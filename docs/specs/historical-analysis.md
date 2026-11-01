@@ -6,7 +6,7 @@
 | **Status** | Active |
 | **Routes** | `/historical-analysis` |
 | **Roles** | A caller who may read the active community (`canRead`): members and community admins |
-| **Domain rules** | EPR-001, EPR-003, EPR-004 (lucoenergia/conluz#409); SEM-001 (lucoenergia/conluz#408); SEM-002…004, ENM-006…008 (lucoenergia/conluz#411); ADR-0005 in lucoenergia/conluz |
+| **Domain rules** | EPR-001, EPR-003, EPR-004 (lucoenergia/conluz#409); SEM-001 (lucoenergia/conluz#408); SEM-002, SEM-003, SEM-004, ENM-006, ENM-007, ENM-008 (lucoenergia/conluz#411); ADR-0005 in lucoenergia/conluz |
 | **Design reference** | Claude Design round 2 copy deck; round 3 copy deck for the period (#248) |
 | **Last reviewed against code** | #249 |
 
@@ -174,7 +174,9 @@ too, never the other members'.
   the headline is drawn from the basis but never written, so no figure on screen depends on it.
   `tariffSource` reports ESTIMATE even where nothing was priced, so keying the label on it would
   state a price beside an amount that has none.
-- **Implements:** SEM-002…004, ENM-006…008 (lucoenergia/conluz#411)
+- **Implements:** SEM-004 and ENM-008 (lucoenergia/conluz#411): the response carries the basis
+  of the self-consumption ratio so that the client shows the ratio with the energy it divides and
+  never recomputes it.
 - **Source:** #249
 
 ### UI-HIS-011 — One headline, and the coverage of the consumption as a sentence
@@ -223,7 +225,14 @@ too, never the other members'.
   own supply never sends assigned energy to the grid, so a usage share there is meaningless rather
   than zero; leaving those supplies out of "Todos mis puntos" changes what the headline counts, and
   the reader is told.
-- **Implements:** SEM-002…004, ENM-006…008 (lucoenergia/conluz#411)
+- **Implements:** lucoenergia/conluz#411:
+  - SEM-002 and ENM-006: nothing assigned is a null ratio reported as having nothing assigned, never
+    as 0.
+  - SEM-003: for a plant's own supply the ratio is null and reported as not applicable,
+    distinguishable from nothing assigned.
+  - ENM-007: plants' own supplies are left out of the membership ratio, and when every supply is one,
+    not applicable takes precedence over nothing assigned.
+  - ENM-008: the basis reports how many plants' own supplies the ratio leaves out.
 - **Source:** #249
 
 ### UI-HIS-014 — Incomplete coverage is stated in words
