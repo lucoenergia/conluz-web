@@ -650,7 +650,7 @@ The members list:
 | State | Rendered | Actions available |
 | --- | --- | --- |
 | Loading | The search and filters, and "Cargando…" in place of the count | Search, filters |
-| Results | The count, one page of rows or cards, each with its derived status (UI-MBR-030), and, with `canInviteMembers`, a checkbox on each selectable row (UI-MBR-037) | Search, filters, "Limpiar filtros" while one is active, each row's menu, the row checkboxes and "Seleccionar todo" |
+| Results | The count, one page of rows, each with its derived status (UI-MBR-030), and, with `canInviteMembers`, a checkbox on each selectable row (UI-MBR-037) | Search, filters, "Limpiar filtros" while one is active, each row's menu, the row checkboxes and "Seleccionar todo" |
 | Selected | The same, with how many are selected, and the limit when it is reached (UI-MBR-038) | The same, and "Enviar invitación (N)" |
 | Nobody to invite | The same, with why nobody can be selected and no checkbox (UI-MBR-042) | Search, filters, each row's menu |
 | Paged | The same, with the range and the page controls (UI-MBR-033) | The same, and the page controls |
