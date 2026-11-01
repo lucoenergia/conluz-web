@@ -28,7 +28,7 @@ const items = [
 
 export const Members = () => (
   <Mui.Box sx={{ maxWidth: 390 }}>
-    <RecordList label="Miembros de la comunidad" emptyMessage="No se encontraron miembros" items={items} rowActions={rowActions} />
+    <RecordList label="Miembros de la comunidad" items={items} rowActions={rowActions} />
   </Mui.Box>
 );
 
@@ -36,7 +36,7 @@ export const WithBadge = () => (
   <Mui.Box sx={{ maxWidth: 390 }}>
     <RecordList
       label="Usuarios de la plataforma"
-      emptyMessage="No se encontraron usuarios"
+     
       rowActions={rowActions}
       items={[
         {
@@ -52,7 +52,7 @@ export const WithLines = () => (
   <Mui.Box sx={{ maxWidth: 390 }}>
     <RecordList
       label="Miembros de la comunidad"
-      emptyMessage="No se encontraron miembros"
+     
       rowActions={{ ...rowActions, has: (item) => item.id === "m-4" }}
       items={[
         {
@@ -82,13 +82,7 @@ export const WithLines = () => (
 
 export const Loading = () => (
   <Mui.Box sx={{ maxWidth: 390 }}>
-    <RecordList label="Miembros de la comunidad" emptyMessage="No se encontraron miembros" items={[]} isLoading />
-  </Mui.Box>
-);
-
-export const Empty = () => (
-  <Mui.Box sx={{ maxWidth: 390 }}>
-    <RecordList label="Miembros de la comunidad" emptyMessage="No se encontraron miembros" items={[]} />
+    <RecordList label="Miembros de la comunidad" items={[]} isLoading />
   </Mui.Box>
 );
 
@@ -96,7 +90,7 @@ export const WithSelection = () => (
   <Mui.Box sx={{ maxWidth: 390 }}>
     <RecordList
       label="Miembros de la comunidad"
-      emptyMessage="No se encontraron miembros"
+     
       rowActions={rowActions}
       items={items.map((item, index) => ({
         ...item,

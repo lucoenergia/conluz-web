@@ -16,7 +16,6 @@ const baseProps: ListTableProps<Row> = {
   title: { header: "Nombre", text: (row) => row.name },
   columns: [],
   isLoading: false,
-  emptyMessage: "Sin filas",
   rowActions: { label: (row) => `Más acciones para ${row.name}`, onClick: vi.fn() },
 };
 
@@ -45,12 +44,5 @@ describe("ListTable", () => {
       .toBeInTheDocument();
     expect(within(brunoRow).queryByRole("checkbox")).not.toBeInTheDocument();
     expect(within(brunoRow).getAllByRole("cell")).toHaveLength(3);
-  });
-
-  it("spans the empty message across the selection column too", () => {
-    render(<ListTable {...baseProps} rows={[]} selection={selection} />);
-
-    // Selection and name: with no row on screen there is no actions column (UI-LST-003).
-    expect(screen.getByRole("cell", { name: "Sin filas" })).toHaveAttribute("colspan", "2");
   });
 });

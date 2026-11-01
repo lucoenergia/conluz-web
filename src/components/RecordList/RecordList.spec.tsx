@@ -22,7 +22,7 @@ const ITEMS: RecordListItem[] = [
 
 describe("RecordList", () => {
   it("renders every record with its fields as label/value pairs", () => {
-    render(<RecordList items={ITEMS} label="Usuarios" emptyMessage="Sin usuarios" />);
+    render(<RecordList items={ITEMS} label="Usuarios" />);
 
     expect(screen.getByText("Ana García")).toBeInTheDocument();
     expect(screen.getByText("ana@example.com")).toBeInTheDocument();
@@ -31,7 +31,7 @@ describe("RecordList", () => {
   });
 
   it("exposes the records as a named list", () => {
-    render(<RecordList items={ITEMS} label="Usuarios" emptyMessage="Sin usuarios" />);
+    render(<RecordList items={ITEMS} label="Usuarios" />);
 
     const list = screen.getByRole("list", { name: "Usuarios" });
     expect(within(list).getAllByRole("listitem")).toHaveLength(2);
@@ -43,7 +43,7 @@ describe("RecordList", () => {
       <RecordList
         items={ITEMS}
         label="Usuarios"
-        emptyMessage="Sin usuarios"
+       
         rowActions={{ label: (item) => `Más acciones para ${item.title}`, onClick, has: (item) => item.id === "u1" }}
       />,
     );
@@ -53,25 +53,17 @@ describe("RecordList", () => {
     expect(screen.queryByRole("button", { name: "Más acciones para Bruno Leal" })).not.toBeInTheDocument();
   });
 
-  it("shows the empty message instead of an empty list", () => {
-    render(<RecordList items={[]} label="Usuarios" emptyMessage="No se encontraron usuarios" />);
-
-    expect(screen.getByText("No se encontraron usuarios")).toBeInTheDocument();
-    expect(screen.queryByRole("list")).not.toBeInTheDocument();
-  });
-
-  it("shows a busy list of skeleton rows while loading, not the empty message", () => {
-    render(<RecordList items={[]} isLoading loadingRows={3} label="Usuarios" emptyMessage="No se encontraron usuarios" />);
+  it("shows a busy list of skeleton rows while loading", () => {
+    render(<RecordList items={[]} isLoading loadingRows={3} label="Usuarios" />);
 
     const list = screen.getByRole("list", { name: "Usuarios", hidden: true });
     expect(list).toHaveAttribute("aria-busy", "true");
     expect(within(list).getAllByRole("listitem", { hidden: true })).toHaveLength(3);
-    expect(screen.queryByText("No se encontraron usuarios")).not.toBeInTheDocument();
   });
 
   it("wraps a long line instead of cutting it", () => {
     const long = "amparo.dominguez.llorens.cooperativa.energetica@telefonica.net";
-    render(<RecordList items={[{ id: "a", title: "Amparo", lines: [long] }]} label="Usuarios" emptyMessage="Sin usuarios" />);
+    render(<RecordList items={[{ id: "a", title: "Amparo", lines: [long] }]} label="Usuarios" />);
 
     expect(screen.getByText(long)).toHaveStyle({ overflowWrap: "anywhere" });
     expect(screen.getByText(long)).not.toHaveStyle({ textOverflow: "ellipsis" });
@@ -82,7 +74,7 @@ describe("RecordList", () => {
       <RecordList
         items={[{ id: "x", title: "Sin datos", fields: [] }]}
         label="Usuarios"
-        emptyMessage="Sin usuarios"
+       
       />,
     );
 
@@ -102,7 +94,7 @@ describe("RecordList", () => {
           },
         ]}
         label="Usuarios"
-        emptyMessage="Sin usuarios"
+       
       />,
     );
 
@@ -119,7 +111,7 @@ describe("RecordList", () => {
           { id: "b", title: "Bruno Leal", fields: [] },
         ]}
         label="Usuarios"
-        emptyMessage="Sin usuarios"
+       
       />,
     );
 
@@ -127,7 +119,7 @@ describe("RecordList", () => {
     expect(within(first).getByRole("checkbox", { name: "Seleccionar Ana García" })).toBeInTheDocument();
     expect(within(second).queryByRole("checkbox")).not.toBeInTheDocument();
 
-    rerender(<RecordList items={ITEMS} label="Usuarios" emptyMessage="Sin usuarios" />);
+    rerender(<RecordList items={ITEMS} label="Usuarios" />);
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   });
 });

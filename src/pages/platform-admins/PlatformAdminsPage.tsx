@@ -20,15 +20,15 @@ import RemoveModeratorIcon from "@mui/icons-material/RemoveModerator";
 import SendIcon from "@mui/icons-material/Send";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import { colors, fontSizes, radii, shadows } from "../../theme/tokens";
+import { colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList, type RecordListItem } from "../../components/RecordList";
 import { ListTable, RowActionsMenu } from "../../components/ListTable";
 import { ResultStatus } from "../../components/ResultStatus";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { DetailHeader } from "../../components/DetailHeader";
-import useWindowDimensions from "../../utils/useWindowDimensions";
-import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
+import { ResponsiveRecordList } from "../../components/ResponsiveRecordList";
+import { EmptyState } from "../../components/EmptyState";
 import { useGetPlatformAdmins } from "../../api/users/users";
 import type { PlatformAdminResponse } from "../../api/models";
 import { usePlatformAdminActions } from "../../hooks/actions";
@@ -95,10 +95,6 @@ const INVITATION_ITEMS: { kind: PlatformInvitationWriteKind; label: string; Icon
  * now (never its last enabled admin).
  */
 export const PlatformAdminsPage: FC = () => {
-  const { width } = useWindowDimensions();
-  // Render ONE layout, not two hidden copies: a stacked list below the
-  // project's desktop breakpoint, the table above it.
-  const isNarrow = width < MIN_DESKTOP_WIDTH;
   const errorDispatch = useErrorDispatch();
 
   const mayList = usePlatformCapabilities("canListPlatformAdmins");
@@ -232,22 +228,13 @@ export const PlatformAdminsPage: FC = () => {
       )}
 
       <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
-        <Paper
-          elevation={0}
-          sx={{
-            borderRadius: { xs: radii.default, sm: radii.large },
-            bgcolor: "white",
-            boxShadow: shadows.soft,
-            overflow: "hidden",
-            width: "100%",
-          }}
-        >
-          {error ? (
-            <Alert severity="error" sx={{ m: 2 }}>
-              Error al cargar los administradores de plataforma. Por favor, inténtalo de nuevo.
-            </Alert>
-          ) : (
-            <>
+        {error ? (
+          <Alert severity="error">
+            Error al cargar los administradores de plataforma. Por favor, inténtalo de nuevo.
+          </Alert>
+        ) : (
+          <ResponsiveRecordList
+            header={
               <ResultStatus
                 isLoading={isLoading}
                 count={holderCount}
@@ -255,84 +242,83 @@ export const PlatformAdminsPage: FC = () => {
                 also={{ count: pendingCount, noun: { one: "invitación pendiente", other: "invitaciones pendientes" } }}
                 emptyMessage={EMPTY_MESSAGE}
               />
-
-              {!isNarrow && (
-                <ListTable
-                  rows={admins}
-                  getRowKey={(admin) => admin.user.id}
-                  isLoading={isLoading}
-                  emptyMessage={EMPTY_MESSAGE}
-                  rowActions={{
-                    label: (admin) => `Más acciones para ${admin.fullName}`,
-                    onClick: handleMenuOpen,
-                    has: hasRowActions,
-                  }}
-                  title={{
-                    header: "Nombre",
-                    text: (admin) => admin.fullName,
-                    leading: (admin) => (
+            }
+            empty={
+              !isLoading && admins.length === 0 ? (
+                <EmptyState icon={AdminPanelSettingsIcon} title={EMPTY_MESSAGE} />
+              ) : undefined
+            }
+            wide={
+              <ListTable
+                rows={admins}
+                getRowKey={(admin) => admin.user.id}
+                isLoading={isLoading}
+                rowActions={{
+                  label: (admin) => `Más acciones para ${admin.fullName}`,
+                  onClick: handleMenuOpen,
+                  has: hasRowActions,
+                }}
+                title={{
+                  header: "Nombre",
+                  text: (admin) => admin.fullName,
+                  leading: (admin) => (
+                    <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
+                      {initialOf(admin)}
+                    </Avatar>
+                  ),
+                }}
+                columns={[
+                  {
+                    key: "email",
+                    header: "Correo",
+                    // No email, no placeholder: the name identifies them.
+                    render: (admin) => admin.email && <Typography variant="body2">{admin.email}</Typography>,
+                  },
+                  {
+                    key: "state",
+                    header: "Estado",
+                    render: (admin) => <StateCell admin={admin} />,
+                  },
+                ]}
+              />
+            }
+            narrow={
+              <RecordList
+                label="Administradores de plataforma"
+                isLoading={isLoading}
+                rowActions={{
+                  label: (item) => `Más acciones para ${item.title}`,
+                  onClick: (event, item) => {
+                    const admin = adminOfItem(item);
+                    if (admin) handleMenuOpen(event, admin);
+                  },
+                  has: (item) => {
+                    const admin = adminOfItem(item);
+                    return !!admin && hasRowActions(admin);
+                  },
+                }}
+                items={admins.map((admin) => {
+                  const invitation = membershipStateOf(admin);
+                  const invitationCaption = invitation && invitationText(invitation);
+                  return {
+                    id: admin.user.id,
+                    avatar: (
                       <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
                         {initialOf(admin)}
                       </Avatar>
                     ),
-                  }}
-                  columns={[
-                    {
-                      key: "email",
-                      header: "Correo",
-                      // No email, no placeholder: the name identifies them.
-                      render: (admin) => admin.email && <Typography variant="body2">{admin.email}</Typography>,
-                    },
-                    {
-                      key: "state",
-                      header: "Estado",
-                      render: (admin) => <StateCell admin={admin} />,
-                    },
-                  ]}
-                />
-              )}
-
-              {isNarrow && (
-                <Box sx={{ p: 2 }}>
-                  <RecordList
-                    label="Administradores de plataforma"
-                    isLoading={isLoading}
-                    emptyMessage={EMPTY_MESSAGE}
-                    rowActions={{
-                      label: (item) => `Más acciones para ${item.title}`,
-                      onClick: (event, item) => {
-                        const admin = adminOfItem(item);
-                        if (admin) handleMenuOpen(event, admin);
-                      },
-                      has: (item) => {
-                        const admin = adminOfItem(item);
-                        return !!admin && hasRowActions(admin);
-                      },
-                    }}
-                    items={admins.map((admin) => {
-                      const invitation = membershipStateOf(admin);
-                      const invitationCaption = invitation && invitationText(invitation);
-                      return {
-                        id: admin.user.id,
-                        avatar: (
-                          <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
-                            {initialOf(admin)}
-                          </Avatar>
-                        ),
-                        title: admin.fullName,
-                        status: invitation ? <PlatformInvitationChip /> : <StateChip admin={admin} />,
-                        fields: [
-                          ...(admin.email ? [{ label: "Email", value: admin.email }] : []),
-                          ...(invitationCaption ? [{ label: "Invitación", value: invitationCaption }] : []),
-                        ],
-                      };
-                    })}
-                  />
-                </Box>
-              )}
-            </>
-          )}
-        </Paper>
+                    title: admin.fullName,
+                    status: invitation ? <PlatformInvitationChip /> : <StateChip admin={admin} />,
+                    fields: [
+                      ...(admin.email ? [{ label: "Email", value: admin.email }] : []),
+                      ...(invitationCaption ? [{ label: "Invitación", value: invitationCaption }] : []),
+                    ],
+                  };
+                })}
+              />
+            }
+          />
+        )}
       </Box>
 
       <RowActionsMenu anchorEl={anchorEl} onClose={handleMenuClose}>

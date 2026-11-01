@@ -44,7 +44,6 @@ export const Members = () => (
     title={title}
     columns={columns}
     isLoading={false}
-    emptyMessage="No hay miembros en esta comunidad"
     rowActions={{ label: (m) => `Más acciones para ${m.name}`, onClick: noop }}
   />
 );
@@ -56,19 +55,6 @@ export const Loading = () => (
     title={title}
     columns={columns}
     isLoading
-    emptyMessage="No hay miembros en esta comunidad"
-    rowActions={{ label: (m) => `Más acciones para ${m.name}`, onClick: noop }}
-  />
-);
-
-export const Empty = () => (
-  <ListTable
-    rows={[] as Member[]}
-    getRowKey={(m) => m.id}
-    title={title}
-    columns={columns}
-    isLoading={false}
-    emptyMessage="No hay miembros en esta comunidad"
     rowActions={{ label: (m) => `Más acciones para ${m.name}`, onClick: noop }}
   />
 );
@@ -83,7 +69,6 @@ export const WithSelection = () => (
     title={title}
     columns={columns}
     isLoading={false}
-    emptyMessage="No hay miembros en esta comunidad"
     rowActions={{ label: (m) => `Más acciones para ${m.name}`, onClick: noop }}
     selection={{
       header: <Mui.Checkbox indeterminate inputProps={{ "aria-label": "Seleccionar todo" }} />,

@@ -48,7 +48,6 @@ export interface RecordListProps {
   isLoading?: boolean;
   /** How many skeleton rows a load shows. */
   loadingRows?: number;
-  emptyMessage: string;
   /** Each record's kebab, always on the title line so it can never be pushed
    *  out of reach the way an off-canvas table column can. */
   rowActions?: RowActions<RecordListItem>;
@@ -85,7 +84,6 @@ export const RecordList: FC<RecordListProps> = ({
   label,
   isLoading,
   loadingRows = 5,
-  emptyMessage,
   rowActions,
   chevron,
 }) => {
@@ -101,16 +99,6 @@ export const RecordList: FC<RecordListProps> = ({
             <Skeleton variant="text" width="60%" />
           </Box>
         ))}
-      </Box>
-    );
-  }
-
-  if (items.length === 0) {
-    return (
-      <Box sx={{ py: 4, textAlign: "center" }}>
-        <Typography variant="body1" color="text.secondary">
-          {emptyMessage}
-        </Typography>
       </Box>
     );
   }

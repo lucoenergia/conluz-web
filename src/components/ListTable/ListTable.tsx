@@ -58,8 +58,6 @@ export interface ListTableProps<T> {
   isLoading: boolean;
   /** How many skeleton rows a load shows. */
   loadingRows?: number;
-  /** Shown in a full-width row when `rows` is empty and not loading. */
-  emptyMessage: string;
   /**
    * The trailing kebab of each row. The column is drawn only while some row on
    * screen has actions; a row without any keeps an empty cell (UI-LST-003).
@@ -119,7 +117,6 @@ export const ListTable = <T,>({
   columns,
   isLoading,
   loadingRows = 5,
-  emptyMessage,
   rowActions,
   isInactive,
   selection,
@@ -129,7 +126,6 @@ export const ListTable = <T,>({
   // does not shift as the rows arrive. Once loaded, only a row with actions
   // earns it.
   const showActions = !!rowActions && (isLoading || rows.some(hasActions));
-  const colSpan = columns.length + 1 + (showActions ? 1 : 0) + (selection ? 1 : 0);
 
   return (
     <TableContainer sx={{ overflowX: "hidden" }}>
@@ -178,14 +174,6 @@ export const ListTable = <T,>({
                 {showActions && <TableCell />}
               </TableRow>
             ))
-          ) : rows.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={colSpan} align="center" sx={{ py: 4 }}>
-                <Typography variant="body1" color="text.secondary">
-                  {emptyMessage}
-                </Typography>
-              </TableCell>
-            </TableRow>
           ) : (
             rows.map((row) => {
               const inactive = isInactive?.(row) ?? false;

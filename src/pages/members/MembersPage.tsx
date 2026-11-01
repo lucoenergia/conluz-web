@@ -36,13 +36,13 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import SendIcon from "@mui/icons-material/Send";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
-import { radii, shadows, colors, fontSizes } from "../../theme/tokens";
+import { colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList, type RecordListItem } from "../../components/RecordList";
 import { ListTable, RowActionsMenu } from "../../components/ListTable";
 import { EmptyState } from "../../components/EmptyState";
-import useWindowDimensions from "../../utils/useWindowDimensions";
-import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
+import { ResponsiveRecordList } from "../../components/ResponsiveRecordList";
+import { useListLayout } from "../../components/ResponsiveRecordList/useListLayout";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { DetailHeader } from "../../components/DetailHeader";
 import { useActiveCommunity } from "../../context/community.context";
@@ -113,10 +113,7 @@ const INVITATION_ITEMS: { kind: InvitationWriteKind; key: keyof InvitationAction
 ];
 
 export const MembersPage: FC = () => {
-  const { width } = useWindowDimensions();
-  // Render ONE layout, not two hidden copies: a stacked list below the
-  // project's desktop breakpoint, the table above it.
-  const isNarrow = width < MIN_DESKTOP_WIDTH;
+  const layout = useListLayout();
   const theme = useTheme();
   const navigate = useNavigate();
   const activeCommunityId = useActiveCommunity();
@@ -328,6 +325,7 @@ export const MembersPage: FC = () => {
   const isFiltering = filters.query.trim() !== "" || filters.status !== "all" || filters.role !== "all";
   // Some members, and none matching: an empty table would read as no members at all.
   const noResults = !isLoading && memberships.length > 0 && filtered.length === 0;
+  const emptyRoster = !isLoading && memberships.length === 0;
 
   // The counters describe the community, not the view: computed over the whole roster.
   // Active means accepted and enabled: a pending member has no access yet.
@@ -414,163 +412,151 @@ export const MembersPage: FC = () => {
       </Box>
 
       <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
-        <Paper
-          elevation={0}
-          sx={{
-            borderRadius: { xs: radii.default, sm: radii.large },
-            bgcolor: "white",
-            boxShadow: shadows.soft,
-            overflow: "hidden",
-            width: "100%",
-          }}
-        >
-          {error ? (
-            <Alert severity="error" sx={{ m: 2 }}>
-              Error al cargar los miembros. Por favor, inténtalo de nuevo.
-            </Alert>
-          ) : (
-            <>
-            <Box sx={{ p: 2, pb: 0, display: "flex", flexDirection: "column", gap: 2 }}>
-              <MembersFilters
-                filters={filters}
-                onChange={changeFilters}
-                onClear={clearFilters}
-                resultCount={filtered.length}
-                showClear={isFiltering && !noResults}
-                isNarrow={isNarrow}
-              />
-              {/* One persistent live region: the count changes, the node stays. */}
-              <Typography
-                ref={countRef}
-                role="status"
-                aria-live="polite"
-                variant="body2"
-                sx={{ fontWeight: 600, color: "text.secondary", scrollMarginTop: (t) => t.spacing(2) }}
-              >
-                {isLoading ? "Cargando…" : membersCount(filtered.length)}
-              </Typography>
-              {invitationEmptyReason && <Notice severity="info">{invitationEmptyReason}</Notice>}
-              {selectionOffered && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: { xs: "column", sm: "row" },
-                    alignItems: { xs: "stretch", sm: "center" },
-                    gap: { xs: 1, sm: 2 },
-                  }}
-                >
-                  {/* The table head carries "select all" on wide screens; the
-                      card list has no head, so it is labelled here. */}
-                  {isNarrow && (
-                    <FormControlLabel
-                      control={selectAllCheckbox}
-                      label="Seleccionar todo"
-                      sx={{ m: 0 }}
-                    />
-                  )}
-                  <Typography variant="body2" sx={{ color: "text.secondary", flex: 1 }}>
-                    {selectedCount === 0
-                      ? "Selecciona a quién enviar la invitación."
-                      : `${selectedCount} ${pluralize(selectedCount, "seleccionado", "seleccionados")}`}
+        {error ? (
+          <Alert severity="error">
+            Error al cargar los miembros. Por favor, inténtalo de nuevo.
+          </Alert>
+        ) : (
+          <ResponsiveRecordList
+            header={
+                <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+                  <MembersFilters
+                    filters={filters}
+                    onChange={changeFilters}
+                    onClear={clearFilters}
+                    resultCount={filtered.length}
+                    showClear={isFiltering && !noResults}
+                  />
+                  {/* One persistent live region: the count changes, the node stays. */}
+                  <Typography
+                    ref={countRef}
+                    role="status"
+                    aria-live="polite"
+                    variant="body2"
+                    sx={{ fontWeight: 600, color: "text.secondary", scrollMarginTop: (t) => t.spacing(2) }}
+                  >
+                    {isLoading ? "Cargando…" : membersCount(filtered.length)}
                   </Typography>
-                  {selectedCount > 0 && (
-                    <Button variant="contained" startIcon={<SendIcon />} onClick={openSendInvitations}>
-                      Enviar invitación ({selectedCount})
-                    </Button>
+                  {invitationEmptyReason && <Notice severity="info">{invitationEmptyReason}</Notice>}
+                  {selectionOffered && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: { xs: "column", sm: "row" },
+                        alignItems: { xs: "stretch", sm: "center" },
+                        gap: { xs: 1, sm: 2 },
+                      }}
+                    >
+                      {/* The table head carries "select all" on wide screens; the
+                          stacked list has no head, so it is labelled here. */}
+                      {layout === "narrow" && (
+                        <FormControlLabel
+                          control={selectAllCheckbox}
+                          label="Seleccionar todo"
+                          sx={{ m: 0 }}
+                        />
+                      )}
+                      <Typography variant="body2" sx={{ color: "text.secondary", flex: 1 }}>
+                        {selectedCount === 0
+                          ? "Selecciona a quién enviar la invitación."
+                          : `${selectedCount} ${pluralize(selectedCount, "seleccionado", "seleccionados")}`}
+                      </Typography>
+                      {selectedCount > 0 && (
+                        <Button variant="contained" startIcon={<SendIcon />} onClick={openSendInvitations}>
+                          Enviar invitación ({selectedCount})
+                        </Button>
+                      )}
+                    </Box>
+                  )}
+                  {selectionOffered && (selection.truncatedByLimit || selection.isAtLimit) && (
+                    <Notice severity="info">
+                      {selection.truncatedByLimit
+                        ? `Se han seleccionado los ${MAX_INVITATION_SELECTION} primeros: es el máximo por envío.`
+                        : `Has llegado al máximo de ${MAX_INVITATION_SELECTION} por envío.`}
+                    </Notice>
                   )}
                 </Box>
-              )}
-              {selectionOffered && (selection.truncatedByLimit || selection.isAtLimit) && (
-                <Notice severity="info">
-                  {selection.truncatedByLimit
-                    ? `Se han seleccionado los ${MAX_INVITATION_SELECTION} primeros: es el máximo por envío.`
-                    : `Has llegado al máximo de ${MAX_INVITATION_SELECTION} por envío.`}
-                </Notice>
-              )}
-            </Box>
-
-            {noResults && (
-              <Box sx={{ p: 2 }}>
+            }
+            empty={
+              noResults ? (
                 <EmptyState
                   icon={SearchOffIcon}
                   title="No hay miembros que coincidan"
                   subtitle="Prueba con otra búsqueda o quita algún filtro."
                   actionButton={{ label: "Limpiar filtros", onClick: clearFilters }}
                 />
-              </Box>
-            )}
-
-            {!isNarrow && !noResults && (
-            <ListTable
-              rows={pageRows}              getRowKey={(membership) => membership.id}
-              isLoading={isLoading}
-              emptyMessage="No hay miembros en esta comunidad"
-              rowActions={{
-                label: (membership) => `Más acciones para ${membership.fullName}`,
-                onClick: handleMenuOpen,
-                has: hasRowActions,
-              }}
-              selection={selectionOffered ? { header: selectAllCheckbox, render: selectionCheckbox } : undefined}
-              title={{
-                header: "Miembro",
-                text: (membership) => membership.fullName,
-                leading: (membership) => (
-                  <Avatar
-                    sx={{
-                      width: 36,
-                      height: 36,
-                      bgcolor: theme.palette.primary.main,
-                      fontSize: fontSizes.md,
-                    }}
-                  >
-                    {membership.fullName.charAt(0).toUpperCase()}
-                  </Avatar>
-                ),
-                // The DNI/NIE/NIF as secondary information, after the email when
-                // there is one; alone, with no separator, when there is none (UI-MBR-007).
-                secondary: (membership) => [
-                  <>
-                    {membership.contactEmail && (
-                      <>
-                        <span>{membership.contactEmail}</span>
-                        <span aria-hidden> · </span>
-                      </>
-                    )}
-                    {showsNoContactEmail(membership) && (
-                      <>
-                        <span>Sin email de contacto</span>
-                        <span aria-hidden> · </span>
-                      </>
-                    )}
-                    <span>{membership.personalId}</span>
-                  </>,
-                ],
-              }}
-              columns={[
-                {
-                  key: "role",
-                  header: "Rol",
-                  render: (membership) => (
-                    <Typography variant="body2">
-                      {ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER]}
-                    </Typography>
+              ) : emptyRoster ? (
+                <EmptyState icon={PeopleIcon} title="No hay miembros en esta comunidad" />
+              ) : undefined
+            }
+            wide={
+              <ListTable
+                rows={pageRows}
+                getRowKey={(membership) => membership.id}
+                isLoading={isLoading}
+                rowActions={{
+                  label: (membership) => `Más acciones para ${membership.fullName}`,
+                  onClick: handleMenuOpen,
+                  has: hasRowActions,
+                }}
+                selection={selectionOffered ? { header: selectAllCheckbox, render: selectionCheckbox } : undefined}
+                title={{
+                  header: "Miembro",
+                  text: (membership) => membership.fullName,
+                  leading: (membership) => (
+                    <Avatar
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        bgcolor: theme.palette.primary.main,
+                        fontSize: fontSizes.md,
+                      }}
+                    >
+                      {membership.fullName.charAt(0).toUpperCase()}
+                    </Avatar>
                   ),
-                },
-                {
-                  key: "status",
-                  header: "Estado",
-                  render: (membership) => <MembershipStatusChip membership={membership} />,
-                },
-              ]}
-            />
-            )}
-
-            {isNarrow && !noResults && (
-            <Box sx={{ p: 2 }}>
+                  // The DNI/NIE/NIF as secondary information, after the email when
+                  // there is one; alone, with no separator, when there is none (UI-MBR-007).
+                  secondary: (membership) => [
+                    <>
+                      {membership.contactEmail && (
+                        <>
+                          <span>{membership.contactEmail}</span>
+                          <span aria-hidden> · </span>
+                        </>
+                      )}
+                      {showsNoContactEmail(membership) && (
+                        <>
+                          <span>Sin email de contacto</span>
+                          <span aria-hidden> · </span>
+                        </>
+                      )}
+                      <span>{membership.personalId}</span>
+                    </>,
+                  ],
+                }}
+                columns={[
+                  {
+                    key: "role",
+                    header: "Rol",
+                    render: (membership) => (
+                      <Typography variant="body2">
+                        {ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER]}
+                      </Typography>
+                    ),
+                  },
+                  {
+                    key: "status",
+                    header: "Estado",
+                    render: (membership) => <MembershipStatusChip membership={membership} />,
+                  },
+                ]}
+              />
+            }
+            narrow={
               <RecordList
                 label="Miembros de la comunidad"
                 isLoading={isLoading}
-                emptyMessage="No se encontraron miembros"
                 rowActions={{
                   label: (item) => `Más acciones para ${item.title}`,
                   onClick: (event, item) => {
@@ -604,11 +590,9 @@ export const MembersPage: FC = () => {
                   };
                 })}
               />
-            </Box>
-            )}
-
-            {!isLoading && (
-              <Box sx={{ p: 2, pt: 0, "&:empty": { display: "none" } }}>
+            }
+            footer={
+              !isLoading && (
                 <ListPagination
                   page={currentPage}
                   pageCount={pageCount}
@@ -616,11 +600,10 @@ export const MembersPage: FC = () => {
                   noun={{ one: "miembro", other: "miembros" }}
                   onChange={changePage}
                 />
-              </Box>
-            )}
-            </>
-          )}
-        </Paper>
+              )
+            }
+          />
+        )}
       </Box>
 
 
