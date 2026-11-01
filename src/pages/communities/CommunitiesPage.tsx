@@ -6,7 +6,6 @@ import {
   Typography,
   Paper,
   Chip,
-  Alert,
   Button,
   MenuItem,
   ListItemIcon,
@@ -78,7 +77,7 @@ export const CommunitiesPage: FC = () => {
 
   const theme = useTheme();
   const navigate = useNavigate();
-  const { data: communities = [], isLoading, error } = useGetAllCommunities();
+  const { data: communities = [], isLoading, error, refetch } = useGetAllCommunities();
 
   // Pages of 25 (UI-LST-005); a page change brings the list's top into view.
   const { page, setPage, pageCount, pageRows } = useListPage(communities);
@@ -216,124 +215,90 @@ export const CommunitiesPage: FC = () => {
       </Box>
 
       <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
-        {error ? (
-          <Alert severity="error">
-            Error al cargar las comunidades. Por favor, inténtalo de nuevo.
-          </Alert>
-        ) : (
-          <ResponsiveRecordList
-            ref={listRef}
-            header={
-              <ResultStatus
-                isLoading={isLoading}
-                count={communities.length}
-                noun={{ one: "comunidad", other: "comunidades" }}
-                emptyMessage="No se encontraron comunidades"
-              />
-            }
-            empty={
-              !isLoading && communities.length === 0 ? (
-                <EmptyState icon={BusinessIcon} title="No hay comunidades registradas" />
-              ) : undefined
-            }
-            wide={
-              <ListTable
-                rows={pageRows}
-                getRowKey={(community) => community.id}
-                isLoading={isLoading}
-                rowActions={{
-                  label: (community) => `Más acciones para ${community.name || "la comunidad"}`,
-                  onClick: handleMenuOpen,
-                  has: hasRowActions,
-                }}
-                title={{
-                  header: "Nombre",
-                  text: (community) => community.name,
-                  leading: () => <BusinessIcon sx={{ color: theme.palette.primary.main, fontSize: 20 }} />,
-                  // Under the name rather than in columns of their own: with the side menu
-                  // open, no wider table fits a 1024px viewport (UI-LST-001).
-                  secondary: (community) => [
-                    community.code,
-                    community.legalId && `NIF/CIF ${community.legalId}`,
-                    community.address,
-                  ].filter((line): line is string => !!line),
-                  width: COLUMN_WIDTHS.name,
-                }}
-                columns={[
-                  {
-                    key: "admins",
-                    header: "Administradores",
-                    width: COLUMN_WIDTHS.admins,
-                    render: (community) => <AdminNamesCell adminNames={community.adminNames} />,
-                  },
-                  {
-                    key: "memberCount",
-                    header: (
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, justifyContent: "center" }}>
-                        <PeopleIcon sx={{ fontSize: fontSizes.md, color: "secondary.main" }} />
-                        <ListTableHeaderText>Miembros</ListTableHeaderText>
-                      </Box>
-                    ),
-                    align: "center",
-                    width: COLUMN_WIDTHS.memberCount,
-                    render: (community) => (
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        {community.memberCount}
-                      </Typography>
-                    ),
-                  },
-                  {
-                    key: "supplyPointCount",
-                    header: (
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, justifyContent: "center" }}>
-                        <ElectricBoltIcon sx={{ fontSize: fontSizes.md, color: "secondary.main" }} />
-                        <ListTableHeaderText>Suministros</ListTableHeaderText>
-                      </Box>
-                    ),
-                    align: "center",
-                    width: COLUMN_WIDTHS.supplyPointCount,
-                    render: (community) => (
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        {community.supplyPointCount}
-                      </Typography>
-                    ),
-                  },
-                  {
-                    key: "status",
-                    header: "Estado",
-                    width: COLUMN_WIDTHS.status,
-                    render: (community) => (
-                      <Chip
-                        label={community.enabled ? "Activa" : "Inactiva"}
-                        color={community.enabled ? "success" : "error"}
-                        size="small"
-                        sx={{ fontWeight: 600 }}
-                      />
-                    ),
-                  },
-                ]}
-              />
-            }
-            narrow={
-              <RecordList
-                label="Comunidades"
-                isLoading={isLoading}
-                rowActions={{
-                  label: (item) => `Más acciones para ${communityOfItem(item)?.name || "la comunidad"}`,
-                  onClick: (event, item) => {
-                    const community = communityOfItem(item);
-                    if (community) handleMenuOpen(event, community);
-                  },
-                  has: (item) => {
-                    const community = communityOfItem(item);
-                    return !!community && hasRowActions(community);
-                  },
-                }}
-                items={pageRows.map((community) => ({
-                  id: String(community.id ?? ""),
-                  avatar: <BusinessIcon sx={{ color: "primary.main", fontSize: 20, mt: 0.5 }} />,
-                  title: community.name || "Sin nombre",
-                  status: (
+        <ResponsiveRecordList
+          // A failed read says so and offers the read again, never the empty state (UI-LST-004).
+          error={error ? { message: "No se pudieron cargar las comunidades.", onRetry: () => void refetch() } : undefined}
+          ref={listRef}
+          header={
+            <ResultStatus
+              isLoading={isLoading}
+              count={communities.length}
+              noun={{ one: "comunidad", other: "comunidades" }}
+              emptyMessage="No se encontraron comunidades"
+            />
+          }
+          empty={
+            !isLoading && communities.length === 0 ? (
+              <EmptyState icon={BusinessIcon} title="No hay comunidades registradas" />
+            ) : undefined
+          }
+          wide={
+            <ListTable
+              rows={pageRows}
+              getRowKey={(community) => community.id}
+              isLoading={isLoading}
+              rowActions={{
+                label: (community) => `Más acciones para ${community.name || "la comunidad"}`,
+                onClick: handleMenuOpen,
+                has: hasRowActions,
+              }}
+              title={{
+                header: "Nombre",
+                text: (community) => community.name,
+                leading: () => <BusinessIcon sx={{ color: theme.palette.primary.main, fontSize: 20 }} />,
+                // Under the name rather than in columns of their own: with the side menu
+                // open, no wider table fits a 1024px viewport (UI-LST-001).
+                secondary: (community) => [
+                  community.code,
+                  community.legalId && `NIF/CIF ${community.legalId}`,
+                  community.address,
+                ].filter((line): line is string => !!line),
+                width: COLUMN_WIDTHS.name,
+              }}
+              columns={[
+                {
+                  key: "admins",
+                  header: "Administradores",
+                  width: COLUMN_WIDTHS.admins,
+                  render: (community) => <AdminNamesCell adminNames={community.adminNames} />,
+                },
+                {
+                  key: "memberCount",
+                  header: (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, justifyContent: "center" }}>
+                      <PeopleIcon sx={{ fontSize: fontSizes.md, color: "secondary.main" }} />
+                      <ListTableHeaderText>Miembros</ListTableHeaderText>
+                    </Box>
+                  ),
+                  align: "center",
+                  width: COLUMN_WIDTHS.memberCount,
+                  render: (community) => (
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                      {community.memberCount}
+                    </Typography>
+                  ),
+                },
+                {
+                  key: "supplyPointCount",
+                  header: (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, justifyContent: "center" }}>
+                      <ElectricBoltIcon sx={{ fontSize: fontSizes.md, color: "secondary.main" }} />
+                      <ListTableHeaderText>Suministros</ListTableHeaderText>
+                    </Box>
+                  ),
+                  align: "center",
+                  width: COLUMN_WIDTHS.supplyPointCount,
+                  render: (community) => (
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                      {community.supplyPointCount}
+                    </Typography>
+                  ),
+                },
+                {
+                  key: "status",
+                  header: "Estado",
+                  width: COLUMN_WIDTHS.status,
+                  render: (community) => (
                     <Chip
                       label={community.enabled ? "Activa" : "Inactiva"}
                       color={community.enabled ? "success" : "error"}
@@ -341,31 +306,61 @@ export const CommunitiesPage: FC = () => {
                       sx={{ fontWeight: 600 }}
                     />
                   ),
-                  // A missing value is left out rather than shown as "—".
-                  fields: [
-                    ...(community.code ? [{ label: "Código", value: community.code }] : []),
-                    ...(community.legalId ? [{ label: "CIF", value: community.legalId }] : []),
-                    ...(community.address ? [{ label: "Dirección", value: community.address }] : []),
-                    { label: "Administradores", value: <AdminNamesCell adminNames={community.adminNames} /> },
-                    { label: "Miembros", value: community.memberCount },
-                    { label: "Suministros", value: community.supplyPointCount },
-                  ],
-                }))}
+                },
+              ]}
+            />
+          }
+          narrow={
+            <RecordList
+              label="Comunidades"
+              isLoading={isLoading}
+              rowActions={{
+                label: (item) => `Más acciones para ${communityOfItem(item)?.name || "la comunidad"}`,
+                onClick: (event, item) => {
+                  const community = communityOfItem(item);
+                  if (community) handleMenuOpen(event, community);
+                },
+                has: (item) => {
+                  const community = communityOfItem(item);
+                  return !!community && hasRowActions(community);
+                },
+              }}
+              items={pageRows.map((community) => ({
+                id: String(community.id ?? ""),
+                avatar: <BusinessIcon sx={{ color: "primary.main", fontSize: 20, mt: 0.5 }} />,
+                title: community.name || "Sin nombre",
+                status: (
+                  <Chip
+                    label={community.enabled ? "Activa" : "Inactiva"}
+                    color={community.enabled ? "success" : "error"}
+                    size="small"
+                    sx={{ fontWeight: 600 }}
+                  />
+                ),
+                // A missing value is left out rather than shown as "—".
+                fields: [
+                  ...(community.code ? [{ label: "Código", value: community.code }] : []),
+                  ...(community.legalId ? [{ label: "CIF", value: community.legalId }] : []),
+                  ...(community.address ? [{ label: "Dirección", value: community.address }] : []),
+                  { label: "Administradores", value: <AdminNamesCell adminNames={community.adminNames} /> },
+                  { label: "Miembros", value: community.memberCount },
+                  { label: "Suministros", value: community.supplyPointCount },
+                ],
+              }))}
+            />
+          }
+          footer={
+            !isLoading && (
+              <ListPagination
+                page={page}
+                pageCount={pageCount}
+                total={communities.length}
+                noun={{ one: "comunidad", other: "comunidades" }}
+                onChange={changePage}
               />
-            }
-            footer={
-              !isLoading && (
-                <ListPagination
-                  page={page}
-                  pageCount={pageCount}
-                  total={communities.length}
-                  noun={{ one: "comunidad", other: "comunidades" }}
-                  onChange={changePage}
-                />
-              )
-            }
-          />
-        )}
+            )
+          }
+        />
       </Box>
 
       {/* Every item is the selected row's own answer. Editing is the

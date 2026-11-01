@@ -1,6 +1,5 @@
 import { useRef, useState, type FC } from "react";
 import {
-  Alert,
   Avatar,
   Box,
   Button,
@@ -104,6 +103,7 @@ export const PlatformAdminsPage: FC = () => {
     data: admins = [],
     isLoading,
     error,
+    refetch,
   } = useGetPlatformAdmins({ query: { enabled: mayList.state === "allowed" } });
 
   // Pages of 25 (UI-LST-005); a page change brings the list's top into view.
@@ -238,109 +238,109 @@ export const PlatformAdminsPage: FC = () => {
       )}
 
       <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
-        {error ? (
-          <Alert severity="error">
-            Error al cargar los administradores de plataforma. Por favor, inténtalo de nuevo.
-          </Alert>
-        ) : (
-          <ResponsiveRecordList
-            ref={listRef}
-            header={
-              <ResultStatus
-                isLoading={isLoading}
-                count={holderCount}
-                noun={{ one: "administrador de plataforma", other: "administradores de plataforma" }}
-                also={{ count: pendingCount, noun: { one: "invitación pendiente", other: "invitaciones pendientes" } }}
-                emptyMessage={EMPTY_MESSAGE}
-              />
-            }
-            empty={
-              !isLoading && admins.length === 0 ? (
-                <EmptyState icon={AdminPanelSettingsIcon} title={EMPTY_MESSAGE} />
-              ) : undefined
-            }
-            wide={
-              <ListTable
-                rows={pageRows}
-                getRowKey={(admin) => admin.user.id}
-                isLoading={isLoading}
-                rowActions={{
-                  label: (admin) => `Más acciones para ${admin.fullName}`,
-                  onClick: handleMenuOpen,
-                  has: hasRowActions,
-                }}
-                title={{
-                  header: "Nombre",
-                  text: (admin) => admin.fullName,
-                  leading: (admin) => (
+        <ResponsiveRecordList
+          // A failed read says so and offers the read again, never the empty state (UI-LST-004).
+          error={
+            error
+              ? { message: "No se pudieron cargar los administradores de plataforma.", onRetry: () => void refetch() }
+              : undefined
+          }
+          ref={listRef}
+          header={
+            <ResultStatus
+              isLoading={isLoading}
+              count={holderCount}
+              noun={{ one: "administrador de plataforma", other: "administradores de plataforma" }}
+              also={{ count: pendingCount, noun: { one: "invitación pendiente", other: "invitaciones pendientes" } }}
+              emptyMessage={EMPTY_MESSAGE}
+            />
+          }
+          empty={
+            !isLoading && admins.length === 0 ? (
+              <EmptyState icon={AdminPanelSettingsIcon} title={EMPTY_MESSAGE} />
+            ) : undefined
+          }
+          wide={
+            <ListTable
+              rows={pageRows}
+              getRowKey={(admin) => admin.user.id}
+              isLoading={isLoading}
+              rowActions={{
+                label: (admin) => `Más acciones para ${admin.fullName}`,
+                onClick: handleMenuOpen,
+                has: hasRowActions,
+              }}
+              title={{
+                header: "Nombre",
+                text: (admin) => admin.fullName,
+                leading: (admin) => (
+                  <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
+                    {initialOf(admin)}
+                  </Avatar>
+                ),
+              }}
+              columns={[
+                {
+                  key: "email",
+                  header: "Correo",
+                  // No email, no placeholder: the name identifies them.
+                  render: (admin) => admin.email && <Typography variant="body2">{admin.email}</Typography>,
+                },
+                {
+                  key: "state",
+                  header: "Estado",
+                  render: (admin) => <StateCell admin={admin} />,
+                },
+              ]}
+            />
+          }
+          narrow={
+            <RecordList
+              label="Administradores de plataforma"
+              isLoading={isLoading}
+              rowActions={{
+                label: (item) => `Más acciones para ${item.title}`,
+                onClick: (event, item) => {
+                  const admin = adminOfItem(item);
+                  if (admin) handleMenuOpen(event, admin);
+                },
+                has: (item) => {
+                  const admin = adminOfItem(item);
+                  return !!admin && hasRowActions(admin);
+                },
+              }}
+              items={pageRows.map((admin) => {
+                const invitation = membershipStateOf(admin);
+                const invitationCaption = invitation && invitationText(invitation);
+                return {
+                  id: admin.user.id,
+                  avatar: (
                     <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
                       {initialOf(admin)}
                     </Avatar>
                   ),
-                }}
-                columns={[
-                  {
-                    key: "email",
-                    header: "Correo",
-                    // No email, no placeholder: the name identifies them.
-                    render: (admin) => admin.email && <Typography variant="body2">{admin.email}</Typography>,
-                  },
-                  {
-                    key: "state",
-                    header: "Estado",
-                    render: (admin) => <StateCell admin={admin} />,
-                  },
-                ]}
+                  title: admin.fullName,
+                  status: invitation ? <PlatformInvitationChip /> : <StateChip admin={admin} />,
+                  fields: [
+                    ...(admin.email ? [{ label: "Email", value: admin.email }] : []),
+                    ...(invitationCaption ? [{ label: "Invitación", value: invitationCaption }] : []),
+                  ],
+                };
+              })}
+            />
+          }
+          footer={
+            !isLoading && (
+              <ListPagination
+                page={page}
+                pageCount={pageCount}
+                total={admins.length}
+                noun={{ one: "administrador de plataforma", other: "administradores de plataforma" }}
+                onChange={changePage}
               />
-            }
-            narrow={
-              <RecordList
-                label="Administradores de plataforma"
-                isLoading={isLoading}
-                rowActions={{
-                  label: (item) => `Más acciones para ${item.title}`,
-                  onClick: (event, item) => {
-                    const admin = adminOfItem(item);
-                    if (admin) handleMenuOpen(event, admin);
-                  },
-                  has: (item) => {
-                    const admin = adminOfItem(item);
-                    return !!admin && hasRowActions(admin);
-                  },
-                }}
-                items={pageRows.map((admin) => {
-                  const invitation = membershipStateOf(admin);
-                  const invitationCaption = invitation && invitationText(invitation);
-                  return {
-                    id: admin.user.id,
-                    avatar: (
-                      <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
-                        {initialOf(admin)}
-                      </Avatar>
-                    ),
-                    title: admin.fullName,
-                    status: invitation ? <PlatformInvitationChip /> : <StateChip admin={admin} />,
-                    fields: [
-                      ...(admin.email ? [{ label: "Email", value: admin.email }] : []),
-                      ...(invitationCaption ? [{ label: "Invitación", value: invitationCaption }] : []),
-                    ],
-                  };
-                })}
-              />
-            }
-            footer={
-              !isLoading && (
-                <ListPagination
-                  page={page}
-                  pageCount={pageCount}
-                  total={admins.length}
-                  noun={{ one: "administrador de plataforma", other: "administradores de plataforma" }}
-                  onChange={changePage}
-                />
-              )
-            }
-          />
-        )}
+            )
+          }
+        />
       </Box>
 
       <RowActionsMenu anchorEl={anchorEl} onClose={handleMenuClose}>

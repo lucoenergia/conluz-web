@@ -5,7 +5,6 @@ import {
   Box,
   Typography,
   Paper,
-  Alert,
   Button,
   Avatar,
   MenuItem,
@@ -147,6 +146,7 @@ export const MembersPage: FC = () => {
     data: memberships = [],
     isLoading,
     error,
+    refetch,
   } = useGetMemberships(activeCommunityId ?? "", {
     query: { enabled: !!activeCommunityId },
   });
@@ -412,198 +412,194 @@ export const MembersPage: FC = () => {
       </Box>
 
       <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
-        {error ? (
-          <Alert severity="error">
-            Error al cargar los miembros. Por favor, inténtalo de nuevo.
-          </Alert>
-        ) : (
-          <ResponsiveRecordList
-            header={
-                <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-                  <MembersFilters
-                    filters={filters}
-                    onChange={changeFilters}
-                    onClear={clearFilters}
-                    resultCount={filtered.length}
-                    showClear={isFiltering && !noResults}
-                  />
-                  {/* One persistent live region: the count changes, the node stays. */}
-                  <Typography
-                    ref={countRef}
-                    role="status"
-                    aria-live="polite"
-                    variant="body2"
-                    sx={{ fontWeight: 600, color: "text.secondary", scrollMarginTop: (t) => t.spacing(2) }}
-                  >
-                    {isLoading ? "Cargando…" : membersCount(filtered.length)}
-                  </Typography>
-                  {invitationEmptyReason && <Notice severity="info">{invitationEmptyReason}</Notice>}
-                  {selectionOffered && (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: { xs: "column", sm: "row" },
-                        alignItems: { xs: "stretch", sm: "center" },
-                        gap: { xs: 1, sm: 2 },
-                      }}
-                    >
-                      {/* The table head carries "select all" on wide screens; the
-                          stacked list has no head, so it is labelled here. */}
-                      {layout === "narrow" && (
-                        <FormControlLabel
-                          control={selectAllCheckbox}
-                          label="Seleccionar todo"
-                          sx={{ m: 0 }}
-                        />
-                      )}
-                      <Typography variant="body2" sx={{ color: "text.secondary", flex: 1 }}>
-                        {selectedCount === 0
-                          ? "Selecciona a quién enviar la invitación."
-                          : `${selectedCount} ${pluralize(selectedCount, "seleccionado", "seleccionados")}`}
-                      </Typography>
-                      {selectedCount > 0 && (
-                        <Button variant="contained" startIcon={<SendIcon />} onClick={openSendInvitations}>
-                          Enviar invitación ({selectedCount})
-                        </Button>
-                      )}
-                    </Box>
-                  )}
-                  {selectionOffered && (selection.truncatedByLimit || selection.isAtLimit) && (
-                    <Notice severity="info">
-                      {selection.truncatedByLimit
-                        ? `Se han seleccionado los ${MAX_INVITATION_SELECTION} primeros: es el máximo por envío.`
-                        : `Has llegado al máximo de ${MAX_INVITATION_SELECTION} por envío.`}
-                    </Notice>
-                  )}
-                </Box>
-            }
-            empty={
-              noResults ? (
-                <EmptyState
-                  icon={SearchOffIcon}
-                  title="No hay miembros que coincidan"
-                  subtitle="Prueba con otra búsqueda o quita algún filtro."
-                  actionButton={{ label: "Limpiar filtros", onClick: clearFilters }}
+        <ResponsiveRecordList
+          // A failed read says so and offers the read again, never the empty state (UI-LST-004).
+          error={error ? { message: "No se pudieron cargar los miembros.", onRetry: () => void refetch() } : undefined}
+          header={
+              <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+                <MembersFilters
+                  filters={filters}
+                  onChange={changeFilters}
+                  onClear={clearFilters}
+                  resultCount={filtered.length}
+                  showClear={isFiltering && !noResults}
                 />
-              ) : emptyRoster ? (
-                <EmptyState icon={PeopleIcon} title="No hay miembros en esta comunidad" />
-              ) : undefined
-            }
-            wide={
-              <ListTable
-                rows={pageRows}
-                getRowKey={(membership) => membership.id}
-                isLoading={isLoading}
-                rowActions={{
-                  label: (membership) => `Más acciones para ${membership.fullName}`,
-                  onClick: handleMenuOpen,
-                  has: hasRowActions,
-                }}
-                selection={selectionOffered ? { header: selectAllCheckbox, render: selectionCheckbox } : undefined}
-                title={{
-                  header: "Miembro",
-                  text: (membership) => membership.fullName,
-                  leading: (membership) => (
-                    <Avatar
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        bgcolor: theme.palette.primary.main,
-                        fontSize: fontSizes.md,
-                      }}
-                    >
+                {/* One persistent live region: the count changes, the node stays. */}
+                <Typography
+                  ref={countRef}
+                  role="status"
+                  aria-live="polite"
+                  variant="body2"
+                  sx={{ fontWeight: 600, color: "text.secondary", scrollMarginTop: (t) => t.spacing(2) }}
+                >
+                  {isLoading ? "Cargando…" : membersCount(filtered.length)}
+                </Typography>
+                {invitationEmptyReason && <Notice severity="info">{invitationEmptyReason}</Notice>}
+                {selectionOffered && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: { xs: "column", sm: "row" },
+                      alignItems: { xs: "stretch", sm: "center" },
+                      gap: { xs: 1, sm: 2 },
+                    }}
+                  >
+                    {/* The table head carries "select all" on wide screens; the
+                        stacked list has no head, so it is labelled here. */}
+                    {layout === "narrow" && (
+                      <FormControlLabel
+                        control={selectAllCheckbox}
+                        label="Seleccionar todo"
+                        sx={{ m: 0 }}
+                      />
+                    )}
+                    <Typography variant="body2" sx={{ color: "text.secondary", flex: 1 }}>
+                      {selectedCount === 0
+                        ? "Selecciona a quién enviar la invitación."
+                        : `${selectedCount} ${pluralize(selectedCount, "seleccionado", "seleccionados")}`}
+                    </Typography>
+                    {selectedCount > 0 && (
+                      <Button variant="contained" startIcon={<SendIcon />} onClick={openSendInvitations}>
+                        Enviar invitación ({selectedCount})
+                      </Button>
+                    )}
+                  </Box>
+                )}
+                {selectionOffered && (selection.truncatedByLimit || selection.isAtLimit) && (
+                  <Notice severity="info">
+                    {selection.truncatedByLimit
+                      ? `Se han seleccionado los ${MAX_INVITATION_SELECTION} primeros: es el máximo por envío.`
+                      : `Has llegado al máximo de ${MAX_INVITATION_SELECTION} por envío.`}
+                  </Notice>
+                )}
+              </Box>
+          }
+          empty={
+            noResults ? (
+              <EmptyState
+                icon={SearchOffIcon}
+                title="No hay miembros que coincidan"
+                subtitle="Prueba con otra búsqueda o quita algún filtro."
+                actionButton={{ label: "Limpiar filtros", onClick: clearFilters }}
+              />
+            ) : emptyRoster ? (
+              <EmptyState icon={PeopleIcon} title="No hay miembros en esta comunidad" />
+            ) : undefined
+          }
+          wide={
+            <ListTable
+              rows={pageRows}
+              getRowKey={(membership) => membership.id}
+              isLoading={isLoading}
+              rowActions={{
+                label: (membership) => `Más acciones para ${membership.fullName}`,
+                onClick: handleMenuOpen,
+                has: hasRowActions,
+              }}
+              selection={selectionOffered ? { header: selectAllCheckbox, render: selectionCheckbox } : undefined}
+              title={{
+                header: "Miembro",
+                text: (membership) => membership.fullName,
+                leading: (membership) => (
+                  <Avatar
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      bgcolor: theme.palette.primary.main,
+                      fontSize: fontSizes.md,
+                    }}
+                  >
+                    {membership.fullName.charAt(0).toUpperCase()}
+                  </Avatar>
+                ),
+                // The DNI/NIE/NIF as secondary information, after the email when
+                // there is one; alone, with no separator, when there is none (UI-MBR-007).
+                secondary: (membership) => [
+                  <>
+                    {membership.contactEmail && (
+                      <>
+                        <span>{membership.contactEmail}</span>
+                        <span aria-hidden> · </span>
+                      </>
+                    )}
+                    {showsNoContactEmail(membership) && (
+                      <>
+                        <span>Sin email de contacto</span>
+                        <span aria-hidden> · </span>
+                      </>
+                    )}
+                    <span>{membership.personalId}</span>
+                  </>,
+                ],
+              }}
+              columns={[
+                {
+                  key: "role",
+                  header: "Rol",
+                  render: (membership) => (
+                    <Typography variant="body2">
+                      {ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER]}
+                    </Typography>
+                  ),
+                },
+                {
+                  key: "status",
+                  header: "Estado",
+                  render: (membership) => <MembershipStatusChip membership={membership} />,
+                },
+              ]}
+            />
+          }
+          narrow={
+            <RecordList
+              label="Miembros de la comunidad"
+              isLoading={isLoading}
+              rowActions={{
+                label: (item) => `Más acciones para ${item.title}`,
+                onClick: (event, item) => {
+                  const membership = membershipOfItem(item);
+                  if (membership) handleMenuOpen(event, membership);
+                },
+                has: (item) => {
+                  const membership = membershipOfItem(item);
+                  return !!membership && hasRowActions(membership);
+                },
+              }}
+              items={pageRows.map((membership) => {
+                const role = ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER];
+                return {
+                  id: String(membership.id ?? ""),
+                  selection: selectionOffered ? selectionCheckbox(membership) : undefined,
+                  avatar: (
+                    <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
                       {membership.fullName.charAt(0).toUpperCase()}
                     </Avatar>
                   ),
-                  // The DNI/NIE/NIF as secondary information, after the email when
-                  // there is one; alone, with no separator, when there is none (UI-MBR-007).
-                  secondary: (membership) => [
-                    <>
-                      {membership.contactEmail && (
-                        <>
-                          <span>{membership.contactEmail}</span>
-                          <span aria-hidden> · </span>
-                        </>
-                      )}
-                      {showsNoContactEmail(membership) && (
-                        <>
-                          <span>Sin email de contacto</span>
-                          <span aria-hidden> · </span>
-                        </>
-                      )}
-                      <span>{membership.personalId}</span>
-                    </>,
+                  title: membership.fullName,
+                  badge: <MembershipStatusChip membership={membership} />,
+                  // Role and DNI/NIE/NIF on one line, the email on its own, left out when there is none.
+                  lines: [
+                    `${role} · ${membership.personalId}`,
+                    ...(membership.contactEmail ? [membership.contactEmail] : []),
+                    ...(showsNoContactEmail(membership) ? ["Sin email de contacto"] : []),
                   ],
-                }}
-                columns={[
-                  {
-                    key: "role",
-                    header: "Rol",
-                    render: (membership) => (
-                      <Typography variant="body2">
-                        {ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER]}
-                      </Typography>
-                    ),
-                  },
-                  {
-                    key: "status",
-                    header: "Estado",
-                    render: (membership) => <MembershipStatusChip membership={membership} />,
-                  },
-                ]}
+                  fields: [],
+                };
+              })}
+            />
+          }
+          footer={
+            !isLoading && (
+              <ListPagination
+                page={currentPage}
+                pageCount={pageCount}
+                total={filtered.length}
+                noun={{ one: "miembro", other: "miembros" }}
+                onChange={changePage}
               />
-            }
-            narrow={
-              <RecordList
-                label="Miembros de la comunidad"
-                isLoading={isLoading}
-                rowActions={{
-                  label: (item) => `Más acciones para ${item.title}`,
-                  onClick: (event, item) => {
-                    const membership = membershipOfItem(item);
-                    if (membership) handleMenuOpen(event, membership);
-                  },
-                  has: (item) => {
-                    const membership = membershipOfItem(item);
-                    return !!membership && hasRowActions(membership);
-                  },
-                }}
-                items={pageRows.map((membership) => {
-                  const role = ROLE_LABELS[membership.role ?? MembershipResponseRole.COMMUNITY_MEMBER];
-                  return {
-                    id: String(membership.id ?? ""),
-                    selection: selectionOffered ? selectionCheckbox(membership) : undefined,
-                    avatar: (
-                      <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
-                        {membership.fullName.charAt(0).toUpperCase()}
-                      </Avatar>
-                    ),
-                    title: membership.fullName,
-                    badge: <MembershipStatusChip membership={membership} />,
-                    // Role and DNI/NIE/NIF on one line, the email on its own, left out when there is none.
-                    lines: [
-                      `${role} · ${membership.personalId}`,
-                      ...(membership.contactEmail ? [membership.contactEmail] : []),
-                      ...(showsNoContactEmail(membership) ? ["Sin email de contacto"] : []),
-                    ],
-                    fields: [],
-                  };
-                })}
-              />
-            }
-            footer={
-              !isLoading && (
-                <ListPagination
-                  page={currentPage}
-                  pageCount={pageCount}
-                  total={filtered.length}
-                  noun={{ one: "miembro", other: "miembros" }}
-                  onChange={changePage}
-                />
-              )
-            }
-          />
-        )}
+            )
+          }
+        />
       </Box>
 
 

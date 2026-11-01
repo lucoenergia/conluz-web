@@ -1,7 +1,6 @@
 import { useRef, useState, type FC } from "react";
 import { useParams } from "react-router";
 import {
-  Alert,
   Avatar,
   Box,
   Button,
@@ -78,6 +77,7 @@ export const CommunityAdminsPage: FC = () => {
     data: admins = [],
     isLoading,
     error,
+    refetch,
   } = useGetCommunityAdmins(communityId, { query: { enabled: manageAdmins.state === "allowed" } });
 
   // Pages of 25 (UI-LST-005); a page change brings the list's top into view.
@@ -191,114 +191,110 @@ export const CommunityAdminsPage: FC = () => {
       )}
 
       <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
-        {error ? (
-          <Alert severity="error">
-            Error al cargar los administradores. Por favor, inténtalo de nuevo.
-          </Alert>
-        ) : (
-          <ResponsiveRecordList
-            ref={listRef}
-            header={
-              <ResultStatus
-                isLoading={isLoading}
-                count={admins.length}
-                noun={{ one: "administrador", other: "administradores" }}
-                emptyMessage="Esta comunidad no tiene administradores"
-              />
-            }
-            empty={
-              !isLoading && admins.length === 0 ? (
-                <EmptyState icon={AdminPanelSettingsIcon} title="Esta comunidad no tiene administradores" />
-              ) : undefined
-            }
-            wide={
-              <ListTable
-                rows={pageRows}
-                getRowKey={(admin) => admin.user.id}
-                isLoading={isLoading}
-                rowActions={{
-                  label: (admin) => `Más acciones para ${admin.fullName}`,
-                  onClick: handleMenuOpen,
-                  has: hasRowActions,
-                }}
-                title={{
-                  header: "Administrador",
-                  text: (admin) => admin.fullName,
-                  leading: (admin) => (
+        <ResponsiveRecordList
+          // A failed read says so and offers the read again, never the empty state (UI-LST-004).
+          error={error ? { message: "No se pudieron cargar los administradores.", onRetry: () => void refetch() } : undefined}
+          ref={listRef}
+          header={
+            <ResultStatus
+              isLoading={isLoading}
+              count={admins.length}
+              noun={{ one: "administrador", other: "administradores" }}
+              emptyMessage="Esta comunidad no tiene administradores"
+            />
+          }
+          empty={
+            !isLoading && admins.length === 0 ? (
+              <EmptyState icon={AdminPanelSettingsIcon} title="Esta comunidad no tiene administradores" />
+            ) : undefined
+          }
+          wide={
+            <ListTable
+              rows={pageRows}
+              getRowKey={(admin) => admin.user.id}
+              isLoading={isLoading}
+              rowActions={{
+                label: (admin) => `Más acciones para ${admin.fullName}`,
+                onClick: handleMenuOpen,
+                has: hasRowActions,
+              }}
+              title={{
+                header: "Administrador",
+                text: (admin) => admin.fullName,
+                leading: (admin) => (
+                  <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
+                    {initialOf(admin)}
+                  </Avatar>
+                ),
+                secondary: (admin) => (admin.contactEmail ? [admin.contactEmail] : []),
+              }}
+              columns={[
+                {
+                  key: "personalId",
+                  header: "DNI/NIE",
+                  render: (admin) => <Typography variant="body2">{admin.personalId}</Typography>,
+                },
+                {
+                  key: "phone",
+                  header: "Teléfono",
+                  render: (admin) => <Typography variant="body2">{admin.phoneNumber ?? "—"}</Typography>,
+                },
+                {
+                  key: "status",
+                  header: "Estado",
+                  render: (admin) => <MembershipStatusChip membership={admin} />,
+                },
+              ]}
+            />
+          }
+          narrow={
+            <RecordList
+              label="Administradores de la comunidad"
+              isLoading={isLoading}
+              rowActions={{
+                label: (item) => `Más acciones para ${item.title}`,
+                onClick: (event, item) => {
+                  const admin = adminOfItem(item);
+                  if (admin) handleMenuOpen(event, admin);
+                },
+                has: (item) => {
+                  const admin = adminOfItem(item);
+                  return !!admin && hasRowActions(admin);
+                },
+              }}
+              items={pageRows.map((admin) => {
+                return {
+                  id: admin.user.id,
+                  avatar: (
                     <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
                       {initialOf(admin)}
                     </Avatar>
                   ),
-                  secondary: (admin) => (admin.contactEmail ? [admin.contactEmail] : []),
-                }}
-                columns={[
-                  {
-                    key: "personalId",
-                    header: "DNI/NIE",
-                    render: (admin) => <Typography variant="body2">{admin.personalId}</Typography>,
-                  },
-                  {
-                    key: "phone",
-                    header: "Teléfono",
-                    render: (admin) => <Typography variant="body2">{admin.phoneNumber ?? "—"}</Typography>,
-                  },
-                  {
-                    key: "status",
-                    header: "Estado",
-                    render: (admin) => <MembershipStatusChip membership={admin} />,
-                  },
-                ]}
+                  title: admin.fullName,
+                  // Under the name, full width: a long sub-status on the title line
+                  // squeezed the name to a letter per line (#331).
+                  badge: <MembershipStatusChip membership={admin} />,
+                  fields: [
+                    { label: "DNI/NIE", value: admin.personalId },
+                    ...(admin.contactEmail ? [{ label: "Email", value: admin.contactEmail }] : []),
+                    ...(admin.phoneNumber ? [{ label: "Teléfono", value: admin.phoneNumber }] : []),
+                  ],
+                };
+              })}
+            />
+          }
+          footer={
+            !isLoading && (
+              <ListPagination
+                page={page}
+                pageCount={pageCount}
+                total={admins.length}
+                noun={{ one: "administrador", other: "administradores" }}
+                onChange={changePage}
               />
-            }
-            narrow={
-              <RecordList
-                label="Administradores de la comunidad"
-                isLoading={isLoading}
-                rowActions={{
-                  label: (item) => `Más acciones para ${item.title}`,
-                  onClick: (event, item) => {
-                    const admin = adminOfItem(item);
-                    if (admin) handleMenuOpen(event, admin);
-                  },
-                  has: (item) => {
-                    const admin = adminOfItem(item);
-                    return !!admin && hasRowActions(admin);
-                  },
-                }}
-                items={pageRows.map((admin) => {
-                  return {
-                    id: admin.user.id,
-                    avatar: (
-                      <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
-                        {initialOf(admin)}
-                      </Avatar>
-                    ),
-                    title: admin.fullName,
-                    // Under the name, full width: a long sub-status on the title line
-                    // squeezed the name to a letter per line (#331).
-                    badge: <MembershipStatusChip membership={admin} />,
-                    fields: [
-                      { label: "DNI/NIE", value: admin.personalId },
-                      ...(admin.contactEmail ? [{ label: "Email", value: admin.contactEmail }] : []),
-                      ...(admin.phoneNumber ? [{ label: "Teléfono", value: admin.phoneNumber }] : []),
-                    ],
-                  };
-                })}
-              />
-            }
-            footer={
-              !isLoading && (
-                <ListPagination
-                  page={page}
-                  pageCount={pageCount}
-                  total={admins.length}
-                  noun={{ one: "administrador", other: "administradores" }}
-                  onChange={changePage}
-                />
-              )
-            }
-          />
-        )}
+            )
+          }
+        />
       </Box>
 
       <RowActionsMenu anchorEl={anchorEl} onClose={handleMenuClose}>
