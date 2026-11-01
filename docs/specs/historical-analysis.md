@@ -87,17 +87,16 @@ too, never the other members'.
   the selected scope, and MUST never be derived from the device clock or the device's time zone.
   "Todos mis puntos" MUST take that month from the membership's energy metrics with
   `period=LATEST_PUBLISHED_MONTH`, and a single supply from that supply's own. "Último mes
-  publicado" is that month; "Este año" runs from January of its year to it; "Últimos 12 meses" is
-  the 12 months ending with it; a custom range MUST NOT end after it. Bounds MUST be half-open, built
-  from calendar days in `APP_TIME_ZONE`. "Este año" with the anchor in December MUST show the
-  neutral state "Aún no hay datos de {año siguiente}" with a "Ver últimos 12 meses" button, and with
-  no published month the page MUST show the neutral state "Todavía no hay datos publicados" and no
-  period selector; neither uses alert colours.
+  publicado" is that month; "Año {año}" is named after its year and runs from January of that year
+  to it; "Últimos 12 meses" is the 12 months ending with it; a custom range MUST NOT end after it.
+  Bounds MUST be half-open, built from calendar days in `APP_TIME_ZONE`. With no published month the
+  page MUST show the neutral state "Todavía no hay datos publicados", without alert colours, and no
+  period selector.
 - **Rationale:** Before publication, self-consumption reads as a measured zero, so a period that
   reaches past the published month shows invented figures. A supply's own month is used because its
-  owner's membership may count a month another supply published. The current month is never
-  published, so an anchor in December means the current year has nothing yet; without the device
-  clock, an anchor in November during the first days of January still reads as the current year.
+  owner's membership may count a month another supply published. The year preset is the anchor's
+  year rather than "this year", so its label never assumes today's date (#248, decided by the
+  maintainer in review).
 - **Implements:** EPR-001, EPR-003, SEM-001; ADR-0005 in lucoenergia/conluz
 - **Source:** #248
 
@@ -167,7 +166,6 @@ too, never the other members'.
 | Supplies, anchor pending | The title, the supply selector and a placeholder where the period selector goes | Choosing a supply |
 | Supplies, nothing published | The title, the supply selector and the neutral "Todavía no hay datos publicados" (UI-HIS-005) | Choosing a supply |
 | Supplies, anchor failed | The title, the supply selector and an error with "Reintentar" | Choosing a supply, retrying |
-| Supplies, "Este año" before January is published | The selectors and the neutral "Aún no hay datos de {año}" (UI-HIS-005) | Choosing a supply or a period, "Ver últimos 12 meses" |
 | Supplies, period | The selectors, the period header and the content region | Choosing a supply or a period |
 | Error | The title only; the error is reported as on the supply list | None |
 
@@ -176,4 +174,3 @@ too, never the other members'.
 | Exception | Reason | Expires when | Source |
 | --- | --- | --- | --- |
 | Disabled supplies are hidden from the selector | What a disabled supply means is not decided yet | The disabled-supply decision is made | #247 |
-| "Este año" reads the anchor's year unless the anchor is December, so in the first days of January it still shows the previous year | The device clock is never read, and the server does not report the current year | The server resolves the current year, or publication state per bucket (ADR-0005's revisit conditions) | #248 |
