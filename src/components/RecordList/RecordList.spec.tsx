@@ -60,11 +60,21 @@ describe("RecordList", () => {
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 
-  it("shows a named progress indicator while loading, not the empty message", () => {
-    render(<RecordList items={[]} isLoading label="Usuarios" emptyMessage="No se encontraron usuarios" />);
+  it("shows a busy list of skeleton rows while loading, not the empty message", () => {
+    render(<RecordList items={[]} isLoading loadingRows={3} label="Usuarios" emptyMessage="No se encontraron usuarios" />);
 
-    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+    const list = screen.getByRole("list", { name: "Usuarios", hidden: true });
+    expect(list).toHaveAttribute("aria-busy", "true");
+    expect(within(list).getAllByRole("listitem", { hidden: true })).toHaveLength(3);
     expect(screen.queryByText("No se encontraron usuarios")).not.toBeInTheDocument();
+  });
+
+  it("wraps a long line instead of cutting it", () => {
+    const long = "amparo.dominguez.llorens.cooperativa.energetica@telefonica.net";
+    render(<RecordList items={[{ id: "a", title: "Amparo", lines: [long] }]} label="Usuarios" emptyMessage="Sin usuarios" />);
+
+    expect(screen.getByText(long)).toHaveStyle({ overflowWrap: "anywhere" });
+    expect(screen.getByText(long)).not.toHaveStyle({ textOverflow: "ellipsis" });
   });
 
   it("omits the field list for a record that has no fields", () => {
