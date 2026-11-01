@@ -199,6 +199,9 @@ const COMMUNITY_SCOPE_WRAPPERS = [
   "src/pages/supply-points/SupplyDetailPage.tsx",
   // Driven by a plant from the active community's plant listing.
   "src/pages/home/management/usePlantSharingAgreements.ts",
+  // Driven by a supply from useOwnSupplies, narrowed to the active community,
+  // and remounted by the keyed Outlet when the community changes.
+  "src/pages/historical-analysis/useHistoricalAnchor.ts",
 ];
 
 // ─── Mutation guard rail ──────────────────────────────────────────────────────
