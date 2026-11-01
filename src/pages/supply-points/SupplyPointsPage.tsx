@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FC, type MouseEvent, type SyntheticEvent } from "react";
+import { useMemo, useState, type FC, type MouseEvent, type SyntheticEvent } from "react";
 import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
@@ -13,16 +13,18 @@ import { FilterChipsBar, type FilterStatus } from "../../components/FilterChips"
 import { ResponsiveRecordList } from "../../components/ResponsiveRecordList";
 import { ListTable } from "../../components/ListTable";
 import { RecordList, type RecordListItem } from "../../components/RecordList";
+import { ListPagination } from "../../components/ListPagination";
+import { useListPage } from "../../components/ListPagination/useListPage";
 import { DisableConfirmationModal } from "../../components/Modals/DisableConfirmationModal";
 import { DisableSuccessModal } from "../../components/Modals/DisableSuccessModal";
 import { EnableConfirmationModal } from "../../components/Modals/EnableConfirmationModal";
 import { EnableSuccessModal } from "../../components/Modals/EnableSuccesModal";
 import { EmptyState } from "../../components/EmptyState";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { useErrorDispatch } from "../../context/error.context";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
+import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { ImportSuppliesDialog } from "./ImportSuppliesDialog";
 import { useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 import { useActiveCommunity } from "../../context/community.context";
@@ -53,7 +55,6 @@ export const SupplyPointsPage: FC = () => {
   const [menuSupplyId, setMenuSupplyId] = useState<string | null>(null);
   const [statusChange, setStatusChange] = useState<StatusChange | null>(null);
   const navigate = useNavigate();
-  const errorDispatch = useErrorDispatch();
   const [searchParams] = useSearchParams();
   const personId = searchParams.get("personId");
 
@@ -104,12 +105,6 @@ export const SupplyPointsPage: FC = () => {
   const activeCommunityName = useActiveCommunityName();
   const { actions: communityActions } = useCommunityActions().forCommunity(activeCommunity);
 
-  useEffect(() => {
-    if (error) {
-      errorDispatch("Ha habido un problema al cargar los puntos de suministro. Por favor, inténtalo más tarde");
-    }
-  }, [error, errorDispatch]);
-
   const filteredItems: SupplyResponse[] = useMemo(() => {
     let items = responseFromApi;
 
@@ -132,6 +127,23 @@ export const SupplyPointsPage: FC = () => {
 
     return items;
   }, [searchText, responseFromApi, filterStatus]);
+
+  // The whole list is read at once (size 10000) and paged here, 25 rows at a
+  // time (UI-LST-005). A new search or filter starts again from the first page.
+  const { page, setPage, pageCount, pageRows } = useListPage(filteredItems);
+  const isFiltering = searchText !== "" || filterStatus !== "all";
+  const changeSearch = (text: string) => {
+    setSearchText(text);
+    setPage(1);
+  };
+  const changeFilter = (status: FilterStatus) => {
+    setFilterStatus(status);
+    setPage(1);
+  };
+  const clearFilters = () => {
+    changeSearch("");
+    changeFilter("all");
+  };
 
   const stats = useMemo(() => {
     const total = responseFromApi.length;
@@ -293,32 +305,43 @@ export const SupplyPointsPage: FC = () => {
           </Box>
 
           {/* Filter Chips */}
-          <FilterChipsBar value={filterStatus} onChange={setFilterStatus} />
+          <FilterChipsBar value={filterStatus} onChange={changeFilter} />
 
           {/* Search Bar */}
-          <SearchBar value={searchText} onChange={setSearchText} />
+          <SearchBar value={searchText} onChange={changeSearch} />
           </Box>
         </Paper>
       </Box>
 
       <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
         <ResponsiveRecordList
+          // A failed read says so and offers the read again, never the empty state (UI-LST-004).
+          error={
+            error
+              ? { message: "No se pudieron cargar los puntos de suministro.", onRetry: () => void refetch() }
+              : undefined
+          }
           empty={
-            !isLoading && !error && filteredItems.length === 0 ? (
+            isLoading || error || filteredItems.length > 0 ? undefined : isFiltering ? (
+              <EmptyState
+                icon={SearchOffIcon}
+                title="No hay puntos de suministro que coincidan"
+                subtitle="Prueba con otra búsqueda o quita algún filtro."
+                actionButton={{ label: "Limpiar filtros", onClick: clearFilters }}
+              />
+            ) : (
               <EmptyState
                 icon={ElectricMeterIcon}
                 title="No se encontraron puntos de suministro"
                 subtitle={
-                  searchText
-                    ? `No hay resultados para "${searchText}"`
-                    : communityActions.createSupply
-                      ? "Comienza agregando tu primer punto de suministro"
-                      // A member cannot add one, so inviting them to is an
-                      // instruction they can only fail to follow.
-                      : "Todavía no hay ningún punto de suministro asociado a tu cuenta en esta comunidad."
+                  communityActions.createSupply
+                    ? "Comienza agregando tu primer punto de suministro"
+                    // A member cannot add one, so inviting them to is an
+                    // instruction they can only fail to follow.
+                    : "Todavía no hay ningún punto de suministro asociado a tu cuenta en esta comunidad."
                 }
                 actionButton={
-                  !searchText && communityActions.createSupply
+                  communityActions.createSupply
                     ? {
                         label: "Crear Punto de Suministro",
                         onClick: () => navigate("/supply-points/new"),
@@ -327,11 +350,11 @@ export const SupplyPointsPage: FC = () => {
                     : undefined
                 }
               />
-            ) : undefined
+            )
           }
           wide={
             <ListTable
-              rows={filteredItems}
+              rows={pageRows}
               getRowKey={(supply) => supply.id}
               isLoading={isLoading}
               rowActions={{ label: rowActionsLabel, onClick: handleMenuOpen, has: hasRowActions }}
@@ -359,8 +382,19 @@ export const SupplyPointsPage: FC = () => {
                   return !!supply && hasRowActions(supply);
                 },
               }}
-              items={filteredItems.map((supply) => toRecordListItem(supply, { showOwner }))}
+              items={pageRows.map((supply) => toRecordListItem(supply, { showOwner }))}
             />
+          }
+          footer={
+            !isLoading && (
+              <ListPagination
+                page={page}
+                pageCount={pageCount}
+                total={filteredItems.length}
+                noun={{ one: "punto de suministro", other: "puntos de suministro" }}
+                onChange={setPage}
+              />
+            )
           }
         />
       </Box>
