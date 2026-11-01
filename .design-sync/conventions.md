@@ -36,7 +36,7 @@ community context the dialogs read. There is no signed-in user, so community-sco
   Rules: `main` is the only role safe as text; `vivid` and `colors.brand.light` are decorative only;
   put tinted backgrounds on `*.surface`, never an alpha overlay under text.
 - **Other tokens**: `radii.small|default|large` (4/8/12px), `shadows.soft|medium|dataCard|dropdown`,
-  `fontSizes.xs…xl` (12–16px), shared `sxStyles` (`pageContainer`, `softPanel`, `flexRowCenter`,
+  `fontSizes.xs…xl` (12–16px), `fontFamilies.mono` (identifiers such as a CUPS), shared `sxStyles` (`pageContainer`, `softPanel`, `flexRowCenter`,
   `touchTarget`).
 
 ## Patterns the app always follows

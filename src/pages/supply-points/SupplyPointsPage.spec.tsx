@@ -14,7 +14,7 @@ import {
 import type { CommunityCapabilitiesResponse, SupplyCapabilitiesResponse } from "../../api/models";
 
 // Only the reads are replaced. The actions layer runs for real -- which is the
-// point: what is under test is that a card's menu and the page's buttons follow
+// point: what is under test is that a row's menu and the page's buttons follow
 // the capabilities on the payload, and stubbing the action hooks would mean
 // restating that rule in the test instead of exercising it. Mutation hooks are
 // inert until called, so leaving them real reaches no network.
@@ -41,7 +41,7 @@ const COMMUNITY_ID = "community-a";
 const NEW_BUTTON = "Nuevo Punto de Suministro";
 const IMPORT_BUTTON = /Importar CSV/i;
 const MENU_BUTTON = "Más acciones para Casa";
-/** Any card's menu button, whichever supply it names. */
+/** Any row's menu button, whichever supply it names. */
 const ANY_MENU_BUTTON = /^Más acciones para /;
 
 const supply = (capabilities: Partial<SupplyCapabilitiesResponse>) =>
@@ -95,12 +95,11 @@ describe("SupplyPointsPage", () => {
       expect(screen.queryByRole("button", { name: IMPORT_BUTTON })).not.toBeInTheDocument();
     });
 
-    // Their own supply: readable, not editable. The card is the one place the
-    // two used to be conflated.
-    it("gets a card with no actions menu for a supply they own but may not edit", () => {
+    // Their own supply: readable, not editable.
+    it("gets a row with no actions menu for a supply they own but may not edit", () => {
       setup({ community: { canManage: false }, supplies: [supply({ canEdit: false })] });
 
-      expect(screen.getByRole("heading", { name: "Casa" })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Casa" })).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: MENU_BUTTON })).not.toBeInTheDocument();
     });
 
@@ -121,7 +120,7 @@ describe("SupplyPointsPage", () => {
       expect(screen.getByRole("button", { name: IMPORT_BUTTON })).toBeInTheDocument();
     });
 
-    it("gets a card with the actions menu", async () => {
+    it("gets a row with the actions menu", async () => {
       setup({ community: { canManage: true }, supplies: [supply({ canEdit: true })] });
 
       await userEvent.click(screen.getByRole("button", { name: MENU_BUTTON }));
@@ -138,7 +137,7 @@ describe("SupplyPointsPage", () => {
   });
 
   // Every supply carries its own answer, so a list may legitimately mix them.
-  it("decides each card from its own supply, not from the community", async () => {
+  it("decides each row from its own supply, not from the community", async () => {
     setup({
       community: { canManage: true },
       supplies: [
@@ -159,7 +158,7 @@ describe("SupplyPointsPage", () => {
     );
   });
 
-  it("#310 AC3 UI-SUP-010 names each card's menu button after its own supply, by its address when it has no name", () => {
+  it("#310 AC3 UI-SUP-010 names each row's menu button after its own supply, by its address when it has no name", () => {
     setup({
       community: { canManage: true },
       supplies: [
@@ -186,13 +185,13 @@ describe("SupplyPointsPage", () => {
       ],
     });
 
-    expect(screen.getByRole("heading", { name: "Casa" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Plaza del Pueblo 3" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Casa" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Plaza del Pueblo 3" })).toBeInTheDocument();
 
     await userEvent.type(screen.getByRole("searchbox", { name: "Buscar punto de suministro..." }), "plaza");
 
-    expect(screen.queryByRole("heading", { name: "Casa" })).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Plaza del Pueblo 3" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Casa" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Plaza del Pueblo 3" })).toBeInTheDocument();
   });
 
   // The capabilities have not arrived yet, which is not the same as "no".
@@ -220,7 +219,7 @@ describe("SupplyPointsPage", () => {
    * the communities they administer -- so the active community still has to be
    * applied here.
    */
-  describe("UI-SUP-001 Eliminar punto de suministro on the card menu", () => {
+  describe("UI-SUP-001 Eliminar punto de suministro on the row menu", () => {
     const DELETE_ITEM = "Eliminar punto de suministro";
 
     it("UI-SUP-001 is offered for a supply that reports canDelete", async () => {
@@ -305,10 +304,10 @@ describe("SupplyPointsPage", () => {
         inCommunity("supply-b1", OTHER_COMMUNITY_ID, "Casa en otra comunidad"),
       ]);
 
-      expect(screen.getByRole("heading", { name: "Casa en Sol Común" })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Casa en Sol Común" })).toBeInTheDocument();
       // The caller may read this one -- it is theirs to administer elsewhere --
       // but it does not belong under this community's heading.
-      expect(screen.queryByRole("heading", { name: "Casa en otra comunidad" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "Casa en otra comunidad" })).not.toBeInTheDocument();
     });
 
     it.each([

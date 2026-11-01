@@ -4,11 +4,11 @@
 | --- | --- |
 | **Prefix** | `UI-LST` |
 | **Status** | Active |
-| **Routes** | `/members`, `/communities`, `/communities/:communityId/admins`, `/platform-admins` |
-| **Roles** | Whoever each list's own page admits; see `members.md`, `community-admins.md`, `platform-admins.md` |
+| **Routes** | `/members`, `/communities`, `/communities/:communityId/admins`, `/platform-admins`, `/supply-points` |
+| **Roles** | Whoever each list's own page admits; see `members.md`, `community-admins.md`, `platform-admins.md`, `supplies.md` |
 | **Domain rules** | n/a |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `ListPagination` |
-| **Last reviewed against code** | #347 |
+| **Last reviewed against code** | #348 |
 
 <!-- Domain rules are cited by ID; the prefix registry in lucoenergia/conluz → docs/specs/README.md maps each prefix to its file. -->
 

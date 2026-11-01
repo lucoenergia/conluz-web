@@ -10,7 +10,7 @@ describe("FilterChipsBar", () => {
 
     expect(screen.getByText("Todos")).toBeInTheDocument();
     expect(screen.getByText("Activos")).toBeInTheDocument();
-    expect(screen.getByText("Inactivos")).toBeInTheDocument();
+    expect(screen.getByText("Dados de baja")).toBeInTheDocument();
   });
 
   it("calls onChange with 'all' when Todos chip is clicked", async () => {
@@ -33,13 +33,13 @@ describe("FilterChipsBar", () => {
     expect(handleChange).toHaveBeenCalledWith("active");
   });
 
-  it("calls onChange with 'inactive' when Inactivos chip is clicked", async () => {
+  it("calls onChange with 'inactive' when Dados de baja chip is clicked", async () => {
     const handleChange = vi.fn();
     const user = userEvent.setup();
 
     render(<FilterChipsBar value="all" onChange={handleChange} />);
 
-    await user.click(screen.getByText("Inactivos"));
+    await user.click(screen.getByText("Dados de baja"));
     expect(handleChange).toHaveBeenCalledWith("inactive");
   });
 
@@ -57,5 +57,26 @@ describe("FilterChipsBar", () => {
 
     const icon = container.querySelector('[data-testid="FilterListIcon"]');
     expect(icon).not.toBeInTheDocument();
+  });
+
+  it("UI-SUP-013 labels the statuses Todos, Activos and Dados de baja", () => {
+    render(<FilterChipsBar value="all" onChange={() => {}} />);
+
+    expect(screen.getAllByRole("button").map((chip) => chip.textContent)).toEqual(["Todos", "Activos", "Dados de baja"]);
+  });
+
+  // Structural: the palette is the subject, and MUI states a chip's colour
+  // only through its colour class.
+  it.each([
+    ["all", "Todos"],
+    ["active", "Activos"],
+    ["inactive", "Dados de baja"],
+  ] as const)("UI-SUP-013 styles the selected chip %s in the brand colour, never success or error", (value, label) => {
+    render(<FilterChipsBar value={value} onChange={() => {}} />);
+
+    const chip = screen.getByRole("button", { name: label });
+    expect(chip).toHaveClass("MuiChip-colorPrimary");
+    expect(chip).not.toHaveClass("MuiChip-colorSuccess");
+    expect(chip).not.toHaveClass("MuiChip-colorError");
   });
 });
