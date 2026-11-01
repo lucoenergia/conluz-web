@@ -1,5 +1,6 @@
 import { useEffect, type FC } from "react";
 import { Box, Skeleton, Typography } from "@mui/material";
+import type { SupplyResponse } from "../../api/models";
 import { useErrorDispatch } from "../../context/error.context";
 import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
@@ -8,6 +9,7 @@ import { LoadErrorAlert } from "../../components/LoadErrorAlert/LoadErrorAlert";
 import { Notice } from "../../components/Notice/Notice";
 import { NeutralNotice } from "../home/NeutralNotice";
 import { HistoricalPeriodContext } from "./HistoricalPeriodContext";
+import { PeriodFigures } from "./PeriodFigures";
 import { PeriodHeader } from "./PeriodHeader";
 import { PeriodSelector } from "./PeriodSelector";
 import { SupplySelector } from "./SupplySelector";
@@ -19,9 +21,10 @@ import { useSelectedSupply } from "./useSelectedSupply";
 /**
  * "Mi consumo y ahorro": the caller's own supplies over time (#247). This
  * holds the supply selector and the period, anchored to the latest month
- * published for the selected scope (#248); the figures come in later issues
- * of lucoenergia/conluz#405, in the content region below it, which reads the
- * period through `useHistoricalPeriod`.
+ * published for the selected scope (#248), and below them the period's
+ * figures (#249). The charts, table and CSV come in later issues of
+ * lucoenergia/conluz#405, in the same content region, which reads the period
+ * through `useHistoricalPeriod`.
  */
 export const HistoricalAnalysisPage: FC = () => {
   const { supplies, isLoading, error } = useOwnSupplies();
@@ -58,7 +61,7 @@ export const HistoricalAnalysisPage: FC = () => {
           </Box>
           {/* Mounted before the anchor resolves, so a clamp the page arrives with is announced. */}
           <ActionStatus message={period.clampNotice} />
-          <AnchoredContent anchor={anchor} period={period} />
+          <AnchoredContent anchor={anchor} period={period} selected={selected} />
         </>
       )}
     </Box>
@@ -71,7 +74,11 @@ const NO_DATA_BODY =
 const ANCHOR_ERROR = "No se pudieron cargar tus datos de energía. Comprueba tu conexión e inténtalo de nuevo.";
 
 /** What hangs off the latest published month of the selected scope (UI-HIS-005). */
-const AnchoredContent: FC<{ anchor: HistoricalAnchor; period: HistoricalPeriodState }> = ({ anchor, period }) => {
+const AnchoredContent: FC<{ anchor: HistoricalAnchor; period: HistoricalPeriodState; selected: SupplyResponse | null }> = ({
+  anchor,
+  period,
+  selected,
+}) => {
   switch (anchor.status) {
     case "loading":
       return null;
@@ -89,7 +96,9 @@ const AnchoredContent: FC<{ anchor: HistoricalAnchor; period: HistoricalPeriodSt
           {resolved && <PeriodHeader anchor={anchor.anchor} resolution={resolved} />}
           <HistoricalPeriodContext.Provider value={resolved?.period}>
             {/* The content region the figures land in. */}
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }} />
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <PeriodFigures selected={selected} />
+            </Box>
           </HistoricalPeriodContext.Provider>
         </>
       );

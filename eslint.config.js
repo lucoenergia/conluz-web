@@ -202,6 +202,8 @@ const COMMUNITY_SCOPE_WRAPPERS = [
   // Driven by a supply from useOwnSupplies, narrowed to the active community,
   // and remounted by the keyed Outlet when the community changes.
   "src/pages/historical-analysis/useHistoricalAnchor.ts",
+  // Driven by the same selected supply, under the same keyed Outlet.
+  "src/pages/historical-analysis/usePeriodEnergyMetrics.ts",
 ];
 
 // ─── Mutation guard rail ──────────────────────────────────────────────────────
