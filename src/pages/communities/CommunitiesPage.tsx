@@ -37,15 +37,22 @@ const MAX_ADMIN_NAMES_SHOWN = 2;
 
 /**
  * The table's column widths, padding included. Each fixed column fits its
- * header (the icon headers, "Administradores") or its chip; Nombre has none and
- * takes what is left, about 137px at a 1024px viewport with the side menu open.
+ * header (the icon headers) or its chip; Nombre has none and takes what is
+ * left, about 269px at a 1024px viewport with the side menu open.
  */
 const COLUMN_WIDTHS = {
-  admins: "132px",
   memberCount: "112px",
   supplyPointCount: "128px",
   status: "104px",
 } as const;
+
+/** "Administradores: Ana, Bruno y 2 más" under the name, or nothing when there are none. */
+function adminNamesLine(adminNames?: string[]): string | undefined {
+  if (!adminNames || adminNames.length === 0) return undefined;
+  const shown = adminNames.slice(0, MAX_ADMIN_NAMES_SHOWN).join(", ");
+  const overflow = adminNames.length - MAX_ADMIN_NAMES_SHOWN;
+  return `Administradores: ${shown}${overflow > 0 ? ` y ${overflow} más` : ""}`;
+}
 
 function AdminNamesCell({ adminNames }: { adminNames?: string[] }) {
   if (!adminNames || adminNames.length === 0) {
@@ -243,20 +250,15 @@ export const CommunitiesPage: FC = () => {
                 text: (community) => community.name,
                 leading: () => <BusinessIcon sx={{ color: theme.palette.primary.main, fontSize: 20 }} />,
                 // Under the name rather than in columns of their own: with the side menu
-                // open, no wider table fits a 1024px viewport (UI-LST-001).
+                // open, no wider table leaves the name room at a 1024px viewport (UI-LST-001).
                 secondary: (community) => [
                   community.code,
                   community.legalId && `NIF/CIF ${community.legalId}`,
                   community.address,
+                  adminNamesLine(community.adminNames),
                 ].filter((line): line is string => !!line),
               }}
               columns={[
-                {
-                  key: "admins",
-                  header: "Administradores",
-                  width: COLUMN_WIDTHS.admins,
-                  render: (community) => <AdminNamesCell adminNames={community.adminNames} />,
-                },
                 {
                   key: "memberCount",
                   header: (

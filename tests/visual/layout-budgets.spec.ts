@@ -739,7 +739,8 @@ test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side me
   };
   const longEmail = "encarnacion.martinez.albaladejo.cooperativa@telefonica-empresas.example";
 
-  const LIST_TABLES: { name: string; open: (page: Page) => Promise<void> }[] = [
+  /** `minNameWidth`: the narrowest the name column may be on that page; below it, long names are cut. */
+  const LIST_TABLES: { name: string; open: (page: Page) => Promise<void>; minNameWidth?: number }[] = [
     {
       name: "/members",
       open: async (page) => {
@@ -757,6 +758,8 @@ test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side me
     },
     {
       name: "/communities",
+      // Everything that does not fit sits under the name, so the name keeps room to be read.
+      minNameWidth: 180,
       open: async (page) => {
         await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
         // Registered last, so it wins for the list itself.
@@ -835,6 +838,9 @@ test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side me
         widths.containerClient,
       );
       expect(widths.clipped, `${listTable.name} cells wider than their column`).toEqual([]);
+      if (listTable.minNameWidth) {
+        expect(widths.columns[0], `${listTable.name} name column width`).toBeGreaterThanOrEqual(listTable.minNameWidth);
+      }
     });
   }
 });
