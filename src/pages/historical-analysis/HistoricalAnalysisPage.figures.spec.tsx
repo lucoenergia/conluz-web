@@ -320,3 +320,53 @@ describe("UI-HIS-014 incomplete coverage is stated in words (#249)", () => {
     expect(screen.queryByText(INCOMPLETE)).not.toBeInTheDocument();
   });
 });
+
+describe("UI-HIS-010 the totals are fields of the same response (#249)", () => {
+  const totals = () => screen.getByRole("list", { name: "Totales del periodo" });
+  const tile = (label: string) => within(totals()).getAllByRole("listitem").find((item) => item.textContent?.startsWith(label))!;
+  const ESTIMATE_LABEL = "Estimado con un precio de 0,15 €/kWh para la energía, sin impuestos.";
+
+  it("UI-HIS-010 four tiles: from the community, from the grid, to the grid and the estimated savings", () => {
+    renderPage();
+
+    expect(within(totals()).getAllByRole("listitem")).toHaveLength(4);
+    expect(tile("De la comunidad")).toHaveTextContent("485 kWh");
+    expect(tile("De la comunidad")).toHaveTextContent("Energía asignada que usaste");
+    expect(tile("De la red")).toHaveTextContent("670 kWh");
+    expect(tile("De la red")).toHaveTextContent("Comprada a tu comercializadora");
+    expect(tile("Se fue a la red")).toHaveTextContent("239 kWh");
+    expect(tile("Se fue a la red")).toHaveTextContent("Se te asignó y no la usaste");
+    expect(tile("Ahorro estimado")).toHaveTextContent("72,75 €");
+  });
+
+  it("UI-HIS-010 the estimate label shows the price the response carries", () => {
+    renderPage();
+
+    expect(tile("Ahorro estimado")).toHaveTextContent(ESTIMATE_LABEL);
+  });
+
+  it("UI-HIS-010 without an estimated price there is no estimate label, even when tariffSource says ESTIMATE", () => {
+    const base = derivedMembershipFigures();
+    membershipAnswers({ ...base, savings: { ...base.savings, tariffSource: "ESTIMATE", estimatedPrice: null } });
+    renderPage();
+
+    expect(tile("Ahorro estimado")).toHaveTextContent("72,75 €");
+    expect(tile("Ahorro estimado")).not.toHaveTextContent("Estimado con");
+  });
+
+  it("UI-HIS-013 for a plant's own supply, the surplus tile says it is always 0 there", () => {
+    supplyAnswers(derivedSupplyFigures(PLANT_SUPPLY, { selfConsumptionRatioStatus: "NOT_APPLICABLE", selfConsumptionRatio: null }));
+    renderPage(`?supplyId=${PLANT_SUPPLY.id}`);
+
+    expect(tile("Se fue a la red")).toHaveTextContent("Siempre 0 en el punto de la planta");
+    expect(tile("Se fue a la red")).not.toHaveTextContent("Se te asignó y no la usaste");
+  });
+
+  it("UI-HIS-011 neither the card nor the totals name the technical terms outside the tooltip", () => {
+    renderPage();
+
+    expect(card()).toBeInTheDocument();
+    expect(totals()).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/autoconsumo|autosuficiencia|excedentes|÷/);
+  });
+});

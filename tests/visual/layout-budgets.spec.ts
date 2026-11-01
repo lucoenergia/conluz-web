@@ -762,3 +762,46 @@ test.describe("#248: the historical analysis period selector", () => {
     await expect(picker.getByRole("button", { name: "Aplicar" })).toBeInViewport();
   });
 });
+
+/**
+ * #249. The period card and the totals at phone width: the card and every
+ * tile fit a 390px viewport, the longest note (the estimate label) wraps
+ * inside its tile instead of widening it, and the page never scrolls
+ * sideways. Measured, not captured: what the risk is is a box overflowing.
+ */
+test.describe("#249: the historical analysis period card and totals", () => {
+  test("UI-HIS-011 at 390px the period card and the four totals fit, and the page never scrolls sideways", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "The budget is a 390px viewport.");
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    // Serves the membership's figures for "Todos mis puntos" too: the period is asked by explicit bounds.
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+    await page.goto("/historical-analysis");
+
+    const card = page.getByRole("region", { name: "De la energía que te tocó" });
+    const totals = page.getByRole("list", { name: "Totales del periodo" });
+    await expect(card).toBeVisible();
+    await expect(totals.getByRole("listitem")).toHaveCount(4);
+    await expect(totals.getByText(/^Estimado con un precio de/)).toBeVisible();
+    await stabilizePage(page);
+
+    const pageWidths = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth,
+    }));
+    expect(pageWidths.document, "the page scrolls sideways").toBeLessThanOrEqual(pageWidths.viewport);
+
+    for (const [name, box] of [
+      ["the card", await card.boundingBox()],
+      ...(await Promise.all((await totals.getByRole("listitem").all()).map(async (tile, index) => [`tile ${index + 1}`, await tile.boundingBox()] as const))),
+    ] as const) {
+      expect(box!.x, `${name} starts off-screen`).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width, `${name} is wider than the viewport`).toBeLessThanOrEqual(390);
+    }
+    for (const tile of await totals.getByRole("listitem").all()) {
+      const widths = await tile.evaluate((node) => ({ scroll: node.scrollWidth, client: node.clientWidth, text: node.textContent }));
+      expect(widths.scroll, `"${widths.text}" overflows its tile`).toBeLessThanOrEqual(widths.client);
+    }
+  });
+});
