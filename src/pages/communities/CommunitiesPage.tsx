@@ -36,16 +36,12 @@ import { Can, outcomeFromResource } from "../../hooks/permissions";
 const MAX_ADMIN_NAMES_SHOWN = 2;
 
 /**
- * The table's column widths. The fixed columns take 416px with the 72px
- * actions column: each fits its header (the icon headers) or its chip.
- * Nombre and Administradores share what is left about 2 : 1.2, which at the
- * 716px the table has at a 1024px viewport with the side menu open is about
- * 187px and 113px. They are percentages of the table, so on a wider screen
- * they keep their share.
+ * The table's column widths, padding included. Each fixed column fits its
+ * header (the icon headers, "Administradores") or its chip; Nombre has none and
+ * takes what is left, about 137px at a 1024px viewport with the side menu open.
  */
 const COLUMN_WIDTHS = {
-  name: "26.1%",
-  admins: "15.8%",
+  admins: "132px",
   memberCount: "112px",
   supplyPointCount: "128px",
   status: "104px",
@@ -253,7 +249,6 @@ export const CommunitiesPage: FC = () => {
                   community.legalId && `NIF/CIF ${community.legalId}`,
                   community.address,
                 ].filter((line): line is string => !!line),
-                width: COLUMN_WIDTHS.name,
               }}
               columns={[
                 {

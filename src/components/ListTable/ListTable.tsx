@@ -25,9 +25,9 @@ export interface ListTableColumn<T> {
   align?: "left" | "center";
   render: (row: T) => ReactNode;
   /**
-   * The column's width under the table's fixed layout: a CSS length or a
-   * percentage of the table ("112px", "20%"), never grid syntax (`fr`,
-   * `minmax`). Columns without one share the space that is left.
+   * The column's width under the table's fixed layout, padding included: a
+   * CSS length or a percentage of the table ("112px", "20%"), never grid
+   * syntax (`fr`, `minmax`). Columns without one share the space that is left.
    */
   width?: string;
 }
@@ -133,11 +133,11 @@ export const ListTable = <T,>({
         <TableHead>
           <TableRow sx={{ backgroundColor: colors.background.surface }}>
             {selection && <TableCell padding="checkbox">{selection.header}</TableCell>}
-            <TableCell sx={{ width: title.width }}>
+            <TableCell sx={{ width: title.width, boxSizing: "border-box" }}>
               <ListTableHeaderText>{title.header}</ListTableHeaderText>
             </TableCell>
             {columns.map((column) => (
-              <TableCell key={column.key} align={column.align} sx={{ width: column.width }}>
+              <TableCell key={column.key} align={column.align} sx={{ width: column.width, boxSizing: "border-box" }}>
                 {typeof column.header === "string" ? (
                   <ListTableHeaderText>{column.header}</ListTableHeaderText>
                 ) : (
@@ -146,7 +146,7 @@ export const ListTable = <T,>({
               </TableCell>
             ))}
             {showActions && (
-              <TableCell align="center" sx={{ width: ACTIONS_COLUMN_WIDTH }}>
+              <TableCell align="center" sx={{ width: ACTIONS_COLUMN_WIDTH, boxSizing: "border-box" }}>
                 {/* Named for screen readers; the kebabs speak for themselves on screen. */}
                 <Box component="span" sx={visuallyHidden}>
                   Acciones
