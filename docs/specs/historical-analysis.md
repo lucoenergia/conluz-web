@@ -6,14 +6,15 @@
 | **Status** | Active |
 | **Routes** | `/historical-analysis` |
 | **Roles** | A caller who may read the active community (`canRead`): members and community admins |
-| **Domain rules** | EPR-001, EPR-003, EPR-004 (lucoenergia/conluz#409); SEM-001 (lucoenergia/conluz#408); ADR-0005 in lucoenergia/conluz |
+| **Domain rules** | EPR-001, EPR-003, EPR-004 (lucoenergia/conluz#409); SEM-001 (lucoenergia/conluz#408); SEM-002…004, ENM-006…008 (lucoenergia/conluz#411); ADR-0005 in lucoenergia/conluz |
 | **Design reference** | Claude Design round 2 copy deck; round 3 copy deck for the period (#248) |
-| **Last reviewed against code** | #248 |
+| **Last reviewed against code** | #249 |
 
-Scope: the page shell, its menu entry and its supply selector (#247), and the period: its anchor,
-selector, custom range picker, header and query string (#248). The figures, charts, table and CSV
-are specified by the later issues of lucoenergia/conluz#405 as they land; they read the period
-through `useHistoricalPeriod` (`src/pages/historical-analysis/HistoricalPeriodContext.tsx`).
+Scope: the page shell, its menu entry and its supply selector (#247), the period: its anchor,
+selector, custom range picker, header and query string (#248), and the period's card and totals
+(#249). The charts, table and CSV are specified by the later issues of lucoenergia/conluz#405 as
+they land; they read the period through `useHistoricalPeriod`
+(`src/pages/historical-analysis/HistoricalPeriodContext.tsx`).
 
 ## Purpose
 
@@ -157,6 +158,85 @@ too, never the other members'.
 - **Implements:** n/a
 - **Source:** #248
 
+### UI-HIS-010 — The card and the totals show the energy metrics of the resolved period and scope
+
+- **Status:** Active
+- **Rule:** Every figure on the period card and the totals MUST come from the energy-metrics response
+  for the resolved period and scope; the client never computes a ratio, share or sum shown as text.
+  "Todos mis puntos" MUST ask the caller's membership, and a single supply MUST ask that supply,
+  both by the period's explicit `startDate` and `endDate`. Only the selected scope's request MAY
+  run, and none MAY run while the period is unknown. The estimate label under the savings MUST be
+  keyed on `savings.estimatedPrice`, never on `tariffSource`. While the response is pending a
+  placeholder stands in the card's place; a failed request MUST show an error with "Reintentar".
+- **Rationale:** The server is the one place the ratios are defined, including which supplies they
+  leave out; a ratio recomputed from rounded totals can disagree with it by a point, and one
+  computed from the basis would silently diverge if the definition changes. The bar's split under
+  the headline is drawn from the basis but never written, so no figure on screen depends on it.
+  `tariffSource` reports ESTIMATE even where nothing was priced, so keying the label on it would
+  state a price beside an amount that has none.
+- **Implements:** SEM-002…004, ENM-006…008 (lucoenergia/conluz#411)
+- **Source:** #249
+
+### UI-HIS-011 — One headline, and the coverage of the consumption as a sentence
+
+- **Status:** Active
+- **Rule:** The period card MUST show one headline percentage, "Usaste el {%}", from
+  `selfConsumptionRatio`: the share of the energy assigned to the caller that they used. The
+  coverage of their consumption, from `selfSufficiencyRatio`, MUST be expressed as a sentence of
+  the form "Eso cubrió {n} de cada 10 kWh de tu consumo", following the fraction rule (UI-HIS-012),
+  at body size with only the fraction emphasised. The words "autoconsumo", "autosuficiencia" and
+  "excedentes", and any formula, MUST appear only in the tooltip of the card's caption.
+- **Rationale:** Two percentages of equal weight invite comparing numbers that measure different
+  things; one figure and its consequence in words read without knowing either technical term. The
+  terms stay one tap away for whoever knows them.
+- **Implements:** n/a
+- **Source:** #249
+
+### UI-HIS-012 — The headline and the fraction never state a share the ratio does not reach
+
+- **Status:** Active
+- **Rule:** With `n` the ratio times 10 rounded half up, the fraction MUST read "Tu consumo no se
+  cubrió con energía de la comunidad" when the ratio is 0, "menos de 1 de cada 10 kWh" when the
+  ratio is above 0 and `n` is 0, "{n} de cada 10 kWh" when `n` is 1 to 9, "casi todo" when `n` is
+  10 and the ratio is below 1, and "todo" only when the ratio is exactly 1. When the ratio is null
+  the coverage row MUST NOT be shown. A percentage above 0 that rounds to 0 MUST read "menos del
+  1 %", and one below 1 that rounds to 100 MUST read "casi el 100 %", in the headline and in the
+  coverage detail alike.
+- **Rationale:** Rounding alone would print "0" for a share that exists and "todo" or "100 %" for one
+  that falls short, both claims the data does not support.
+- **Implements:** n/a
+- **Source:** #249
+
+### UI-HIS-013 — The card's states follow selfConsumptionRatioStatus, and excluded plant supplies are stated
+
+- **Status:** Active
+- **Rule:** The card's state MUST be decided by `selfConsumptionRatioStatus`, never by a null ratio.
+  `NOT_APPLICABLE` MUST replace the headline with "No aplica al punto de la planta" and "En el punto
+  de la planta, «se fue a la red» siempre es 0 kWh.", and hide the bar and the detail.
+  `NOTHING_ASSIGNED` MUST replace the headline with "En este periodo no se te asignó energía", and
+  hide the bar and the detail. In both, the coverage row stays. `AVAILABLE` with
+  `selfConsumptionRatioBasis.excludedPlantSupplyCount` above 0 MUST say "No incluye {n} punto(s) de
+  planta" under the detail. A plant's own supply, selected alone, MUST be introduced by "{punto} es
+  el punto de suministro de la planta {planta}: «se fue a la red» siempre es 0 kWh.", and its
+  surplus tile MUST read "Siempre 0 en el punto de la planta". No state uses an alert colour.
+- **Rationale:** A null ratio means two different things, and only the status says which. A plant's
+  own supply never sends assigned energy to the grid, so a usage share there is meaningless rather
+  than zero; leaving those supplies out of "Todos mis puntos" changes what the headline counts, and
+  the reader is told.
+- **Implements:** SEM-002…004, ENM-006…008 (lucoenergia/conluz#411)
+- **Source:** #249
+
+### UI-HIS-014 — Incomplete coverage is stated in words
+
+- **Status:** Active
+- **Rule:** When the response's `coverage.hoursWithData` is below `coverage.expectedHours`, the page
+  MUST say "Faltan datos de parte de este periodo: las cifras suman solo los datos disponibles."
+  under the card, as a neutral note. It MUST be decided from the response's coverage only.
+- **Rationale:** Totals summed over missing hours look like a quiet period. The design's notice names
+  the missing dates, which the coverage counts do not give, so the note says only what is known.
+- **Implements:** n/a
+- **Source:** #249
+
 ## States
 
 | State | Rendered | Actions available |
@@ -166,7 +246,9 @@ too, never the other members'.
 | Supplies, anchor pending | The title, the supply selector and a placeholder where the period selector goes | Choosing a supply |
 | Supplies, nothing published | The title, the supply selector and the neutral "Todavía no hay datos publicados" (UI-HIS-005) | Choosing a supply |
 | Supplies, anchor failed | The title, the supply selector and an error with "Reintentar" | Choosing a supply, retrying |
-| Supplies, period | The selectors, the period header and the content region | Choosing a supply or a period |
+| Supplies, period, figures pending | The selectors, the period header and a placeholder where the card goes (UI-HIS-010) | Choosing a supply or a period |
+| Supplies, period, figures failed | The selectors, the period header and an error with "Reintentar" (UI-HIS-010) | Choosing a supply or a period, retrying |
+| Supplies, period, figures | The selectors, the period header, the card in the state its status gives (UI-HIS-013) and the totals | Choosing a supply or a period |
 | Error | The title only; the error is reported as on the supply list | None |
 
 ## Accepted exceptions
