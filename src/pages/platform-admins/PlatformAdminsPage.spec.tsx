@@ -393,3 +393,33 @@ describe("as a records list (#347)", () => {
     expect(listReads(router)).toBe(2);
   });
 });
+
+describe("pages of the platform admins list (#347)", () => {
+  const many = (count: number) =>
+    Array.from({ length: count }, (_, index) => {
+      const n = String(index + 1).padStart(2, "0");
+      return buildPlatformAdmin({ user: { id: `u-${n}` }, fullName: `Administrador ${n}`, email: `admin${n}@example.com` });
+    });
+
+  it("UI-LST-005 shows 25 platform admins without pagination", async () => {
+    servePage({ current: many(25) });
+    renderPage();
+
+    expect(await screen.findByText("Administrador 25")).toBeInTheDocument();
+    expect(screen.getAllByRole("row")).toHaveLength(26);
+    expect(
+      screen.queryByRole("navigation", { name: "Páginas de administradores de plataforma" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("UI-LST-005 shows the first 25 of 26 platform admins, and the pagination", async () => {
+    servePage({ current: many(26) });
+    renderPage();
+
+    expect(await screen.findByText("Administrador 25")).toBeInTheDocument();
+    expect(screen.getAllByRole("row")).toHaveLength(26);
+    expect(screen.queryByText("Administrador 26")).not.toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Páginas de administradores de plataforma" })).toBeInTheDocument();
+    expect(screen.getByText("1–25 de 26 administradores de plataforma")).toBeInTheDocument();
+  });
+});
