@@ -2,6 +2,7 @@ import "@testing-library/jest-dom";
 import { act, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 import userEvent from "@testing-library/user-event";
+import { AxiosError } from "axios";
 import type { QueryClient } from "@tanstack/react-query";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
@@ -776,6 +777,53 @@ describe("MembersPage", () => {
       expect(screen.getByText("ana@sur.example")).toBeInTheDocument();
       expect(screen.queryByText("Ana García")).not.toBeInTheDocument();
       expect(screen.queryByText("ana@norte.example")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("as a records list (#347)", () => {
+    const many = (count: number) =>
+      Array.from({ length: count }, (_, index) =>
+        buildMembership({
+          id: `m${index + 1}`,
+          fullName: `Socio ${String(index + 1).padStart(2, "0")}`,
+          user: { id: `u${index + 1}` },
+        }),
+      );
+
+    it("UI-LST-004 shows what failed and a retry that reads the roster again, not the empty state", async () => {
+      const user = userEvent.setup();
+      vi.mocked(useGetCommunityById).mockReturnValue(
+        query.success<typeof getCommunityById>(
+          buildCommunity({ id: "c1", capabilities: buildCommunityCapabilities({ canRead: true, ...ADMIN_COMMUNITY }) }),
+        ),
+      );
+      const failed = query.error<MembershipResponse[]>(new AxiosError("Network Error"));
+      vi.mocked(useGetMemberships).mockReturnValue(failed);
+      renderWithProviders(<MembersPage />, { activeCommunityId: "c1" });
+
+      expect(screen.getByRole("alert")).toHaveTextContent("No se pudieron cargar los miembros.");
+      expect(screen.queryByText("No hay miembros en esta comunidad")).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Reintentar" }));
+
+      expect(failed.refetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("UI-LST-005 shows 25 members without pagination", () => {
+      setup({ memberships: many(25) });
+
+      expect(screen.getAllByRole("row")).toHaveLength(26);
+      expect(screen.queryByRole("navigation", { name: "Páginas de miembros" })).not.toBeInTheDocument();
+    });
+
+    it("UI-LST-005 shows the first 25 of 26 members, and the pagination", () => {
+      setup({ memberships: many(26) });
+
+      expect(screen.getAllByRole("row")).toHaveLength(26);
+      expect(screen.getByText("Socio 25")).toBeInTheDocument();
+      expect(screen.queryByText("Socio 26")).not.toBeInTheDocument();
+      expect(screen.getByRole("navigation", { name: "Páginas de miembros" })).toBeInTheDocument();
+      expect(screen.getByText("1–25 de 26 miembros")).toBeInTheDocument();
     });
   });
 });

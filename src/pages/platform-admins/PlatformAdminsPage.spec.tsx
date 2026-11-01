@@ -351,3 +351,45 @@ describe("revoking the role", () => {
     expect(listReads(router)).toBe(1);
   });
 });
+
+describe("as a records list (#347)", () => {
+  it("UI-LST-003 keeps the actions column, with an empty cell on the caller's own row", async () => {
+    servePage({ current: [PAULA, RAMON] });
+    renderPage();
+
+    await screen.findByText("Ramón Revocable");
+    expect(screen.getByRole("columnheader", { name: "Acciones" })).toBeInTheDocument();
+    expect(within(rowOf("Ramón Revocable")).getByRole("button", { name: "Más acciones para Ramón Revocable" }))
+      .toBeInTheDocument();
+    const paulaCells = within(rowOf("Paula Plataforma")).getAllByRole("cell");
+    expect(paulaCells).toHaveLength(4);
+    expect(paulaCells[3]).toBeEmptyDOMElement();
+  });
+
+  it("UI-LST-004 shows what failed and a retry that reads the list again, not the empty state", async () => {
+    // The first read fails; the retry is answered.
+    let failNext = true;
+    const admins: Admins = {
+      get current() {
+        if (failNext) {
+          failNext = false;
+          throw { response: { status: 500, headers: {}, data: { status: 500, message: "boom", errors: [] } } };
+        }
+        return [PAULA, RAMON];
+      },
+    };
+    const router = servePage(admins);
+    renderPage();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "No se pudieron cargar los administradores de plataforma.",
+    );
+    expect(screen.queryByText("No hay administradores de plataforma")).not.toBeInTheDocument();
+    expect(listReads(router)).toBe(1);
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "Reintentar" }));
+
+    expect(await screen.findByText("Ramón Revocable")).toBeInTheDocument();
+    expect(listReads(router)).toBe(2);
+  });
+});

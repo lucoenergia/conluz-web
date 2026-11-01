@@ -21,16 +21,20 @@
  */
 
 import { type Page } from "@playwright/test";
-import type { SupplyResponse } from "../../src/api/models";
+import type { CommunityResponse, SupplyResponse } from "../../src/api/models";
 import {
   test,
   expect,
+  communityCapabilitiesFor,
   FIXED_COEFFICIENTS_MIXED,
+  FIXED_COMMUNITY_ADMINS,
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_COMMUNITY_ID,
   FIXED_MEMBER_USER,
+  FIXED_MEMBERSHIPS,
   FIXED_PLANT_ID,
   FIXED_PLATFORM_ADMIN_USER,
+  FIXED_PLATFORM_ADMINS,
   FIXED_SHARING_AGREEMENTS,
   FIXED_SUPPLY,
   FIXED_SUPPLY_ID,
@@ -706,4 +710,131 @@ test.describe("#247: the historical analysis supply selector", () => {
     expect(optionBox!.x + optionBox!.width, "the long option is cut off").toBeLessThanOrEqual(sheetBox!.x + sheetBox!.width);
     await expect(sheet.getByText("Punto de planta")).toBeInViewport();
   });
+});
+
+/**
+ * UI-LST-001. From a 1024px viewport a records list is a table, and with the
+ * side menu open no table may scroll sideways: a value that does not fit moves
+ * under the name instead. Measured at exactly 1024px, the narrowest viewport
+ * that shows the table, on each of the four list pages, with values long
+ * enough to need folding. The long values are copies of the shared fixtures,
+ * served to these tests alone.
+ *
+ * Desktop project only: the side menu is persistent from 768px, so it is open
+ * at 1024px, and the real scrollbars this file runs with take their width.
+ */
+test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side menu open", () => {
+  const LONG = "Cooperativa Energética Comunitaria de la Vega Baja del Segura y Comarca";
+  const longCommunity: CommunityResponse = {
+    id: FIXED_COMMUNITY_ID,
+    name: LONG,
+    code: "COOP-VEGA-BAJA-SEGURA-2026",
+    legalId: "F12345678",
+    address: "Avenida de la Constitución Española, 1978, Bloque 4, Escalera B, 03300 Orihuela (Alicante)",
+    enabled: true,
+    adminNames: ["Encarnación Martínez-Albaladejo", "Maximiliano Fernández de Córdoba", "Rosa Activa Gómez"],
+    memberCount: 1284,
+    supplyPointCount: 12840,
+    capabilities: communityCapabilitiesFor(FIXED_PLATFORM_ADMIN_USER),
+  };
+  const longEmail = "encarnacion.martinez.albaladejo.cooperativa@telefonica-empresas.example";
+
+  const LIST_TABLES: { name: string; open: (page: Page) => Promise<void> }[] = [
+    {
+      name: "/members",
+      open: async (page) => {
+        await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+        await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+        await mockCommunityManagementRoutes(page, {
+          memberships: FIXED_MEMBERSHIPS.map((membership) => ({
+            ...membership,
+            fullName: `${membership.fullName} ${LONG}`,
+            contactEmail: membership.contactEmail && longEmail,
+          })),
+        });
+        await page.goto("/members");
+      },
+    },
+    {
+      name: "/communities",
+      open: async (page) => {
+        await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+        // Registered last, so it wins for the list itself.
+        await page.route(
+          (url) => url.pathname === "/api/v1/communities",
+          (route) =>
+            route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([longCommunity]) }),
+        );
+        await page.goto("/communities");
+      },
+    },
+    {
+      name: "/communities/:communityId/admins",
+      open: async (page) => {
+        await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+        await mockCommunityAdminsRoutes(page, FIXED_PLATFORM_ADMIN_USER, {
+          admins: FIXED_COMMUNITY_ADMINS.map((admin) => ({
+            ...admin,
+            fullName: `${admin.fullName} ${LONG}`,
+            contactEmail: admin.contactEmail && longEmail,
+          })),
+        });
+        await page.goto(`/communities/${FIXED_COMMUNITY_ID}/admins`);
+      },
+    },
+    {
+      name: "/platform-admins",
+      open: async (page) => {
+        await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+        await mockPlatformAdminsRoutes(page, FIXED_PLATFORM_ADMIN_USER, {
+          admins: FIXED_PLATFORM_ADMINS.map((admin) => ({
+            ...admin,
+            fullName: `${admin.fullName} ${LONG}`,
+            email: admin.email && longEmail,
+          })),
+        });
+        await page.goto("/platform-admins");
+      },
+    },
+  ];
+
+  for (const listTable of LIST_TABLES) {
+    test(`UI-LST-001 ${listTable.name} shows its table without sideways scroll`, async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name !== "desktop", "The side menu is persistent only on the desktop project.");
+
+      await page.setViewportSize({ width: 1024, height: 900 });
+      await injectAuthToken(page);
+      await listTable.open(page);
+
+      const table = page.getByRole("main").getByRole("table");
+      await expect(table).toBeVisible();
+      await expect(page.getByRole("navigation", { name: "Navegación principal" })).toBeVisible();
+      await stabilizePage(page);
+
+      const widths = await table.evaluate((element) => {
+        // Structural: the table's scroll container is MUI's TableContainer, its parent; it has no role.
+        const container = element.parentElement as HTMLElement;
+        return {
+          viewport: document.documentElement.clientWidth,
+          document: document.documentElement.scrollWidth,
+          containerScroll: container.scrollWidth,
+          containerClient: container.clientWidth,
+          table: Math.round(element.getBoundingClientRect().width),
+          columns: [...element.querySelectorAll("thead th")].map((th) => Math.round(th.getBoundingClientRect().width)),
+          // A header or a cell whose content is wider than its column is cut by the fixed layout.
+          clipped: [...element.querySelectorAll("th, td")]
+            .filter((cell) => cell.scrollWidth > cell.clientWidth)
+            .map((cell) => cell.textContent),
+        };
+      });
+      testInfo.annotations.push({ type: "column widths", description: `${listTable.name}: ${widths.columns.join(", ")}` });
+      console.log(`UI-LST-001 ${listTable.name}: table ${widths.table}px, columns ${widths.columns.join(", ")}`);
+
+      expect(widths.document, `${listTable.name} scrolls sideways`).toBeLessThanOrEqual(widths.viewport);
+      expect(widths.containerScroll, `${listTable.name} table overflows its container`).toBeLessThanOrEqual(
+        widths.containerClient,
+      );
+      expect(widths.clipped, `${listTable.name} cells wider than their column`).toEqual([]);
+    });
+  }
 });

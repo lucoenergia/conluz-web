@@ -217,7 +217,7 @@ export async function mockMemberHome(
  * branch /communities/:communityId/edit refuses them, because the fixture --
  * not the product -- says they may not update it.
  */
-function communityCapabilitiesFor(currentUser: object) {
+export function communityCapabilitiesFor(currentUser: object) {
   const role = (currentUser as CurrentUserFixture).memberships?.[FIXED_COMMUNITY_ID];
   const isPlatformAdmin = (currentUser as CurrentUserFixture).isPlatformAdmin === true;
   return isPlatformAdmin

@@ -699,3 +699,31 @@ describe("refused row actions", () => {
     expect(screen.getByRole("dialog", { name: `Suspender administrador en ${COMMUNITY_NAME}` })).toBeInTheDocument();
   });
 });
+
+describe("a failed read (#347)", () => {
+  it("UI-LST-004 shows what failed and a retry that reads the admins again, not the empty state", async () => {
+    // The first read fails; the retry is answered.
+    let failNext = true;
+    const admins: Admins = {
+      get current() {
+        if (failNext) {
+          failNext = false;
+          throw { response: { status: 500, headers: {}, data: { status: 500, message: "boom", errors: [] } } };
+        }
+        return [ROSA, PABLO];
+      },
+    };
+    const router = serveAdminsPage(admins);
+    renderPage();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("No se pudieron cargar los administradores.");
+    expect(screen.queryByText("Esta comunidad no tiene administradores")).not.toBeInTheDocument();
+    expect(adminReads(router)).toBe(1);
+
+    await user().click(screen.getByRole("button", { name: "Reintentar" }));
+
+    expect(await screen.findByText("Rosa Activa")).toBeInTheDocument();
+    expect(adminReads(router)).toBe(2);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+});

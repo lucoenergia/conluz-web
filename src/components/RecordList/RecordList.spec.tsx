@@ -1,6 +1,9 @@
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { useLocation } from "react-router";
 import { describe, expect, it, vi } from "vitest";
+import { renderWithProviders } from "../../test/renderWithProviders";
 import { RecordList, type RecordListItem } from "./RecordList";
 
 const ITEMS: RecordListItem[] = [
@@ -121,5 +124,72 @@ describe("RecordList", () => {
 
     rerender(<RecordList items={ITEMS} label="Usuarios" />);
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+});
+
+/** Where the router is, so a test can tell whether a click navigated. */
+const LocationProbe = () => <output aria-label="Ubicación">{useLocation().pathname}</output>;
+const location = () => screen.getByRole("status", { name: "Ubicación" });
+
+/** The text a user gets by selecting all of `element`. */
+const selectedText = (element: HTMLElement) => {
+  const selection = window.getSelection()!;
+  selection.selectAllChildren(element);
+  return selection.toString();
+};
+
+describe("UI-LST-002 only the title links to a record's detail", () => {
+  const SUPPLIES: RecordListItem[] = [
+    {
+      id: "s1",
+      title: "Casa de Ana",
+      href: "/supplies/s1",
+      lines: ["ES0021000000000001AB"],
+      fields: [{ label: "Titular", value: "Ana García" }],
+    },
+    {
+      id: "s2",
+      title: "Local de Bruno",
+      href: "/supplies/s2",
+      lines: ["ES0021000000000002CD"],
+      fields: [{ label: "Titular", value: "Bruno Leal" }],
+    },
+  ];
+  const renderList = (items = SUPPLIES) =>
+    renderWithProviders(
+      <>
+        <RecordList items={items} label="Suministros" chevron />
+        <LocationProbe />
+      </>,
+      { route: "/supplies" },
+    );
+
+  it("UI-LST-002 navigates from the title link to the record's detail", async () => {
+    const user = userEvent.setup();
+    renderList();
+
+    await user.click(screen.getByRole("link", { name: "Local de Bruno" }));
+
+    expect(location()).toHaveTextContent("/supplies/s2");
+  });
+
+  it("UI-LST-002 does not navigate from a line or a field, whose text can be selected", async () => {
+    const user = userEvent.setup();
+    renderList();
+
+    await user.click(screen.getByText("ES0021000000000001AB"));
+    await user.click(screen.getByText("Ana García"));
+
+    expect(location()).toHaveTextContent(/^\/supplies$/);
+    expect(selectedText(screen.getByText("ES0021000000000001AB"))).toBe("ES0021000000000001AB");
+    expect(selectedText(screen.getByText("Ana García"))).toBe("Ana García");
+    expect(screen.getAllByRole("link")).toHaveLength(2);
+  });
+
+  it("UI-LST-002 renders the title as plain text where no detail route exists", () => {
+    renderList(SUPPLIES.map((item) => ({ ...item, href: undefined })));
+
+    expect(screen.getByText("Casa de Ana")).toBeInTheDocument();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 });
