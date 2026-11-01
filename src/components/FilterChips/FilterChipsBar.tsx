@@ -11,6 +11,11 @@ export interface FilterChipsBarProps {
   showIcon?: boolean;
 }
 
+/**
+ * The status filter of a list. A selected chip is the brand colour whichever
+ * it is: success and error colours are kept for outcomes, and a status filter
+ * reports none (UI-SUP-013).
+ */
 export const FilterChipsBar: FC<FilterChipsBarProps> = ({
   value,
   onChange,
@@ -38,13 +43,13 @@ export const FilterChipsBar: FC<FilterChipsBarProps> = ({
       <Chip
         label="Activos"
         onClick={() => onChange("active")}
-        color={value === "active" ? "success" : "default"}
+        color={value === "active" ? "primary" : "default"}
         size="small"
       />
       <Chip
-        label="Inactivos"
+        label="Dados de baja"
         onClick={() => onChange("inactive")}
-        color={value === "inactive" ? "error" : "default"}
+        color={value === "inactive" ? "primary" : "default"}
         size="small"
       />
     </Box>

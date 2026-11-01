@@ -172,7 +172,7 @@ export const SupplyPointsPage: FC = () => {
           keyFacts={[
             { label: "Total", value: stats.total },
             { label: "Activos", value: stats.active },
-            { label: "Inactivos", value: stats.inactive },
+            { label: "Dados de baja", value: stats.inactive },
           ]}
         />
       </Box>

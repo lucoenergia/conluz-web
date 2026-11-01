@@ -10,7 +10,7 @@ describe("FilterChipsBar", () => {
 
     expect(screen.getByText("Todos")).toBeInTheDocument();
     expect(screen.getByText("Activos")).toBeInTheDocument();
-    expect(screen.getByText("Inactivos")).toBeInTheDocument();
+    expect(screen.getByText("Dados de baja")).toBeInTheDocument();
   });
 
   it("calls onChange with 'all' when Todos chip is clicked", async () => {
@@ -33,13 +33,13 @@ describe("FilterChipsBar", () => {
     expect(handleChange).toHaveBeenCalledWith("active");
   });
 
-  it("calls onChange with 'inactive' when Inactivos chip is clicked", async () => {
+  it("calls onChange with 'inactive' when Dados de baja chip is clicked", async () => {
     const handleChange = vi.fn();
     const user = userEvent.setup();
 
     render(<FilterChipsBar value="all" onChange={handleChange} />);
 
-    await user.click(screen.getByText("Inactivos"));
+    await user.click(screen.getByText("Dados de baja"));
     expect(handleChange).toHaveBeenCalledWith("inactive");
   });
 
