@@ -1,4 +1,4 @@
-import { useState, type FC } from "react";
+import { useRef, useState, type FC } from "react";
 import { useParams } from "react-router";
 import {
   Alert,
@@ -30,6 +30,8 @@ import { BreadCrumb } from "../../components/Breadcrumb";
 import { DetailHeader } from "../../components/DetailHeader";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { ResponsiveRecordList } from "../../components/ResponsiveRecordList";
+import { ListPagination } from "../../components/ListPagination";
+import { useListPage } from "../../components/ListPagination/useListPage";
 import { EmptyState } from "../../components/EmptyState";
 import { useGetCommunityById } from "../../api/communities/communities";
 import { useGetCommunityAdmins } from "../../api/memberships/memberships";
@@ -77,6 +79,14 @@ export const CommunityAdminsPage: FC = () => {
     isLoading,
     error,
   } = useGetCommunityAdmins(communityId, { query: { enabled: manageAdmins.state === "allowed" } });
+
+  // Pages of 25 (UI-LST-005); a page change brings the list's top into view.
+  const { page, setPage, pageCount, pageRows } = useListPage(admins);
+  const listRef = useRef<HTMLDivElement>(null);
+  const changePage = (next: number) => {
+    setPage(next);
+    listRef.current?.scrollIntoView?.({ block: "start" });
+  };
 
   const { forCommunity, forCommunityAdmin } = useCommunityActions();
   const { inviteAdmin } = forCommunity(communityData).actions;
@@ -187,6 +197,7 @@ export const CommunityAdminsPage: FC = () => {
           </Alert>
         ) : (
           <ResponsiveRecordList
+            ref={listRef}
             header={
               <ResultStatus
                 isLoading={isLoading}
@@ -202,7 +213,7 @@ export const CommunityAdminsPage: FC = () => {
             }
             wide={
               <ListTable
-                rows={admins}
+                rows={pageRows}
                 getRowKey={(admin) => admin.user.id}
                 isLoading={isLoading}
                 rowActions={{
@@ -254,7 +265,7 @@ export const CommunityAdminsPage: FC = () => {
                     return !!admin && hasRowActions(admin);
                   },
                 }}
-                items={admins.map((admin) => {
+                items={pageRows.map((admin) => {
                   return {
                     id: admin.user.id,
                     avatar: (
@@ -274,6 +285,17 @@ export const CommunityAdminsPage: FC = () => {
                   };
                 })}
               />
+            }
+            footer={
+              !isLoading && (
+                <ListPagination
+                  page={page}
+                  pageCount={pageCount}
+                  total={admins.length}
+                  noun={{ one: "administrador", other: "administradores" }}
+                  onChange={changePage}
+                />
+              )
             }
           />
         )}

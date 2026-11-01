@@ -1,4 +1,4 @@
-import { useState, type FC } from "react";
+import { useRef, useState, type FC } from "react";
 import { Link, useNavigate } from "react-router";
 import { useTheme, alpha } from "@mui/material/styles";
 import {
@@ -24,6 +24,8 @@ import { RecordList, type RecordListItem } from "../../components/RecordList";
 import { ListTable, ListTableHeaderText, RowActionsMenu } from "../../components/ListTable";
 import { ResultStatus } from "../../components/ResultStatus";
 import { ResponsiveRecordList } from "../../components/ResponsiveRecordList";
+import { ListPagination } from "../../components/ListPagination";
+import { useListPage } from "../../components/ListPagination/useListPage";
 import { EmptyState } from "../../components/EmptyState";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { DetailHeader } from "../../components/DetailHeader";
@@ -61,6 +63,14 @@ export const CommunitiesPage: FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { data: communities = [], isLoading, error } = useGetAllCommunities();
+
+  // Pages of 25 (UI-LST-005); a page change brings the list's top into view.
+  const { page, setPage, pageCount, pageRows } = useListPage(communities);
+  const listRef = useRef<HTMLDivElement>(null);
+  const changePage = (next: number) => {
+    setPage(next);
+    listRef.current?.scrollIntoView?.({ block: "start" });
+  };
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   // The id, not the row. A write invalidates the list, so a stored row would go
@@ -196,6 +206,7 @@ export const CommunitiesPage: FC = () => {
           </Alert>
         ) : (
           <ResponsiveRecordList
+            ref={listRef}
             header={
               <ResultStatus
                 isLoading={isLoading}
@@ -211,7 +222,7 @@ export const CommunitiesPage: FC = () => {
             }
             wide={
               <ListTable
-                rows={communities}
+                rows={pageRows}
                 getRowKey={(community) => community.id}
                 isLoading={isLoading}
                 rowActions={{
@@ -317,7 +328,7 @@ export const CommunitiesPage: FC = () => {
                     return !!community && hasRowActions(community);
                   },
                 }}
-                items={communities.map((community) => ({
+                items={pageRows.map((community) => ({
                   id: String(community.id ?? ""),
                   avatar: <BusinessIcon sx={{ color: "primary.main", fontSize: 20, mt: 0.5 }} />,
                   title: community.name || "Sin nombre",
@@ -339,6 +350,17 @@ export const CommunitiesPage: FC = () => {
                   ],
                 }))}
               />
+            }
+            footer={
+              !isLoading && (
+                <ListPagination
+                  page={page}
+                  pageCount={pageCount}
+                  total={communities.length}
+                  noun={{ one: "comunidad", other: "comunidades" }}
+                  onChange={changePage}
+                />
+              )
             }
           />
         )}

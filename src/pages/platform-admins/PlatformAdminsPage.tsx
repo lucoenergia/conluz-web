@@ -1,4 +1,4 @@
-import { useState, type FC } from "react";
+import { useRef, useState, type FC } from "react";
 import {
   Alert,
   Avatar,
@@ -28,6 +28,8 @@ import { ResultStatus } from "../../components/ResultStatus";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { DetailHeader } from "../../components/DetailHeader";
 import { ResponsiveRecordList } from "../../components/ResponsiveRecordList";
+import { ListPagination } from "../../components/ListPagination";
+import { useListPage } from "../../components/ListPagination/useListPage";
 import { EmptyState } from "../../components/EmptyState";
 import { useGetPlatformAdmins } from "../../api/users/users";
 import type { PlatformAdminResponse } from "../../api/models";
@@ -103,6 +105,14 @@ export const PlatformAdminsPage: FC = () => {
     isLoading,
     error,
   } = useGetPlatformAdmins({ query: { enabled: mayList.state === "allowed" } });
+
+  // Pages of 25 (UI-LST-005); a page change brings the list's top into view.
+  const { page, setPage, pageCount, pageRows } = useListPage(admins);
+  const listRef = useRef<HTMLDivElement>(null);
+  const changePage = (next: number) => {
+    setPage(next);
+    listRef.current?.scrollIntoView?.({ block: "start" });
+  };
 
   const { invite, forPlatformAdmin } = usePlatformAdminActions();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
@@ -234,6 +244,7 @@ export const PlatformAdminsPage: FC = () => {
           </Alert>
         ) : (
           <ResponsiveRecordList
+            ref={listRef}
             header={
               <ResultStatus
                 isLoading={isLoading}
@@ -250,7 +261,7 @@ export const PlatformAdminsPage: FC = () => {
             }
             wide={
               <ListTable
-                rows={admins}
+                rows={pageRows}
                 getRowKey={(admin) => admin.user.id}
                 isLoading={isLoading}
                 rowActions={{
@@ -297,7 +308,7 @@ export const PlatformAdminsPage: FC = () => {
                     return !!admin && hasRowActions(admin);
                   },
                 }}
-                items={admins.map((admin) => {
+                items={pageRows.map((admin) => {
                   const invitation = membershipStateOf(admin);
                   const invitationCaption = invitation && invitationText(invitation);
                   return {
@@ -316,6 +327,17 @@ export const PlatformAdminsPage: FC = () => {
                   };
                 })}
               />
+            }
+            footer={
+              !isLoading && (
+                <ListPagination
+                  page={page}
+                  pageCount={pageCount}
+                  total={admins.length}
+                  noun={{ one: "administrador de plataforma", other: "administradores de plataforma" }}
+                  onChange={changePage}
+                />
+              )
             }
           />
         )}
