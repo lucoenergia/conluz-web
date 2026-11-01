@@ -516,47 +516,42 @@ export const MembersPage: FC = () => {
                 has: hasRowActions,
               }}
               selection={selectionOffered ? { header: selectAllCheckbox, render: selectionCheckbox } : undefined}
+              title={{
+                header: "Miembro",
+                text: (membership) => membership.fullName,
+                leading: (membership) => (
+                  <Avatar
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      bgcolor: theme.palette.primary.main,
+                      fontSize: fontSizes.md,
+                    }}
+                  >
+                    {membership.fullName.charAt(0).toUpperCase()}
+                  </Avatar>
+                ),
+                // The DNI/NIE/NIF as secondary information, after the email when
+                // there is one; alone, with no separator, when there is none (UI-MBR-007).
+                secondary: (membership) => [
+                  <>
+                    {membership.contactEmail && (
+                      <>
+                        <span>{membership.contactEmail}</span>
+                        <span aria-hidden> · </span>
+                      </>
+                    )}
+                    {showsNoContactEmail(membership) && (
+                      <>
+                        <span>Sin email de contacto</span>
+                        <span aria-hidden> · </span>
+                      </>
+                    )}
+                    <span>{membership.personalId}</span>
+                  </>,
+                ],
+              }}
               columns={[
-                {
-                  key: "member",
-                  header: "Miembro",
-                  render: (membership) => (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                      <Avatar
-                        sx={{
-                          width: 36,
-                          height: 36,
-                          bgcolor: theme.palette.primary.main,
-                          fontSize: fontSizes.md,
-                        }}
-                      >
-                        {membership.fullName.charAt(0).toUpperCase()}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {membership.fullName}
-                        </Typography>
-                        {/* The DNI/NIE/NIF as secondary information, after the email when
-                            there is one; alone, with no separator, when there is none (UI-MBR-007). */}
-                        <Typography variant="caption" component="p" sx={{ color: colors.text.subtle }}>
-                          {membership.contactEmail && (
-                            <>
-                              <span>{membership.contactEmail}</span>
-                              <span aria-hidden> · </span>
-                            </>
-                          )}
-                          {showsNoContactEmail(membership) && (
-                            <>
-                              <span>Sin email de contacto</span>
-                              <span aria-hidden> · </span>
-                            </>
-                          )}
-                          <span>{membership.personalId}</span>
-                        </Typography>
-                      </Box>
-                    </Box>
-                  ),
-                },
                 {
                   key: "role",
                   header: "Rol",

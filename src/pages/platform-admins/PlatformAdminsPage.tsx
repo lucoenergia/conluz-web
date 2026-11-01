@@ -267,21 +267,16 @@ export const PlatformAdminsPage: FC = () => {
                     onClick: handleMenuOpen,
                     has: hasRowActions,
                   }}
+                  title={{
+                    header: "Nombre",
+                    text: (admin) => admin.fullName,
+                    leading: (admin) => (
+                      <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
+                        {initialOf(admin)}
+                      </Avatar>
+                    ),
+                  }}
                   columns={[
-                    {
-                      key: "admin",
-                      header: "Nombre",
-                      render: (admin) => (
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                          <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
-                            {initialOf(admin)}
-                          </Avatar>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {admin.fullName}
-                          </Typography>
-                        </Box>
-                      ),
-                    },
                     {
                       key: "email",
                       header: "Correo",

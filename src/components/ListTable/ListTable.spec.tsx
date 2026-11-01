@@ -13,7 +13,8 @@ const ROWS: Row[] = [
 const baseProps: ListTableProps<Row> = {
   rows: ROWS,
   getRowKey: (row) => row.id,
-  columns: [{ key: "name", header: "Nombre", render: (row) => row.name }],
+  title: { header: "Nombre", text: (row) => row.name },
+  columns: [],
   isLoading: false,
   emptyMessage: "Sin filas",
   rowActions: { label: (row) => `Más acciones para ${row.name}`, onClick: vi.fn() },
@@ -49,6 +50,7 @@ describe("ListTable", () => {
   it("spans the empty message across the selection column too", () => {
     render(<ListTable {...baseProps} rows={[]} selection={selection} />);
 
-    expect(screen.getByRole("cell", { name: "Sin filas" })).toHaveAttribute("colspan", "3");
+    // Selection and name: with no row on screen there is no actions column (UI-LST-003).
+    expect(screen.getByRole("cell", { name: "Sin filas" })).toHaveAttribute("colspan", "2");
   });
 });

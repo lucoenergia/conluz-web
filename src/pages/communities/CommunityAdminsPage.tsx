@@ -219,28 +219,17 @@ export const CommunityAdminsPage: FC = () => {
                     onClick: handleMenuOpen,
                     has: hasRowActions,
                   }}
+                  title={{
+                    header: "Administrador",
+                    text: (admin) => admin.fullName,
+                    leading: (admin) => (
+                      <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
+                        {initialOf(admin)}
+                      </Avatar>
+                    ),
+                    secondary: (admin) => (admin.contactEmail ? [admin.contactEmail] : []),
+                  }}
                   columns={[
-                    {
-                      key: "admin",
-                      header: "Administrador",
-                      render: (admin) => (
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                          <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", fontSize: fontSizes.md }}>
-                            {initialOf(admin)}
-                          </Avatar>
-                          <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              {admin.fullName}
-                            </Typography>
-                            {admin.contactEmail && (
-                              <Typography variant="caption" sx={{ color: colors.text.subtle }}>
-                                {admin.contactEmail}
-                              </Typography>
-                            )}
-                          </Box>
-                        </Box>
-                      ),
-                    },
                     {
                       key: "personalId",
                       header: "DNI/NIE",

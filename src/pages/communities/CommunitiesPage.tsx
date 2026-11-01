@@ -228,19 +228,12 @@ export const CommunitiesPage: FC = () => {
                 onClick: handleMenuOpen,
                 has: hasRowActions,
               }}
+              title={{
+                header: "Nombre",
+                text: (community) => community.name,
+                leading: () => <BusinessIcon sx={{ color: theme.palette.primary.main, fontSize: 20 }} />,
+              }}
               columns={[
-                {
-                  key: "name",
-                  header: "Nombre",
-                  render: (community) => (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                      <BusinessIcon sx={{ color: theme.palette.primary.main, fontSize: 20 }} />
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {community.name}
-                      </Typography>
-                    </Box>
-                  ),
-                },
                 {
                   key: "code",
                   header: "Código",
