@@ -4,7 +4,7 @@
 export { ConluzProvider } from "./ConluzProvider";
 export { Mui, Icons } from "./primitives";
 export { theme } from "../../src/theme";
-export { colors, alphas, shadows, radii, fontSizes, motion, interactiveTransition } from "../../src/theme/tokens";
+export { colors, alphas, shadows, radii, fontSizes, fontFamilies, motion, interactiveTransition } from "../../src/theme/tokens";
 export { sxStyles } from "../../src/theme/sx";
 // Pure selectors that turn an agreement + its coefficients into the state the
 // lifecycle banner and spine render, so designs derive it the way the app does.
