@@ -146,7 +146,7 @@ test.describe("Visual baselines", () => {
     await page.goto("/supply-points");
     await stabilizePage(page);
 
-    // Open the three-dot menu on the enabled supply card (ES0021000000000000AA)
+    // Open the three-dot menu on the enabled supply row (ES0021000000000000AA)
     await page.getByRole("button", { name: `Más acciones para ${FIXED_SUPPLY_NAME}` }).click();
 
     // Click "Deshabilitar" in the dropdown — opens DisableConfirmationModal
@@ -245,7 +245,7 @@ test.describe("Visual baselines", () => {
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
 
     await page.goto("/supply-points");
-    await expect(page.getByRole("heading", { name: "Casa Principal" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Casa Principal" })).toBeVisible();
     await stabilizePage(page);
 
     // The enabled supply's menu, which proves it by offering "Deshabilitar"
