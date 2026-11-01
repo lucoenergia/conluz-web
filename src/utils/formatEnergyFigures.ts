@@ -1,12 +1,19 @@
 import { APP_TIME_ZONE, formatCalendarDate } from "./formatCalendarDate";
 
 /**
+ * A kWh amount without its unit, written as formatKilowattHours writes it, for
+ * the first figure of a pair that names the unit once: "135 de 275 kWh".
+ */
+export function formatKilowattHourAmount(value: number): string {
+  return new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 }).format(value);
+}
+
+/**
  * Spanish-locale energy in kWh: no decimals for whole amounts, at most two
  * otherwise and no trailing zeros -- "268 kWh", "3,4 kWh", "12,57 kWh".
  */
 export function formatKilowattHours(value: number): string {
-  const formatted = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 }).format(value);
-  return `${formatted} kWh`;
+  return `${formatKilowattHourAmount(value)} kWh`;
 }
 
 /** Spanish-locale amount in euros, to the cent: "12,34 €". */

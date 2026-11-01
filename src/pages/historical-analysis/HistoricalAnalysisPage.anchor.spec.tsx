@@ -92,8 +92,9 @@ describe("UI-HIS-005 the period is anchored to the latest month published for th
     renderPage();
 
     const membershipCalls = enabledCalls(vi.mocked(useGetMembershipEnergyMetrics).mock.calls, 3);
-    expect(membershipCalls.length).toBeGreaterThan(0);
-    expect(membershipCalls.every(([communityId, userId, params]) => communityId === COMMUNITY_ID && userId === OWNER_ID && JSON.stringify(params) === JSON.stringify(LATEST))).toBe(true);
+    expect(membershipCalls.every(([communityId, userId]) => communityId === COMMUNITY_ID && userId === OWNER_ID)).toBe(true);
+    // The period's figures ask the same membership by explicit bounds (#249); the anchor is the call by period.
+    expect(membershipCalls.filter(([, , params]) => JSON.stringify(params) === JSON.stringify(LATEST)).length).toBeGreaterThan(0);
     expect(enabledCalls(vi.mocked(useGetSupplyEnergyMetrics).mock.calls, 2)).toEqual([]);
   });
 
@@ -101,8 +102,9 @@ describe("UI-HIS-005 the period is anchored to the latest month published for th
     renderPage(`?supplyId=${HOME.id}`);
 
     const supplyCalls = enabledCalls(vi.mocked(useGetSupplyEnergyMetrics).mock.calls, 2);
-    expect(supplyCalls.length).toBeGreaterThan(0);
-    expect(supplyCalls.every(([supplyId, params]) => supplyId === HOME.id && JSON.stringify(params) === JSON.stringify(LATEST))).toBe(true);
+    expect(supplyCalls.every(([supplyId]) => supplyId === HOME.id)).toBe(true);
+    // The period's figures ask the same supply by explicit bounds (#249); the anchor is the call by period.
+    expect(supplyCalls.filter(([, params]) => JSON.stringify(params) === JSON.stringify(LATEST)).length).toBeGreaterThan(0);
     expect(enabledCalls(vi.mocked(useGetMembershipEnergyMetrics).mock.calls, 3)).toEqual([]);
   });
 
