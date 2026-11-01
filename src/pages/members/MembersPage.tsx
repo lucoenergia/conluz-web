@@ -77,15 +77,13 @@ import {
 import { MembershipStatusChip } from "./MembershipStatusChip";
 import {
   filterMemberships,
-  MEMBERS_PAGE_SIZE,
   membersCount,
   NO_MEMBER_FILTERS,
-  pageCountOf,
-  pageOf,
   type MemberFilters,
 } from "./memberFilters";
 import { MembersFilters } from "./MembersFilters";
-import { MembersPagination } from "./MembersPagination";
+import { ListPagination } from "../../components/ListPagination";
+import { useListPage } from "../../components/ListPagination/useListPage";
 import { Notice } from "../../components/Notice";
 import { inFlightDialogProps } from "../../utils/inFlightDialog";
 import { useRowSelection } from "../../hooks/useRowSelection";
@@ -146,7 +144,6 @@ export const MembersPage: FC = () => {
   // The search, the filters and the page are this view's alone: never stored,
   // never sent, and lost on leaving the page (#331).
   const [filters, setFilters] = useState<MemberFilters>(NO_MEMBER_FILTERS);
-  const [page, setPage] = useState(1);
   const countRef = useRef<HTMLElement>(null);
 
   const {
@@ -256,10 +253,8 @@ export const MembersPage: FC = () => {
   // Derived from the roster on every render, never copied: a refetch after a
   // write shows through at once, filtered as before.
   const filtered = useMemo(() => filterMemberships(memberships, filters), [memberships, filters]);
-  const pageCount = pageCountOf(filtered.length);
   // A write can shrink the result under the page shown, so it is clamped.
-  const currentPage = Math.min(page, pageCount);
-  const pageRows = pageOf(filtered, currentPage);
+  const { page: currentPage, setPage, pageCount, pageRows } = useListPage(filtered);
   const changePage = (next: number) => {
     setPage(next);
     countRef.current?.scrollIntoView?.({ block: "start" });
@@ -612,14 +607,14 @@ export const MembersPage: FC = () => {
             </Box>
             )}
 
-            {!isLoading && filtered.length > MEMBERS_PAGE_SIZE && (
-              <Box sx={{ p: 2, pt: 0 }}>
-                <MembersPagination
+            {!isLoading && (
+              <Box sx={{ p: 2, pt: 0, "&:empty": { display: "none" } }}>
+                <ListPagination
                   page={currentPage}
                   pageCount={pageCount}
                   total={filtered.length}
+                  noun={{ one: "miembro", other: "miembros" }}
                   onChange={changePage}
-                  isNarrow={isNarrow}
                 />
               </Box>
             )}
