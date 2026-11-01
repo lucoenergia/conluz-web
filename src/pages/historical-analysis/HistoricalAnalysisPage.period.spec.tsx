@@ -330,7 +330,8 @@ describe("UI-HIS-007 a period over 24 months once snapped cannot be applied (#24
     expect(within(picker).getByText(TOO_LONG, { selector: "p" })).toBeInTheDocument();
     await waitFor(() => expect(within(picker).getByRole("status")).toHaveTextContent(TOO_LONG));
     expect(within(picker).getByRole("button", { name: "Aplicar" })).toBeDisabled();
-  });
+    // Paging back two years is 24 clicks, each re-rendering two calendars.
+  }, 15_000);
 
   it("UI-HIS-007 a link to a range over 24 months falls back to the latest published month, silently", async () => {
     renderPage("?period=custom&from=2024-09-30&to=2026-09-30");
