@@ -4,6 +4,7 @@ import type { SupplyResponse } from "../../api/models";
 import { LoadErrorAlert } from "../../components/LoadErrorAlert/LoadErrorAlert";
 import { NeutralNotice } from "../home/NeutralNotice";
 import { useHistoricalPeriod } from "./HistoricalPeriodContext";
+import { PeriodTotals } from "./PeriodTotals";
 import { PeriodUsageCard } from "./PeriodUsageCard";
 import { plantSupplyNotice } from "./periodUsage";
 import { usePeriodEnergyMetrics } from "./usePeriodEnergyMetrics";
@@ -14,8 +15,8 @@ const INCOMPLETE_DATA = "Faltan datos de parte de este periodo: las cifras suman
 
 /**
  * The figures of the selected period and scope (#249): the period card, with
- * what qualifies it. Nothing renders, and nothing is fetched, until the period
- * is known.
+ * what qualifies it, and the totals. Nothing renders, and nothing is fetched,
+ * until the period is known.
  */
 export const PeriodFigures: FC<{ selected: SupplyResponse | null }> = ({ selected }) => {
   const period = useHistoricalPeriod();
@@ -33,6 +34,7 @@ export const PeriodFigures: FC<{ selected: SupplyResponse | null }> = ({ selecte
           <PeriodUsageCard metrics={state.metrics} />
           {/* Stated from the response's own coverage, never inferred from the figures. */}
           {state.metrics.coverage.hoursWithData < state.metrics.coverage.expectedHours && <NeutralNotice>{INCOMPLETE_DATA}</NeutralNotice>}
+          <PeriodTotals metrics={state.metrics} isPlantSupply={!!plant} />
         </>
       )}
     </Box>
