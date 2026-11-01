@@ -36,6 +36,22 @@ import { Can, outcomeFromResource } from "../../hooks/permissions";
 
 const MAX_ADMIN_NAMES_SHOWN = 2;
 
+/**
+ * The table's column widths. The fixed columns take 416px with the 72px
+ * actions column: each fits its header (the icon headers) or its chip.
+ * Nombre and Administradores share what is left about 2 : 1.2, which at the
+ * 716px the table has at a 1024px viewport with the side menu open is about
+ * 187px and 113px. They are percentages of the table, so on a wider screen
+ * they keep their share.
+ */
+const COLUMN_WIDTHS = {
+  name: "26.1%",
+  admins: "15.8%",
+  memberCount: "112px",
+  supplyPointCount: "128px",
+  status: "104px",
+} as const;
+
 function AdminNamesCell({ adminNames }: { adminNames?: string[] }) {
   if (!adminNames || adminNames.length === 0) {
     return (
@@ -234,38 +250,20 @@ export const CommunitiesPage: FC = () => {
                   header: "Nombre",
                   text: (community) => community.name,
                   leading: () => <BusinessIcon sx={{ color: theme.palette.primary.main, fontSize: 20 }} />,
+                  // Under the name rather than in columns of their own: with the side menu
+                  // open, no wider table fits a 1024px viewport (UI-LST-001).
+                  secondary: (community) => [
+                    community.code,
+                    community.legalId && `NIF/CIF ${community.legalId}`,
+                    community.address,
+                  ].filter((line): line is string => !!line),
+                  width: COLUMN_WIDTHS.name,
                 }}
                 columns={[
                   {
-                    key: "code",
-                    header: "Código",
-                    render: (community) => (
-                      <Typography variant="body2" sx={{ color: "secondary.main", fontFamily: "monospace" }}>
-                        {community.code}
-                      </Typography>
-                    ),
-                  },
-                  {
-                    key: "legalId",
-                    header: "NIF/CIF",
-                    render: (community) => (
-                      <Typography variant="body2" sx={{ color: "secondary.main" }}>
-                        {community.legalId || "—"}
-                      </Typography>
-                    ),
-                  },
-                  {
-                    key: "address",
-                    header: "Dirección",
-                    render: (community) => (
-                      <Typography variant="body2" sx={{ color: "secondary.main" }}>
-                        {community.address || "—"}
-                      </Typography>
-                    ),
-                  },
-                  {
                     key: "admins",
                     header: "Administradores",
+                    width: COLUMN_WIDTHS.admins,
                     render: (community) => <AdminNamesCell adminNames={community.adminNames} />,
                   },
                   {
@@ -277,9 +275,10 @@ export const CommunitiesPage: FC = () => {
                       </Box>
                     ),
                     align: "center",
+                    width: COLUMN_WIDTHS.memberCount,
                     render: (community) => (
                       <Typography variant="body2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        {community.memberCount ?? "—"}
+                        {community.memberCount}
                       </Typography>
                     ),
                   },
@@ -292,15 +291,17 @@ export const CommunitiesPage: FC = () => {
                       </Box>
                     ),
                     align: "center",
+                    width: COLUMN_WIDTHS.supplyPointCount,
                     render: (community) => (
                       <Typography variant="body2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                        {community.supplyPointCount ?? "—"}
+                        {community.supplyPointCount}
                       </Typography>
                     ),
                   },
                   {
                     key: "status",
                     header: "Estado",
+                    width: COLUMN_WIDTHS.status,
                     render: (community) => (
                       <Chip
                         label={community.enabled ? "Activa" : "Inactiva"}
@@ -340,13 +341,14 @@ export const CommunitiesPage: FC = () => {
                       sx={{ fontWeight: 600 }}
                     />
                   ),
+                  // A missing value is left out rather than shown as "—".
                   fields: [
-                    { label: "Código", value: community.code || "—" },
-                    { label: "CIF", value: community.legalId || "—" },
-                    { label: "Dirección", value: community.address || "—" },
-                    { label: "Admins", value: <AdminNamesCell adminNames={community.adminNames} /> },
-                    { label: "Socios", value: community.memberCount ?? "—" },
-                    { label: "Suministros", value: community.supplyPointCount ?? "—" },
+                    ...(community.code ? [{ label: "Código", value: community.code }] : []),
+                    ...(community.legalId ? [{ label: "CIF", value: community.legalId }] : []),
+                    ...(community.address ? [{ label: "Dirección", value: community.address }] : []),
+                    { label: "Administradores", value: <AdminNamesCell adminNames={community.adminNames} /> },
+                    { label: "Miembros", value: community.memberCount },
+                    { label: "Suministros", value: community.supplyPointCount },
                   ],
                 }))}
               />
