@@ -7,6 +7,7 @@ import {
   presetSummary,
   rangeResultText,
   resolvePeriod,
+  settleSelection,
   writeSelection,
   type CalendarDay,
   type PeriodResolution,
@@ -245,6 +246,42 @@ describe("UI-HIS-008 a custom range is clamped to the anchor it meets (#248)", (
   it("UI-HIS-008 a clamp that leaves 62 days re-evaluates the granularity to daily", () => {
     const { selection } = clampToAnchor(custom(day(2026, 7, 1), day(2026, 9, 30)), { year: 2026, month: 8 });
     expect(ok(resolvePeriod({ year: 2026, month: 8 }, selection)).period.granularity).toBe("daily");
+  });
+});
+
+describe("UI-HIS-008 a selection is settled against the anchor it meets, whenever it meets one (#248)", () => {
+  const AUGUST = { year: 2026, month: 8 };
+
+  it("UI-HIS-008 a range past the anchor is clamped and told, whether it arrives from a link or a switch", () => {
+    expect(settleSelection(custom(day(2026, 7, 10), day(2026, 9, 20)), AUGUST)).toEqual({
+      selection: custom(day(2026, 7, 10), day(2026, 8, 31)),
+      adjusted: true,
+      rewrite: true,
+    });
+  });
+
+  it("UI-HIS-008 a range starting after the anchor falls back to the latest published month, and is told", () => {
+    expect(settleSelection(custom(day(2026, 9, 2), day(2026, 9, 20)), AUGUST)).toEqual({
+      selection: { kind: "latest" },
+      adjusted: true,
+      rewrite: true,
+    });
+  });
+
+  it("UI-HIS-009 no selection at all falls back to the latest published month, silently", () => {
+    expect(settleSelection(null, AUGUST)).toEqual({ selection: { kind: "latest" }, adjusted: false, rewrite: true });
+  });
+
+  it("UI-HIS-007 a range over the cap falls back to the latest published month, silently", () => {
+    expect(settleSelection(custom(day(2024, 7, 1), day(2026, 8, 31)), AUGUST)).toEqual({
+      selection: { kind: "latest" },
+      adjusted: false,
+      rewrite: true,
+    });
+  });
+
+  it("UI-HIS-009 a selection the anchor admits is kept, and the address left alone", () => {
+    expect(settleSelection({ kind: "year" }, AUGUST)).toEqual({ selection: { kind: "year" }, adjusted: false, rewrite: false });
   });
 });
 

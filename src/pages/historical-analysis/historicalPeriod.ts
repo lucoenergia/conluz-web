@@ -362,3 +362,29 @@ export function sameSelection(a: PeriodSelection, b: PeriodSelection): boolean {
   if (a.kind !== "custom" || b.kind !== "custom") return true;
   return compareDays(a.from, b.from) === 0 && compareDays(a.to, b.to) === 0;
 }
+
+/**
+ * What a selection read from the query string becomes once it meets the
+ * anchor -- on arrival from a link, after a community switch, or when the
+ * selected supply changes the anchor; the rule is the same every time.
+ *
+ * - Not a selection at all (an unknown period, a date that does not exist, a
+ *   range running backwards): the default, silently.
+ * - A custom range past the anchor month: clamped to it, or the default when
+ *   nothing would be left, and the user is told (`adjusted`).
+ * - A range that still cannot be requested (over the cap): the default, silently.
+ *
+ * `rewrite` says the query string no longer holds what is shown.
+ */
+export function settleSelection(
+  parsed: PeriodSelection | null,
+  anchor: CalendarMonth,
+): { selection: PeriodSelection; adjusted: boolean; rewrite: boolean } {
+  const latest: PeriodSelection = { kind: "latest" };
+  if (!parsed) return { selection: latest, adjusted: false, rewrite: true };
+
+  const clamped = clampToAnchor(parsed, anchor);
+  const status = resolvePeriod(anchor, clamped.selection).status;
+  const selection = status === "tooLong" || status === "unpickable" ? latest : clamped.selection;
+  return { selection, adjusted: clamped.adjusted, rewrite: !sameSelection(selection, parsed) };
+}
