@@ -114,7 +114,7 @@ export const CommunitiesPage: FC = () => {
 
   // No permitted action means no menu at all, rather than a menu with nothing
   // in it or items the backend would refuse.
-  const hasRowActions = (community: CommunityResponse) =>
+  const offersRowActions = (community: CommunityResponse) =>
     !!forCommunity(community).actions.update || rowAdmins(community).state === "allowed";
 
   const selectedUpdate = forCommunity(selectedCommunity ?? undefined).actions.update;
@@ -236,7 +236,7 @@ export const CommunitiesPage: FC = () => {
               rowActions={{
                 label: (community) => `Más acciones para ${community.name || "la comunidad"}`,
                 onClick: handleMenuOpen,
-                has: hasRowActions,
+                has: offersRowActions,
               }}
               title={{
                 header: "Nombre",
@@ -317,7 +317,7 @@ export const CommunitiesPage: FC = () => {
                 },
                 has: (item) => {
                   const community = communityOfItem(item);
-                  return !!community && hasRowActions(community);
+                  return !!community && offersRowActions(community);
                 },
               }}
               items={pageRows.map((community) => ({

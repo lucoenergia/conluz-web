@@ -73,7 +73,7 @@ export const MembersFilters: FC<MembersFiltersProps> = ({
   resultCount,
   showClear,
 }) => {
-  const isNarrow = useListLayout() === "narrow";
+  const layout = useListLayout();
   const [panelOpen, setPanelOpen] = useState(false);
   const panelId = useId();
 
@@ -86,7 +86,7 @@ export const MembersFilters: FC<MembersFiltersProps> = ({
     />
   );
 
-  if (!isNarrow) {
+  if (layout === "wide") {
     return (
       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
         <Box sx={{ flex: "1 1 280px", minWidth: 0 }}>{search}</Box>

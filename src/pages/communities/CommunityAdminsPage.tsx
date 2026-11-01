@@ -108,7 +108,7 @@ export const CommunityAdminsPage: FC = () => {
   const selectedInvitationAction = invitationDialog ? selectedInvitationActions[invitationDialog] : undefined;
 
   // No permitted action means no menu at all.
-  const hasRowActions = (admin: CommunityAdminResponse) => {
+  const offersRowActions = (admin: CommunityAdminResponse) => {
     const actions = rowActionsOf(admin);
     return !!statusToggleFor(admin, actions) || Object.values(invitationActionsFor(admin, actions)).some(Boolean);
   };
@@ -216,7 +216,7 @@ export const CommunityAdminsPage: FC = () => {
               rowActions={{
                 label: (admin) => `Más acciones para ${admin.fullName}`,
                 onClick: handleMenuOpen,
-                has: hasRowActions,
+                has: offersRowActions,
               }}
               title={{
                 header: "Administrador",
@@ -259,7 +259,7 @@ export const CommunityAdminsPage: FC = () => {
                 },
                 has: (item) => {
                   const admin = adminOfItem(item);
-                  return !!admin && hasRowActions(admin);
+                  return !!admin && offersRowActions(admin);
                 },
               }}
               items={pageRows.map((admin) => {

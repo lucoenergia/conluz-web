@@ -144,7 +144,7 @@ export const PlatformAdminsPage: FC = () => {
         : undefined;
 
   // No permitted action means no menu at all.
-  const hasRowActions = (admin: PlatformAdminResponse) => hasAnyOffer(offerOf(admin));
+  const offersRowActions = (admin: PlatformAdminResponse) => hasAnyOffer(offerOf(admin));
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, admin: PlatformAdminResponse) => {
     setAnchorEl(event.currentTarget);
@@ -268,7 +268,7 @@ export const PlatformAdminsPage: FC = () => {
               rowActions={{
                 label: (admin) => `Más acciones para ${admin.fullName}`,
                 onClick: handleMenuOpen,
-                has: hasRowActions,
+                has: offersRowActions,
               }}
               title={{
                 header: "Nombre",
@@ -306,7 +306,7 @@ export const PlatformAdminsPage: FC = () => {
                 },
                 has: (item) => {
                   const admin = adminOfItem(item);
-                  return !!admin && hasRowActions(admin);
+                  return !!admin && offersRowActions(admin);
                 },
               }}
               items={pageRows.map((admin) => {

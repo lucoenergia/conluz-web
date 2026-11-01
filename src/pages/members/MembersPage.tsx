@@ -173,7 +173,7 @@ export const MembersPage: FC = () => {
 
   // No permitted action means no menu at all, rather than a menu with nothing
   // in it or items the backend would refuse.
-  const hasRowActions = (membership: MembershipResponse) => {
+  const offersRowActions = (membership: MembershipResponse) => {
     const actions = forMembership(membership).actions;
     return (
       !!actions.editRecord ||
@@ -494,7 +494,7 @@ export const MembersPage: FC = () => {
               rowActions={{
                 label: (membership) => `Más acciones para ${membership.fullName}`,
                 onClick: handleMenuOpen,
-                has: hasRowActions,
+                has: offersRowActions,
               }}
               selection={selectionOffered ? { header: selectAllCheckbox, render: selectionCheckbox } : undefined}
               title={{
@@ -562,7 +562,7 @@ export const MembersPage: FC = () => {
                 },
                 has: (item) => {
                   const membership = membershipOfItem(item);
-                  return !!membership && hasRowActions(membership);
+                  return !!membership && offersRowActions(membership);
                 },
               }}
               items={pageRows.map((membership) => {
