@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { Box, Chip, Typography } from "@mui/material";
+import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import type { SupplyResponse } from "../../api/models";
 import type { SupplyRowActions } from "../../hooks/actions/useSupplyActions";
 import type { RecordListItem } from "../../components/RecordList";
 import type { ListTableColumn, ListTableTitle } from "../../components/ListTable/ListTable";
-import { fontFamilies } from "../../theme/tokens";
+import { colors, fontFamilies, fontSizes } from "../../theme/tokens";
 import { supplyDisplayLabel, supplyLabelSource } from "../../utils/supplyDisplayLabel";
 
 /**
@@ -53,6 +54,19 @@ const cupsText = (code: string) => (
 const retiredChip = () => <Chip component="span" size="small" label="Dado de baja" sx={{ fontWeight: 600 }} />;
 
 /**
+ * The supply a plant of the community produces onto, named after that plant
+ * (UI-SUP-012). The supply says so itself (`plant`), so no other read is
+ * needed. Violet is production's colour, not an alert: the supply is a
+ * plant's, not a consumer in trouble.
+ */
+const plantMark = (plantName: string) => (
+  <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, color: colors.accent.violet }}>
+    <SolarPowerIcon aria-hidden sx={{ fontSize: fontSizes.lg }} />
+    <span>Punto de la planta {plantName}</span>
+  </Box>
+);
+
+/**
  * The lines that say what the title does not: the CUPS unless the title is
  * the CUPS, and the address only when the title is the name, so neither value
  * is shown twice.
@@ -71,6 +85,7 @@ export function toRecordListItem(supply: SupplyResponse, { showOwner }: SupplyRo
   const lines: ReactNode[] = [];
   if (cups) lines.push(cups);
   if (showOwner) lines.push(`Titular: ${supplyOwnerText(supply)}`);
+  if (supply.plant) lines.push(plantMark(supply.plant.name));
   if (address) lines.push(address);
 
   return {
@@ -83,7 +98,7 @@ export function toRecordListItem(supply: SupplyResponse, { showOwner }: SupplyRo
   };
 }
 
-/** The wide layout's name column: the label, linked, with the status and the address under it. */
+/** The wide layout's name column: the label, linked, with the status, the plant mark and the address under it. */
 export const supplyTableTitle: ListTableTitle<SupplyResponse> = {
   header: "Punto de suministro",
   text: supplyDisplayLabel,
@@ -94,6 +109,7 @@ export const supplyTableTitle: ListTableTitle<SupplyResponse> = {
     const { address } = identifierLines(supply);
     const lines: ReactNode[] = [];
     if (!supply.enabled) lines.push(retiredChip());
+    if (supply.plant) lines.push(plantMark(supply.plant.name));
     if (address) lines.push(address);
     return lines;
   },
