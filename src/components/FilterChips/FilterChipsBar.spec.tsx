@@ -58,4 +58,25 @@ describe("FilterChipsBar", () => {
     const icon = container.querySelector('[data-testid="FilterListIcon"]');
     expect(icon).not.toBeInTheDocument();
   });
+
+  it("UI-SUP-013 labels the statuses Todos, Activos and Dados de baja", () => {
+    render(<FilterChipsBar value="all" onChange={() => {}} />);
+
+    expect(screen.getAllByRole("button").map((chip) => chip.textContent)).toEqual(["Todos", "Activos", "Dados de baja"]);
+  });
+
+  // Structural: the palette is the subject, and MUI states a chip's colour
+  // only through its colour class.
+  it.each([
+    ["all", "Todos"],
+    ["active", "Activos"],
+    ["inactive", "Dados de baja"],
+  ] as const)("UI-SUP-013 styles the selected chip %s in the brand colour, never success or error", (value, label) => {
+    render(<FilterChipsBar value={value} onChange={() => {}} />);
+
+    const chip = screen.getByRole("button", { name: label });
+    expect(chip).toHaveClass("MuiChip-colorPrimary");
+    expect(chip).not.toHaveClass("MuiChip-colorSuccess");
+    expect(chip).not.toHaveClass("MuiChip-colorError");
+  });
 });
