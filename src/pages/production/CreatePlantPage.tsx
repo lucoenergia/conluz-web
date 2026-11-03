@@ -40,7 +40,8 @@ export const CreatePlantPage: FC = () => {
     };
 
     // The action invalidates the plant list itself, so there is no refetch here.
-    if (await createPlant.run(newPlant)) {
+    const result = await createPlant.run(newPlant);
+    if ("ok" in result) {
       navigate("/production");
     } else {
       errorDispatch("Ha habido un problema al crear una nueva planta. Por favor, inténtalo más tarde");

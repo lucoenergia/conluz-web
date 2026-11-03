@@ -114,7 +114,7 @@ export interface CommunityRowActions {
     update: MaybeAction<[UpdateCommunityBody], CommunityWriteResult>;
     enable: MaybeAction<[], boolean>;
     disable: MaybeAction<[], boolean>;
-    createPlant: MaybeAction<[CreatePlantBody], PlantResponse | undefined>;
+    createPlant: MaybeAction<[CreatePlantBody], CommunityWriteResult<PlantResponse>>;
     createSupply: MaybeAction<[CreateSupplyBody], CommunityWriteResult<SupplyResponse>>;
     importSupplies: MaybeAction<[ImportSuppliesBody], CommunityWriteResult<ImportSuppliesResponse>>;
     configureDatadis: MaybeAction<[ConfigureDatadisBody], ConfigureDatadisResult>;
@@ -228,16 +228,6 @@ export function useCommunityActions(): CommunityActions {
         }
       };
 
-      const runCreating = async <T>(call: () => Promise<T>, invalidate: () => void) => {
-        try {
-          const created = await call();
-          invalidate();
-          return created;
-        } catch {
-          return undefined;
-        }
-      };
-
       const invalidateSupplies = () =>
         queryClient.invalidateQueries({ queryKey: getGetAllSuppliesQueryKey(communityId) });
       const invalidatePlants = () =>
@@ -279,10 +269,18 @@ export function useCommunityActions(): CommunityActions {
             () => runOnCommunity(() => disableMutation.mutateAsync({ communityId })),
             disableMutation.isPending,
           ),
+          // A refused supply is worded by its code, so the refusal is handed back.
           createPlant: grant(
             createPlant,
-            (data: CreatePlantBody) =>
-              runCreating(() => createPlantMutation.mutateAsync({ data }), invalidatePlants),
+            async (data: CreatePlantBody): Promise<CommunityWriteResult<PlantResponse>> => {
+              try {
+                const value = await createPlantMutation.mutateAsync({ data });
+                invalidatePlants();
+                return { ok: true, value };
+              } catch (error) {
+                return { error };
+              }
+            },
             createPlantMutation.isPending,
           ),
           // Approximation: canManage, for want of a canCreateSupplies.

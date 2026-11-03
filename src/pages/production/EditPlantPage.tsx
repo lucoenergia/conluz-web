@@ -39,7 +39,8 @@ export const EditPlantPage: FC = () => {
 
     // The action invalidates the plant and the list itself, so there is no
     // refetch to fire here.
-    if (await edit.run(updatedPlant)) {
+    const result = await edit.run(updatedPlant);
+    if ("ok" in result) {
       navigate("/production");
     } else {
       errorDispatch("Ha habido un problema al editar la planta. Por favor, inténtalo más tarde");
