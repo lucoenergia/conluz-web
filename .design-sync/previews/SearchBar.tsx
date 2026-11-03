@@ -3,12 +3,12 @@ import { SearchBar, FilterChipsBar, Mui } from "conluz-web";
 
 export const Empty = () => {
   const [q, setQ] = useState("");
-  return <SearchBar value={q} onChange={setQ} />;
+  return <SearchBar value={q} onChange={setQ} placeholder="Buscar punto de suministro..." />;
 };
 
 export const WithQuery = () => {
   const [q, setQ] = useState("Torrent");
-  return <SearchBar value={q} onChange={setQ} />;
+  return <SearchBar value={q} onChange={setQ} placeholder="Buscar punto de suministro..." />;
 };
 
 export const CustomPlaceholder = () => {
@@ -21,7 +21,7 @@ export const WithFilters = () => {
   const [f, setF] = useState<"all" | "active" | "inactive">("active");
   return (
     <Mui.Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
-      <SearchBar value={q} onChange={setQ} />
+      <SearchBar value={q} onChange={setQ} placeholder="Buscar punto de suministro..." />
       <FilterChipsBar value={f} onChange={setF} />
     </Mui.Box>
   );
