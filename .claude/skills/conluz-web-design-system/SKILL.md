@@ -40,7 +40,8 @@ repo-specific gotchas are in `.design-sync/NOTES.md`. Read NOTES.md before editi
 
   Reading the community name (`useActiveCommunityName`) is fine: the provider supplies an inert
   community context. Types from `src/api/models` are fine. Check the whole import tree, not just
-  the component file: `SupplyCard` is only eligible because the dialogs it embeds are.
+  the component file: a component that embeds a confirmation modal is only eligible because the
+  modal is.
 
 ## Adding a component
 

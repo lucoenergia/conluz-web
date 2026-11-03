@@ -135,7 +135,7 @@ const themeOptions: Parameters<typeof createTheme>[0] = {
       },
     },
     // MenuItem defaults: standard nav-item layout and hover colour
-    // encoded once instead of repeated in ProfileMenu, DisplayMenu, PlantCard.
+    // encoded once instead of repeated in every menu.
     // Danger/success hover colours remain in local sx (they win over this default).
     MuiMenuItem: {
       styleOverrides: {
