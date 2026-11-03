@@ -79,7 +79,10 @@ const TITLE = "Tus datos";
 /** Euros as the app writes them, with the non-breaking space Intl puts before the sign. */
 const eur = (value: number) => formatEuros(value);
 const LOADING_LABEL = "Cargando la tabla de tus datos…";
-const LOAD_ERROR = "No se pudo cargar la tabla de tus datos. Comprueba tu conexión e inténtalo de nuevo.";
+const UNAVAILABLE = "La tabla estará disponible cuando se carguen tus datos.";
+/** What the blocks that own the requests say when one fails: the charts (#250) and the period card (#249). */
+const SERIES_ERROR = "No se pudo cargar la evolución de tu energía. Comprueba tu conexión e inténtalo de nuevo.";
+const METRICS_ERROR = "No se pudieron cargar tus datos de energía. Comprueba tu conexión e inténtalo de nuevo.";
 const DOWNLOAD = "Descargar CSV";
 
 const pad = (value: number) => String(value).padStart(2, "0");
@@ -322,34 +325,56 @@ describe("UI-HIS-021 loading and failure (#251)", () => {
     expect(screen.getByRole("progressbar", { name: LOADING_LABEL })).toBeInTheDocument();
     expect(within(region()).queryByRole("table")).not.toBeInTheDocument();
     expect(within(region()).getByRole("button", { name: DOWNLOAD })).toBeDisabled();
+    expect(within(region()).queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("UI-HIS-021 while the metrics are pending, the download is disabled", () => {
+  it("UI-HIS-021 while the metrics are pending, a placeholder stands in the table's place, and the download is disabled", () => {
     metricsState = "loading";
     renderPage();
 
+    expect(within(region()).getByRole("progressbar", { name: LOADING_LABEL })).toBeInTheDocument();
+    expect(within(region()).queryByRole("table")).not.toBeInTheDocument();
     expect(within(region()).getByRole("button", { name: DOWNLOAD })).toBeDisabled();
   });
 
-  it("UI-HIS-021 a failed series is an error with the series' retry, and the download is disabled", async () => {
+  it("UI-HIS-021 a failed series is the charts' one alert; the table says it will be available, and the download is disabled", async () => {
     seriesState = "error";
     renderPage();
 
-    const alert = within(region()).getByRole("alert");
-    expect(alert).toHaveTextContent(LOAD_ERROR);
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(SERIES_ERROR);
+    expect(within(region()).queryByRole("alert")).not.toBeInTheDocument();
+    expect(region()).toHaveTextContent(UNAVAILABLE);
+    expect(within(region()).queryByRole("table")).not.toBeInTheDocument();
     expect(within(region()).getByRole("button", { name: DOWNLOAD })).toBeDisabled();
     await userEvent.click(within(alert).getByRole("button", { name: "Reintentar" }));
     expect(failedSeries.refetch).toHaveBeenCalled();
   });
 
-  it("UI-HIS-021 failed metrics are an error with the metrics' retry, and the download is disabled", async () => {
+  it("UI-HIS-021 failed metrics are the period card's one alert; the table says it will be available, and the download is disabled", async () => {
     metricsState = "error";
     renderPage();
 
-    const alert = within(region()).getByRole("alert");
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(METRICS_ERROR);
+    expect(within(region()).queryByRole("alert")).not.toBeInTheDocument();
+    expect(region()).toHaveTextContent(UNAVAILABLE);
     expect(within(region()).getByRole("button", { name: DOWNLOAD })).toBeDisabled();
     await userEvent.click(within(alert).getByRole("button", { name: "Reintentar" }));
     expect(failedMetrics.refetch).toHaveBeenCalled();
+  });
+
+  it("UI-HIS-021 with both requests failed, the page holds one alert per request, and none in the table", () => {
+    seriesState = "error";
+    metricsState = "error";
+    renderPage();
+
+    const alerts = screen.getAllByRole("alert").map((alert) => alert.textContent);
+    expect(alerts).toHaveLength(2);
+    expect(alerts.some((text) => text?.includes(SERIES_ERROR))).toBe(true);
+    expect(alerts.some((text) => text?.includes(METRICS_ERROR))).toBe(true);
+    expect(within(region()).queryByRole("alert")).not.toBeInTheDocument();
+    expect(region()).toHaveTextContent(UNAVAILABLE);
   });
 });
 

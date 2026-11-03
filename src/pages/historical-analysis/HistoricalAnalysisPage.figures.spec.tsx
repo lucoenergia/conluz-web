@@ -193,11 +193,9 @@ describe("UI-HIS-010 the figures come from the energy metrics of the resolved pe
     membershipFigures = () => failed as MembershipQuery;
     renderPage();
 
-    // The data table reports the same failure in an alert of its own (#251).
-    const alert = screen.getByText(LOAD_ERROR).closest<HTMLElement>("[role=alert]")!;
-    expect(alert).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(LOAD_ERROR);
     expect(screen.queryByRole("region", { name: CARD })).not.toBeInTheDocument();
-    await userEvent.click(within(alert).getByRole("button", { name: "Reintentar" }));
+    await userEvent.click(screen.getByRole("button", { name: "Reintentar" }));
     expect(failed.refetch).toHaveBeenCalled();
   });
 });

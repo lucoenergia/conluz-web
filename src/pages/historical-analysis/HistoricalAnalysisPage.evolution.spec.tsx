@@ -375,9 +375,8 @@ describe("UI-HIS-019 loading and failure of the series (#250)", () => {
     seriesState = "error";
     renderPage();
 
-    // The data table reports the same failure in an alert of its own (#251).
-    const alert = screen.getByText("No se pudo cargar la evolución de tu energía. Comprueba tu conexión e inténtalo de nuevo.").closest<HTMLElement>("[role=alert]")!;
-    expect(alert).toBeInTheDocument();
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("No se pudo cargar la evolución de tu energía. Comprueba tu conexión e inténtalo de nuevo.");
     expect(screen.queryByRole("region", { name: DAILY_TITLE })).not.toBeInTheDocument();
     await userEvent.click(within(alert).getByRole("button", { name: "Reintentar" }));
     expect(failed.refetch).toHaveBeenCalled();

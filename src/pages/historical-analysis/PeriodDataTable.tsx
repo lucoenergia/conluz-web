@@ -18,7 +18,6 @@ import { visuallyHidden } from "@mui/utils";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import TableRowsRoundedIcon from "@mui/icons-material/TableRowsRounded";
 import type { SupplyResponse } from "../../api/models";
-import { LoadErrorAlert } from "../../components/LoadErrorAlert/LoadErrorAlert";
 import { colors } from "../../theme/tokens";
 import { formatEuros, formatEurosPerKilowattHour, formatKilowattHours } from "../../utils/formatEnergyFigures";
 import { triggerBrowserDownload } from "../../utils/triggerBrowserDownload";
@@ -39,7 +38,8 @@ const STATE_HEADER = "Datos";
 const TOTAL_LABEL = "Total del periodo";
 const GAP_CELL = "—";
 const LOADING_LABEL = "Cargando la tabla de tus datos…";
-const LOAD_ERROR = "No se pudo cargar la tabla de tus datos. Comprueba tu conexión e inténtalo de nuevo.";
+/** Neutral: the card and the charts that own the failed request already say so, with "Reintentar". */
+const UNAVAILABLE = "La tabla estará disponible cuando se carguen tus datos.";
 
 /** One row of the table: a slot's, or the period's totals. Every figure is already a string. */
 interface Row {
@@ -271,11 +271,14 @@ export const PeriodDataTable: FC<{ selected: SupplyResponse | null }> = ({ selec
   // Already cached: the period card asked for the same metrics (#249).
   const metrics = usePeriodEnergyMetrics(selected);
   if (!period) return null;
-  const failed = series.status === "error" ? series : metrics.status === "error" ? metrics : null;
-  if (failed) {
+  // A failed request is reported, with its retry, by the block that owns it:
+  // the period card (#249) or the evolution charts (#250), never twice.
+  if (series.status === "error" || metrics.status === "error") {
     return (
       <Placeholder>
-        <LoadErrorAlert message={LOAD_ERROR} onRetry={failed.retry} />
+        <Typography variant="body2" sx={{ color: colors.text.body }}>
+          {UNAVAILABLE}
+        </Typography>
       </Placeholder>
     );
   }
