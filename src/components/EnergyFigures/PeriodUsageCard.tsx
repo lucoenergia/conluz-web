@@ -6,14 +6,13 @@ import { formatKilowattHourAmount, formatKilowattHours } from "../../utils/forma
 import { sxStyles } from "../../theme/sx";
 import { colors, radii } from "../../theme/tokens";
 import { ENERGY_COLORS } from "./energyColors";
-import { boundedPercent, coverageSentence, excludedPlantsText, usageHeadline } from "./periodUsage";
+import { NOT_APPLICABLE_TITLE, boundedPercent, coverageSentence, excludedPlantsText, usageHeadline } from "./periodUsage";
 import type { PeriodEnergyMetrics } from "./periodEnergyMetrics";
 
 const CAPTION = "De la energía que te tocó";
 /** The one place the technical names of the two ratios appear (UI-HIS-011). */
 const TECHNICAL_TERMS =
   "En términos técnicos, la primera cifra es tu porcentaje de autoconsumo y la segunda, tu porcentaje de autosuficiencia.";
-const NOT_APPLICABLE_TITLE = "No aplica al punto de la planta";
 const NOT_APPLICABLE_BODY = "En el punto de la planta, «se fue a la red» siempre es 0 kWh.";
 const NOTHING_ASSIGNED_TITLE = "En este periodo no se te asignó energía";
 
