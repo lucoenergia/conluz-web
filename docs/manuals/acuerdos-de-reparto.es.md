@@ -106,20 +106,20 @@ Antes de empezar: [cómo se organiza la pantalla de un acuerdo](#cómo-se-organi
 ## 1. Acceder a la sección
 
 1. Entra en la ficha de la planta desde **Producción**.
-2. Accede a **Acuerdos de Reparto**. La ruta de navegación (breadcrumb) muestra: `Inicio → Producción → [Planta] → Acuerdos de Reparto`.
+2. Accede a **Acuerdos de reparto**. La ruta de navegación (breadcrumb) muestra: `Inicio → Producción → [Planta] → Acuerdos de reparto`.
 
 Si tu rol en la comunidad activa no es de administrador, no podrás acceder a esta pantalla.
 
-<!-- SCREENSHOT: breadcrumb de navegación hasta "Acuerdos de Reparto" -->
-![Acceso a la sección de Acuerdos de Reparto](placeholder-acceso.png)
+<!-- SCREENSHOT: breadcrumb de navegación hasta "Acuerdos de reparto" -->
+![Acceso a la sección de Acuerdos de reparto](placeholder-acceso.png)
 
 Al entrar verás:
 
 - Un encabezado con el nombre de la planta y su **CAU** (código regulatorio).
 - Tres indicadores con el número de acuerdos en cada estado: **Vigente**, **Borradores** e **Históricos**.
-- La lista de acuerdos existentes, ordenados en una línea de tiempo.
+- La lista de acuerdos existentes, del más reciente al más antiguo. Cada fila muestra el nombre del acuerdo, su estado, la potencia instalada, la fecha de la última edición (o de creación, si nunca se ha editado), el fichero subido o «Sin fichero», y las notas, si las tiene.
 
-<!-- SCREENSHOT: vista completa de la lista de acuerdos de reparto de una planta, con los indicadores de estado y la línea de tiempo -->
+<!-- SCREENSHOT: vista completa de la lista de acuerdos de reparto de una planta, con los indicadores de estado y las filas de los acuerdos -->
 ![Lista de acuerdos de reparto](placeholder-lista.png)
 
 ---
@@ -332,7 +332,7 @@ Todas estas acciones también admiten selección múltiple desde la barra de acc
 
 Solo puedes eliminar un acuerdo mientras está en **Borrador**:
 
-1. Desde la lista de acuerdos, abre el menú (**⋮**) de la tarjeta del acuerdo, o desde su pantalla de detalle, el menú de tres puntos.
+1. Desde la lista de acuerdos, abre el menú (**⋮**) de la fila del acuerdo, o desde su pantalla de detalle, el menú de tres puntos.
 2. Selecciona **Eliminar**.
 3. Confirma en el diálogo, que te recuerda que se eliminarán permanentemente el borrador y sus coeficientes.
 

@@ -4,7 +4,7 @@
 | --- | --- |
 | **Prefix** | `UI-LST` |
 | **Status** | Active |
-| **Routes** | `/members`, `/communities`, `/communities/:communityId/admins`, `/platform-admins`, `/supply-points`, `/production` |
+| **Routes** | `/members`, `/communities`, `/communities/:communityId/admins`, `/platform-admins`, `/supply-points`, `/production`, `/production/:plantId/sharing-agreements` |
 | **Roles** | Whoever each list's own page admits; see `members.md`, `community-admins.md`, `platform-admins.md`, `supplies.md`, `plants.md` |
 | **Domain rules** | n/a |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `ListPagination` |
