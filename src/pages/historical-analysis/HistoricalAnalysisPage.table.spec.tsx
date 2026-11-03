@@ -221,7 +221,14 @@ describe("UI-HIS-021 one row per chart slot, with the same states and words (#25
     const grid = table();
     expect(grid.querySelector("caption")).toHaveTextContent("Tus datos: Septiembre de 2026, por días");
     const headers = within(grid).getAllByRole("columnheader");
-    expect(headers.map((header) => header.textContent)).toEqual(["Día", "De la comunidad", "De la red", "Se fue a la red", "Ahorro estimado", "Datos"]);
+    expect(headers.map((header) => header.textContent)).toEqual([
+      "Día",
+      "De la comunidad",
+      "De la red",
+      "Se fue a la red",
+      "Ahorro estimado con 0,15 €/kWh",
+      "Datos",
+    ]);
     headers.forEach((header) => expect(header).toHaveAttribute("scope", "col"));
     const rowHeaders = within(grid).getAllByRole("rowheader");
     rowHeaders.forEach((header) => expect(header).toHaveAttribute("scope", "row"));
@@ -277,16 +284,17 @@ describe("UI-HIS-021 one row per chart slot, with the same states and words (#25
     expect(bodyRows()).toHaveLength(7);
   });
 
-  it("UI-HIS-021 the footer states the estimated price, and is left out without one", () => {
+  it("UI-HIS-021 the estimated price is the savings header's second line, and is left out without one", () => {
     const { unmount } = renderPage();
-    const footer = within(region()).getByText(/^Ahorro estimado con/);
-    expect(footer).toHaveTextContent(/^Ahorro estimado con 0,15 €\/kWh\. El CSV incluye las mismas filas y la columna «Datos»\.$/);
+    const savings = within(table()).getByRole("columnheader", { name: /^Ahorro estimado/ });
+    expect(within(savings).getByText("con 0,15 €/kWh")).toBeInTheDocument();
+    expect(region()).not.toHaveTextContent("El CSV incluye");
     unmount();
 
     membershipFigures = derivedMembershipFigures({ ...PERIOD_FIGURES, savings: { ...PERIOD_FIGURES.savings, estimatedPrice: null } });
     renderPage();
-    expect(region()).not.toHaveTextContent("Ahorro estimado con");
-    expect(table()).toBeInTheDocument();
+    expect(within(table()).getByRole("columnheader", { name: /^Ahorro estimado/ })).toHaveTextContent(/^Ahorro estimado$/);
+    expect(region()).not.toHaveTextContent("€/kWh");
   });
 });
 
@@ -442,6 +450,21 @@ describe("UI-HIS-023 \"Descargar CSV\" (#251)", () => {
 });
 
 describe("UI-HIS-021 below sm, one card per row (#251)", () => {
+  it("UI-HIS-021 the estimated price is stated once, above the cards, and is left out without one", () => {
+    const { unmount } = renderPage();
+    const note = within(region()).getByText("Ahorro estimado con 0,15 €/kWh.");
+    const list = within(region()).getByRole("list", { name: /^Tus datos:/ });
+    expect(note.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    cards().forEach((card) => expect(card).not.toHaveTextContent("€/kWh"));
+    expect(region()).not.toHaveTextContent("El CSV incluye");
+    unmount();
+
+    membershipFigures = derivedMembershipFigures({ ...PERIOD_FIGURES, savings: { ...PERIOD_FIGURES.savings, estimatedPrice: null } });
+    renderPage();
+    expect(region()).not.toHaveTextContent("€/kWh");
+    expect(cards()).toHaveLength(7 + 1);
+  });
+
   it("UI-HIS-021 cards replace the table, with the same content, the totals last, and the same paging", async () => {
     membershipDaily = [membershipGapDay("2026/07/01"), ...JULY_AUGUST_DAYS.slice(1).map((date) => membershipDay(date, DAY))];
     renderPage(LONGEST_DAILY);

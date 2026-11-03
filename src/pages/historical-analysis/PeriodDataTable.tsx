@@ -103,8 +103,18 @@ const DataRow: FC<{ row: Row; total?: boolean }> = ({ row, total = false }) => (
   </TableRow>
 );
 
-/** From `sm` up: a real table, the accessible alternative to the charts. */
-const DesktopTable: FC<{ caption: string; granularity: Granularity; rows: Row[]; total: Row }> = ({ caption, granularity, rows, total }) => (
+/**
+ * From `sm` up: a real table, the accessible alternative to the charts. The
+ * estimated price, when there is one, is the savings header's second line, so
+ * it sits on the column it prices.
+ */
+const DesktopTable: FC<{ caption: string; granularity: Granularity; rows: Row[]; total: Row; price: string | null }> = ({
+  caption,
+  granularity,
+  rows,
+  total,
+  price,
+}) => (
   <TableContainer>
     <Table size="small">
       <Box component="caption" sx={visuallyHidden}>
@@ -116,6 +126,14 @@ const DesktopTable: FC<{ caption: string; granularity: Granularity; rows: Row[];
           {VALUE_HEADERS.map((header) => (
             <TableCell key={header} scope="col" align="right">
               {header}
+              {header === SAVINGS_SERIES && price && (
+                <>
+                  {" "}
+                  <Typography component="span" variant="caption" sx={{ display: "block", color: colors.text.body, whiteSpace: "nowrap" }}>
+                    con {price}
+                  </Typography>
+                </>
+              )}
             </TableCell>
           ))}
           <TableCell scope="col">{STATE_HEADER}</TableCell>
@@ -218,6 +236,7 @@ const ReadyTable: FC<{
   const subtitle = subtitleOf(period);
   const caption = `${TITLE}: ${subtitle}`;
   const { estimatedPrice } = metrics.savings;
+  const price = estimatedPrice ? formatEurosPerKilowattHour(estimatedPrice.eurPerKWh) : null;
   // Every slot of the period, not only the rows on screen.
   const download = () =>
     triggerBrowserDownload(
@@ -234,9 +253,17 @@ const ReadyTable: FC<{
         <DownloadButton onDownload={download} />
       </Box>
       {isWide ? (
-        <DesktopTable caption={caption} granularity={granularity} rows={shown} total={total} />
+        <DesktopTable caption={caption} granularity={granularity} rows={shown} total={total} price={price} />
       ) : (
-        <MobileCards caption={caption} rows={shown} total={total} />
+        <>
+          {/* Once, above the cards: repeated on each card it would be read up to 63 times. */}
+          {price && (
+            <Typography variant="caption" component="p" sx={{ color: colors.text.body }}>
+              Ahorro estimado con {price}.
+            </Typography>
+          )}
+          <MobileCards caption={caption} rows={shown} total={total} />
+        </>
       )}
       {rows.length > PAGE_SIZE && (
         <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
@@ -247,11 +274,6 @@ const ReadyTable: FC<{
             {showAll ? "Ver menos" : "Ver todos"}
           </Button>
         </Box>
-      )}
-      {estimatedPrice && (
-        <Typography variant="caption" component="p" sx={{ color: colors.text.body }}>
-          Ahorro estimado con {formatEurosPerKilowattHour(estimatedPrice.eurPerKWh)}. El CSV incluye las mismas filas y la columna «Datos».
-        </Typography>
       )}
     </HomeCard>
   );
