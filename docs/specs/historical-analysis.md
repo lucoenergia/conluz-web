@@ -431,7 +431,7 @@ too, never the other members'.
 | Supplies, period, series failed | Under the figures, an error with "Reintentar" (UI-HIS-019) | Choosing a supply or a period, retrying |
 | Supplies, period, series | Under the figures, the evolution card: coverage line, notices, the energy chart (UI-HIS-017) and the savings chart, every slot complete, measured zero, gap or partial (UI-HIS-015), and the marks' key | Choosing a supply or a period; hovering a slot for its tooltip |
 | Supplies, period, table pending | Under the evolution card, a placeholder where the data table goes, and "Descargar CSV" disabled | Choosing a supply or a period |
-| Supplies, period, table failed | Under the evolution card, an error with "Reintentar", and "Descargar CSV" disabled | Choosing a supply or a period, retrying |
+| Supplies, period, table failed | Under the evolution card, the neutral line "La tabla estará disponible cuando se carguen tus datos." and "Descargar CSV" disabled; the failure itself is reported, with "Reintentar", only by the period card (UI-HIS-010) or the evolution charts (UI-HIS-019) that own the request | Choosing a supply or a period; retrying from the block that reports the failure |
 | Supplies, period, table | Under the evolution card, "Tus datos": a row per slot (UI-HIS-021), the totals row (UI-HIS-022), seven rows until "Ver todos"; below `sm`, a card per row | Choosing a supply or a period; "Ver todos" / "Ver menos"; "Descargar CSV" (UI-HIS-023, UI-HIS-024) |
 | Error | The title only; the error is reported as on the supply list | None |
 
