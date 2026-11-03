@@ -7,14 +7,14 @@
 | **Routes** | `/historical-analysis` |
 | **Roles** | A caller who may read the active community (`canRead`): members and community admins |
 | **Domain rules** | EPR-001, EPR-003, EPR-004 (lucoenergia/conluz#409); SEM-001 (lucoenergia/conluz#408); SEM-002, SEM-003, SEM-004, ENM-006, ENM-007, ENM-008 (lucoenergia/conluz#411); MCS-001, MCS-002 (lucoenergia/conluz#410); ADR-0005 in lucoenergia/conluz |
-| **Design reference** | Claude Design round 2 copy deck; round 3 copy deck for the period (#248); the member consumption analysis design, option A, for the evolution charts (#250) |
-| **Last reviewed against code** | #250 |
+| **Design reference** | Claude Design round 2 copy deck; round 3 copy deck for the period (#248); the member consumption analysis design, option A, for the evolution charts (#250) and the data table and CSV (#251) |
+| **Last reviewed against code** | #251 |
 
 Scope: the page shell, its menu entry and its supply selector (#247), the period: its anchor,
 selector, custom range picker, header and query string (#248), the period's card and totals
-(#249), and the energy and savings evolution charts (#250). The table and CSV are specified by the
-later issues of lucoenergia/conluz#405 as they land; they read the period through
-`useHistoricalPeriod` (`src/pages/historical-analysis/HistoricalPeriodContext.tsx`).
+(#249), the energy and savings evolution charts (#250), and the data table with its CSV download
+(#251). All of them read the period through `useHistoricalPeriod`
+(`src/pages/historical-analysis/HistoricalPeriodContext.tsx`).
 
 ## Purpose
 
@@ -361,6 +361,60 @@ too, never the other members'.
 - **Implements:** n/a
 - **Source:** #250
 
+### UI-HIS-021 — The data table has one row per chart slot, with the same states and words
+
+- **Status:** Active
+- **Rule:** The data table MUST have exactly one row per slot of the evolution charts, in the
+  charts' axis order, with each slot's state in the same words the charts use; a gap MUST show no
+  value.
+- **Rationale:** The table is the accessible alternative to the charts, so it must say what they
+  draw, slot for slot. Reading the rows from the charts' own slots, and the words from the one
+  module that holds every state's short and long form (`slotStateText.ts`), keeps the two from
+  drifting apart. A gap written as a figure would read as a measured 0, which UI-HIS-015 forbids on
+  the charts for the same reason.
+- **Implements:** MCS-001 and MCS-002 (lucoenergia/conluz#410), through the slot states of
+  UI-HIS-015.
+- **Source:** #251, #250
+
+### UI-HIS-022 — The table's totals row is the energy metrics' totals
+
+- **Status:** Active
+- **Rule:** The table's totals row MUST show the energy-metrics totals for the same period and
+  scope, never a sum of the rows.
+- **Rationale:** Each bucket and the period are rounded separately by the server, so the rows can
+  add up to a figure a cent or a thousandth of a kWh away from the period's. The totals row is the
+  same figure the totals under the card show (UI-HIS-010), and two totals for one period would
+  contradict each other. The client counts slots by state for the row's "Datos" sentence, which is
+  not a figure.
+- **Implements:** n/a
+- **Source:** #251, #249 (UI-HIS-010)
+
+### UI-HIS-023 — The CSV holds the table's rows, unrounded, with the estimate on every line
+
+- **Status:** Active
+- **Rule:** The CSV MUST contain the same rows as the table, with the API's unrounded values and a
+  decimal comma, empty cells on a gap, the slot's state in `datos`, and, when `estimatedPrice` is
+  present, the estimated price and its note on every line.
+- **Rationale:** A file taken away must carry the measurements, not the screen's rounding of them,
+  and must keep a gap distinct from a measured 0. A spreadsheet in Spanish reads `;`-separated
+  columns with a decimal comma, and needs the UTF-8 byte order mark to keep accents. The price and
+  its note repeat on every line so that any row copied out of the file still says its savings are
+  an estimate; both stay empty without `estimatedPrice`, keyed as UI-HIS-020 keys the legend.
+- **Implements:** n/a
+- **Source:** #251
+
+### UI-HIS-024 — The CSV file name is the scope's ASCII slug and the period's first and last day
+
+- **Status:** Active
+- **Rule:** The CSV file MUST be named `conluz-consumo-{punto}-{desde}-{hasta}.csv`, where
+  `{punto}` is an ASCII slug of the scope and `{desde}` and `{hasta}` are the period's first and
+  last day.
+- **Rationale:** An ASCII name survives every file system and mail client. The scope and the days
+  tell two downloads apart without opening them. The last day is the one shown, the day before the
+  half-open `endDate`, so the name never states a day the file has no row for.
+- **Implements:** EPR-001 (lucoenergia/conluz#409), under which a period is half-open.
+- **Source:** #251
+
 ## States
 
 | State | Rendered | Actions available |
@@ -376,6 +430,9 @@ too, never the other members'.
 | Supplies, period, series pending | Under the figures, a placeholder where the evolution charts go (UI-HIS-019) | Choosing a supply or a period |
 | Supplies, period, series failed | Under the figures, an error with "Reintentar" (UI-HIS-019) | Choosing a supply or a period, retrying |
 | Supplies, period, series | Under the figures, the evolution card: coverage line, notices, the energy chart (UI-HIS-017) and the savings chart, every slot complete, measured zero, gap or partial (UI-HIS-015), and the marks' key | Choosing a supply or a period; hovering a slot for its tooltip |
+| Supplies, period, table pending | Under the evolution card, a placeholder where the data table goes, and "Descargar CSV" disabled | Choosing a supply or a period |
+| Supplies, period, table failed | Under the evolution card, an error with "Reintentar", and "Descargar CSV" disabled | Choosing a supply or a period, retrying |
+| Supplies, period, table | Under the evolution card, "Tus datos": a row per slot (UI-HIS-021), the totals row (UI-HIS-022), seven rows until "Ver todos"; below `sm`, a card per row | Choosing a supply or a period; "Ver todos" / "Ver menos"; "Descargar CSV" (UI-HIS-023, UI-HIS-024) |
 | Error | The title only; the error is reported as on the supply list | None |
 
 ## Accepted exceptions
