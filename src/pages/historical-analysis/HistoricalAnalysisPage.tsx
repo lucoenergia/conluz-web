@@ -30,7 +30,7 @@ import { useSelectedSupply } from "./useSelectedSupply";
  */
 export const HistoricalAnalysisPage: FC = () => {
   const { supplies, isLoading, error } = useOwnSupplies();
-  const { selected, select } = useSelectedSupply(supplies);
+  const { selected, viewed, select } = useSelectedSupply(supplies);
   const anchor = useHistoricalAnchor(selected);
   const period = useHistoricalPeriodState(anchor, selected);
   const errorDispatch = useErrorDispatch();
@@ -52,7 +52,7 @@ export const HistoricalAnalysisPage: FC = () => {
         <>
           <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: "flex-start", gap: 2 }}>
             <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
-              <SupplySelector supplies={supplies} selected={selected} onSelect={select} />
+              <SupplySelector supplies={supplies} selected={selected} viewed={viewed} onSelect={select} />
             </Box>
             {anchor.status === "loading" && <Skeleton variant="rounded" height={56} sx={{ flex: 1, width: "100%" }} />}
             {anchor.status === "ready" && (
