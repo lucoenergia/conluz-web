@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router";
 import type { SupplyResponse } from "../../api/models";
-import { useActiveCommunity } from "../../context/community.context";
 import { isDenial, outcomeFromResource, useActiveCommunityCapabilities } from "../../hooks/permissions";
 import { SUPPLY_ID_PARAM } from "../../utils/routes";
 import { useSupplyInActiveCommunity } from "../supply-points/useSupplyInActiveCommunity";
@@ -30,13 +29,19 @@ const retryUnlessDenied = (failureCount: number, error: unknown) => !isDenial(er
  * its figures to the caller (UI-HIS-001, #252). Everything else -- a member
  * following an admin's link, another community's supply, a disabled one, a
  * missing one, or a lookup that failed -- falls back to "Todos mis puntos" and
- * is removed from the address, without an error. Only once that is known:
+ * is removed from the address, without an error.
+ *
+ * Whether the supply belongs to the active community is not checked here: the
+ * lookup goes through useSupplyInActiveCommunity, which withholds a supply of
+ * another community, and the backend authorises the read itself. This hook
+ * adds only what the supply's own state and capabilities say.
+ *
+ * The address changes only once all of that is known:
  * while the listing, the capability or the lookup is pending, or after the
  * listing failed (`supplies` undefined), the address is left alone.
  */
 export function useSelectedSupply(supplies: SupplyResponse[] | undefined): SelectedSupply {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeCommunityId = useActiveCommunity();
   const supplyId = searchParams.get(SUPPLY_ID_PARAM);
   const own = (supplyId && supplies?.find((supply) => supply.id === supplyId)) || null;
 
@@ -50,7 +55,6 @@ export function useSelectedSupply(supplies: SupplyResponse[] | undefined): Selec
   const viewed =
     found &&
     found.enabled &&
-    found.community.id === activeCommunityId &&
     outcomeFromResource(found.capabilities, "canRead").state === "allowed"
       ? found
       : null;
