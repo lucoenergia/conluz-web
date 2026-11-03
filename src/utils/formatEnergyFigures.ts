@@ -64,9 +64,33 @@ export function formatAverageKilowattHours(value: number): string {
  * is how this label once shipped broken while every test was green.
  */
 function calendarMonthOf(localDate: string, options: Intl.DateTimeFormatOptions): string {
-  const [year, month] = localDate.split("/").map(Number);
   // Mid-month noon, named in the app's time zone: no offset can reach another month.
-  return new Date(Date.UTC(year, month - 1, 15, 12)).toLocaleDateString("es-ES", { timeZone: APP_TIME_ZONE, ...options });
+  return noonOfCalendarDate(localDate, 15).toLocaleDateString("es-ES", { timeZone: APP_TIME_ZONE, ...options });
+}
+
+/**
+ * Noon UTC of a local calendar date as the API writes it ("2026/08/14"), or of
+ * another day of its month. Noon UTC is the same calendar day in Madrid
+ * whatever the offset, so naming it in the app's time zone gives back the date
+ * that was written. Reads only that shape, as calendarMonthOf explains.
+ */
+function noonOfCalendarDate(localDate: string, dayOfMonth?: number): Date {
+  const [year, month, day] = localDate.split("/").map(Number);
+  return new Date(Date.UTC(year, month - 1, dayOfMonth ?? day, 12));
+}
+
+function calendarDayOf(localDate: string, options: Intl.DateTimeFormatOptions): string {
+  return noonOfCalendarDate(localDate).toLocaleDateString("es-ES", { timeZone: APP_TIME_ZONE, ...options });
+}
+
+/** A chart's day label, from a local calendar date: "2026/07/15" reads "15 jul". */
+export function formatShortDay(localDate: string): string {
+  return calendarDayOf(localDate, { day: "numeric", month: "short" });
+}
+
+/** The full name of a local calendar date: "2026/07/15" reads "15 de julio de 2026". */
+export function formatCalendarDay(localDate: string): string {
+  return calendarDayOf(localDate, { day: "numeric", month: "long", year: "numeric" });
 }
 
 /** A chart's month label, from a local calendar date: "2026/08/01" reads "ago". */
