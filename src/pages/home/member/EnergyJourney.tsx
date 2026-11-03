@@ -1,9 +1,10 @@
-import { useId, type FC } from "react";
+import { useId, type FC, type ReactNode } from "react";
 import { Box, Typography } from "@mui/material";
 import RouteRoundedIcon from "@mui/icons-material/RouteRounded";
 import type { MembershipEnergyMetricsResponse } from "../../../api/models";
 import { formatKilowattHours } from "../../../utils/formatEnergyFigures";
 import { formatPercentage } from "../../../utils/formatPercentage";
+import { NOT_APPLICABLE_TITLE, excludedPlantsText } from "../../../components/EnergyFigures/periodUsage";
 import { colors, radii } from "../../../theme/tokens";
 import { ENERGY_COLORS, swatch, type SwatchStyle } from "../../../components/EnergyFigures/energyColors";
 import { HomeCard } from "../HomeCard";
@@ -79,37 +80,67 @@ const Unavailable: FC<{ title: string; reason: string }> = ({ title, reason }) =
   </Box>
 );
 
-/**
- * The figure the page leads with (#231): the share of the assigned energy the
- * member used, and the kWh it stands for. Nothing else belongs here -- no
- * reading of the figure, no direction, no promise that it can rise. Whether
- * there is anything to do is the advice's to say, under its own rules.
- */
-const PrimaryFigure: FC<{ ratio: number; usedKWh: number; assignedKWh: number }> = ({ ratio, usedKWh, assignedKWh }) => {
+/** The headline's place, labelled as the headline, whatever fills it. */
+const PrimaryFigureFrame: FC<{ children: ReactNode }> = ({ children }) => {
   const labelId = useId();
   return (
     <Box role="group" aria-labelledby={labelId} sx={{ pb: 2, borderBottom: `1px solid ${colors.border.light}` }}>
       <Typography id={labelId} variant="h6" component="p" sx={{ color: colors.text.primary }}>
         Energía asignada que usaste
       </Typography>
-      <Typography
-        variant="h2"
-        component="p"
-        sx={(theme) => ({
-          [theme.breakpoints.up("sm")]: { fontSize: theme.typography.h1.fontSize },
-          fontWeight: 700,
-          lineHeight: 1.1,
-          color: colors.success.main,
-        })}
-      >
-        {wholePercent(ratio)}
-      </Typography>
-      <Typography variant="h6" component="p" sx={{ fontWeight: 400, color: colors.text.body }}>
-        {formatKilowattHours(usedKWh)} de {formatKilowattHours(assignedKWh)}
-      </Typography>
+      {children}
     </Box>
   );
 };
+
+/**
+ * The figure the page leads with (#231): the share of the assigned energy the
+ * member used, the kWh it stands for, and the plants' own supplies it leaves
+ * out (UI-HOM-013). Nothing else belongs here -- no
+ * reading of the figure, no direction, no promise that it can rise. Whether
+ * there is anything to do is the advice's to say, under its own rules.
+ */
+const PrimaryFigure: FC<{ ratio: number; usedKWh: number; assignedKWh: number; excludedPlantSupplyCount: number }> = ({
+  ratio,
+  usedKWh,
+  assignedKWh,
+  excludedPlantSupplyCount,
+}) => (
+  <PrimaryFigureFrame>
+    <Typography
+      variant="h2"
+      component="p"
+      sx={(theme) => ({
+        [theme.breakpoints.up("sm")]: { fontSize: theme.typography.h1.fontSize },
+        fontWeight: 700,
+        lineHeight: 1.1,
+        color: colors.success.main,
+      })}
+    >
+      {wholePercent(ratio)}
+    </Typography>
+    <Typography variant="h6" component="p" sx={{ fontWeight: 400, color: colors.text.body }}>
+      {formatKilowattHours(usedKWh)} de {formatKilowattHours(assignedKWh)}
+    </Typography>
+    {excludedPlantSupplyCount > 0 && (
+      <Typography variant="body2" sx={{ color: colors.text.subtle }}>
+        {excludedPlantsText(excludedPlantSupplyCount)}
+      </Typography>
+    )}
+  </PrimaryFigureFrame>
+);
+
+/**
+ * In place of the headline when every supply of the member is a plant's own
+ * supply (UI-HOM-013): plain type, never an alert colour, and no figure.
+ */
+const NotApplicableFigure: FC = () => (
+  <PrimaryFigureFrame>
+    <Typography variant="body1" component="p" sx={{ color: colors.text.body }}>
+      {NOT_APPLICABLE_TITLE}
+    </Typography>
+  </PrimaryFigureFrame>
+);
 
 /**
  * The two-bar story: where the energy assigned to the member went, and where
@@ -129,8 +160,14 @@ export const EnergyJourney: FC<{ metrics: MembershipEnergyMetricsResponse }> = (
   const usage = status === "AVAILABLE" ? selfConsumptionRatio : null;
   return (
     <HomeCard title="El recorrido de tu energía" icon={RouteRoundedIcon} variant="primary">
+      {status === "NOT_APPLICABLE" && <NotApplicableFigure />}
       {usage !== null && (
-        <PrimaryFigure ratio={usage} usedKWh={basis.selfConsumptionKWh} assignedKWh={basis.assignedProductionKWh} />
+        <PrimaryFigure
+          ratio={usage}
+          usedKWh={basis.selfConsumptionKWh}
+          assignedKWh={basis.assignedProductionKWh}
+          excludedPlantSupplyCount={basis.excludedPlantSupplyCount}
+        />
       )}
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3, pt: 1 }}>
         {status === "NOTHING_ASSIGNED" && (

@@ -1143,5 +1143,59 @@ describe("MemberHomePage (#199)", () => {
 
       expect(text(card("El recorrido de tu energía"))).not.toContain("Este mes no se te asignó energía de la comunidad.");
     });
+
+    it("UI-HOM-013 AC1 -- states the plant's own supply the headline leaves out, next to it", () => {
+      answer({ metrics: derivedMonthWithPlantSupply() });
+      openHome();
+
+      expect(text(primaryFigure())).toBe("Energía asignada que usaste50 %100 kWh de 200 kWhNo incluye 1 punto de planta");
+    });
+
+    it("UI-HOM-013 AC1 -- names several plants' own supplies in the plural", () => {
+      const metrics = derivedMonthWithPlantSupply();
+      answer({ metrics: { ...metrics, selfConsumptionRatioBasis: { ...metrics.selfConsumptionRatioBasis, excludedPlantSupplyCount: 2 } } });
+      openHome();
+
+      expect(text(primaryFigure())).toContain("No incluye 2 puntos de planta");
+    });
+
+    it("UI-HOM-013 AC3 -- a member without plants' own supplies is told nothing about them", () => {
+      openHome();
+
+      expect(page()).not.toContain("No incluye");
+    });
+
+    describe("UI-HOM-013 AC4 -- every supply a plant's own supply", () => {
+      const notApplicable = () =>
+        derivedMonthWithPlantSupply({
+          energy: { assignedProductionKWh: 50, selfConsumptionKWh: 50, surplusKWh: 0, totalConsumptionKWh: 120, gridImportKWh: 70 },
+          selfConsumptionRatio: null,
+          selfSufficiencyRatio: 0.4167,
+          selfConsumptionRatioStatus: "NOT_APPLICABLE",
+          selfConsumptionRatioBasis: { selfConsumptionKWh: 0, assignedProductionKWh: 0, excludedPlantSupplyCount: 2 },
+        });
+
+      it("shows the neutral not-applicable text in place of the headline, with no figure and no alert colour", () => {
+        answer({ metrics: notApplicable() });
+        openHome();
+        const statusColours = [...Object.values(colors.error), ...Object.values(colors.warning), ...Object.values(colors.success)];
+
+        expect(text(primaryFigure())).toBe("Energía asignada que usasteNo aplica al punto de la planta");
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+        for (const element of primaryFigure().querySelectorAll("*")) {
+          expect(statusColours).not.toContain(declaredStyle(element).color);
+        }
+      });
+
+      it("hides the assigned-energy bar and the advice, and keeps the consumption bar", () => {
+        answer({ metrics: notApplicable() });
+        openHome();
+
+        expect(screen.queryByRole("heading", { name: "La energía que se te asignó" })).not.toBeInTheDocument();
+        expect(text(card("El recorrido de tu energía"))).not.toContain("Este mes no se te asignó energía de la comunidad.");
+        expect(advice()).toHaveLength(0);
+        expect(text(consumptionBar())).toContain("De la comunidad: 50 kWh (42 %)");
+      });
+    });
   });
 });
