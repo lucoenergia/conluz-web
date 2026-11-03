@@ -6,12 +6,12 @@
 | **Status** | Active |
 | **Routes** | `/home/member`, `/home/management` |
 | **Roles** | A caller to whom the view is open (`useHomeViews`) |
-| **Domain rules** | `lucoenergia/conluz`: EPR-001 |
+| **Domain rules** | `lucoenergia/conluz`: EPR-001, ENM-006, ENM-007, ENM-008, SEM-003 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #324 |
+| **Last reviewed against code** | #253 |
 
-Scope: the rules introduced in #280 for home states migrated from visual tests to Vitest, and the
-month bounds of #324. Not exhaustive: other home behaviour is not yet specified here.
+Scope: the rules introduced in #280 for home states migrated from visual tests to Vitest, the
+month bounds of #324, and the self-consumption ratio's basis and status of #253. Not exhaustive: other home behaviour is not yet specified here.
 
 ## Purpose
 
@@ -143,6 +143,54 @@ view may present a missing figure as a zero or a normal setup stage as a failure
 - **Implements:** EPR-001
 - **Source:** #324, lucoenergia/conluz#409
 
+### UI-HOM-012 — The member home's usage figures come from the ratio's basis, and their states from its status
+
+- **Status:** Active
+- **Rule:**
+  - The headline MUST show `selfConsumptionRatio`, and its detail line MUST show
+    `selfConsumptionRatioBasis.selfConsumptionKWh` "de" `selfConsumptionRatioBasis.assignedProductionKWh`.
+  - The assigned-energy bar ("La energía que se te asignó") MUST show
+    `selfConsumptionRatioBasis.assignedProductionKWh` as its base,
+    `selfConsumptionRatioBasis.selfConsumptionKWh` as "La usaste tú" and `energy.surplusKWh` as "Se fue
+    a la red".
+  - The advice ("Qué puedes hacer") MUST take its percentage from `selfConsumptionRatio` and its kWh
+    from `energy.surplusKWh`.
+  - The consumption bar ("Tu consumo") MUST keep showing the energy totals.
+  - The headline, the assigned-energy bar and the advice MUST show only when
+    `selfConsumptionRatioStatus` is `AVAILABLE`.
+  - When `selfConsumptionRatioStatus` is `NOTHING_ASSIGNED`, the assigned-energy bar's place MUST
+    show "Este mes no se te asignó energía de la comunidad."
+  - A null `selfConsumptionRatio` MUST NOT decide either state.
+- **Rationale:** The ratio leaves plants' own supplies out, so the energy totals are no longer the
+  energy it was computed from: a headline over the totals' kWh would state a percentage its own
+  detail line contradicts. `energy.surplusKWh` is the basis's surplus because a plant's own supply
+  stores its surplus as 0, and reading it spares the client a subtraction of rounded figures. The
+  consumption bar describes what the member really consumed, plant's supply included. Only the
+  status tells "nothing assigned" from "not applicable": the ratio is null in both.
+- **Implements:** ENM-006, ENM-007, ENM-008, SEM-003
+- **Source:** #253, lucoenergia/conluz#411
+
+### UI-HOM-013 — Plants' own supplies left out are stated, and a ratio that does not apply is neutral
+
+- **Status:** Active
+- **Rule:**
+  - When `selfConsumptionRatioStatus` is `AVAILABLE` and
+    `selfConsumptionRatioBasis.excludedPlantSupplyCount` is 1, the headline MUST show "No incluye 1
+    punto de planta" beneath its detail line.
+  - When it is `AVAILABLE` and the count is above 1, the headline MUST show "No incluye {n} puntos de
+    planta" beneath its detail line.
+  - When `selfConsumptionRatioStatus` is `NOT_APPLICABLE`, the headline's place MUST show "No aplica
+    al punto de la planta", with no figure and no alert colour.
+  - When it is `NOT_APPLICABLE`, the assigned-energy bar and the advice MUST NOT show, and the
+    consumption bar MUST still show.
+- **Rationale:** A member with a plant's own supply sees a headline that counts less energy than the
+  consumption bar beneath it, and must be told why. A plant's own supply's ratio would always read
+  100 %, which says nothing about how the energy assigned to it was used; that is a fact about the
+  supply, not a failure, so it is said without an alert, and the bar and the advice, which would
+  read that same figure, are left out.
+- **Implements:** ENM-007, ENM-008, SEM-003
+- **Source:** #253, lucoenergia/conluz#411
+
 ## States
 
 | State | Rendered | Actions available |
@@ -151,6 +199,9 @@ view may present a missing figure as a zero or a normal setup stage as a failure
 | Nothing resolved yet | The payback sentence without a large figure (UI-HOM-002); neutral notices in place of empty blocks (UI-HOM-007) | — |
 | Incomplete month | The comparison said to be affected (UI-HOM-004); no best hours named (UI-HOM-006) | — |
 | Management setup | No plant, or a plant without an agreement, explained without an alert (UI-HOM-009) | — |
+| A plant's own supply left out | The headline, its bar and the advice from the ratio's basis (UI-HOM-012), the supplies left out stated (UI-HOM-013) | — |
+| Ratio not applicable | The neutral not-applicable text in place of the headline; no assigned-energy bar, no advice (UI-HOM-013) | — |
+| Nothing assigned | The nothing-assigned state, decided by the status (UI-HOM-012) | — |
 
 ## Accepted exceptions
 
