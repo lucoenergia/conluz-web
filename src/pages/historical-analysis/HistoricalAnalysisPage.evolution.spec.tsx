@@ -193,25 +193,25 @@ beforeEach(() => {
   serveSeries();
 });
 
-describe("UI-HIS-016 the series follow the scope and the period's granularity and bounds (#250)", () => {
-  it("UI-HIS-016 'Todos mis puntos' by days asks only the membership daily series, by the period's bounds", () => {
+describe("UI-HIS-019 the series follow the scope and the period's granularity and bounds (#250)", () => {
+  it("UI-HIS-019 'Todos mis puntos' by days asks only the membership daily series, by the period's bounds", () => {
     renderPage();
     expect(enabledSeriesCalls()).toEqual({ membershipDaily: [COMMUNITY_ID, OWNER_ID, SEPTEMBER_2026] });
     expect(card()).toBeInTheDocument();
   });
 
-  it("UI-HIS-016 'Todos mis puntos' by months asks only the membership monthly series, by the period's bounds", () => {
+  it("UI-HIS-019 'Todos mis puntos' by months asks only the membership monthly series, by the period's bounds", () => {
     renderPage("?period=last12");
     expect(enabledSeriesCalls()).toEqual({ membershipMonthly: [COMMUNITY_ID, OWNER_ID, LAST_12] });
     expect(card(MONTHLY_TITLE)).toBeInTheDocument();
   });
 
-  it("UI-HIS-016 a supply by days asks only that supply's daily series, by the period's bounds", () => {
+  it("UI-HIS-019 a supply by days asks only that supply's daily series, by the period's bounds", () => {
     renderPage(`?supplyId=${HOME.id}`);
     expect(enabledSeriesCalls()).toEqual({ supplyDaily: [HOME.id, SEPTEMBER_2026] });
   });
 
-  it("UI-HIS-016 a supply by months asks only that supply's monthly series, by the period's bounds", () => {
+  it("UI-HIS-019 a supply by months asks only that supply's monthly series, by the period's bounds", () => {
     renderPage(`?supplyId=${HOME.id}&period=last12`);
     expect(enabledSeriesCalls()).toEqual({ supplyMonthly: [HOME.id, LAST_12] });
   });
@@ -333,8 +333,8 @@ describe("UI-HIS-017 the energy chart is option A (#250)", () => {
   });
 });
 
-describe("UI-HIS-017 the charts' colours (#250)", () => {
-  it("UI-HIS-017 draws every series in its ENERGY_COLORS or SAVINGS_COLOR token, and nothing else", () => {
+describe("UI-HIS-020 the charts' colours (#250)", () => {
+  it("UI-HIS-020 draws every series in its ENERGY_COLORS or SAVINGS_COLOR token, and nothing else", () => {
     renderPage();
 
     expect(chartProps("energy").options.colors).toEqual([ENERGY_COLORS.community, ENERGY_COLORS.grid, ENERGY_COLORS.exported]);
@@ -342,13 +342,13 @@ describe("UI-HIS-017 the charts' colours (#250)", () => {
   });
 });
 
-describe("UI-HIS-017 the savings legend states the estimated price (#250)", () => {
-  it("UI-HIS-017 states the estimated price from the period's energy metrics when there is one", () => {
+describe("UI-HIS-020 the savings legend states the estimated price (#250)", () => {
+  it("UI-HIS-020 states the estimated price from the period's energy metrics when there is one", () => {
     renderPage();
     expect(within(card()).getByText("Estimado con un precio de 0,15 €/kWh para la energía, sin impuestos.")).toBeInTheDocument();
   });
 
-  it("UI-HIS-017 states no price without estimatedPrice, even when tariffSource says ESTIMATE", () => {
+  it("UI-HIS-020 states no price without estimatedPrice, even when tariffSource says ESTIMATE", () => {
     vi.mocked(useGetMembershipEnergyMetrics).mockImplementation((_c, _u, params, options) => {
       if (options?.query?.enabled === false) return query.disabled();
       if (isAnchorCall(params)) return query.success<typeof getMembershipEnergyMetrics>(membershipLatest(SEPTEMBER_2026));
@@ -362,8 +362,8 @@ describe("UI-HIS-017 the savings legend states the estimated price (#250)", () =
   });
 });
 
-describe("UI-HIS-016 loading and failure of the series (#250)", () => {
-  it("UI-HIS-016 a placeholder stands in the charts' place while the series loads", () => {
+describe("UI-HIS-019 loading and failure of the series (#250)", () => {
+  it("UI-HIS-019 a placeholder stands in the charts' place while the series loads", () => {
     seriesState = "loading";
     renderPage();
 
@@ -371,7 +371,7 @@ describe("UI-HIS-016 loading and failure of the series (#250)", () => {
     expect(screen.queryByRole("region", { name: DAILY_TITLE })).not.toBeInTheDocument();
   });
 
-  it("UI-HIS-016 a failed series is an error with a retry, and no charts", async () => {
+  it("UI-HIS-019 a failed series is an error with a retry, and no charts", async () => {
     seriesState = "error";
     renderPage();
 

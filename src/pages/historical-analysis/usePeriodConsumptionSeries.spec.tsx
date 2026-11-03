@@ -79,7 +79,7 @@ describe("usePeriodConsumptionSeries (#250)", () => {
     for (const hook of Object.values(HOOKS)) vi.mocked(hook).mockReturnValue(query.disabled());
   });
 
-  it("UI-HIS-016 asks the membership daily series of the active community by the period's bounds, and nothing else", () => {
+  it("UI-HIS-019 asks the membership daily series of the active community by the period's bounds, and nothing else", () => {
     vi.mocked(useHistoricalPeriod).mockReturnValue(JULY_AUGUST);
     render(null);
 
@@ -89,7 +89,7 @@ describe("usePeriodConsumptionSeries (#250)", () => {
     expect(enabledHooks()).toEqual({ membershipDaily: true, membershipMonthly: false, supplyDaily: false, supplyMonthly: false });
   });
 
-  it("UI-HIS-016 asks the membership monthly series by the period's bounds, and nothing else", () => {
+  it("UI-HIS-019 asks the membership monthly series by the period's bounds, and nothing else", () => {
     vi.mocked(useHistoricalPeriod).mockReturnValue(LAST_12);
     render(null);
 
@@ -99,7 +99,7 @@ describe("usePeriodConsumptionSeries (#250)", () => {
     expect(enabledHooks()).toEqual({ membershipDaily: false, membershipMonthly: true, supplyDaily: false, supplyMonthly: false });
   });
 
-  it("UI-HIS-016 asks the selected supply's daily series by the period's bounds, and nothing else", () => {
+  it("UI-HIS-019 asks the selected supply's daily series by the period's bounds, and nothing else", () => {
     vi.mocked(useHistoricalPeriod).mockReturnValue(JULY_AUGUST);
     render(HOME);
 
@@ -107,7 +107,7 @@ describe("usePeriodConsumptionSeries (#250)", () => {
     expect(enabledHooks()).toEqual({ membershipDaily: false, membershipMonthly: false, supplyDaily: true, supplyMonthly: false });
   });
 
-  it("UI-HIS-016 asks the selected supply's monthly series by the period's bounds, and nothing else", () => {
+  it("UI-HIS-019 asks the selected supply's monthly series by the period's bounds, and nothing else", () => {
     vi.mocked(useHistoricalPeriod).mockReturnValue(LAST_12);
     render(HOME);
 
@@ -115,7 +115,7 @@ describe("usePeriodConsumptionSeries (#250)", () => {
     expect(enabledHooks()).toEqual({ membershipDaily: false, membershipMonthly: false, supplyDaily: false, supplyMonthly: true });
   });
 
-  it("UI-HIS-016 asks nothing while the period is unknown", () => {
+  it("UI-HIS-019 asks nothing while the period is unknown", () => {
     vi.mocked(useHistoricalPeriod).mockReturnValue(undefined);
     const { result } = render(null);
 
@@ -123,7 +123,7 @@ describe("usePeriodConsumptionSeries (#250)", () => {
     expect(result.current).toEqual({ status: "loading" });
   });
 
-  it("UI-HIS-016 hands back the buckets tagged with the series they came from", () => {
+  it("UI-HIS-019 hands back the buckets tagged with the series they came from", () => {
     vi.mocked(useHistoricalPeriod).mockReturnValue(JULY_AUGUST);
     const buckets = [membershipDay("2026/07/01"), membershipDay("2026/07/02")];
     vi.mocked(useGetMembershipDailyConsumption).mockReturnValue(query.success<typeof getMembershipDailyConsumption>(buckets));
@@ -135,7 +135,7 @@ describe("usePeriodConsumptionSeries (#250)", () => {
     expect(render(HOME).result.current).toEqual({ status: "ready", series: { kind: "supplyMonthly", buckets: months } });
   });
 
-  it("UI-HIS-016 is loading while the selected series is, and retries it after a failure", () => {
+  it("UI-HIS-019 is loading while the selected series is, and retries it after a failure", () => {
     vi.mocked(useHistoricalPeriod).mockReturnValue(JULY_AUGUST);
     vi.mocked(useGetSupplyDailyConsumption).mockReturnValue(query.loading());
     expect(render(HOME).result.current).toEqual({ status: "loading" });
