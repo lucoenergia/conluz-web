@@ -240,11 +240,15 @@ too, never the other members'.
 - **Status:** Active
 - **Rule:** When the response's `coverage.hoursWithData` is below `coverage.expectedHours`, the page
   MUST say "Faltan datos de parte de este periodo: las cifras suman solo los datos disponibles."
-  under the card, as a neutral note. It MUST be decided from the response's coverage only.
+  under the card, as a neutral note. Whether the note shows MUST be decided from the response's
+  coverage only. When the evolution card shows its gaps notice (UI-HIS-015), the note MUST add
+  "Consulta los días afectados en la evolución." ("los meses afectados" for a monthly period).
 - **Rationale:** Totals summed over missing hours look like a quiet period. The design's notice names
   the missing dates, which the coverage counts do not give, so the note says only what is known.
+  Once the evolution card names the missing days, the note points there instead of leaving the
+  reader with two unrelated "faltan datos" messages.
 - **Implements:** n/a
-- **Source:** #249
+- **Source:** #249; the pointer to the evolution card, #250
 
 ### UI-HIS-015 — A gap, a measured zero and a partial bucket are told apart in words and marks
 
