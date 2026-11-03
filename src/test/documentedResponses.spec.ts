@@ -1,6 +1,12 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { DOCUMENTED_MEMBERSHIP_ENERGY_METRICS, DOCUMENTED_SUPPLY_ENERGY_METRICS } from "./documentedResponses";
+import {
+  DOCUMENTED_MEMBERSHIP_DAILY_CONSUMPTION_BUCKET,
+  DOCUMENTED_MEMBERSHIP_ENERGY_METRICS,
+  DOCUMENTED_MEMBERSHIP_MONTHLY_CONSUMPTION_BUCKET,
+  DOCUMENTED_SUPPLY_CONSUMPTION_BUCKET,
+  DOCUMENTED_SUPPLY_ENERGY_METRICS,
+} from "./documentedResponses";
 
 /**
  * The documented responses are the schema examples of api-docs.json and
@@ -31,5 +37,25 @@ describe("documented energy metrics responses (#249)", () => {
 
   it("the supply response is its schema's examples, unedited", () => {
     expect(DOCUMENTED_SUPPLY_ENERGY_METRICS).toEqual(fromExamples(SCHEMAS.SupplyEnergyMetricsResponse, "SupplyEnergyMetricsResponse"));
+  });
+});
+
+describe("documented consumption series buckets (#250)", () => {
+  it("the membership daily bucket is its schema's examples, unedited", () => {
+    expect(DOCUMENTED_MEMBERSHIP_DAILY_CONSUMPTION_BUCKET).toEqual(
+      fromExamples(SCHEMAS.MembershipDailyConsumptionBucketResponse, "MembershipDailyConsumptionBucketResponse"),
+    );
+  });
+
+  it("the membership monthly bucket is its schema's examples, unedited", () => {
+    expect(DOCUMENTED_MEMBERSHIP_MONTHLY_CONSUMPTION_BUCKET).toEqual(
+      fromExamples(SCHEMAS.MembershipMonthlyConsumptionBucketResponse, "MembershipMonthlyConsumptionBucketResponse"),
+    );
+  });
+
+  it("the supply bucket is its schema's examples, unedited", () => {
+    expect(DOCUMENTED_SUPPLY_CONSUMPTION_BUCKET).toEqual(
+      fromExamples(SCHEMAS.SupplyConsumptionBucketResponse, "SupplyConsumptionBucketResponse"),
+    );
   });
 });

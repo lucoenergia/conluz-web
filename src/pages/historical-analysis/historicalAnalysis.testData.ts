@@ -1,6 +1,19 @@
-import type { MembershipEnergyMetricsResponse, SupplyEnergyMetricsResponse, SupplyResponse } from "../../api/models";
+import type {
+  MembershipDailyConsumptionBucketResponse,
+  MembershipEnergyMetricsResponse,
+  MembershipMonthlyConsumptionBucketResponse,
+  SupplyConsumptionBucketResponse,
+  SupplyEnergyMetricsResponse,
+  SupplyResponse,
+} from "../../api/models";
 import { CAPTURED_MEMBERSHIP_ENERGY_METRICS_LATEST_PUBLISHED_MONTH, CAPTURED_SUPPLIES_BY_USER_ID } from "../../test/capturedResponses";
-import { DOCUMENTED_MEMBERSHIP_ENERGY_METRICS, DOCUMENTED_SUPPLY_ENERGY_METRICS } from "../../test/documentedResponses";
+import {
+  DOCUMENTED_MEMBERSHIP_DAILY_CONSUMPTION_BUCKET,
+  DOCUMENTED_MEMBERSHIP_ENERGY_METRICS,
+  DOCUMENTED_MEMBERSHIP_MONTHLY_CONSUMPTION_BUCKET,
+  DOCUMENTED_SUPPLY_CONSUMPTION_BUCKET,
+  DOCUMENTED_SUPPLY_ENERGY_METRICS,
+} from "../../test/documentedResponses";
 import { buildCurrentUser } from "../../test/fixtures";
 
 // Data shared by the historical analysis page specs. No vi.mock here: each
@@ -84,3 +97,50 @@ export function derivedSupplyFigures(supply: SupplyResponse, overrides: Partial<
     ...overrides,
   };
 }
+
+// ─── Consumption series (#250) ───────────────────────────────────────────────
+// Buckets derived from the documented ones (no capture exists), each dated by
+// the caller. A spec overrides every figure it asserts on.
+
+const NOTHING_STORED = { selfConsumptionKWh: 0, gridImportKWh: 0, surplusKWh: 0, assignedProductionKWh: 0 } as const;
+
+/** A day of "Todos mis puntos": complete by default, every supply stored a record. */
+export function membershipDay(
+  date: string,
+  overrides: Partial<MembershipDailyConsumptionBucketResponse> = {},
+): MembershipDailyConsumptionBucketResponse {
+  const documented = DOCUMENTED_MEMBERSHIP_DAILY_CONSUMPTION_BUCKET;
+  return { ...documented, suppliesWithData: documented.supplyCount, date, ...overrides };
+}
+
+/** A day no supply stored a record on, as the server answers it: zeros, and null savings. */
+export const membershipGapDay = (date: string) =>
+  membershipDay(date, { ...NOTHING_STORED, savingsEur: null, tariffSource: null, suppliesWithData: 0 });
+
+/** A day only some of the supplies stored a record on. */
+export const membershipPartialDay = (date: string, suppliesWithData = 1, supplyCount = 2) =>
+  membershipDay(date, { suppliesWithData, supplyCount });
+
+/** A month of "Todos mis puntos": complete by default. */
+export function membershipMonth(
+  date: string,
+  overrides: Partial<MembershipMonthlyConsumptionBucketResponse> = {},
+): MembershipMonthlyConsumptionBucketResponse {
+  const documented = DOCUMENTED_MEMBERSHIP_MONTHLY_CONSUMPTION_BUCKET;
+  return { ...documented, suppliesWithData: documented.supplyCount, date, ...overrides };
+}
+
+/** A month no supply stored a record in. */
+export const membershipGapMonth = (date: string) =>
+  membershipMonth(date, { ...NOTHING_STORED, savingsEur: null, tariffSource: null, suppliesWithData: 0 });
+
+/** A day or a month of a single supply, with a stored record. */
+export function supplyBucket(date: string, overrides: Partial<SupplyConsumptionBucketResponse> = {}): SupplyConsumptionBucketResponse {
+  return { ...DOCUMENTED_SUPPLY_CONSUMPTION_BUCKET, date, ...overrides };
+}
+
+/** A supply day with no stored record, as the server answers it: zeros and 0.00 €, told apart only by obtainMethod. */
+export const supplyGapDay = (date: string) => supplyBucket(date, { ...NOTHING_STORED, savingsEur: 0, obtainMethod: null });
+
+/** A supply day whose records were stored and measured zero. */
+export const supplyMeasuredZeroDay = (date: string) => supplyBucket(date, { ...NOTHING_STORED, savingsEur: 0 });
