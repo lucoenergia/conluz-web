@@ -142,7 +142,7 @@ const requestsTo = (router: RequestRouter, method: string, url: string) =>
 
 const renderPage = async () => {
   renderWithProviders(<SupplyPointsPage />, { activeCommunityId: COMMUNITY_ID, token: "a-token" });
-  await screen.findByRole("heading", { name: "Casa" });
+  await screen.findByRole("link", { name: "Casa" });
 };
 
 async function openImport(u: ReturnType<typeof userEvent.setup>) {
@@ -377,7 +377,7 @@ describe("importing a file", () => {
 
     await waitFor(() => expect(requestsTo(r, "GET", SUPPLIES_URL).length).toBeGreaterThan(readsBefore));
     await u.click(within(dialog).getByRole("button", { name: "Cerrar" }));
-    expect(await screen.findByRole("heading", { name: "Casa del pueblo" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Casa del pueblo" })).toBeInTheDocument();
   });
 
   it("UI-MBR-021 shows progress while the import runs, and cannot be closed until it ends", async () => {

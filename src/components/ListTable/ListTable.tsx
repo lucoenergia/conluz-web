@@ -129,7 +129,19 @@ export const ListTable = <T,>({
 
   return (
     <TableContainer sx={{ overflowX: "hidden" }}>
-      <Table sx={{ tableLayout: "fixed", width: "100%" }}>
+      <Table
+        sx={{
+          tableLayout: "fixed",
+          width: "100%",
+          // A hairline under the header and between rows, the stacked list's
+          // own. MUI's default lightens the divider until it is invisible on
+          // the panel. The last row draws none, as the panel's edge or the
+          // footer's hairline closes the list, but keeps the border's width,
+          // so the table is exactly as tall as it was.
+          "& .MuiTableCell-root": { borderBottom: `1px solid ${colors.divider}` },
+          "& .MuiTableBody-root .MuiTableRow-root:last-of-type .MuiTableCell-root": { borderBottomColor: "transparent" },
+        }}
+      >
         <TableHead>
           <TableRow sx={{ backgroundColor: colors.background.surface }}>
             {selection && <TableCell padding="checkbox">{selection.header}</TableCell>}

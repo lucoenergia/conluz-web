@@ -27,7 +27,7 @@ import {
 import { VISIBLE } from "../../test/visibleText";
 
 /**
- * Deleting a supply from its card menu (#290), in the community's supply list
+ * Deleting a supply from its row menu (#290), in the community's supply list
  * and in a member's supplies (?personId=).
  *
  * Tier 2: the subject is what the deletion refreshes, so the real action hook,
@@ -182,7 +182,7 @@ async function openDeletion(user: ReturnType<typeof userEvent.setup>) {
 const deleteRequests = (router: ReturnType<typeof routeRequests>) =>
   router.requests.filter((request) => request.method === "DELETE");
 
-describe("deleting a supply from its card menu", () => {
+describe("deleting a supply from its row menu", () => {
   beforeEach(() => {
     mockCustomInstance.mockReset();
   });
@@ -196,15 +196,15 @@ describe("deleting a supply from its card menu", () => {
       const { router, state, queryClient } = renderPage(route, deleted);
       const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
       const removeQueries = vi.spyOn(queryClient, "removeQueries");
-      expect(await screen.findByRole("heading", { name: "Casa de Lucía" })).toBeInTheDocument();
+      expect(await screen.findByRole("link", { name: "Casa de Lucía" })).toBeInTheDocument();
 
       await openDeletion(user);
       await user.click(screen.getByRole("button", { name: "Eliminar" }));
 
       await waitFor(() => expect(deleteRequests(router)).toHaveLength(1));
       await waitFor(() => expect(state[listServed]).toBe(2));
-      await waitFor(() => expect(screen.queryByRole("heading", { name: "Casa de Lucía" })).not.toBeInTheDocument());
-      expect(screen.getByRole("heading", { name: "Local de la asociación" })).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole("link", { name: "Casa de Lucía" })).not.toBeInTheDocument());
+      expect(screen.getByRole("link", { name: "Local de la asociación" })).toBeInTheDocument();
       expect(await screen.findByText("Punto de suministro ES0031406912345678JN0F eliminado.", VISIBLE)).toBeInTheDocument();
 
       expect(removeQueries).toHaveBeenCalledWith({ queryKey: getGetSupplyQueryKey(DELETABLE_ID), type: "inactive" });
@@ -288,7 +288,7 @@ describe("deleting a supply from its card menu", () => {
       ).not.toBeInTheDocument(),
     );
     expect(deleteRequests(router)).toHaveLength(0);
-    expect(screen.getByRole("heading", { name: "Casa de Lucía" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Casa de Lucía" })).toBeInTheDocument();
   });
 
   it.each([
@@ -297,7 +297,7 @@ describe("deleting a supply from its card menu", () => {
   ] as const)("UI-SUP-004 a 409 %s recommends «Deshabilitar», and the supply stays", async (code, reason) => {
     const user = userEvent.setup();
     const { router, state } = renderPage("/supply-points", refused(apiError(409, { code })));
-    await screen.findByRole("heading", { name: "Casa de Lucía" });
+    await screen.findByRole("link", { name: "Casa de Lucía" });
 
     await openDeletion(user);
     await user.click(screen.getByRole("button", { name: "Eliminar" }));
@@ -305,7 +305,7 @@ describe("deleting a supply from its card menu", () => {
     const alert = await screen.findByText(new RegExp(reason));
     expect(alert).toHaveTextContent("Si quieres dejar de usarlo, deshabilítalo con «Deshabilitar»");
     expect(deleteRequests(router)).toHaveLength(1);
-    expect(screen.getByRole("heading", { name: "Casa de Lucía" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Casa de Lucía" })).toBeInTheDocument();
     // Nothing was deleted, so nothing was refetched.
     expect(state.communityListServed).toBe(1);
   });
@@ -313,13 +313,13 @@ describe("deleting a supply from its card menu", () => {
   it("UI-SUP-004 a 403 says the caller may not delete it, and the supply stays", async () => {
     const user = userEvent.setup();
     const { state } = renderPage("/supply-points", refused(apiError(403)));
-    await screen.findByRole("heading", { name: "Casa de Lucía" });
+    await screen.findByRole("link", { name: "Casa de Lucía" });
 
     await openDeletion(user);
     await user.click(screen.getByRole("button", { name: "Eliminar" }));
 
     expect(await screen.findByText("No tienes permiso para eliminar este punto de suministro.")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Casa de Lucía" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Casa de Lucía" })).toBeInTheDocument();
     expect(state.communityListServed).toBe(1);
   });
 
@@ -330,7 +330,7 @@ describe("deleting a supply from its card menu", () => {
       server.supplies = [KEPT];
       throw apiError(404);
     });
-    await screen.findByRole("heading", { name: "Casa de Lucía" });
+    await screen.findByRole("link", { name: "Casa de Lucía" });
 
     await openDeletion(user);
     await user.click(screen.getByRole("button", { name: "Eliminar" }));
@@ -339,7 +339,7 @@ describe("deleting a supply from its card menu", () => {
       await screen.findByText("Este punto de suministro ya no existe. Hemos actualizado la lista."),
     ).toBeInTheDocument();
     await waitFor(() => expect(state.communityListServed).toBe(2));
-    await waitFor(() => expect(screen.queryByRole("heading", { name: "Casa de Lucía" })).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole("link", { name: "Casa de Lucía" })).not.toBeInTheDocument());
   });
 });
 
@@ -349,10 +349,10 @@ describe("disabling a supply from a member's supplies", () => {
   });
 
   // The refusals above recommend «Deshabilitar», which an admin may do from here.
-  it("refetches the member's supplies, and the card shows the new state", async () => {
+  it("refetches the member's supplies, and the row shows the new state", async () => {
     const user = userEvent.setup();
     const { state } = renderPage(`/supply-points?personId=${OWNER_ID}`, deleted);
-    await screen.findByRole("heading", { name: "Casa de Lucía" });
+    await screen.findByRole("link", { name: "Casa de Lucía" });
 
     await user.click(await screen.findByRole("button", { name: MENU_BUTTON }));
     await user.click(screen.getByRole("menuitem", { name: "Deshabilitar" }));
@@ -361,6 +361,6 @@ describe("disabling a supply from a member's supplies", () => {
 
     await waitFor(() => expect(state.ownerListServed).toBe(2));
     // Both supplies were enabled; only the refetched read can say otherwise.
-    await waitFor(() => expect(screen.getAllByText("Inactivo")).toHaveLength(1));
+    await waitFor(() => expect(screen.getAllByText("Dado de baja")).toHaveLength(1));
   });
 });

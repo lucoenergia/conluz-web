@@ -5,10 +5,10 @@
 | **Prefix** | `UI-SUP` |
 | **Status** | Active |
 | **Routes** | `/supply-points`, `/supply-points?personId=…` (a member's supplies), `/supply-points/:supplyPointId`, `/supply-points/new`, `/supply-points/:supplyPointId/edit` |
-| **Roles** | Any member of the active community reads them. Deleting: a caller to whom the supply reports `canDelete`. Creating and importing: a caller to whom the active community reports `canManage`. Editing: a caller to whom the supply reports `canEdit` |
-| **Domain rules** | `lucoenergia/conluz`: SUP-001, SUP-002, SUP-005, SUP-006, SUP-007, MEM-026, EPR-003 |
-| **Design reference** | n/a |
-| **Last reviewed against code** | #339 |
+| **Roles** | Any member of the active community reads them. Deleting: a caller to whom the supply reports `canDelete`. Creating and importing, and seeing each supply's owner in the list: a caller to whom the active community reports `canManage`. Editing: a caller to whom the supply reports `canEdit` |
+| **Domain rules** | `lucoenergia/conluz`: SUP-001, SUP-002, SUP-004, SUP-005, SUP-006, SUP-007, MEM-026, EPR-003 |
+| **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `FilterChipsBar` (the list; its shared rules are `record-lists.md`) |
+| **Last reviewed against code** | #348 |
 
 ## Purpose
 
@@ -21,7 +21,11 @@ member import, the step that follows it during onboarding, and correct a supply 
 CUPS or its owner on the input concerned. Show a supply without a name by something that
 recognises it.
 
-This document covers only the rules #290, #302, #324 and #339 introduced.
+List a community's supplies, or one member's, with only what the supply itself says: how it is
+named, its CUPS, its owner for whoever manages the community, whether a plant produces onto it, and
+whether it has left the community.
+
+This document covers only the rules #290, #302, #324, #339 and #348 introduced.
 
 ## Rules
 
@@ -29,16 +33,16 @@ This document covers only the rules #290, #302, #324 and #339 introduced.
 
 - **Status:** Active
 - **Rule:**
-  - "Eliminar punto de suministro" MUST be offered on a supply's card menu, in the community's
+  - "Eliminar punto de suministro" MUST be offered on a supply's row menu, in the community's
     supply list and in a member's supplies, and on the supply detail page, only when that
     supply's `capabilities.canDelete` is `true`.
   - A `canDelete` absent from the payload MUST count as `false`.
-  - On the card menu, "Eliminar punto de suministro" goes last, below a divider, in the error colour.
+  - On the row menu, "Eliminar punto de suministro" goes last, below a divider, in the error colour.
 - **Rationale:** The backend answers per supply who may delete it. A backend that predates the
   endpoint does not report the capability, and offering the action there would send a request the
   backend cannot answer.
 - **Implements:** SUP-001
-- **Source:** #290, lucoenergia/conluz#412
+- **Source:** #290, lucoenergia/conluz#412; #348 (the card menu became a row menu, behaviour unchanged)
 
 ### UI-SUP-002 — The confirmation names what is deleted, and dismissing it sends nothing
 
@@ -84,7 +88,7 @@ This document covers only the rules #290, #302, #324 and #339 introduced.
   backend keeps them as the community's records. Disabling stops using the supply and keeps them.
   A 404 means somebody else already deleted the supply, so the screen is stale.
 - **Implements:** SUP-001
-- **Source:** #290, lucoenergia/conluz#412
+- **Source:** #290, lucoenergia/conluz#412; #348 (the card menu became a row menu, behaviour unchanged)
 
 ### UI-SUP-005 — The owner shown is their record in the supply's community
 
@@ -185,7 +189,58 @@ This document covers only the rules #290, #302, #324 and #339 introduced.
 - **Implements:** n/a
 - **Source:** #339
 
+### UI-SUP-011 — A supply row shows what the supply says, and the owner only to whoever manages the community
+
+- **Status:** Active
+- **Rule:**
+  - A supply row MUST show its label (UI-SUP-010) and its CUPS unless the label is the CUPS. It
+    MUST show its address only when the label is its name, so neither value is shown twice. A
+    layout with a CUPS column of its own shows the CUPS there whatever the label is.
+  - It MUST show its owner record (UI-SUP-005), or "Sin titular" when there is none, only when the
+    active community grants `canManage`, in the community's list and in a member's supplies alike.
+  - It MUST NOT show consumption, connection or any other figure.
+  - While `canManage` is pending, the list MUST stay in its loading state. If the capability read
+    fails, the list MUST render without the owner.
+- **Rationale:** Only real supply data is shown. The owner is useful to whoever manages the
+  community, and redundant for a member, who only sees their own supplies; a capability decides
+  it, not a role. Rows that gained an owner after they were drawn would shift under the reader.
+  Hiding the owner discloses nothing, and a failed secondary read must not block the list.
+- **Implements:** n/a
+- **Source:** #348
+
+### UI-SUP-012 — A plant's own supply is marked with the plant's name
+
+- **Status:** Active
+- **Rule:** A supply that a plant of the active community produces onto MUST be marked "Punto de la
+  planta <plant name>", without alert colours. The mark MUST come from the supply's own `plant`.
+- **Rationale:** A plant's supply is not a consumer, and the reader must not mistake it for one. The
+  supply names its plant itself, so the mark needs no second read: the plants listing would need a
+  capability a member does not hold, and could fail on its own.
+- **Implements:** SUP-004
+- **Source:** #348
+
+### UI-SUP-013 — A disabled supply is "Dado de baja", and status is never coloured as a failure
+
+- **Status:** Active
+- **Rule:**
+  - A disabled supply MUST be shown as "Dado de baja", and an enabled one MUST show no status.
+  - The status filter and the header counter MUST say "Dados de baja".
+  - Filter chips MUST NOT use success or error colours.
+- **Rationale:** "Inactivo" is ambiguous, because a disabled supply has left the community. Colour is
+  reserved for failures.
+- **Implements:** n/a
+- **Source:** #348
+
 ## States
+
+The supply list follows the states of `record-lists.md`. What is particular to it:
+
+| State | Rendered | Actions available |
+| --- | --- | --- |
+| Loading | Skeleton rows, also while `canManage` is pending (UI-SUP-011) | Search, filter, create and import where offered |
+| Empty | "No se encontraron puntos de suministro", with "Crear Punto de Suministro" where `createSupply` is offered | As in Loading |
+| No results | "No hay puntos de suministro que coincidan" | "Limpiar filtros", which clears the search and the filter |
+| Error | "No se pudieron cargar los puntos de suministro." | "Reintentar" |
 
 The import dialog, as the member import's (`members.md`):
 

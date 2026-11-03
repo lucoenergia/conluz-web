@@ -189,6 +189,14 @@ export const fontSizes = {
   "2xl": "1.125rem", // 18px
 } as const;
 
+// ─── Font families ────────────────────────────────────────────────────────────
+// The theme's body font (Inter) is set once in src/theme/index.ts. These are
+// the other stacks a value may need, never a webfont: `mono` sets identifiers
+// read character by character, such as a CUPS.
+export const fontFamilies = {
+  mono: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+} as const;
+
 // ─── Transitions ──────────────────────────────────────────────────────────────
 // The properties every interactive surface in this app actually animates on
 // hover, focus and press. None of them drive layout, so they stay on the

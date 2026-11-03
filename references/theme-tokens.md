@@ -210,3 +210,14 @@ Use these when MUI Typography variants don't cover the size. Prefer variants (`b
 | `fontSizes.lg` | `"0.9375rem"` | 15px |
 | `fontSizes.xl` | `"1rem"` | 16px — MUI body1 |
 | `fontSizes["2xl"]` | `"1.125rem"` | 18px |
+
+---
+
+## `fontFamilies` — Font stacks other than the body font
+
+The body font (self-hosted Inter, see `references/fonts.md`) is set by the theme. Use these only for
+a value that needs a different stack. They are system stacks: nothing is downloaded.
+
+| Token | Value | Use |
+|---|---|---|
+| `fontFamilies.mono` | `"ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"` | Identifiers read character by character, e.g. a CUPS |

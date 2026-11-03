@@ -35,7 +35,7 @@ test.describe("cross-community scope", () => {
     await expect(page.getByRole("main")).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByRole("heading", { name: "Casa Principal" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Casa Principal" })).toBeVisible();
     await expect(
       page.getByText(FIXED_SUPPLY_OTHER_COMMUNITY.community.name ?? "Vecinos del Sur"),
     ).toHaveCount(0);
@@ -53,10 +53,10 @@ test.describe("cross-community scope", () => {
     await expect(page.getByRole("main")).toBeVisible();
     await stabilizePage(page);
 
-    await expect(page.getByRole("heading", { name: "Casa Principal" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Casa Principal" })).toBeVisible();
     // Readable by this caller, and still not this community's business.
     await expect(
-      page.getByRole("heading", { name: FIXED_SUPPLY_OTHER_COMMUNITY.name ?? "Casa en otra comunidad" }),
+      page.getByRole("link", { name: FIXED_SUPPLY_OTHER_COMMUNITY.name ?? "Casa en otra comunidad" }),
     ).toHaveCount(0);
   });
 });

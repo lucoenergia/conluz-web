@@ -22,10 +22,12 @@
 
 import { type Page } from "@playwright/test";
 import type { CommunityResponse, SupplyResponse } from "../../src/api/models";
+import { colors } from "../../src/theme/tokens";
 import {
   test,
   expect,
   communityCapabilitiesFor,
+  COMMUNITY_ADMIN_SUPPLY_CAPABILITIES,
   FIXED_COEFFICIENTS_MIXED,
   FIXED_COMMUNITY_ADMINS,
   FIXED_COMMUNITY_ADMIN_USER,
@@ -37,6 +39,7 @@ import {
   FIXED_PLATFORM_ADMINS,
   FIXED_SHARING_AGREEMENTS,
   FIXED_SUPPLY,
+  FIXED_SUPPLY_2,
   FIXED_SUPPLY_ID,
   injectAuthToken,
   MEMBER_HOURLY_PROFILE_GAPS,
@@ -52,6 +55,7 @@ import {
   navigateToSharingAgreementDetail,
   navigateToSharingAgreements,
   openPlantDetail,
+  PAGED_SUPPLIES,
   PUBLISHED_AGREEMENT,
   seedActiveCommunity,
   stabilizePage,
@@ -718,12 +722,17 @@ test.describe("#247: the historical analysis supply selector", () => {
  * under the name instead. Measured at exactly 1024px, the narrowest viewport
  * that shows the table, on each of the four list pages, with values long
  * enough to need folding. The long values are copies of the shared fixtures,
- * served to these tests alone.
+ * served to these tests alone. The supply list is measured as a community
+ * admin, the caller whose table has the most columns (#348).
  *
  * Desktop project only: the side menu is persistent from 768px, so it is open
  * at 1024px, and the real scrollbars this file runs with take their width.
  */
 test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side menu open", () => {
+  /** `colors.divider` as getComputedStyle reports it: "rgb(r, g, b)". */
+  const dividerRgb = `rgb(${[1, 3, 5].map((at) => parseInt(colors.divider.slice(at, at + 2), 16)).join(", ")})`;
+  const HAIRLINE = `1px solid ${dividerRgb}`;
+  const LAST_ROW_BORDER = "1px solid rgba(0, 0, 0, 0)";
   const LONG = "Cooperativa Energética Comunitaria de la Vega Baja del Segura y Comarca";
   const longCommunity: CommunityResponse = {
     id: FIXED_COMMUNITY_ID,
@@ -738,6 +747,25 @@ test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side me
     capabilities: communityCapabilitiesFor(FIXED_PLATFORM_ADMIN_USER),
   };
   const longEmail = "encarnacion.martinez.albaladejo.cooperativa@telefonica-empresas.example";
+  // Every value a supply row shows, at its longest: a long name and address, an
+  // owner with a member number, a plant mark, and a disabled supply's badge.
+  const longSupplies: SupplyResponse[] = [
+    {
+      ...FIXED_SUPPLY,
+      name: `${FIXED_SUPPLY.name} ${LONG}`,
+      address: `${LONG}, Avenida de la Constitución Española 1978, Bloque 4, Escalera B, 03300 Orihuela`,
+      ownerRecord: { fullName: "Encarnación Martínez-Albaladejo Fernández de Córdoba", memberNumber: 12840, contactEmail: longEmail, address: null, phoneNumber: null },
+      plant: { id: FIXED_PLANT_ID, name: `Planta fotovoltaica ${LONG}` },
+      capabilities: COMMUNITY_ADMIN_SUPPLY_CAPABILITIES,
+    },
+    {
+      ...FIXED_SUPPLY_2,
+      name: `${FIXED_SUPPLY_2.name} ${LONG}`,
+      enabled: false,
+      ownerRecord: null,
+      capabilities: COMMUNITY_ADMIN_SUPPLY_CAPABILITIES,
+    },
+  ];
 
   /** `minNameWidth`: the narrowest the name column may be on that page; below it, long names are cut. */
   const LIST_TABLES: { name: string; open: (page: Page) => Promise<void>; minNameWidth?: number }[] = [
@@ -754,6 +782,28 @@ test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side me
           })),
         });
         await page.goto("/members");
+      },
+    },
+    {
+      name: "/supply-points",
+      // The CUPS and the owner have columns of their own; the name keeps room to be read.
+      minNameWidth: 180,
+      open: async (page) => {
+        await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+        await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+        // Registered last, so it wins for the community's listing.
+        await page.route(
+          (url) => url.pathname === `/api/v1/communities/${FIXED_COMMUNITY_ID}/supplies`,
+          (route) =>
+            route.fulfill({
+              status: 200,
+              contentType: "application/json",
+              body: JSON.stringify({ ...PAGED_SUPPLIES, items: longSupplies, totalElements: longSupplies.length }),
+            }),
+        );
+        await page.goto("/supply-points");
+        // The long rows, not the shared fixture: a budget over the wrong rows proves nothing.
+        await expect(page.getByRole("link", { name: longSupplies[0].name ?? "" })).toBeVisible();
       },
     },
     {
@@ -841,6 +891,44 @@ test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side me
       if (listTable.minNameWidth) {
         expect(widths.columns[0], `${listTable.name} name column width`).toBeGreaterThanOrEqual(listTable.minNameWidth);
       }
+    });
+
+    // Measured, not captured: a divider hairline on white is inside the
+    // screenshot comparison's per-pixel colour threshold, so no baseline can
+    // tell a table with separators from one without (#348).
+    test(`#348 ${listTable.name} separates its header and its rows with a hairline`, async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name !== "desktop", "The table is the layout from 1024px; the mobile project never shows it.");
+
+      await page.setViewportSize({ width: 1024, height: 900 });
+      await injectAuthToken(page);
+      await listTable.open(page);
+
+      const table = page.getByRole("main").getByRole("table");
+      await expect(table).toBeVisible();
+      await stabilizePage(page);
+
+      const borders = await table.evaluate((element) => {
+        const borderOf = (cell: Element) => {
+          const style = getComputedStyle(cell);
+          return `${style.borderBottomWidth} ${style.borderBottomStyle} ${style.borderBottomColor}`;
+        };
+        const bodyRows = [...element.querySelectorAll("tbody tr")];
+        return {
+          header: [...new Set([...element.querySelectorAll("thead th")].map(borderOf))],
+          between: [...new Set(bodyRows.slice(0, -1).flatMap((row) => [...row.querySelectorAll("td")].map(borderOf)))],
+          last: [...new Set([...(bodyRows.at(-1)?.querySelectorAll("td") ?? [])].map(borderOf))],
+          rowCount: bodyRows.length,
+        };
+      });
+
+      expect(borders.rowCount, `${listTable.name} rows`).toBeGreaterThan(0);
+      expect(borders.header, `${listTable.name} header border`).toEqual([HAIRLINE]);
+      if (borders.rowCount > 1) {
+        expect(borders.between, `${listTable.name} border between rows`).toEqual([HAIRLINE]);
+      }
+      // The panel's edge, or the footer's own hairline, closes the list; the
+      // last row keeps the width, so no table changes height.
+      expect(borders.last, `${listTable.name} last row border`).toEqual([LAST_ROW_BORDER]);
     });
   }
 });

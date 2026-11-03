@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FC } from "react";
+import { useMemo, useState, type FC, type MouseEvent, type SyntheticEvent } from "react";
 import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
@@ -8,17 +8,23 @@ import { useGetSuppliesByUserId, useGetUserById } from "../../api/users/users";
 import type { SupplyResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { SearchBar } from "../../components/SearchBar/SearchBar";
-import { SupplyCard } from "../../components/SupplyCard/SupplyCard";
 import { DetailHeader } from "../../components/DetailHeader";
 import { FilterChipsBar, type FilterStatus } from "../../components/FilterChips";
-import { CardGrid } from "../../components/CardGrid";
-import { LoadingCardGrid } from "../../components/CardGrid";
+import { ResponsiveRecordList } from "../../components/ResponsiveRecordList";
+import { ListTable } from "../../components/ListTable";
+import { RecordList, type RecordListItem } from "../../components/RecordList";
+import { ListPagination } from "../../components/ListPagination";
+import { useListPage } from "../../components/ListPagination/useListPage";
+import { DisableConfirmationModal } from "../../components/Modals/DisableConfirmationModal";
+import { DisableSuccessModal } from "../../components/Modals/DisableSuccessModal";
+import { EnableConfirmationModal } from "../../components/Modals/EnableConfirmationModal";
+import { EnableSuccessModal } from "../../components/Modals/EnableSuccesModal";
 import { EmptyState } from "../../components/EmptyState";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { useErrorDispatch } from "../../context/error.context";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
+import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { ImportSuppliesDialog } from "./ImportSuppliesDialog";
 import { useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 import { useActiveCommunity } from "../../context/community.context";
@@ -27,6 +33,12 @@ import { useCommunityActions, useSupplyActions } from "../../hooks/actions";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
 import { SupplyDeletionDialog } from "./SupplyDeletionDialog";
 import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
+import { useActiveCommunityCapabilities } from "../../hooks/permissions";
+import { offersSupplyRowActions, supplyTableColumns, supplyTableTitle, toRecordListItem } from "./supplyRows";
+import { SupplyRowMenu } from "./SupplyRowMenu";
+
+/** A disable or enable the caller has asked for, by supply id, and where it stands. */
+type StatusChange = { supplyId: string; kind: "disable" | "enable"; step: "confirm" | "done" };
 
 export const SupplyPointsPage: FC = () => {
   const theme = useTheme();
@@ -38,8 +50,11 @@ export const SupplyPointsPage: FC = () => {
   // render, so the dialog answers from the current read, and closes once a
   // deleted supply has left it.
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  // The row menu and the status change it starts, by id for the same reason.
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+  const [menuSupplyId, setMenuSupplyId] = useState<string | null>(null);
+  const [statusChange, setStatusChange] = useState<StatusChange | null>(null);
   const navigate = useNavigate();
-  const errorDispatch = useErrorDispatch();
   const [searchParams] = useSearchParams();
   const personId = searchParams.get("personId");
 
@@ -73,29 +88,29 @@ export const SupplyPointsPage: FC = () => {
     () => (personId ? userSuppliesInCommunity : (allData?.items ?? [])),
     [personId, userSuppliesInCommunity, allData?.items],
   );
-  const isLoading = personId ? isLoadingUser : isLoadingAll;
+  // Whether the rows name their owner (UI-SUP-011). Until the answer arrives
+  // the list stays loading, so rows never gain an owner after they are drawn.
+  // A failed read shows them without: hiding the owner discloses nothing, and
+  // the list is not this read's to block.
+  const canManage = useActiveCommunityCapabilities("canManage");
+  const showOwner = canManage.state === "allowed";
+  const isLoading = (personId ? isLoadingUser : isLoadingAll) || canManage.state === "pending";
   const error = personId ? errorUser : errorAll;
   const refetch = personId ? refetchUser : refetchAll;
 
   // What this caller may do, as the backend answers it. forSupply is a plain
-  // function rather than a hook precisely so it can be asked once per card.
+  // function rather than a hook precisely so it can be asked once per row.
   const { forSupply } = useSupplyActions();
   const activeCommunity = useActiveCommunityResource();
   const activeCommunityName = useActiveCommunityName();
   const { actions: communityActions } = useCommunityActions().forCommunity(activeCommunity);
-
-  useEffect(() => {
-    if (error) {
-      errorDispatch("Ha habido un problema al cargar los puntos de suministro. Por favor, inténtalo más tarde");
-    }
-  }, [error, errorDispatch]);
 
   const filteredItems: SupplyResponse[] = useMemo(() => {
     let items = responseFromApi;
 
     // Filter by search text
     if (searchText) {
-      // The label is what the card shows, so what is shown can be found.
+      // The label is what the row shows, so what is shown can be found.
       items = items.filter((item) =>
         supplyDisplayLabel(item).toLowerCase().includes(searchText.toLowerCase()) ||
         item.code?.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -113,12 +128,61 @@ export const SupplyPointsPage: FC = () => {
     return items;
   }, [searchText, responseFromApi, filterStatus]);
 
+  // The whole list is read at once (size 10000) and paged here, 25 rows at a
+  // time (UI-LST-005). A new search or filter starts again from the first page.
+  const { page, setPage, pageCount, pageRows } = useListPage(filteredItems);
+  const isFiltering = searchText !== "" || filterStatus !== "all";
+  const changeSearch = (text: string) => {
+    setSearchText(text);
+    setPage(1);
+  };
+  const changeFilter = (status: FilterStatus) => {
+    setFilterStatus(status);
+    setPage(1);
+  };
+  const clearFilters = () => {
+    changeSearch("");
+    changeFilter("all");
+  };
+
   const stats = useMemo(() => {
     const total = responseFromApi.length;
     const active = responseFromApi.filter(item => item.enabled).length;
     const inactive = total - active;
     return { total, active, inactive };
   }, [responseFromApi]);
+
+  const supplyById = (id: string | null) => responseFromApi.find((supply) => supply.id === id);
+  const hasRowActions = (supply: SupplyResponse) => offersSupplyRowActions(forSupply(supply));
+  const rowActionsLabel = (supply: SupplyResponse) => `Más acciones para ${supplyDisplayLabel(supply)}`;
+  // Over the whole list, not the page, so every page of it looks the same.
+  const chevron = !filteredItems.some(hasRowActions);
+
+  const handleMenuOpen = (event: MouseEvent<HTMLElement>, supply: SupplyResponse) => {
+    setMenuAnchor(event.currentTarget);
+    setMenuSupplyId(supply.id);
+  };
+  const handleMenuClose = () => setMenuAnchor(null);
+  const menuSupply = supplyById(menuSupplyId);
+  const supplyOfItem = (item: RecordListItem) => supplyById(item.id);
+
+  const statusChangeSupply = supplyById(statusChange?.supplyId ?? null);
+  const statusChangeCode = statusChangeSupply?.code ?? "";
+  const closeStatusChange = (event?: SyntheticEvent) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    setStatusChange(null);
+  };
+  // The confirmation closes before the request is sent, so it holds no request
+  // in flight; the success dialog follows only if the change went through.
+  const confirmStatusChange = async () => {
+    if (!statusChange) return;
+    const { supplyId, kind } = statusChange;
+    setStatusChange(null);
+    const action = forSupply(supplyById(supplyId)).actions[kind];
+    if (!action) return;
+    if (await action.run()) setStatusChange({ supplyId, kind, step: "done" });
+  };
 
   const handleOpenImportModal = () => {
     setShowImportModal(true);
@@ -172,7 +236,7 @@ export const SupplyPointsPage: FC = () => {
           keyFacts={[
             { label: "Total", value: stats.total },
             { label: "Activos", value: stats.active },
-            { label: "Inactivos", value: stats.inactive },
+            { label: "Dados de baja", value: stats.inactive },
           ]}
         />
       </Box>
@@ -241,78 +305,132 @@ export const SupplyPointsPage: FC = () => {
           </Box>
 
           {/* Filter Chips */}
-          <FilterChipsBar value={filterStatus} onChange={setFilterStatus} />
+          <FilterChipsBar value={filterStatus} onChange={changeFilter} />
 
           {/* Search Bar */}
-          <SearchBar value={searchText} onChange={setSearchText} />
+          <SearchBar value={searchText} onChange={changeSearch} />
           </Box>
         </Paper>
       </Box>
 
-      {/* Supply Cards Grid */}
-      {!isLoading && !error && filteredItems.length > 0 && (
-        <Box sx={sxStyles.pageContainer}>
-          <CardGrid
-            items={filteredItems}
-            getKey={(item) => item.id || ""}
-            renderCard={(item) => {
-              // Destructured so TypeScript narrows them: an action the caller
-              // was not given is undefined, and the card is handed nothing.
-              const { disable, enable, edit, remove } = forSupply(item).actions;
-              return (
-                <SupplyCard
-                  id={item.id}
-                  code={item.code}
-                  name={supplyDisplayLabel(item)}
-                  address={item.address}
-                  enabled={item.enabled}
-                  lastConnection="Hace 2 horas"
-                  lastMeasurement={Math.floor(Math.random() * 100)}
-                  canEdit={!!edit}
-                  onDisable={disable && (() => disable.run())}
-                  onEnable={enable && (() => enable.run())}
-                  onDeleteRequest={remove && (() => setDeleteTargetId(item.id))}
-                />
-              );
-            }}
-          />
-        </Box>
-      )}
+      <Box sx={[sxStyles.pageContainerFull, { boxSizing: "border-box" }]}>
+        <ResponsiveRecordList
+          // A failed read says so and offers the read again, never the empty state (UI-LST-004).
+          error={
+            error
+              ? { message: "No se pudieron cargar los puntos de suministro.", onRetry: () => void refetch() }
+              : undefined
+          }
+          empty={
+            isLoading || error || filteredItems.length > 0 ? undefined : isFiltering ? (
+              <EmptyState
+                icon={SearchOffIcon}
+                title="No hay puntos de suministro que coincidan"
+                subtitle="Prueba con otra búsqueda o quita algún filtro."
+                actionButton={{ label: "Limpiar filtros", onClick: clearFilters }}
+              />
+            ) : (
+              <EmptyState
+                icon={ElectricMeterIcon}
+                title="No se encontraron puntos de suministro"
+                subtitle={
+                  communityActions.createSupply
+                    ? "Comienza agregando tu primer punto de suministro"
+                    // A member cannot add one, so inviting them to is an
+                    // instruction they can only fail to follow.
+                    : "Todavía no hay ningún punto de suministro asociado a tu cuenta en esta comunidad."
+                }
+                actionButton={
+                  communityActions.createSupply
+                    ? {
+                        label: "Crear Punto de Suministro",
+                        onClick: () => navigate("/supply-points/new"),
+                        startIcon: <AddCircleOutlineIcon />,
+                      }
+                    : undefined
+                }
+              />
+            )
+          }
+          wide={
+            <ListTable
+              rows={pageRows}
+              getRowKey={(supply) => supply.id}
+              isLoading={isLoading}
+              rowActions={{ label: rowActionsLabel, onClick: handleMenuOpen, has: hasRowActions }}
+              isInactive={(supply) => !supply.enabled}
+              title={supplyTableTitle}
+              columns={supplyTableColumns({ showOwner })}
+            />
+          }
+          narrow={
+            <RecordList
+              label="Puntos de suministro"
+              isLoading={isLoading}
+              chevron={chevron}
+              rowActions={{
+                label: (item) => {
+                  const supply = supplyOfItem(item);
+                  return supply ? rowActionsLabel(supply) : `Más acciones para ${item.title}`;
+                },
+                onClick: (event, item) => {
+                  const supply = supplyOfItem(item);
+                  if (supply) handleMenuOpen(event, supply);
+                },
+                has: (item) => {
+                  const supply = supplyOfItem(item);
+                  return !!supply && hasRowActions(supply);
+                },
+              }}
+              items={pageRows.map((supply) => toRecordListItem(supply, { showOwner }))}
+            />
+          }
+          footer={
+            !isLoading && (
+              <ListPagination
+                page={page}
+                pageCount={pageCount}
+                total={filteredItems.length}
+                noun={{ one: "punto de suministro", other: "puntos de suministro" }}
+                onChange={setPage}
+              />
+            )
+          }
+        />
+      </Box>
 
-      {/* Loading State */}
-      {isLoading && (
-        <Box sx={sxStyles.pageContainer}>
-          <LoadingCardGrid />
-        </Box>
-      )}
+      <SupplyRowMenu
+        anchorEl={menuAnchor}
+        onClose={handleMenuClose}
+        supply={menuSupply}
+        actions={forSupply(menuSupply).actions}
+        onDisable={() => menuSupply && setStatusChange({ supplyId: menuSupply.id, kind: "disable", step: "confirm" })}
+        onEnable={() => menuSupply && setStatusChange({ supplyId: menuSupply.id, kind: "enable", step: "confirm" })}
+        onDelete={() => menuSupply && setDeleteTargetId(menuSupply.id)}
+      />
 
-      {/* Empty State */}
-      {!isLoading && !error && filteredItems.length === 0 && (
-        <Box sx={sxStyles.pageContainer}>
-          <EmptyState
-            icon={ElectricMeterIcon}
-            title="No se encontraron puntos de suministro"
-            subtitle={
-              searchText
-                ? `No hay resultados para "${searchText}"`
-                : communityActions.createSupply
-                  ? "Comienza agregando tu primer punto de suministro"
-                  // A member cannot add one, so inviting them to is an
-                  // instruction they can only fail to follow.
-                  : "Todavía no hay ningún punto de suministro asociado a tu cuenta en esta comunidad."
-            }
-            actionButton={
-              !searchText && communityActions.createSupply
-                ? {
-                    label: "Crear Punto de Suministro",
-                    onClick: () => navigate("/supply-points/new"),
-                    startIcon: <AddCircleOutlineIcon />,
-                  }
-                : undefined
-            }
-          />
-        </Box>
-      )}
+      <DisableConfirmationModal
+        isOpen={statusChange?.kind === "disable" && statusChange.step === "confirm"}
+        code={statusChangeCode}
+        onCancel={closeStatusChange}
+        onDisable={confirmStatusChange}
+      />
+      <DisableSuccessModal
+        isOpen={statusChange?.kind === "disable" && statusChange.step === "done"}
+        code={statusChangeCode}
+        onClose={closeStatusChange}
+      />
+      <EnableConfirmationModal
+        isOpen={statusChange?.kind === "enable" && statusChange.step === "confirm"}
+        code={statusChangeCode}
+        onCancel={closeStatusChange}
+        onEnable={confirmStatusChange}
+      />
+      <EnableSuccessModal
+        isOpen={statusChange?.kind === "enable" && statusChange.step === "done"}
+        code={statusChangeCode}
+        onClose={closeStatusChange}
+      />
 
       {/* Mounted on open, so every opening starts from the guide, and with its
           button's gate: no import action, nothing that can open it. The page
@@ -328,7 +446,7 @@ export const SupplyPointsPage: FC = () => {
       )}
 
       <SupplyDeletionDialog
-        supply={responseFromApi.find((supply) => supply.id === deleteTargetId)}
+        supply={supplyById(deleteTargetId)}
         onClose={() => setDeleteTargetId(null)}
       />
     </Box>
