@@ -1105,3 +1105,51 @@ test.describe("#250: the historical analysis evolution charts", () => {
     }
   });
 });
+
+/**
+ * #251. The data table at phone width, over the longest daily period: 62 days
+ * with "Ver todos" open. Below sm each row is a card; every card, the totals
+ * included, stays within the viewport and holds its own content, and the page
+ * never scrolls sideways. Measured, not captured: the risk is a value that
+ * does not wrap pushing a card past the screen, which jsdom cannot lay out.
+ */
+test.describe("#251: the historical analysis data table", () => {
+  test("UI-HIS-021 at 390px the 62 row cards and the totals fit, and the page never scrolls sideways", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "The budget is a 390px viewport.");
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+    // Registered after mockAllApiRoutes so it wins for this path only.
+    const sixtyTwoDays = memberDailySeries("2026/07/01", 62);
+    await page.route(
+      (url) => /\/memberships\/[^/]+\/consumption\/daily$/.test(url.pathname),
+      (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(sixtyTwoDays) }),
+    );
+    await page.goto("/historical-analysis?period=custom&from=2026-07-01&to=2026-08-31");
+
+    const region = page.getByRole("region", { name: "Tus datos" });
+    await region.getByRole("button", { name: "Ver todos" }).click();
+    const cards = region.getByRole("list", { name: /^Tus datos:/ }).getByRole("listitem");
+    await expect(cards).toHaveCount(62 + 1);
+    await expect(cards.last()).toHaveAccessibleName("Total del periodo");
+    await stabilizePage(page);
+
+    const pageWidths = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth,
+    }));
+    expect(pageWidths.document, "the page scrolls sideways").toBeLessThanOrEqual(pageWidths.viewport);
+    const boxes = await cards.evaluateAll((items) =>
+      items.map((item) => {
+        const box = item.getBoundingClientRect();
+        return { name: item.getAttribute("aria-label"), left: box.left, right: box.right, scroll: item.scrollWidth, client: item.clientWidth };
+      }),
+    );
+    for (const box of boxes) {
+      expect(box.left, `${box.name} starts off-screen`).toBeGreaterThanOrEqual(0);
+      expect(box.right, `${box.name} is wider than the viewport`).toBeLessThanOrEqual(390);
+      expect(box.scroll, `${box.name}'s content is wider than the card (${box.scroll}px)`).toBeLessThanOrEqual(box.client);
+    }
+  });
+});

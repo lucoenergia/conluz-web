@@ -2,7 +2,7 @@ import type { FC } from "react";
 import { Box, Typography } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import type { EstimatedPriceResponse } from "../../../api/models";
-import { formatEurosPerKilowattHour } from "../../../utils/formatEnergyFigures";
+import { estimatedPriceText } from "./estimatedPriceText";
 import { colors, radii } from "../../../theme/tokens";
 
 /**
@@ -31,7 +31,7 @@ export const EstimatedPriceLabel: FC<{ estimatedPrice: EstimatedPriceResponse | 
     >
       <InfoOutlinedIcon aria-hidden sx={{ fontSize: 16, mt: 0.25 }} />
       <Typography variant="caption" component="p" sx={{ color: colors.text.body }}>
-        Estimado con un precio de {formatEurosPerKilowattHour(estimatedPrice.eurPerKWh)} para la energía, sin impuestos.
+        {estimatedPriceText(estimatedPrice)}
       </Typography>
     </Box>
   );

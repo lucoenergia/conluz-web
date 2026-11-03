@@ -45,6 +45,7 @@ import {
   TableRow,
   TableCell,
   TableContainer,
+  TableFooter,
   List,
   ListItem,
   ListItemButton,
@@ -180,6 +181,7 @@ import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import SolarPowerOutlinedIcon from "@mui/icons-material/SolarPowerOutlined";
 import SolarPowerRoundedIcon from "@mui/icons-material/SolarPowerRounded";
 import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
+import TableRowsRoundedIcon from "@mui/icons-material/TableRowsRounded";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import UndoOutlinedIcon from "@mui/icons-material/UndoOutlined";
@@ -240,6 +242,7 @@ export const Mui = {
   TableRow,
   TableCell,
   TableContainer,
+  TableFooter,
   List,
   ListItem,
   ListItemButton,
@@ -378,6 +381,7 @@ export const Icons = {
   SolarPowerOutlined: SolarPowerOutlinedIcon,
   SolarPowerRounded: SolarPowerRoundedIcon,
   SupportAgentRounded: SupportAgentRoundedIcon,
+  TableRowsRounded: TableRowsRoundedIcon,
   TrendingDown: TrendingDownIcon,
   TrendingUp: TrendingUpIcon,
   UndoOutlined: UndoOutlinedIcon,

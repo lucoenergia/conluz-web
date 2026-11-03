@@ -23,6 +23,7 @@ import {
   type Granularity,
   type HistoricalPeriod,
 } from "./historicalPeriod";
+import { slotStateText } from "./slotStateText";
 import type { ConsumptionSeries } from "./usePeriodConsumptionSeries";
 
 /**
@@ -96,8 +97,7 @@ export const CONSUMPTION_GROUP = "consumption";
 export const ASSIGNED_UNUSED_GROUP = "assignedUnused";
 const SAVINGS_GROUP = "savings";
 
-export const COMPLETE_TEXT = "Datos completos.";
-const GAP_TEXT = { daily: "Sin datos: no hay lecturas de este día. No cuenta como 0.", monthly: "Sin datos: no hay lecturas de este mes. No cuenta como 0." };
+export { COMPLETE_TEXT } from "./slotStateText";
 export const MEASURED_ZERO_KWH_TEXT = "0,0 kWh (medido)";
 export const MEASURED_ZERO_EUR_TEXT = `${formatEuros(0)} (medido)`;
 
@@ -190,17 +190,6 @@ function stateOf(reading: BucketReading | undefined): SlotState {
 const kilowattHoursText = (value: number) => (value === 0 ? MEASURED_ZERO_KWH_TEXT : formatKilowattHours(value));
 const eurosText = (value: number) => (value === 0 ? MEASURED_ZERO_EUR_TEXT : formatEuros(value));
 
-function stateTextOf(state: SlotState, granularity: Granularity): string {
-  switch (state.kind) {
-    case "gap":
-      return GAP_TEXT[granularity];
-    case "partial":
-      return `Datos parciales: ${state.reported} de ${state.total} puntos con datos.`;
-    default:
-      return COMPLETE_TEXT;
-  }
-}
-
 function axisLabelOf(day: CalendarDay, index: number, granularity: Granularity, step: number): string {
   if (index % step !== 0) return "";
   const key = formatDayKey(day);
@@ -218,7 +207,7 @@ function slotOf(day: CalendarDay, index: number, reading: BucketReading | undefi
     axisLabel: axisLabelOf(day, index, granularity, step),
     name: granularity === "daily" ? formatCalendarDay(key) : capitalise(formatCalendarMonth(key)),
     state,
-    stateText: stateTextOf(state, granularity),
+    stateText: slotStateText(state, granularity).long,
   };
   if (state.kind === "gap" || !reading) {
     return {
