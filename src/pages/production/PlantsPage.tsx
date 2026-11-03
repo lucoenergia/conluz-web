@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FC } from "react";
+import { useEffect, useMemo, useState, type FC, type MouseEvent } from "react";
 import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
@@ -7,28 +7,33 @@ import { useGetAllPlants } from "../../api/plants/plants";
 import type { PlantResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { SearchBar } from "../../components/SearchBar/SearchBar";
-import { PlantCard } from "../../components/PlantCard/PlantCard";
 import { DetailHeader } from "../../components/DetailHeader";
-import { CardGrid } from "../../components/CardGrid";
-import { LoadingCardGrid } from "../../components/CardGrid";
+import { ResponsiveRecordList } from "../../components/ResponsiveRecordList";
+import { ListTable } from "../../components/ListTable";
+import { RecordList, type RecordListItem } from "../../components/RecordList";
 import { EmptyState } from "../../components/EmptyState";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { Link, useNavigate } from "react-router";
 import { useErrorDispatch } from "../../context/error.context";
-import { useSuccessDispatch } from "../../context/success.context";
-import { plantDeletionRefusalMessage } from "../../errors/plantErrors";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import { useActiveCommunity } from "../../context/community.context";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
 import { useCommunityActions, usePlantActions } from "../../hooks/actions";
+import { offersPlantRowActions, plantTableColumns, plantTableTitle, toRecordListItem } from "./plantRows";
+import { PlantRowMenu } from "./PlantRowMenu";
+import { PlantDeletionDialog } from "./PlantDeletionDialog";
 
 export const PlantsPage: FC = () => {
   const theme = useTheme();
   const [searchText, setSearchText] = useState("");
+  // Ids, not plants: the plant is resolved from the list on every render, so
+  // the menu and the dialog answer from the current read.
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+  const [menuPlantId, setMenuPlantId] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const navigate = useNavigate();
   const errorDispatch = useErrorDispatch();
-  const successDispatch = useSuccessDispatch();
   const activeCommunityId = useActiveCommunity();
   const { data: { items: responseFromApi = [] } = {}, isLoading, error } = useGetAllPlants(
     activeCommunityId ?? "",
@@ -66,6 +71,20 @@ export const PlantsPage: FC = () => {
     const totalPower = responseFromApi.reduce((sum, item) => sum + (item.totalPower || 0), 0);
     return { total, totalPower };
   }, [responseFromApi]);
+
+  const plantById = (id: string | null) => responseFromApi.find((plant) => plant.id === id);
+  const plantOfItem = (item: RecordListItem) => plantById(item.id);
+  const hasRowActions = (plant: PlantResponse) => offersPlantRowActions(plant, forPlant(plant));
+  const rowActionsLabel = (plant: PlantResponse) => `Más acciones para ${plant.name}`;
+  // Over the whole list, not the page, so every page of it looks the same.
+  const chevron = !filteredItems.some(hasRowActions);
+
+  const handleMenuOpen = (event: MouseEvent<HTMLElement>, plant: PlantResponse) => {
+    setMenuAnchor(event.currentTarget);
+    setMenuPlantId(plant.id);
+  };
+  const handleMenuClose = () => setMenuAnchor(null);
+  const menuPlant = plantById(menuPlantId);
 
   return (
     <Box
@@ -150,77 +169,76 @@ export const PlantsPage: FC = () => {
         </Paper>
       </Box>
 
-      {/* Plant Cards Grid */}
-      {!isLoading && !error && filteredItems.length > 0 && (
-        <Box sx={sxStyles.pageContainer}>
-          <CardGrid
-            items={filteredItems}
-            getKey={(item) => item.id || ""}
-            renderCard={(item) => {
-              // Destructured so TypeScript narrows them: an action the caller
-              // was not given is undefined, and the card is handed nothing.
-              const { remove } = forPlant(item).actions;
-              const { canManage, canListSharingAgreements } = item.capabilities;
-              return (
-                <PlantCard
-                  id={item.id}
-                  code={item.providerCode}
-                  name={item.name}
-                  address={item.address}
-                  totalPower={item.totalPower}
-                  connectionDate={item.connectionDate ?? undefined}
-                  description={item.description ?? undefined}
-                  canManage={canManage}
-                  canListSharingAgreements={canListSharingAgreements}
-                  onDelete={
-                    remove &&
-                    (async () => {
-                      const result = await remove.run();
-                      // Announced by the page: the card leaves the list once
-                      // it refreshes, and anything it showed goes with it.
-                      if ("ok" in result) successDispatch(`Planta ${item.providerCode} eliminada.`);
-                      else errorDispatch(plantDeletionRefusalMessage(result.error));
-                    })
-                  }
-                />
-              );
-            }}
-          />
-        </Box>
-      )}
+      <Box sx={sxStyles.pageContainerFull}>
+        <ResponsiveRecordList
+          empty={
+            isLoading || error || filteredItems.length > 0 ? undefined : (
+              <EmptyState
+                icon={SolarPowerIcon}
+                title="No se encontraron plantas"
+                subtitle={
+                  searchText
+                    ? `No hay resultados para "${searchText}"`
+                    : createPlant
+                      ? "Comienza agregando tu primera planta de producción"
+                      : "Todavía no hay ninguna planta de producción en esta comunidad."
+                }
+                actionButton={
+                  !searchText && createPlant
+                    ? {
+                        label: "Crear Planta",
+                        onClick: () => navigate("/production/new"),
+                        startIcon: <AddCircleOutlineIcon />,
+                      }
+                    : undefined
+                }
+              />
+            )
+          }
+          wide={
+            <ListTable
+              rows={filteredItems}
+              getRowKey={(plant) => plant.id}
+              isLoading={isLoading}
+              rowActions={{ label: rowActionsLabel, onClick: handleMenuOpen, has: hasRowActions }}
+              title={plantTableTitle}
+              columns={plantTableColumns}
+            />
+          }
+          narrow={
+            <RecordList
+              label="Plantas"
+              isLoading={isLoading}
+              chevron={chevron}
+              rowActions={{
+                label: (item) => {
+                  const plant = plantOfItem(item);
+                  return plant ? rowActionsLabel(plant) : `Más acciones para ${item.title}`;
+                },
+                onClick: (event, item) => {
+                  const plant = plantOfItem(item);
+                  if (plant) handleMenuOpen(event, plant);
+                },
+                has: (item) => {
+                  const plant = plantOfItem(item);
+                  return !!plant && hasRowActions(plant);
+                },
+              }}
+              items={filteredItems.map(toRecordListItem)}
+            />
+          }
+        />
+      </Box>
 
-      {/* Loading State */}
-      {isLoading && (
-        <Box sx={sxStyles.pageContainer}>
-          <LoadingCardGrid />
-        </Box>
-      )}
+      <PlantRowMenu
+        anchorEl={menuAnchor}
+        onClose={handleMenuClose}
+        plant={menuPlant}
+        actions={forPlant(menuPlant).actions}
+        onDelete={() => menuPlant && setDeleteTargetId(menuPlant.id)}
+      />
 
-      {/* Empty State */}
-      {!isLoading && !error && filteredItems.length === 0 && (
-        <Box sx={sxStyles.pageContainer}>
-          <EmptyState
-            icon={SolarPowerIcon}
-            title="No se encontraron plantas"
-            subtitle={
-              searchText
-                ? `No hay resultados para "${searchText}"`
-                : createPlant
-                  ? "Comienza agregando tu primera planta de producción"
-                  : "Todavía no hay ninguna planta de producción en esta comunidad."
-            }
-            actionButton={
-              !searchText && createPlant
-                ? {
-                    label: "Crear Planta",
-                    onClick: () => navigate("/production/new"),
-                    startIcon: <AddCircleOutlineIcon />,
-                  }
-                : undefined
-            }
-          />
-        </Box>
-      )}
+      <PlantDeletionDialog plant={plantById(deleteTargetId)} onClose={() => setDeleteTargetId(null)} />
     </Box>
   );
 };

@@ -28,7 +28,7 @@ export async function navigateToSharingAgreements(page: Page) {
   // behind the Suspense fallback. Stabilizing then would inject the
   // animation-killing stylesheet into a document that has not painted the
   // content yet, and the click below would hunt for an element that does not
-  // exist — reported as a bare 30s timeout rather than "no plant card".
+  // exist — reported as a bare 30s timeout rather than "no plant row".
   // (The warm-up project removes the cold-transform cost; this makes the
   // helper honest about what it is waiting for either way.)
   // An explicit budget, not the 5 s expect default. This is not an assertion
@@ -36,21 +36,21 @@ export async function navigateToSharingAgreements(page: Page) {
   // to arrive, on a dev server shared with the other viewport project. Measured
   // at 909 ms median and 980 ms worst over 69 navigations on an idle machine;
   // the default left barely 5x headroom and was the first thing to break on a
-  // busier one, reporting "no plant card" for what was really contention.
-  const plantCard = page.locator(".MuiCard-root").filter({ hasText: FIXED_PLANT.name });
-  await expect(plantCard).toBeVisible({ timeout: ROUTE_MOUNT_TIMEOUT_MS });
+  // busier one, reporting "no plant row" for what was really contention.
+  // The row's kebab, named after the plant: the same in the table and in the
+  // stacked list, so it holds on either viewport.
+  const plantMenuButton = page.getByRole("button", { name: `Más acciones para ${FIXED_PLANT.name}` });
+  await expect(plantMenuButton).toBeVisible({ timeout: ROUTE_MOUNT_TIMEOUT_MS });
 
   await stabilizePage(page);
 
-  // Named, not a bare getByRole("button"): the card grows controls over time,
-  // and an unnamed role query would start matching whichever one came first.
-  await plantCard.getByRole("button", { name: `Más acciones para ${FIXED_PLANT.name}` }).click();
+  await plantMenuButton.click();
   await page.getByRole("menuitem", { name: /Acuerdos de Reparto/i }).click();
 
   // A click into another lazy, capability-guarded route. React Router renders a
   // navigation as a transition, so the old page stays up with no fallback while
   // the new one loads, and a quiet page is no sign the new one has arrived: its
-  // own content is. Like the plant card above, that is a mount wait with the
+  // own content is. Like the plant row above, that is a mount wait with the
   // mount budget; settling then lets its reads land before anything is clicked.
   await expect(page.getByText(/CAU:/)).toBeVisible({ timeout: ROUTE_MOUNT_TIMEOUT_MS });
   await waitForPageSettled(page);
