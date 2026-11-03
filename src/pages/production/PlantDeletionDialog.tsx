@@ -42,7 +42,7 @@ export const PlantDeletionDialog: FC<PlantDeletionDialogProps> = ({ plant, onClo
   return (
     <DeleteConfirmationModal
       isOpen
-      code={plant.providerCode}
+      name={plant.name}
       onCancel={onClose}
       onDelete={() => void handleConfirm()}
     />

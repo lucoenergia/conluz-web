@@ -317,7 +317,7 @@ export const PlantCard: FC<PlantCardProps> = ({
       {canManage && (
         <DeleteConfirmationModal
           isOpen={openDeleteConfirmation}
-          code={code}
+          name={name}
           onCancel={handleCloseDeleteConfirmation}
           onDelete={handleDelete}
         />
