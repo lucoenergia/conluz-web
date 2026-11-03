@@ -28,6 +28,9 @@ vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => (
 }));
 
 let mockLoggedUser: CurrentUserResponse;
+// The evolution charts (#250) are another block, with reads of their own;
+// HistoricalAnalysisPage.evolution.spec.tsx covers them.
+vi.mock(import("./PeriodEvolution"), () => ({ PeriodEvolution: () => null }));
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
   useLoggedUser: () => mockLoggedUser,

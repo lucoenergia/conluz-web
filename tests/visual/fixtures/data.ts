@@ -4,6 +4,7 @@ import type {
   GetDatadisConfigResponse,
   GetHuaweiConfigResponse,
   GetShellyConfigResponse,
+  MembershipDailyConsumptionBucketResponse,
   MembershipEnergyMetricsResponse,
   MembershipHourlyProfileResponse,
   MembershipMonthlyConsumptionBucketResponse,
@@ -1336,6 +1337,38 @@ export const MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE: MembershipMonthlyConsumptionB
     return month;
   },
 );
+
+/**
+ * The member's days from `firstDay` on (#250), both supplies reporting every
+ * day: the evolution charts' default series. Figures vary by day of the run so
+ * bars differ, and are rounded to what the backend writes (3 decimals for kWh,
+ * cents for euros). Dates step in UTC, where every day lasts 24 hours: this
+ * counts calendar days, never instants.
+ */
+export function memberDailySeries(firstDay: string, days: number): MembershipDailyConsumptionBucketResponse[] {
+  const [year, month, day] = firstDay.split("/").map(Number);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return Array.from({ length: days }, (_, index) => {
+    const date = new Date(Date.UTC(year, month - 1, day + index));
+    const selfConsumptionKWh = Math.round((3 + (index % 5) * 0.8) * 1000) / 1000;
+    const surplusKWh = Math.round((1 + (index % 3) * 0.4) * 1000) / 1000;
+    return {
+      date: `${date.getUTCFullYear()}/${pad(date.getUTCMonth() + 1)}/${pad(date.getUTCDate())}`,
+      time: "00:00",
+      selfConsumptionKWh,
+      gridImportKWh: Math.round((6 + (index % 7) * 0.5) * 1000) / 1000,
+      surplusKWh,
+      assignedProductionKWh: Math.round((selfConsumptionKWh + surplusKWh) * 1000) / 1000,
+      savingsEur: Math.round(selfConsumptionKWh * 15) / 100,
+      tariffSource: "ESTIMATE",
+      supplyCount: 2,
+      suppliesWithData: 2,
+    };
+  });
+}
+
+/** August 2026, the reference month: what "Último mes publicado" shows by day. */
+export const MEMBER_DAILY_SERIES: MembershipDailyConsumptionBucketResponse[] = memberDailySeries("2026/08/01", 31);
 
 /**
  * August's average day: consumption every hour, peaking in the evening;
