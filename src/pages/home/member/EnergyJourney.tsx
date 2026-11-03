@@ -111,27 +111,38 @@ const PrimaryFigure: FC<{ ratio: number; usedKWh: number; assignedKWh: number }>
   );
 };
 
-/** The two-bar story: where the energy assigned to the member went, and where their consumption came from. */
+/**
+ * The two-bar story: where the energy assigned to the member went, and where
+ * their consumption came from. The headline and the first bar describe the
+ * supplies the ratio covers, so their kWh come from its basis, never from the
+ * totals, which also count plants' own supplies (UI-HOM-012). Which of them
+ * shows is decided by the ratio's status, never by a null ratio.
+ */
 export const EnergyJourney: FC<{ metrics: MembershipEnergyMetricsResponse }> = ({ metrics }) => {
-  const { energy, selfConsumptionRatio, selfSufficiencyRatio } = metrics;
+  const {
+    energy,
+    selfConsumptionRatio,
+    selfConsumptionRatioStatus: status,
+    selfConsumptionRatioBasis: basis,
+    selfSufficiencyRatio,
+  } = metrics;
+  const usage = status === "AVAILABLE" ? selfConsumptionRatio : null;
   return (
     <HomeCard title="El recorrido de tu energía" icon={RouteRoundedIcon} variant="primary">
-      {selfConsumptionRatio !== null && (
-        <PrimaryFigure
-          ratio={selfConsumptionRatio}
-          usedKWh={energy.selfConsumptionKWh}
-          assignedKWh={energy.assignedProductionKWh}
-        />
+      {usage !== null && (
+        <PrimaryFigure ratio={usage} usedKWh={basis.selfConsumptionKWh} assignedKWh={basis.assignedProductionKWh} />
       )}
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3, pt: 1 }}>
-        {selfConsumptionRatio === null ? (
+        {status === "NOTHING_ASSIGNED" && (
           <Unavailable title="La energía que se te asignó" reason="Este mes no se te asignó energía de la comunidad." />
-        ) : (
+        )}
+        {usage !== null && (
           <JourneyBar
             title="La energía que se te asignó"
-            base={`de ${formatKilowattHours(energy.assignedProductionKWh)} asignados`}
-            ratio={selfConsumptionRatio}
-            shared={{ label: "La usaste tú", kWh: energy.selfConsumptionKWh, swatch: SHARED }}
+            base={`de ${formatKilowattHours(basis.assignedProductionKWh)} asignados`}
+            ratio={usage}
+            shared={{ label: "La usaste tú", kWh: basis.selfConsumptionKWh, swatch: SHARED }}
+            // A plant's own supply stores no surplus, so the totals' surplus is the basis's.
             rest={{ label: "Se fue a la red", kWh: energy.surplusKWh, swatch: swatch.solid(ENERGY_COLORS.exported) }}
           />
         )}
