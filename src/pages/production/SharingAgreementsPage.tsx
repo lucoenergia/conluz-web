@@ -21,7 +21,7 @@ import { SharingAgreementResponseStatus } from "../../api/models";
 import { useSharingAgreementsData } from "./useSharingAgreementsData";
 import { usePlantActions, useSharingAgreementActions } from "../../hooks/actions";
 import { filterSharingAgreements, type SharingAgreementStatusFilter } from "./sharingAgreementFilters";
-import { getSharingAgreementStatusColor, getSharingAgreementStatusLabel } from "./sharingAgreementStatus";
+import { getSharingAgreementStatusLabel } from "./sharingAgreementStatus";
 
 const STATUS_FILTERS: SharingAgreementStatusFilter[] = [
   "all",
@@ -178,13 +178,8 @@ export const SharingAgreementsPage: FC = () => {
                       key={status}
                       label={status === "all" ? "Todos" : getSharingAgreementStatusLabel(status)}
                       onClick={() => setStatusFilter(status)}
-                      color={
-                        statusFilter === status
-                          ? status === "all"
-                            ? "primary"
-                            : getSharingAgreementStatusColor(status)
-                          : "default"
-                      }
+                      // The brand colour for whichever filter is selected: no status is a failure (UI-AGR-016).
+                      color={statusFilter === status ? "primary" : "default"}
                       size="small"
                       sx={{ flexShrink: 0 }}
                     />

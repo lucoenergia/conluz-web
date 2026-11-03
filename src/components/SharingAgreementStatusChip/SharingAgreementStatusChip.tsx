@@ -11,8 +11,8 @@ import { getSharingAgreementStatusLabel } from "../../pages/production/sharingAg
 export interface SharingAgreementStatusChipProps {
   status: StatusValue | undefined;
   /**
-   * "onLight" (default) is tuned for a white card background (SharingAgreementCard):
-   * an explicit `surface` tint carrying the matching `text` tone at >= 4.5:1.
+   * "onLight" (default) is tuned for a white background (a list row, the
+   * coefficient history): a neutral or brand tint carrying its `text` tone at >= 4.5:1.
    * "onDark" forces a near-opaque white pill instead, because the tints share the
    * hue of the primary banner behind them (SharingAgreementDetailHeader) and would
    * otherwise sit invisibly on it. Both tones use the same `text` tone, which clears
@@ -41,16 +41,21 @@ export const SharingAgreementStatusChip: FC<SharingAgreementStatusChipProps> = (
         />
       );
     case SharingAgreementResponseStatus.DRAFT:
+      // A dashed outline, not a colour: a draft is a stage of the lifecycle, not
+      // a failure, and colour is kept for failures (UI-AGR-016).
       return (
         <Chip
           icon={<EditOutlinedIcon />}
           label={label}
           size="small"
+          variant="outlined"
           sx={{
-            bgcolor: onDark ? alphas.white.strong : colors.warning.surface,
-            color: colors.warning.main,
+            bgcolor: onDark ? alphas.white.strong : "transparent",
+            borderStyle: "dashed",
+            borderColor: colors.text.secondary,
+            color: colors.text.secondary,
             fontWeight: 600,
-            "& .MuiChip-icon": { color: colors.warning.main },
+            "& .MuiChip-icon": { color: colors.text.secondary },
           }}
         />
       );
@@ -61,7 +66,7 @@ export const SharingAgreementStatusChip: FC<SharingAgreementStatusChipProps> = (
           label={label}
           size="small"
           sx={{
-            bgcolor: onDark ? alphas.white.strong : colors.border.light,
+            bgcolor: onDark ? alphas.white.strong : colors.background.surface,
             color: colors.text.secondary,
             fontWeight: 600,
             "& .MuiChip-icon": { color: colors.text.secondary },
