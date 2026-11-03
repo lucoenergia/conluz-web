@@ -9,6 +9,7 @@ import { LoadErrorAlert } from "../../components/LoadErrorAlert/LoadErrorAlert";
 import { Notice } from "../../components/Notice/Notice";
 import { NeutralNotice } from "../home/NeutralNotice";
 import { HistoricalPeriodContext } from "./HistoricalPeriodContext";
+import { PeriodDataTable } from "./PeriodDataTable";
 import { PeriodEvolution } from "./PeriodEvolution";
 import { PeriodFigures } from "./PeriodFigures";
 import { PeriodHeader } from "./PeriodHeader";
@@ -23,9 +24,9 @@ import { useSelectedSupply } from "./useSelectedSupply";
  * "Mi consumo y ahorro": the caller's own supplies over time (#247). This
  * holds the supply selector and the period, anchored to the latest month
  * published for the selected scope (#248), and below them the period's
- * figures (#249) and their evolution charts (#250). The table and CSV come in
- * later issues of lucoenergia/conluz#405, in the same content region, which
- * reads the period through `useHistoricalPeriod`.
+ * figures (#249), their evolution charts (#250) and the data table with its
+ * CSV download (#251), all in one content region that reads the period
+ * through `useHistoricalPeriod`.
  */
 export const HistoricalAnalysisPage: FC = () => {
   const { supplies, isLoading, error } = useOwnSupplies();
@@ -100,6 +101,7 @@ const AnchoredContent: FC<{ anchor: HistoricalAnchor; period: HistoricalPeriodSt
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
               <PeriodFigures selected={selected} />
               <PeriodEvolution selected={selected} />
+              <PeriodDataTable selected={selected} />
             </Box>
           </HistoricalPeriodContext.Provider>
         </>
