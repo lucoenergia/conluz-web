@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { query } from "../../test/queryState";
 import { buildSupply, buildSupplyCapabilities } from "../../test/fixtures";
 import type { SupplyCapabilitiesResponse } from "../../api/models";
 
@@ -35,11 +36,25 @@ vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => {
     useGetSupplyDailyConsumption: idle,
     useGetSupplyMonthlyConsumption: idle,
     useGetSupplyYearlyConsumption: idle,
+    useGetSupplyEnergyMetrics: vi.fn(),
   } as unknown as typeof actual;
 });
 
+// The plant tag's community check (#252) is not what this file is about.
+vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetCommunityById: vi.fn(),
+}));
+
 import { useSupplyInActiveCommunity } from "./useSupplyInActiveCommunity";
 import { SupplyDetailPage } from "./SupplyDetailPage";
+import { useGetSupplyEnergyMetrics } from "../../api/supplies/supplies";
+import { useGetCommunityById } from "../../api/communities/communities";
+
+beforeEach(() => {
+  vi.mocked(useGetSupplyEnergyMetrics).mockReturnValue(query.loading());
+  vi.mocked(useGetCommunityById).mockReturnValue(query.loading());
+});
 
 function setup(
   wrapper: Partial<ReturnType<typeof useSupplyInActiveCommunity>> & {

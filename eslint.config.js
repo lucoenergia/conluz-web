@@ -197,6 +197,9 @@ const COMMUNITY_SCOPE_WRAPPERS = [
   // Drives these from a community-scoped supply list, and is remounted by the
   // keyed Outlet when the community changes.
   "src/pages/supply-points/SupplyDetailPage.tsx",
+  // Asks only for a supply useSupplyInActiveCommunity has admitted, under the
+  // same keyed Outlet (#252).
+  "src/pages/supply-points/useSupplyLatestMonth.ts",
   // Driven by a plant from the active community's plant listing.
   "src/pages/home/management/usePlantSharingAgreements.ts",
   // Driven by a supply from useOwnSupplies, narrowed to the active community,

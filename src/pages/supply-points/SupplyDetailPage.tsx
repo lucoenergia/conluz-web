@@ -30,12 +30,13 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import PercentIcon from "@mui/icons-material/Percent";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { EmptyState } from "../../components/EmptyState";
-import { Can, outcomeFromResource } from "../../hooks/permissions";
+import { Can, outcomeFromResource, useActiveCommunityCapabilities } from "../../hooks/permissions";
 import { useSupplyActions } from "../../hooks/actions";
 import { SupplyDeletionDialog } from "./SupplyDeletionDialog";
 import { toConsumptionRows } from "./consumptionRows";
 import { getFirstApiErrorCode } from "../../errors/apiErrorCatalogue";
 import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
+import { SupplyLatestMonthSummary } from "./SupplyLatestMonthSummary";
 
 /**
  * A daily or monthly consumption period that has not started yet: "Mes" in the
@@ -142,6 +143,11 @@ export const SupplyDetailPage: FC = () => {
   const { remove } = useSupplyActions().forSupply(supplyPoint).actions;
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const navigate = useNavigate();
+  // A plant opens to any reader of its community -- the same canRead the
+  // /production routes require -- and the plant reference carries no
+  // capabilities of its own, so the tag links on the community's answer.
+  const canOpenPlants = useActiveCommunityCapabilities("canRead").state === "allowed";
+  const plantHref = canOpenPlants && supplyPoint?.plant ? `/production/${supplyPoint.plant.id}` : undefined;
 
   // Fetch hourly production data when DAY filter is selected
   const {
@@ -596,6 +602,7 @@ export const SupplyDetailPage: FC = () => {
           isLoading={supplyPointLoading}
           error={supplyPointError}
           onDeleteRequest={remove && (() => setIsDeleteOpen(true))}
+          plantHref={plantHref}
         />
       </Box>
 
@@ -613,6 +620,12 @@ export const SupplyDetailPage: FC = () => {
       <Can outcome={canReadSupply}>
         <SupplyCoefficientHistorySection supplyId={supplyPointId} />
       </Can>
+
+      {supplyPoint && (
+        <Box sx={sxStyles.pageContainer}>
+          <SupplyLatestMonthSummary supply={supplyPoint} />
+        </Box>
+      )}
 
       {/* Filter Section */}
       <Box sx={sxStyles.pageContainer}>

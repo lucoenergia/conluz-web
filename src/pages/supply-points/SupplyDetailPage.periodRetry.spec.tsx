@@ -35,6 +35,8 @@ vi.mock(import("../../components/SupplyCoefficientHistorySection"), () => ({
   SupplyCoefficientHistorySection: () => null,
 }));
 // Every series but the daily consumption one is served without a request.
+// The latest-month summary and the plant tag's community check (#252) are not
+// what this file is about: both stay loading.
 vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetSupplyHourlyProduction: vi.fn(),
@@ -43,6 +45,11 @@ vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
   useGetSupplyHourlyConsumption: vi.fn(),
   useGetSupplyMonthlyConsumption: vi.fn(),
   useGetSupplyYearlyConsumption: vi.fn(),
+  useGetSupplyEnergyMetrics: vi.fn(),
+}));
+vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetCommunityById: vi.fn(),
 }));
 
 import { useSupplyInActiveCommunity } from "./useSupplyInActiveCommunity";
@@ -58,6 +65,13 @@ import {
   useGetSupplyYearlyConsumption,
 } from "../../api/supplies/supplies";
 import { SupplyDetailPage } from "./SupplyDetailPage";
+import { useGetSupplyEnergyMetrics } from "../../api/supplies/supplies";
+import { useGetCommunityById } from "../../api/communities/communities";
+
+beforeEach(() => {
+  vi.mocked(useGetSupplyEnergyMetrics).mockReturnValue(query.loading());
+  vi.mocked(useGetCommunityById).mockReturnValue(query.loading());
+});
 
 const SUPPLY_ID = "supply-1";
 const COMMUNITY_ID = "community-a";
