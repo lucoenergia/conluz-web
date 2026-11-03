@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FC, type MouseEvent } from "react";
+import { useMemo, useState, type FC, type MouseEvent } from "react";
 import { Box, Button, Chip, Paper } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useNavigate, useParams } from "react-router";
@@ -14,9 +14,10 @@ import { SearchBar } from "../../components/SearchBar/SearchBar";
 import { ResponsiveRecordList } from "../../components/ResponsiveRecordList";
 import { ListTable } from "../../components/ListTable";
 import { RecordList, type RecordListItem } from "../../components/RecordList";
+import { ListPagination } from "../../components/ListPagination";
+import { useListPage } from "../../components/ListPagination/useListPage";
 import { SharingAgreementFormDialog, type SharingAgreementFormValues } from "../../components/SharingAgreementFormDialog";
 import { DeleteSharingAgreementConfirmationModal } from "../../components/Modals/DeleteSharingAgreementConfirmationModal";
-import { useErrorDispatch } from "../../context/error.context";
 import { useDebounce } from "../../utils/useDebounce";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import type { SharingAgreementResponse } from "../../api/models";
@@ -43,8 +44,7 @@ const STATUS_FILTERS: SharingAgreementStatusFilter[] = [
 export const SharingAgreementsPage: FC = () => {
   const { plantId = "" } = useParams();
   const navigate = useNavigate();
-  const errorDispatch = useErrorDispatch();
-  const { agreements, plant, counts, isLoading, isNotFound, error } = useSharingAgreementsData(plantId);
+  const { agreements, plant, counts, isLoading, isNotFound, error, refetch } = useSharingAgreementsData(plantId);
   // Creating is authorised by the plant, the rest by the agreement itself.
   const { createSharingAgreement } = usePlantActions().forPlant(plant).actions;
   const { forAgreement } = useSharingAgreementActions(plantId);
@@ -67,16 +67,26 @@ export const SharingAgreementsPage: FC = () => {
   const removeAgreement = removableFromRow(deleteTarget);
   const menuRemove = removableFromRow(agreementById(menuAgreementId));
 
-  useEffect(() => {
-    if (error) {
-      errorDispatch("Ha habido un problema al cargar los acuerdos de reparto. Por favor, inténtalo más tarde");
-    }
-  }, [error, errorDispatch]);
-
   const filteredAgreements = useMemo(
     () => filterSharingAgreements(agreements, debouncedSearchText, statusFilter),
     [agreements, debouncedSearchText, statusFilter],
   );
+
+  // The whole list is read at once and paged here, 25 rows at a time
+  // (UI-LST-005). A new search or filter starts again from the first page.
+  const { page, setPage, pageCount, pageRows } = useListPage(filteredAgreements);
+  const changeSearch = (text: string) => {
+    setSearchText(text);
+    setPage(1);
+  };
+  const changeStatusFilter = (status: SharingAgreementStatusFilter) => {
+    setStatusFilter(status);
+    setPage(1);
+  };
+  const clearFilters = () => {
+    changeSearch("");
+    changeStatusFilter("all");
+  };
 
   const agreementOfItem = (item: RecordListItem) => agreementById(item.id);
   const hasRowActions = (agreement: SharingAgreementResponse) =>
@@ -131,7 +141,7 @@ export const SharingAgreementsPage: FC = () => {
             { label: "Inicio", href: "/" },
             { label: "Producción", href: "/production" },
             { label: "Planta", href: `/production/${plantId}` },
-            { label: "Acuerdos de Reparto", href: "#" },
+            { label: "Acuerdos de reparto", href: "#" },
           ]}
         />
       </Box>
@@ -205,7 +215,7 @@ export const SharingAgreementsPage: FC = () => {
                     <Chip
                       key={status}
                       label={status === "all" ? "Todos" : getSharingAgreementStatusLabel(status)}
-                      onClick={() => setStatusFilter(status)}
+                      onClick={() => changeStatusFilter(status)}
                       // The brand colour for whichever filter is selected: no status is a failure (UI-AGR-016).
                       color={statusFilter === status ? "primary" : "default"}
                       size="small"
@@ -216,33 +226,38 @@ export const SharingAgreementsPage: FC = () => {
 
                 <SearchBar
                   value={searchText}
-                  onChange={setSearchText}
+                  onChange={changeSearch}
                   placeholder="Buscar por nombre o notas..."
                 />
               </Box>
             </Paper>
           </Box>
 
-          {!error && (
           <Box sx={sxStyles.pageContainerFull}>
             <ResponsiveRecordList
+              // A failed read says so and offers the read again, never the empty state (UI-LST-004).
+              error={error ? { message: "No se pudieron cargar los acuerdos de reparto.", onRetry: refetch } : undefined}
               empty={
-                !isLoading && filteredAgreements.length === 0 ? (
+                isLoading || error || filteredAgreements.length > 0 ? undefined : agreements.length === 0 ? (
                   <EmptyState
                     icon={HandshakeOutlinedIcon}
                     title="No se encontraron acuerdos de reparto"
-                    subtitle={
-                      agreements.length === 0
-                        ? "Esta planta todavía no tiene acuerdos de reparto registrados."
-                        : "No hay acuerdos de reparto que coincidan con los filtros aplicados."
-                    }
+                    subtitle="Esta planta todavía no tiene acuerdos de reparto registrados."
                   />
-                ) : undefined
+                ) : (
+                  // Agreements exist, so it is the search or the status filter that hides them.
+                  <EmptyState
+                    icon={SearchOffIcon}
+                    title="No hay acuerdos de reparto que coincidan"
+                    subtitle="Prueba con otra búsqueda u otro estado."
+                    actionButton={{ label: "Limpiar filtros", onClick: clearFilters }}
+                  />
+                )
               }
               wide={
                 <ListTable
                   // The API's order, newest first: the page never sorts (UI-AGR-015).
-                  rows={filteredAgreements}
+                  rows={pageRows}
                   getRowKey={(agreement) => agreement.id}
                   isLoading={isLoading}
                   rowActions={{ label: rowActionsLabel, onClick: handleMenuOpen, has: hasRowActions }}
@@ -269,12 +284,22 @@ export const SharingAgreementsPage: FC = () => {
                       return !!agreement && hasRowActions(agreement);
                     },
                   }}
-                  items={filteredAgreements.map(toRecordListItem(plantId))}
+                  items={pageRows.map(toRecordListItem(plantId))}
                 />
+              }
+              footer={
+                !isLoading && (
+                  <ListPagination
+                    page={page}
+                    pageCount={pageCount}
+                    total={filteredAgreements.length}
+                    noun={{ one: "acuerdo de reparto", other: "acuerdos de reparto" }}
+                    onChange={setPage}
+                  />
+                )
               }
             />
           </Box>
-          )}
         </>
       )}
 

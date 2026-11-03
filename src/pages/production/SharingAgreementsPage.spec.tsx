@@ -19,6 +19,7 @@ const mockUseSharingAgreementsData = vi.fn();
 const mockCreateMutateAsync = vi.fn();
 const mockDeleteMutateAsync = vi.fn();
 const mockNavigate = vi.fn();
+const mockRefetch = vi.fn();
 
 // Spread the original: the harness renders the real ErrorProvider.
 vi.mock(import("../../context/error.context"), async (importOriginal) => ({
@@ -89,6 +90,7 @@ function baseData(): SharingAgreementsData {
     isLoading: false,
     isNotFound: false,
     error: null,
+    refetch: mockRefetch,
   };
 }
 
@@ -132,13 +134,18 @@ describe("SharingAgreementsPage", () => {
     expect(mockErrorDispatch).not.toHaveBeenCalled();
   });
 
-  test("dispatches the generic error toast for a non-404 error", () => {
+  test("UI-LST-004 a non-404 error says the list could not be loaded and offers the read again, without a toast", async () => {
     mockData({ error: { response: { status: 500 } } });
+    const user = userEvent.setup();
     setup();
 
-    expect(mockErrorDispatch).toHaveBeenCalledWith(
-      "Ha habido un problema al cargar los acuerdos de reparto. Por favor, inténtalo más tarde",
-    );
+    expect(screen.getByText("No se pudieron cargar los acuerdos de reparto.")).toBeInTheDocument();
+    expect(screen.queryByText("No se encontraron acuerdos de reparto")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Reparto vecinos bloque A" })).not.toBeInTheDocument();
+    expect(mockErrorDispatch).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Reintentar" }));
+    expect(mockRefetch).toHaveBeenCalledTimes(1);
   });
 
   test("shows a distinct empty state when the plant has no agreements at all", () => {
