@@ -67,7 +67,6 @@ export { RevertSharingAgreementToDraftConfirmationModal } from "../../src/compon
 export { NextStepBanner } from "../../src/components/NextStepBanner/NextStepBanner";
 export { Notice } from "../../src/components/Notice/Notice";
 export { PaginationOutlined } from "../../src/components/Pagination/Pagination";
-export { PlantCard } from "../../src/components/PlantCard/PlantCard";
 export { PlantDetailHeader } from "../../src/components/PlantDetailHeader/PlantDetailHeader";
 export { PlatformKpiCard } from "../../src/components/PlatformKpiCard/PlatformKpiCard";
 export { RecordList } from "../../src/components/RecordList/RecordList";
