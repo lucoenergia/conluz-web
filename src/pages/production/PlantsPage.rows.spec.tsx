@@ -27,6 +27,7 @@ import { PlantsPage } from "./PlantsPage";
 const COMMUNITY_ID = "community-a";
 const LIST_NAME = "Plantas";
 const PAGES_NAME = "Páginas de plantas";
+const SEARCH_NAME = "Buscar por nombre, CAU o dirección";
 
 type Layout = "narrow" | "wide";
 const LAYOUTS: Layout[] = ["narrow", "wide"];
@@ -177,8 +178,15 @@ describe("the plants search", () => {
   });
   const PLANTS = [NORTH, SOUTH, SCHOOL];
 
-  const search = (text: string) => userEvent.type(screen.getByRole("searchbox"), text);
+  const search = (text: string) => userEvent.type(screen.getByRole("searchbox", { name: SEARCH_NAME }), text);
   const shownNames = () => rows("wide").map((row) => within(row).getByRole("link").textContent);
+
+  it("UI-PLS-002 names the search box for what it matches, not for supply points", () => {
+    setup({ plants: PLANTS });
+
+    expect(screen.getByRole("searchbox", { name: SEARCH_NAME })).toHaveAttribute("placeholder", SEARCH_NAME);
+    expect(screen.queryByRole("searchbox", { name: /punto de suministro/i })).not.toBeInTheDocument();
+  });
 
   it.each([
     ["part of a name", "huerto", "Huerto Sur"],
@@ -208,7 +216,7 @@ describe("the plants search", () => {
     await search("ninguna");
     await userEvent.click(screen.getByRole("button", { name: "Limpiar filtros" }));
 
-    expect(screen.getByRole("searchbox")).toHaveValue("");
+    expect(screen.getByRole("searchbox", { name: SEARCH_NAME })).toHaveValue("");
     expect(rows("wide")).toHaveLength(3);
   });
 });
@@ -306,7 +314,7 @@ describe("the list's states", () => {
     setup({ plants: many(26) });
 
     await userEvent.click(screen.getByRole("button", { name: "Página siguiente" }));
-    await userEvent.type(screen.getByRole("searchbox"), "Planta");
+    await userEvent.type(screen.getByRole("searchbox", { name: SEARCH_NAME }), "Planta");
 
     expect(screen.getByRole("link", { name: "Planta 1" })).toBeInTheDocument();
   });

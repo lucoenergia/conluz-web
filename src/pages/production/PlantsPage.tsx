@@ -168,7 +168,8 @@ export const PlantsPage: FC = () => {
           )}
 
           {/* Search Bar */}
-          <SearchBar value={searchText} onChange={changeSearch} />
+          {/* Named for what it matches (UI-PLS-002), not left on the supply list's default. */}
+          <SearchBar value={searchText} onChange={changeSearch} placeholder="Buscar por nombre, CAU o dirección" />
           </Box>
         </Paper>
       </Box>
