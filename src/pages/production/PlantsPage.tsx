@@ -53,13 +53,14 @@ export const PlantsPage: FC = () => {
   const filteredItems: PlantResponse[] = useMemo(() => {
     let items = responseFromApi;
 
-    // Filter by search text
+    // Only what the row shows can be searched (UI-PLS-002): a match on a
+    // hidden value would return a row with no visible reason for it.
     if (searchText) {
+      const text = searchText.toLowerCase();
       items = items.filter((item) =>
-        item.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.providerCode?.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.regulatoryCode?.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.address?.toLowerCase().includes(searchText.toLowerCase())
+        item.name.toLowerCase().includes(text) ||
+        item.regulatoryCode?.toLowerCase().includes(text) ||
+        item.address.toLowerCase().includes(text)
       );
     }
 
