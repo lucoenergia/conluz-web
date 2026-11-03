@@ -18,8 +18,6 @@ export { AppCard } from "../../src/components/AppCard/AppCard";
 export { AttentionPanel } from "../../src/components/AttentionPanel/AttentionPanel";
 export { BreadCrumb } from "../../src/components/Breadcrumb/BreadCrumb";
 export { CapabilityLoadError } from "../../src/components/Auth/CapabilityLoadError";
-export { CardGrid } from "../../src/components/CardGrid/CardGrid";
-export { LoadingCardGrid } from "../../src/components/CardGrid/LoadingCardGrid";
 export { CoefficientActionsMenuItems } from "../../src/components/CoefficientActionsMenu/CoefficientActionsMenu";
 export { CoefficientHistory } from "../../src/components/CoefficientHistory/CoefficientHistory";
 export { CommunityScopeHeader } from "../../src/components/CommunityScopeHeader/CommunityScopeHeader";
@@ -69,7 +67,6 @@ export { PublishSharingAgreementConfirmationModal } from "../../src/components/M
 export { RevertSharingAgreementToDraftConfirmationModal } from "../../src/components/Modals/RevertSharingAgreementToDraftConfirmationModal";
 export { NextStepBanner } from "../../src/components/NextStepBanner/NextStepBanner";
 export { Notice } from "../../src/components/Notice/Notice";
-export { PaginatedList } from "../../src/components/PaginatedList/PaginatedList";
 export { PaginationOutlined } from "../../src/components/Pagination/Pagination";
 export { PlantCard } from "../../src/components/PlantCard/PlantCard";
 export { PlantDetailHeader } from "../../src/components/PlantDetailHeader/PlantDetailHeader";
