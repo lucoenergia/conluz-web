@@ -6,15 +6,15 @@
 | **Status** | Active |
 | **Routes** | `/historical-analysis` |
 | **Roles** | A caller who may read the active community (`canRead`): members and community admins |
-| **Domain rules** | EPR-001, EPR-003, EPR-004 (lucoenergia/conluz#409); SEM-001 (lucoenergia/conluz#408); SEM-002, SEM-003, SEM-004, ENM-006, ENM-007, ENM-008 (lucoenergia/conluz#411); ADR-0005 in lucoenergia/conluz |
-| **Design reference** | Claude Design round 2 copy deck; round 3 copy deck for the period (#248) |
-| **Last reviewed against code** | #249 |
+| **Domain rules** | EPR-001, EPR-003, EPR-004 (lucoenergia/conluz#409); SEM-001 (lucoenergia/conluz#408); SEM-002, SEM-003, SEM-004, ENM-006, ENM-007, ENM-008 (lucoenergia/conluz#411); MCS-001, MCS-002 (lucoenergia/conluz#410); ADR-0005 in lucoenergia/conluz |
+| **Design reference** | Claude Design round 2 copy deck; round 3 copy deck for the period (#248); the member consumption analysis design, option A, for the evolution charts (#250) |
+| **Last reviewed against code** | #250 |
 
 Scope: the page shell, its menu entry and its supply selector (#247), the period: its anchor,
-selector, custom range picker, header and query string (#248), and the period's card and totals
-(#249). The charts, table and CSV are specified by the later issues of lucoenergia/conluz#405 as
-they land; they read the period through `useHistoricalPeriod`
-(`src/pages/historical-analysis/HistoricalPeriodContext.tsx`).
+selector, custom range picker, header and query string (#248), the period's card and totals
+(#249), and the energy and savings evolution charts (#250). The table and CSV are specified by the
+later issues of lucoenergia/conluz#405 as they land; they read the period through
+`useHistoricalPeriod` (`src/pages/historical-analysis/HistoricalPeriodContext.tsx`).
 
 ## Purpose
 
@@ -246,6 +246,120 @@ too, never the other members'.
 - **Implements:** n/a
 - **Source:** #249
 
+### UI-HIS-015 — A gap, a measured zero and a partial bucket are told apart in words and marks
+
+- **Status:** Active
+- **Rule:** A gap, a measured zero and a partial bucket MUST be told apart with words in the
+  charts' tooltips and with marks on the charts, never by colour alone, and a gap MUST NOT be
+  plotted as 0.
+  - **Signals.** A slot is a gap when the series has no bucket for it, when a membership bucket has
+    `savingsEur: null`, or when a supply bucket has `obtainMethod: null`, whose zeros are
+    placeholders. A membership bucket with `suppliesWithData` below `supplyCount` is partial. A
+    bucket whose `selfConsumptionKWh`, `gridImportKWh` and `surplusKWh` are all 0 is a measured
+    zero.
+  - **Precedence.** When several signals coincide, the first that applies decides:
+    gap > partial > measuredZero > complete.
+  - **Tooltip.** Each tooltip MUST give:
+    - the slot's date;
+    - its state: "Datos completos.", "Sin datos: no hay lecturas de este día. No cuenta como 0."
+      (or "…de este mes…"), or "Datos parciales: {n} de {total} puntos con datos.";
+    - the slot's figures, except on a gap, with a measured 0 written "0,0 kWh (medido)";
+    - "En el punto de la planta, «se fue a la red» siempre es 0 kWh." when a plant's own supply is
+      selected.
+
+    No state MAY name a supply.
+  - **Marks and key.** A gap MUST be marked with a ring on the baseline, a measured zero with a dot
+    on the baseline, and a partial bucket with an asterisk above its bar. The key under the charts
+    reads "Sin datos: no hay lecturas · Cero medido · Datos parciales".
+  - **Notices.** Above the charts:
+    - the coverage line "{periodo}: {n} de {total} días con datos", followed by "; faltan {x}.",
+      "; {p} con datos parciales." or ".";
+    - when there are gaps, "Faltan datos {rangos}. Los totales suman solo los días con datos.",
+      with one date range per run of consecutive gaps;
+    - for "Todos mis puntos" only, a notice naming the partial days and how many of the caller's
+      supplies reported on them.
+
+    Months read "meses" throughout.
+- **Rationale:** A day with nothing stored is not a day that used or saved nothing. Drawn as a zero
+  bar, it reads as one. A colour difference is lost on readers who cannot tell the colours apart.
+  The API gives only how many supplies reported, never which, so a partial state cannot name one.
+  The precedence follows what each signal proves:
+  - A missing record makes every other signal meaningless.
+  - Zeros on a partial bucket cover only some supplies, so they are not a measurement of the
+    caller's consumption.
+- **Implements:** MCS-001 (lucoenergia/conluz#410), under which a day no supply stored a record on
+  has `savingsEur` and `tariffSource` null. MCS-002 (lucoenergia/conluz#410), under which a bucket
+  reports how many supplies the membership has and how many stored data.
+- **Source:** #250
+
+### UI-HIS-016 — The chart axis covers every day or month of the period
+
+- **Status:** Active
+- **Rule:** The chart axis MUST cover every day of a daily period, or every month of a monthly one,
+  built from the period's bounds in the app's time zone. That includes slots the series omits,
+  which are shown as gaps (UI-HIS-015).
+  - **Half-open period.** The day or month at `endDate` MUST NOT get a slot.
+  - **Matching.** Buckets MUST be matched to slots by their `date`.
+  - **Request.** The series MUST be asked by the period's explicit `startDate` and `endDate`, as
+    follows:
+
+    | Scope | Daily | Monthly |
+    | --- | --- | --- |
+    | "Todos mis puntos" | the membership daily series | the membership monthly series |
+    | A single supply | the supply's daily series | the supply's monthly series |
+
+    Only the series for the selected scope and granularity MAY run, and none while the period is
+    unknown.
+  - **Pending and failed.** While the series is pending, a placeholder MUST stand in the charts'
+    place. A failed request MUST show an error with "Reintentar".
+- **Rationale:** The supply monthly series leaves out a month with nothing stored. An axis built
+  from the buckets would close that month up, with no gap and no mark to show it is missing. Asking
+  by the period's own bounds keeps the buckets on the period that the card and totals cover.
+- **Implements:** EPR-001 (lucoenergia/conluz#409), under which a period is half-open. MCS-001
+  (lucoenergia/conluz#410), under which the membership daily series emits every local day of the
+  period.
+- **Source:** #250
+
+### UI-HIS-017 — The energy chart shows consumption as one stacked bar and unused assigned energy beside it
+
+- **Status:** Active
+- **Rule:** The energy chart MUST show each slot's consumption as one bar, "De la comunidad"
+  stacked with "De la red". It MUST show "Se fue a la red" as a separate bar beside it.
+  - **Energy legend.** The legend MUST group the series as "Tu consumo: De la comunidad · De la
+    red" and "Asignada que no usaste: Se fue a la red".
+  - **Caption.** The caption MUST read "La barra apilada es tu consumo. La barra de al lado es
+    energía asignada que no usaste: no forma parte de tu consumo."
+  - **Savings legend.** The savings chart's legend MUST read "Ahorro estimado". It MUST state the
+    estimated price only from the period's energy metrics' `savings.estimatedPrice`, never from
+    `tariffSource`, as UI-HIS-010 does.
+  - **Colours.** The bars MUST take their colours from `ENERGY_COLORS` and `SAVINGS_COLOR` only.
+- **Rationale:** Energy that went to the grid unused is not part of what the caller consumed.
+  Stacked onto the consumption bar, it would overstate consumption. The legend and the caption say
+  so in words, rather than leaving the difference to the bars' positions. `tariffSource` reports
+  ESTIMATE even where nothing was priced.
+- **Implements:** n/a
+- **Source:** #250, design option A chosen by the maintainer
+
+### UI-HIS-018 — Bucket labels are calendar dates read from the bucket's date
+
+- **Status:** Active
+- **Rule:** Bucket labels MUST be calendar dates read from the bucket's `date` string (`yyyy/MM/dd`),
+  formatted in `APP_TIME_ZONE`. A `date` MUST never be parsed as an instant, and the device's clock
+  and zone MUST never be read.
+  - **Axis labels.** Daily slots MUST read "15 jul". Monthly slots MUST read "feb", with the year
+    on the first month and on January ("ene 26").
+  - **Tooltip names.** Tooltips MUST name the slot in full ("15 de julio de 2026", "Febrero de
+    2026").
+  - **Mobile.** Below `sm`, each chart MUST keep a width its slots need and scroll sideways inside
+    its card, with the hint "Desliza el gráfico para ver todo el periodo.". The page MUST NOT scroll
+    sideways. The axis MUST label only every Nth slot, never rotated, so that at 62 daily slots on
+    390 px no two labels overlap.
+- **Rationale:** A bucket's `date` is a day in the community's calendar. Read as a midnight in the
+  device's zone, it lands on the previous day east of Madrid (Kiritimati), and the label and the
+  slot it is matched to move with it. A label on every one of 62 days does not fit at 390 px.
+- **Implements:** n/a
+- **Source:** #250
+
 ## States
 
 | State | Rendered | Actions available |
@@ -258,6 +372,9 @@ too, never the other members'.
 | Supplies, period, figures pending | The selectors, the period header and a placeholder where the card goes (UI-HIS-010) | Choosing a supply or a period |
 | Supplies, period, figures failed | The selectors, the period header and an error with "Reintentar" (UI-HIS-010) | Choosing a supply or a period, retrying |
 | Supplies, period, figures | The selectors, the period header, the card in the state its status gives (UI-HIS-013) and the totals | Choosing a supply or a period |
+| Supplies, period, series pending | Under the figures, a placeholder where the evolution charts go (UI-HIS-016) | Choosing a supply or a period |
+| Supplies, period, series failed | Under the figures, an error with "Reintentar" (UI-HIS-016) | Choosing a supply or a period, retrying |
+| Supplies, period, series | Under the figures, the evolution card: coverage line, notices, the energy chart (UI-HIS-017) and the savings chart, every slot complete, measured zero, gap or partial (UI-HIS-015), and the marks' key | Choosing a supply or a period; hovering a slot for its tooltip |
 | Error | The title only; the error is reported as on the supply list | None |
 
 ## Accepted exceptions
