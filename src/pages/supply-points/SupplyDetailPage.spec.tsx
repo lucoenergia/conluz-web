@@ -12,33 +12,17 @@ const COMMUNITY_ID = "community-a";
 
 vi.mock(import("./useSupplyInActiveCommunity"), () => ({ useSupplyInActiveCommunity: vi.fn() }));
 
-// ApexCharts measures real layout and throws in jsdom. The charts are not what
-// this file is about, and every spec that renders this page would otherwise
-// have to carry the same failure.
-// String form: the typed one cannot express this module's default export.
-vi.mock("react-apexcharts", () => ({ default: () => <div /> }));
-
 // The section under the gate makes its own request; a stub keeps this file
 // about the gate rather than about the history.
 vi.mock(import("../../components/SupplyCoefficientHistorySection"), () => ({
   SupplyCoefficientHistorySection: () => <div>HISTORIAL</div>,
 }));
 
-vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => {
-  const actual = await importOriginal();
-  const idle = () => ({ data: undefined, isLoading: false, error: null });
-  return {
-    ...actual,
-    useGetSupplyHourlyProduction: idle,
-    useGetSupplyDailyProduction: idle,
-    useGetSupplyMonthlyProduction: idle,
-    useGetSupplyHourlyConsumption: idle,
-    useGetSupplyDailyConsumption: idle,
-    useGetSupplyMonthlyConsumption: idle,
-    useGetSupplyYearlyConsumption: idle,
-    useGetSupplyEnergyMetrics: vi.fn(),
-  } as unknown as typeof actual;
-});
+// The latest-month summary (#252) is not what this file is about.
+vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetSupplyEnergyMetrics: vi.fn(),
+}));
 
 // The plant tag's community check (#252) is not what this file is about.
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({

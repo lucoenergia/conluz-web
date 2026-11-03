@@ -40,7 +40,8 @@ test.describe("Visual baselines", () => {
   });
 
   test("supply detail page", async ({ page }) => {
-    // The capture includes GraphFilter's date input, which defaults to today.
+    // Frozen as before #252, when the capture included a date input that
+    // defaulted to today; the page no longer reads the clock.
     await freezeClock(page);
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
@@ -275,7 +276,8 @@ test.describe("Visual baselines", () => {
   // caller who may delete, which moves the title's wrapping on a phone. The
   // member capture above is the header without it.
   test("supply detail page (community admin)", async ({ page }) => {
-    // The capture includes GraphFilter's date input, which defaults to today.
+    // Frozen as before #252, when the capture included a date input that
+    // defaulted to today; the page no longer reads the clock.
     await freezeClock(page);
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
