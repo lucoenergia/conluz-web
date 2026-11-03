@@ -33,7 +33,7 @@ vi.mock(import("./useSharingAgreementsData"), async (importOriginal) => ({
 }));
 
 // Only the reads are replaced. The actions layer runs for real -- which is the
-// point: what is under test is that the page's button and each card's menu
+// point: what is under test is that the page's button and each row's menu
 // follow the capabilities on the payload, and stubbing the action hooks would
 // restate that rule instead of exercising it.
 vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
@@ -108,7 +108,7 @@ describe("SharingAgreementsPage", () => {
     vi.mocked(useDeleteSharingAgreement).mockReturnValue(mutation.idle({ mutateAsync: mockDeleteMutateAsync }));
   });
 
-  test("renders plant name, CAU, counts and every agreement card on normal load", () => {
+  test("renders plant name, CAU, counts and every agreement row on normal load", () => {
     mockData();
     setup("plant-42");
 
@@ -148,7 +148,7 @@ describe("SharingAgreementsPage", () => {
     expect(screen.getByText("Esta planta todavía no tiene acuerdos de reparto registrados.")).toBeInTheDocument();
   });
 
-  test("clicking a status chip filters the cards client-side without changing the header counts", async () => {
+  test("clicking a status chip filters the rows client-side without changing the header counts", async () => {
     mockData();
     setup();
     const user = userEvent.setup();
@@ -163,7 +163,7 @@ describe("SharingAgreementsPage", () => {
     expect(screen.getByText("5")).toBeInTheDocument();
   });
 
-  test("search filters cards by name, case- and accent-insensitively", async () => {
+  test("search filters rows by name, case- and accent-insensitively", async () => {
     mockData();
     setup();
     const user = userEvent.setup();
@@ -230,7 +230,7 @@ describe("SharingAgreementsPage", () => {
     expect(link).toHaveAttribute("href", "/production/plant-42/sharing-agreements/2");
   });
 
-  test("only the DRAFT agreement's card renders a kebab, and it only offers Eliminar", async () => {
+  test("only the DRAFT agreement's row renders a kebab, and it only offers Eliminar", async () => {
     mockData();
     const user = userEvent.setup();
     setup();
@@ -244,7 +244,7 @@ describe("SharingAgreementsPage", () => {
     expect(screen.queryByText("Ver detalle")).not.toBeInTheDocument();
   });
 
-  test("deleting from the card kebab shows the confirmation and deletes the agreement it was opened on", async () => {
+  test("deleting from the row kebab shows the confirmation and deletes the agreement it was opened on", async () => {
     mockData();
     mockDeleteMutateAsync.mockResolvedValue(undefined);
     const user = userEvent.setup();
@@ -278,7 +278,7 @@ describe("SharingAgreementsPage", () => {
       expect(screen.queryByRole("button", { name: "Nuevo acuerdo de reparto" })).not.toBeInTheDocument();
     });
 
-    test("gets no kebab on the DRAFT card, which still opens as a link", () => {
+    test("gets no kebab on the DRAFT row, whose title still opens as a link", () => {
       mockData({
         plant: buildPlant({ name: "Planta Solar Norte", capabilities: READ_ONLY_PLANT }),
         agreements: READ_ONLY_AGREEMENTS,

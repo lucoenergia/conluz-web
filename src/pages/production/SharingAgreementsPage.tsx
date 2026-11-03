@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FC } from "react";
+import { useEffect, useMemo, useState, type FC, type MouseEvent } from "react";
 import { Box, Button, Chip, Paper } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useNavigate, useParams } from "react-router";
@@ -10,18 +10,28 @@ import { colors, interactiveTransition, motion} from "../../theme/tokens";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { EmptyState } from "../../components/EmptyState";
 import { DetailHeader } from "../../components/DetailHeader";
-import { LoadingCardGrid } from "../../components/CardGrid";
 import { SearchBar } from "../../components/SearchBar/SearchBar";
-import { SharingAgreementTimeline } from "../../components/SharingAgreementTimeline";
+import { ResponsiveRecordList } from "../../components/ResponsiveRecordList";
+import { ListTable } from "../../components/ListTable";
+import { RecordList, type RecordListItem } from "../../components/RecordList";
 import { SharingAgreementFormDialog, type SharingAgreementFormValues } from "../../components/SharingAgreementFormDialog";
 import { DeleteSharingAgreementConfirmationModal } from "../../components/Modals/DeleteSharingAgreementConfirmationModal";
 import { useErrorDispatch } from "../../context/error.context";
 import { useDebounce } from "../../utils/useDebounce";
 import { SharingAgreementResponseStatus } from "../../api/models";
+import type { SharingAgreementResponse } from "../../api/models";
 import { useSharingAgreementsData } from "./useSharingAgreementsData";
 import { usePlantActions, useSharingAgreementActions } from "../../hooks/actions";
 import { filterSharingAgreements, type SharingAgreementStatusFilter } from "./sharingAgreementFilters";
 import { getSharingAgreementStatusLabel } from "./sharingAgreementStatus";
+import {
+  deletableFromRow,
+  offersSharingAgreementRowActions,
+  sharingAgreementTableColumns,
+  sharingAgreementTableTitle,
+  toRecordListItem,
+} from "./sharingAgreementRows";
+import { SharingAgreementRowMenu } from "./SharingAgreementRowMenu";
 
 const STATUS_FILTERS: SharingAgreementStatusFilter[] = [
   "all",
@@ -29,8 +39,6 @@ const STATUS_FILTERS: SharingAgreementStatusFilter[] = [
   SharingAgreementResponseStatus.PUBLISHED,
   SharingAgreementResponseStatus.SUPERSEDED,
 ];
-
-const SINGLE_COLUMN = { xs: 1, sm: 1, md: 1, lg: 1 };
 
 export const SharingAgreementsPage: FC = () => {
   const { plantId = "" } = useParams();
@@ -46,11 +54,18 @@ export const SharingAgreementsPage: FC = () => {
   const debouncedSearchText = useDebounce(searchText, 500);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  // The id, not the agreement: the list is refetched around the delete, so a
-  // stored object would be the pre-invalidation copy by the time it is used.
+  // Ids, not agreements: the list is refetched around the delete, so a stored
+  // object would be the pre-invalidation copy by the time it is used.
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+  const [menuAgreementId, setMenuAgreementId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const deleteTarget = agreements.find((agreement) => agreement.id === deleteTargetId);
-  const removeAgreement = forAgreement(deleteTarget).actions.remove;
+  const agreementById = (id: string | null) => agreements.find((agreement) => agreement.id === id);
+  // One answer for the kebab, its menu and the dialog (deletableFromRow).
+  const removableFromRow = (agreement: SharingAgreementResponse | undefined) =>
+    deletableFromRow(agreement, forAgreement(agreement));
+  const deleteTarget = agreementById(deleteTargetId);
+  const removeAgreement = removableFromRow(deleteTarget);
+  const menuRemove = removableFromRow(agreementById(menuAgreementId));
 
   useEffect(() => {
     if (error) {
@@ -62,6 +77,19 @@ export const SharingAgreementsPage: FC = () => {
     () => filterSharingAgreements(agreements, debouncedSearchText, statusFilter),
     [agreements, debouncedSearchText, statusFilter],
   );
+
+  const agreementOfItem = (item: RecordListItem) => agreementById(item.id);
+  const hasRowActions = (agreement: SharingAgreementResponse) =>
+    offersSharingAgreementRowActions(agreement, forAgreement(agreement));
+  const rowActionsLabel = (agreement: SharingAgreementResponse) => `Más acciones para ${agreement.name}`;
+  // Over the whole filtered list, not the page, so every page of it looks the same.
+  const chevron = !filteredAgreements.some(hasRowActions);
+
+  const handleMenuOpen = (event: MouseEvent<HTMLElement>, agreement: SharingAgreementResponse) => {
+    setMenuAnchor(event.currentTarget);
+    setMenuAgreementId(agreement.id);
+  };
+  const handleMenuClose = () => setMenuAnchor(null);
 
   const handleCreateSubmit = async (values: SharingAgreementFormValues) => {
     if (!createSharingAgreement) return;
@@ -195,35 +223,57 @@ export const SharingAgreementsPage: FC = () => {
             </Paper>
           </Box>
 
-          {isLoading && (
-            <Box sx={sxStyles.pageContainer}>
-              <LoadingCardGrid columns={SINGLE_COLUMN} />
-            </Box>
-          )}
-
-          {!isLoading && !error && filteredAgreements.length > 0 && (
-            <Box sx={sxStyles.pageContainer}>
-              <SharingAgreementTimeline
-                plantId={plantId}
-                agreements={filteredAgreements}
-                canDelete={(agreement) => !!forAgreement(agreement).actions.remove}
-                onDeleteRequest={(agreement) => setDeleteTargetId(agreement.id)}
-              />
-            </Box>
-          )}
-
-          {!isLoading && !error && filteredAgreements.length === 0 && (
-            <Box sx={sxStyles.pageContainer}>
-              <EmptyState
-                icon={HandshakeOutlinedIcon}
-                title="No se encontraron acuerdos de reparto"
-                subtitle={
-                  agreements.length === 0
-                    ? "Esta planta todavía no tiene acuerdos de reparto registrados."
-                    : "No hay acuerdos de reparto que coincidan con los filtros aplicados."
-                }
-              />
-            </Box>
+          {!error && (
+          <Box sx={sxStyles.pageContainerFull}>
+            <ResponsiveRecordList
+              empty={
+                !isLoading && filteredAgreements.length === 0 ? (
+                  <EmptyState
+                    icon={HandshakeOutlinedIcon}
+                    title="No se encontraron acuerdos de reparto"
+                    subtitle={
+                      agreements.length === 0
+                        ? "Esta planta todavía no tiene acuerdos de reparto registrados."
+                        : "No hay acuerdos de reparto que coincidan con los filtros aplicados."
+                    }
+                  />
+                ) : undefined
+              }
+              wide={
+                <ListTable
+                  // The API's order, newest first: the page never sorts (UI-AGR-015).
+                  rows={filteredAgreements}
+                  getRowKey={(agreement) => agreement.id}
+                  isLoading={isLoading}
+                  rowActions={{ label: rowActionsLabel, onClick: handleMenuOpen, has: hasRowActions }}
+                  title={sharingAgreementTableTitle(plantId)}
+                  columns={sharingAgreementTableColumns}
+                />
+              }
+              narrow={
+                <RecordList
+                  label="Acuerdos de reparto"
+                  isLoading={isLoading}
+                  chevron={chevron}
+                  rowActions={{
+                    label: (item) => {
+                      const agreement = agreementOfItem(item);
+                      return agreement ? rowActionsLabel(agreement) : `Más acciones para ${item.title}`;
+                    },
+                    onClick: (event, item) => {
+                      const agreement = agreementOfItem(item);
+                      if (agreement) handleMenuOpen(event, agreement);
+                    },
+                    has: (item) => {
+                      const agreement = agreementOfItem(item);
+                      return !!agreement && hasRowActions(agreement);
+                    },
+                  }}
+                  items={filteredAgreements.map(toRecordListItem(plantId))}
+                />
+              }
+            />
+          </Box>
           )}
         </>
       )}
@@ -240,6 +290,13 @@ export const SharingAgreementsPage: FC = () => {
           onSubmit={handleCreateSubmit}
         />
       )}
+
+      <SharingAgreementRowMenu
+        anchorEl={menuAnchor}
+        onClose={handleMenuClose}
+        remove={menuRemove}
+        onDelete={() => setDeleteTargetId(menuAgreementId)}
+      />
 
       {deleteTarget && removeAgreement && (
         <DeleteSharingAgreementConfirmationModal

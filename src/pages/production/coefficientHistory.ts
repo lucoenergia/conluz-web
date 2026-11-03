@@ -67,10 +67,9 @@ export function isActivePeriod(period: PartitionCoefficientResponse): boolean {
  * Groups a supply's periods by the plant they belong to, newest first within
  * each group.
  *
- * Newest-first matches the agreement timeline the admin has just come from
- * (the backend orders agreements `createdAt DESC` and SharingAgreementTimeline
- * does no sorting of its own), so the two lists in the same flow read in the
- * same direction. Note this is the opposite of the endpoint's own ascending
+ * Newest-first matches the agreement list the admin has just come from
+ * (the backend orders agreements `createdAt DESC` and the list does no sorting
+ * of its own), so the two lists in the same flow read in the same direction. Note this is the opposite of the endpoint's own ascending
  * order -- the sort here is deliberate, not incidental.
  *
  * Group order follows first appearance in the source, which is the endpoint's
