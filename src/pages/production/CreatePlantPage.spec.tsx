@@ -151,6 +151,16 @@ describe("CreatePlantPage", () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
+  it("UI-ERR-005 shows the server's message for a refusal whose code the catalogue does not map", async () => {
+    mockMutateAsync.mockRejectedValue(apiError(400, { code: null }));
+    const user = userEvent.setup();
+    setup(true);
+
+    await fillAndSubmit(user);
+
+    await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalledWith("raw backend message"));
+  });
+
   it("keeps the generic message for a failure without an error detail (#253)", async () => {
     mockMutateAsync.mockRejectedValue(apiError(500));
     const user = userEvent.setup();
