@@ -204,6 +204,8 @@ const COMMUNITY_SCOPE_WRAPPERS = [
   "src/pages/historical-analysis/useHistoricalAnchor.ts",
   // Driven by the same selected supply, under the same keyed Outlet.
   "src/pages/historical-analysis/usePeriodEnergyMetrics.ts",
+  // Driven by the same selected supply, under the same keyed Outlet (#250).
+  "src/pages/historical-analysis/usePeriodConsumptionSeries.ts",
 ];
 
 // ─── Mutation guard rail ──────────────────────────────────────────────────────
