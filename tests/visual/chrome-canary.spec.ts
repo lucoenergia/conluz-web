@@ -53,7 +53,9 @@ async function openProductionAsCommunityAdmin(page: Page) {
   await page.goto("/production");
   // Rendered content first, then stabilize: networkidle alone can fire while
   // the lazy route is still behind its Suspense fallback.
-  await expect(page.locator(".MuiCard-root").filter({ hasText: FIXED_PLANT.name })).toBeVisible();
+  // The plant's name link: its row's title in the stacked list and its name
+  // cell in the table, so it holds on either viewport.
+  await expect(page.getByRole("main").getByRole("link", { name: FIXED_PLANT.name })).toBeVisible();
   await stabilizePage(page);
 }
 
