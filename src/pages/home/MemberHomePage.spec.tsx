@@ -1165,7 +1165,7 @@ describe("MemberHomePage (#199)", () => {
       expect(page()).not.toContain("No incluye");
     });
 
-    describe("UI-HOM-013 AC4 -- every supply a plant's own supply", () => {
+    describe("every supply a plant's own supply (#253)", () => {
       const notApplicable = () =>
         derivedMonthWithPlantSupply({
           energy: { assignedProductionKWh: 50, selfConsumptionKWh: 50, surplusKWh: 0, totalConsumptionKWh: 120, gridImportKWh: 70 },
@@ -1175,7 +1175,7 @@ describe("MemberHomePage (#199)", () => {
           selfConsumptionRatioBasis: { selfConsumptionKWh: 0, assignedProductionKWh: 0, excludedPlantSupplyCount: 2 },
         });
 
-      it("shows the neutral not-applicable text in place of the headline, with no figure and no alert colour", () => {
+      it("UI-HOM-013 AC4 -- shows the neutral not-applicable text in place of the headline, with no figure and no alert colour", () => {
         answer({ metrics: notApplicable() });
         openHome();
         const statusColours = [...Object.values(colors.error), ...Object.values(colors.warning), ...Object.values(colors.success)];
@@ -1187,7 +1187,7 @@ describe("MemberHomePage (#199)", () => {
         }
       });
 
-      it("hides the assigned-energy bar and the advice, and keeps the consumption bar", () => {
+      it("UI-HOM-013 AC4 -- hides the assigned-energy bar and the advice, and keeps the consumption bar", () => {
         answer({ metrics: notApplicable() });
         openHome();
 
