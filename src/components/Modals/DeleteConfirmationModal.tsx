@@ -8,12 +8,13 @@ import { radii, alphas, fontSizes } from "../../theme/tokens";
 
 interface DeleteConfirmationModalProps {
   isOpen: boolean;
-  code: string;
+  /** The plant's name: what a person knows it by, never the provider's station code (UI-PLS-003). */
+  name: string;
   onCancel: (event: SyntheticEvent) => void;
   onDelete: () => void;
 }
 
-export const DeleteConfirmationModal: FC<DeleteConfirmationModalProps> = ({ isOpen, code, onCancel, onDelete }) => {
+export const DeleteConfirmationModal: FC<DeleteConfirmationModalProps> = ({ isOpen, name, onCancel, onDelete }) => {
   const communityName = useActiveCommunityName();
   return (
     <ConfirmationModal
@@ -37,7 +38,7 @@ export const DeleteConfirmationModal: FC<DeleteConfirmationModalProps> = ({ isOp
           borderRadius: radii.default,
         }}
       >
-        {code}
+        {name}
       </Typography>
       <Typography
         sx={{

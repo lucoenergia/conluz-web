@@ -1,3 +1,3 @@
 import { DeleteConfirmationModal } from "conluz-web";
 
-export const Open = () => <DeleteConfirmationModal isOpen code="Planta Polideportivo" onCancel={() => {}} onDelete={() => {}} />;
+export const Open = () => <DeleteConfirmationModal isOpen name="Planta Polideportivo" onCancel={() => {}} onDelete={() => {}} />;

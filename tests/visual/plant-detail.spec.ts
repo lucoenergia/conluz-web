@@ -43,7 +43,7 @@ test.describe("Visual baselines", () => {
 
     await page.getByRole("button", { name: /^Ver \d+ datos? más$/ }).click();
     // Scoped to the header: the integrations section below also says "Huawei".
-    await expect(page.getByTestId("detail-header").getByText("HUAWEI", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("detail-header").getByText("Huawei", { exact: true })).toBeVisible();
     await stabilizePage(page);
 
     await expect(page.getByTestId("detail-header")).toHaveScreenshot("plant-detail-expanded.png", await hideAppBar(page));

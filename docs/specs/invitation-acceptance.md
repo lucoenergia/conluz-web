@@ -8,7 +8,7 @@
 | **Roles** | Every caller, with or without a session |
 | **Domain rules** | `lucoenergia/conluz`: MEM-014, MEM-015, MEM-016, MEM-017, ACC-007, OTT-008; ADR-0004 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #288 |
+| **Last reviewed against code** | #349 |
 
 ## Purpose
 
@@ -230,6 +230,22 @@ channel.
   caller. A platform invitation has no community to name.
 - **Implements:** lucoenergia/conluz ADR-0004 §1
 - **Source:** #288
+
+### UI-INV-018 — The landing decides from the user the acceptance produced
+
+- **Status:** Active
+- **Rule:**
+  - After a signed-in acceptance, the screen MUST go to the landing only once the signed-in user
+    shows what was accepted: the community's membership, or the platform-admin capability.
+  - If re-reading the current user fails, or answers without it, the screen MUST go to the landing
+    anyway.
+  - A caller who has just joined a community MUST NOT be sent to the no-community screen.
+- **Rationale:** The landing chooses where to send the caller from the signed-in user it renders
+  with, and that user can reach the screen a render after the re-read. Going there at once sent
+  somebody who had just joined a community to the no-community screen. Waiting with no way out
+  would leave the screen stuck if the backend answered without the membership.
+- **Implements:** MEM-017
+- **Source:** #349
 
 ## States
 

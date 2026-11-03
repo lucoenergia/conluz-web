@@ -66,7 +66,7 @@ beforeEach(() => {
 
 describe("plant confirmations name the community (AC9)", () => {
   test("deleting a plant", () => {
-    renderWithProviders(<DeleteConfirmationModal isOpen code="Planta Norte" onCancel={vi.fn()} onDelete={vi.fn()} />, {
+    renderWithProviders(<DeleteConfirmationModal isOpen name="Planta Norte" onCancel={vi.fn()} onDelete={vi.fn()} />, {
       activeCommunityId: "c1",
     });
 
