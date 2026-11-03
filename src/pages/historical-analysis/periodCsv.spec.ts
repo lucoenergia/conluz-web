@@ -202,11 +202,11 @@ describe("periodCsvFileName (#251)", () => {
   const days = supplyDays([supplyBucket("2026/07/01")]);
 
   it.each([
-    [null, "todos"],
-    [supply("Taller Moreño"), "taller-moreno"],
-    [supply("Casa / Garaje"), "casa-garaje"],
-    [supply("  ¡Ático Nº 3!  "), "atico-n-3"],
-  ])("UI-HIS-024 the scope %# is written as %s", (selected, slug) => {
+    ["Todos mis puntos", "todos", null],
+    ["Taller Moreño", "taller-moreno", supply("Taller Moreño")],
+    ["Casa / Garaje", "casa-garaje", supply("Casa / Garaje")],
+    ["  ¡Ático Nº 3!  ", "atico-n-3", supply("  ¡Ático Nº 3!  ")],
+  ])("UI-HIS-024 the scope %j is written as %j", (_label, slug, selected) => {
     expect(periodCsvFileName(selected, days, "daily")).toBe(`conluz-consumo-${slug}-2026-07-01-2026-07-03.csv`);
   });
 
