@@ -250,8 +250,7 @@ const ReadyTable: FC<{
       )}
       {estimatedPrice && (
         <Typography variant="caption" component="p" sx={{ color: colors.text.body }}>
-          kWh · Ahorro estimado con {formatEurosPerKilowattHour(estimatedPrice.eurPerKWh)}. El CSV incluye las mismas filas y la columna
-          «Datos».
+          Ahorro estimado con {formatEurosPerKilowattHour(estimatedPrice.eurPerKWh)}. El CSV incluye las mismas filas y la columna «Datos».
         </Typography>
       )}
     </HomeCard>

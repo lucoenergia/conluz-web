@@ -279,7 +279,8 @@ describe("UI-HIS-021 one row per chart slot, with the same states and words (#25
 
   it("UI-HIS-021 the footer states the estimated price, and is left out without one", () => {
     const { unmount } = renderPage();
-    expect(region()).toHaveTextContent("kWh · Ahorro estimado con 0,15 €/kWh. El CSV incluye las mismas filas y la columna «Datos».");
+    const footer = within(region()).getByText(/^Ahorro estimado con/);
+    expect(footer).toHaveTextContent(/^Ahorro estimado con 0,15 €\/kWh\. El CSV incluye las mismas filas y la columna «Datos»\.$/);
     unmount();
 
     membershipFigures = derivedMembershipFigures({ ...PERIOD_FIGURES, savings: { ...PERIOD_FIGURES.savings, estimatedPrice: null } });
