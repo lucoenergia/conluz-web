@@ -22,6 +22,7 @@
 
 import { type Page } from "@playwright/test";
 import type { CommunityResponse, SupplyResponse } from "../../src/api/models";
+import { colors } from "../../src/theme/tokens";
 import {
   test,
   expect,
@@ -728,6 +729,10 @@ test.describe("#247: the historical analysis supply selector", () => {
  * at 1024px, and the real scrollbars this file runs with take their width.
  */
 test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side menu open", () => {
+  /** `colors.divider` as getComputedStyle reports it: "rgb(r, g, b)". */
+  const dividerRgb = `rgb(${[1, 3, 5].map((at) => parseInt(colors.divider.slice(at, at + 2), 16)).join(", ")})`;
+  const HAIRLINE = `1px solid ${dividerRgb}`;
+  const LAST_ROW_BORDER = "1px solid rgba(0, 0, 0, 0)";
   const LONG = "Cooperativa Energética Comunitaria de la Vega Baja del Segura y Comarca";
   const longCommunity: CommunityResponse = {
     id: FIXED_COMMUNITY_ID,
@@ -886,6 +891,44 @@ test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side me
       if (listTable.minNameWidth) {
         expect(widths.columns[0], `${listTable.name} name column width`).toBeGreaterThanOrEqual(listTable.minNameWidth);
       }
+    });
+
+    // Measured, not captured: a divider hairline on white is inside the
+    // screenshot comparison's per-pixel colour threshold, so no baseline can
+    // tell a table with separators from one without (#348).
+    test(`#348 ${listTable.name} separates its header and its rows with a hairline`, async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name !== "desktop", "The table is the layout from 1024px; the mobile project never shows it.");
+
+      await page.setViewportSize({ width: 1024, height: 900 });
+      await injectAuthToken(page);
+      await listTable.open(page);
+
+      const table = page.getByRole("main").getByRole("table");
+      await expect(table).toBeVisible();
+      await stabilizePage(page);
+
+      const borders = await table.evaluate((element) => {
+        const borderOf = (cell: Element) => {
+          const style = getComputedStyle(cell);
+          return `${style.borderBottomWidth} ${style.borderBottomStyle} ${style.borderBottomColor}`;
+        };
+        const bodyRows = [...element.querySelectorAll("tbody tr")];
+        return {
+          header: [...new Set([...element.querySelectorAll("thead th")].map(borderOf))],
+          between: [...new Set(bodyRows.slice(0, -1).flatMap((row) => [...row.querySelectorAll("td")].map(borderOf)))],
+          last: [...new Set([...(bodyRows.at(-1)?.querySelectorAll("td") ?? [])].map(borderOf))],
+          rowCount: bodyRows.length,
+        };
+      });
+
+      expect(borders.rowCount, `${listTable.name} rows`).toBeGreaterThan(0);
+      expect(borders.header, `${listTable.name} header border`).toEqual([HAIRLINE]);
+      if (borders.rowCount > 1) {
+        expect(borders.between, `${listTable.name} border between rows`).toEqual([HAIRLINE]);
+      }
+      // The panel's edge, or the footer's own hairline, closes the list; the
+      // last row keeps the width, so no table changes height.
+      expect(borders.last, `${listTable.name} last row border`).toEqual([LAST_ROW_BORDER]);
     });
   }
 });
