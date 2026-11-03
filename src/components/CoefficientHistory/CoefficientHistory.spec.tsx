@@ -7,6 +7,7 @@ import { theme } from "../../theme";
 import { CoefficientHistory, type CoefficientHistoryProps } from "./CoefficientHistory";
 import type { PartitionCoefficientResponse } from "../../api/models";
 import { buildPartitionCoefficientCapabilities } from "../../test/fixtures";
+import { expectNeutralStatusChip } from "../SharingAgreementStatusChip/expectNeutralStatusChip";
 
 const ACTIVE_COMMUNITY = { id: "community-1", name: "Sol Común" };
 const PLANT_NORTE = { id: "plant-norte", name: "Planta Solar Norte" };
@@ -208,5 +209,17 @@ describe("CoefficientHistory", () => {
 
     expect(screen.getByRole("alert")).toHaveTextContent("No se ha podido cargar el histórico de coeficientes");
     expect(screen.queryByText("Sin periodos aplicados")).not.toBeInTheDocument();
+  });
+
+  // A DRAFT never appears here: the history lists applied periods, and a draft
+  // can hold none, so the reachable statuses are the published and superseded ones.
+  it("UI-AGR-016 each agreement's status chip carries no warning or error palette", () => {
+    renderHistory();
+
+    for (const label of ["Vigente", "Histórico"]) {
+      const chips = screen.getAllByText(label);
+      expect(chips.length, `${label} chips`).toBeGreaterThan(0);
+      chips.forEach(expectNeutralStatusChip);
+    }
   });
 });

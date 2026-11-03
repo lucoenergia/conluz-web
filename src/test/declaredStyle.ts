@@ -23,3 +23,24 @@ export function declaredStyle(element: Element): Record<string, string> {
   }
   return declared;
 }
+
+/**
+ * Every declaration under a rule whose selector names one of the element's own
+ * classes, including the rules emotion writes for its descendants
+ * (`.css-x .MuiChip-icon{…}`) and its states (`.css-x:hover{…}`), as
+ * `[selector, property, value]`. For a spec that must see everything an
+ * element paints, where `declaredStyle` sees only its plain rule.
+ */
+export function declaredStyleWithin(element: Element): [selector: string, property: string, value: string][] {
+  const css = [...document.querySelectorAll("style[data-emotion]")].map((style) => style.textContent ?? "").join("\n");
+  const own = [...element.classList].filter((className) => className.startsWith("css-")).map((className) => `.${className}`);
+  const declared: [string, string, string][] = [];
+  for (const [, selector, body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    if (!selector.split(/[\s,>+~:]/).some((part) => own.includes(part))) continue;
+    for (const declaration of body.split(";")) {
+      const colon = declaration.indexOf(":");
+      if (colon > 0) declared.push([selector.trim(), declaration.slice(0, colon).trim(), declaration.slice(colon + 1).trim()]);
+    }
+  }
+  return declared;
+}

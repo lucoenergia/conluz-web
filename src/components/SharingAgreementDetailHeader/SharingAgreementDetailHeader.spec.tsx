@@ -7,6 +7,7 @@ import { query } from "../../test/queryState";
 import { buildPlant, buildSharingAgreement, buildUser } from "../../test/fixtures";
 import { useGetUserById, type getUserById } from "../../api/users/users";
 import { SharingAgreementDetailHeader, type SharingAgreementDetailHeaderProps } from "./SharingAgreementDetailHeader";
+import { expectNeutralStatusChip } from "../SharingAgreementStatusChip/expectNeutralStatusChip";
 import {
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementResponseStatus,
@@ -85,6 +86,19 @@ describe("SharingAgreementDetailHeader", () => {
         screen.getByRole("button", { name: "Ocultar detalles" }).getAttribute("aria-controls") as string,
       ) as HTMLElement;
     };
+
+    it.each([
+      ["DRAFT", draftAgreement, "Borrador"],
+      ["PUBLISHED", publishedAgreement, "Vigente"],
+      ["SUPERSEDED", supersededAgreement, "Histórico"],
+    ])("UI-AGR-016 the %s status chip carries no warning or error palette", (_status, agreement, label) => {
+      renderHeader({ agreement });
+
+      // The label may also be a key fact; the chip is the one inside a chip.
+      const chipLabel = screen.getAllByText(label).find((element) => element.closest(".MuiChip-root"));
+      expect(chipLabel, `${label} chip`).toBeDefined();
+      if (chipLabel) expectNeutralStatusChip(chipLabel);
+    });
 
     it("renders the agreement name and its status chip", () => {
       renderHeader();
