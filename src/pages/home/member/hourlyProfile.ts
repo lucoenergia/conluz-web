@@ -2,7 +2,7 @@ import type { ApexOptions } from "apexcharts";
 import type { MembershipHourlyProfileBucketResponse, MembershipHourlyProfileResponse } from "../../../api/models";
 import { formatAverageKilowattHours, formatHourOfDay, formatMonth } from "../../../utils/formatEnergyFigures";
 import { colors } from "../../../theme/tokens";
-import { ENERGY_COLORS } from "./energyColors";
+import { ENERGY_COLORS } from "../../../components/EnergyFigures/energyColors";
 import { isPartialMonth } from "./memberHomeMessage";
 
 /** One series at one hour: no sample at all, or an average over its own samples. */

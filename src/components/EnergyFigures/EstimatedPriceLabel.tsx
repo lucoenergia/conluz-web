@@ -1,9 +1,9 @@
 import type { FC } from "react";
 import { Box, Typography } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import type { EstimatedPriceResponse } from "../../../api/models";
+import type { EstimatedPriceResponse } from "../../api/models";
 import { estimatedPriceText } from "./estimatedPriceText";
-import { colors, radii } from "../../../theme/tokens";
+import { colors, radii } from "../../theme/tokens";
 
 /**
  * States the estimated price a euro figure was computed with, as visible text.

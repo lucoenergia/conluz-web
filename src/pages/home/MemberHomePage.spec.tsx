@@ -37,7 +37,7 @@ import { declaredStyle } from "../../test/declaredStyle";
 import { colors } from "../../theme/tokens";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { MemberHomePage } from "./MemberHomePage";
-import { ENERGY_COLORS, SAVINGS_COLOR } from "./member/energyColors";
+import { ENERGY_COLORS, SAVINGS_COLOR } from "../../components/EnergyFigures/energyColors";
 import { answerCommunities } from "./homeViews.mocks";
 
 vi.mock(import("../../http/custom-instance"), async (importOriginal) => ({
