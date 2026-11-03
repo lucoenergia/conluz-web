@@ -1,4 +1,4 @@
-import { colors } from "../../../theme/tokens";
+import { colors } from "../../theme/tokens";
 
 /**
  * The one place the member home chooses a colour for an energy concept (#231).

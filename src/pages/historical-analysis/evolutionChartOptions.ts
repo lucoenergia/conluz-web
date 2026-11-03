@@ -1,7 +1,7 @@
 import type { ApexOptions } from "apexcharts";
 import { formatEuros, formatKilowattHours } from "../../utils/formatEnergyFigures";
 import { colors, shadows } from "../../theme/tokens";
-import { ENERGY_COLORS, SAVINGS_COLOR } from "../home/member/energyColors";
+import { ENERGY_COLORS, SAVINGS_COLOR } from "../../components/EnergyFigures/energyColors";
 import {
   GRID_IMPORT_SERIES,
   SAVINGS_SERIES,

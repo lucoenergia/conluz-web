@@ -62,6 +62,7 @@ import {
   PUBLISHED_AGREEMENT,
   seedActiveCommunity,
   stabilizePage,
+  SUPPLY_ENERGY_METRICS,
 } from "./fixtures";
 
 // Real scrollbars, so a vertical scrollbar takes width as it does for a desktop
@@ -1086,6 +1087,54 @@ test.describe("#249: the historical analysis period card and totals", () => {
 
     const card = page.getByRole("region", { name: "De la energía que te tocó" });
     const totals = page.getByRole("list", { name: "Totales del periodo" });
+    await expect(card).toBeVisible();
+    await expect(totals.getByRole("listitem")).toHaveCount(4);
+    await expect(totals.getByText(/^Estimado con un precio de/)).toBeVisible();
+    await stabilizePage(page);
+
+    const pageWidths = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth,
+    }));
+    expect(pageWidths.document, "the page scrolls sideways").toBeLessThanOrEqual(pageWidths.viewport);
+
+    for (const [name, box] of [
+      ["the card", await card.boundingBox()],
+      ...(await Promise.all((await totals.getByRole("listitem").all()).map(async (tile, index) => [`tile ${index + 1}`, await tile.boundingBox()] as const))),
+    ] as const) {
+      expect(box!.x, `${name} starts off-screen`).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width, `${name} is wider than the viewport`).toBeLessThanOrEqual(390);
+    }
+    for (const tile of await totals.getByRole("listitem").all()) {
+      const widths = await tile.evaluate((node) => ({ scroll: node.scrollWidth, client: node.clientWidth, text: node.textContent }));
+      expect(widths.scroll, `"${widths.text}" overflows its tile`).toBeLessThanOrEqual(widths.client);
+    }
+  });
+});
+
+/**
+ * #252. The supply detail page's latest published month at phone width: the
+ * period card and every tile of the totals fit a 390px viewport, no tile's
+ * text overflows it, and the page never scrolls sideways. Measured, not
+ * captured, like the #249 budget it extends.
+ */
+test.describe("#252: the supply detail page's latest published month", () => {
+  test("UI-SUP-014 at 390px the period card and the four totals fit, and the page never scrolls sideways", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "The budget is a 390px viewport.");
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+    // Its own route, registered last so it wins: the supply's URL space also answers the supply itself.
+    await page.route(
+      (url) => url.pathname.endsWith(`/api/v1/supplies/${FIXED_SUPPLY_ID}/energy-metrics`),
+      (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(SUPPLY_ENERGY_METRICS) }),
+    );
+    await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
+
+    const summary = page.getByRole("region", { name: "Último mes publicado" });
+    const card = summary.getByRole("region", { name: "De la energía que te tocó" });
+    const totals = summary.getByRole("list", { name: "Totales del periodo" });
     await expect(card).toBeVisible();
     await expect(totals.getByRole("listitem")).toHaveCount(4);
     await expect(totals.getByText(/^Estimado con un precio de/)).toBeVisible();

@@ -25,10 +25,19 @@ export interface SupplyInActiveCommunity {
  *
  * Switching community inside the app is handled earlier, by the redirect in
  * AuthenticatedLayout; this is the case where no switch happens at all.
+ *
+ * `retry` replaces React Query's default for a caller that renders a failure
+ * as an ordinary state rather than as an error (#252).
  */
-export function useSupplyInActiveCommunity(supplyId: string): SupplyInActiveCommunity {
+export function useSupplyInActiveCommunity(
+  supplyId: string,
+  options: { retry?: (failureCount: number, error: unknown) => boolean } = {},
+): SupplyInActiveCommunity {
   const activeCommunityId = useActiveCommunity();
-  const { data: supply, isLoading, error, refetch } = useGetSupply(supplyId);
+  const { data: supply, isLoading, error, refetch } = useGetSupply(
+    supplyId,
+    options.retry ? { query: { retry: options.retry } } : undefined,
+  );
 
   const isForeign = isSupplyOutsideActiveCommunity(supply, activeCommunityId);
   const isNotFound =

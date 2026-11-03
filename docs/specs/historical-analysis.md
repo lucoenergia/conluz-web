@@ -8,55 +8,77 @@
 | **Roles** | A caller who may read the active community (`canRead`): members and community admins |
 | **Domain rules** | EPR-001, EPR-003, EPR-004 (lucoenergia/conluz#409); SEM-001 (lucoenergia/conluz#408); SEM-002, SEM-003, SEM-004, ENM-006, ENM-007, ENM-008 (lucoenergia/conluz#411); MCS-001, MCS-002 (lucoenergia/conluz#410); ADR-0005 in lucoenergia/conluz |
 | **Design reference** | Claude Design round 2 copy deck; round 3 copy deck for the period (#248); the member consumption analysis design, option A, for the evolution charts (#250) and the data table and CSV (#251) |
-| **Last reviewed against code** | #251 |
+| **Last reviewed against code** | #252 |
 
 Scope: the page shell, its menu entry and its supply selector (#247), the period: its anchor,
 selector, custom range picker, header and query string (#248), the period's card and totals
 (#249), the energy and savings evolution charts (#250), and the data table with its CSV download
-(#251). All of them read the period through `useHistoricalPeriod`
+(#251), and a community admin's way in to a supply of the community from its detail page (#252).
+All of them read the period through `useHistoricalPeriod`
 (`src/pages/historical-analysis/HistoricalPeriodContext.tsx`).
 
 ## Purpose
 
 Let a caller look back at what their own supplies consumed and saved in the community they are
-working in, all of them together or one at a time. A community admin sees their own supplies here
-too, never the other members'.
+working in, all of them together or one at a time. A community admin lists only their own supplies
+here too, and opens another member's supply from its detail page, one at a time.
 
 ## Rules
 
-### UI-HIS-001 — The selector lists only the caller's own enabled supplies in the active community
+### UI-HIS-001 — The selector lists the caller's own enabled supplies, and a community admin may open any enabled supply of the active community
 
 - **Status:** Active
-- **Rule:** The historical analysis page MUST list only the caller's own enabled supplies in the
-  active community, for members and community admins alike. The selector, labelled "Punto de
-  suministro", MUST offer "Todos mis puntos" first, as the default, then one option per supply as
-  "{nombre} · {CUPS}", the name falling back to the address as UI-SUP-010 does. An option MUST be
-  tagged "Punto de planta" exactly when the supply's `plant` reference is non-null. The footer "Solo
-  aparecen tus puntos activos en esta comunidad." MUST be shown under it. Below `sm` the selector
-  MUST open as a bottom sheet.
-- **Rationale:** Supply management lives on another screen; this one is about the caller's own
-  energy, so an admin reading the community's whole list would analyse other members' supplies. The
-  caller's own listing spans every community they belong to, so it is narrowed to the active one. A
-  disabled supply is hidden until what a disabled supply means is decided, and the footer says so.
-  The plant tag reads the reference the backend sets for a plant's own supply
-  (lucoenergia/conluz#411), never the supply's name.
+- **Rule:**
+  - The page MUST list the caller's own enabled supplies in the active community and "Todos mis
+    puntos", for members and community admins alike. The selector, labelled "Punto de suministro",
+    MUST offer "Todos mis puntos" first among them, as the default, then one option per supply as
+    "{nombre} · {CUPS}", the name falling back to the address as UI-SUP-010 does. An option MUST be
+    tagged "Punto de planta" exactly when the supply's `plant` reference is non-null. The footer
+    "Solo aparecen tus puntos activos en esta comunidad." MUST be shown under it. Below `sm` the
+    selector MUST open as a bottom sheet.
+  - A community admin MAY open any enabled supply of the active community through `?supplyId=`. It
+    is looked up only when the active community reports `canManage`, and selectable only when it is
+    enabled, belongs to the active community and reports `canRead`.
+  - That supply MUST be shown in its own group, "Punto que estás consultando", above the caller's
+    own, labelled "{nombre} · {CUPS} · {titular}" when the response carries the owner's member
+    record and "{nombre} · {CUPS}" when it does not. Choosing any other option MUST remove it from
+    the selector.
+  - "Todos mis puntos" MUST stay the caller's own supplies, read from the caller's own membership.
+- **Rationale:** Supply management lives on another screen, and this one is about the caller's own
+  energy, so the list is never the community's whole. A community admin still sees every figure of
+  the supplies they manage, through this one analysis page, opened from the supply's detail page
+  (UI-SUP-015), rather than a second analysis screen. The caller's own listing spans every
+  community they belong to, so it is narrowed to the active one. A disabled supply is hidden until
+  what a disabled supply means is decided, and the footer says so. The plant tag reads the
+  reference the backend sets for a plant's own supply (lucoenergia/conluz#411), never the supply's
+  name. The owner's member record, when the response carries one, says whose supply the admin is
+  reading, with no second request.
 - **Implements:** n/a
-- **Source:** #247
+- **Source:** #247; changed in #252 (a community admin opens a supply of the community)
 
 ### UI-HIS-002 — The selection is held in the address, and does not survive a community switch
 
 - **Status:** Active
-- **Rule:** The selected supply MUST be held in `?supplyId=`. An id the caller cannot select
-  (somebody else's supply, one in another community, a disabled one, or an unknown id) MUST fall
-  back to "Todos mis puntos" without an error, and the parameter MUST be removed, once the listing
-  has succeeded; while the listing is pending or has failed, the parameter MUST be left as it is. A
-  community switch MUST drop the parameter, and the page remounts on "Todos mis puntos".
+- **Rule:**
+  - The selected supply MUST be held in `?supplyId=`.
+  - An id the caller cannot select MUST fall back to "Todos mis puntos" without an error, and the
+    parameter MUST be removed, only after it has been resolved: for one of the caller's own
+    supplies, once the listing has succeeded; for any other id, once the active community's
+    `canManage` and, where it is granted, the supply's lookup have answered. While any of them is
+    pending, or the listing has failed, the parameter MUST be left as it is.
+  - For a community admin, an enabled supply of the active community that reports `canRead` is
+    selectable (UI-HIS-001). Somebody else's supply for a caller without `canManage`, a supply of
+    another community, a disabled one, one that does not report `canRead`, an unknown id and a
+    failed lookup are not.
+  - A refused or missing lookup MUST NOT be retried.
+  - A community switch MUST drop the parameter, and the page remounts on "Todos mis puntos".
 - **Rationale:** Another page can link here with a supply preselected. A stale or foreign link is an
   ordinary case, not a failure, so it lands on the default instead of an error. Nothing is known
-  about an id until the listing answers, so it is not removed early. A supply belongs to one
-  community, so its id cannot follow the caller into another.
+  about an id until what decides it has answered, so it is not removed early. Asking again for a
+  supply that was refused or does not exist changes nothing and only delays the fallback. A supply
+  belongs to one community, so its id cannot follow the caller into another.
 - **Implements:** n/a
-- **Source:** #247
+- **Source:** #247; changed in #252 (a community admin's selectable supplies)
 
 ### UI-HIS-003 — No own supply here is a neutral state, not a failure
 
@@ -421,6 +443,7 @@ too, never the other members'.
 | --- | --- | --- |
 | Loading | The title and a placeholder where the selector goes | None |
 | Empty | The title and the neutral notice (UI-HIS-003) | None |
+| Supplies, another supply being resolved | The title and the supply selector on "Todos mis puntos", with `?supplyId=` left as it is (UI-HIS-002) | Choosing a supply |
 | Supplies, anchor pending | The title, the supply selector and a placeholder where the period selector goes | Choosing a supply |
 | Supplies, nothing published | The title, the supply selector and the neutral "Todavía no hay datos publicados" (UI-HIS-005) | Choosing a supply |
 | Supplies, anchor failed | The title, the supply selector and an error with "Reintentar" | Choosing a supply, retrying |

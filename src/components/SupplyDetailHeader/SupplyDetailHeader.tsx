@@ -1,5 +1,6 @@
 import { useState, type FC, type MouseEvent } from "react";
 import { Box, Chip, IconButton, MenuItem, Typography } from "@mui/material";
+import { Link as RouterLink } from "react-router";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -19,13 +20,21 @@ export interface SupplyDetailHeaderProps {
    * canDelete (#290); without it the header has no menu at all.
    */
   onDeleteRequest?: () => void;
+  /**
+   * Where the plant this supply belongs to opens, when the caller may open it.
+   * Without it a plant's own supply is still tagged, as plain text.
+   */
+  plantHref?: string;
 }
+
+const PLANT_TAG_SX = { fontWeight: 600, bgcolor: colors.brand.surface, color: "primary.main" } as const;
 
 export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
   supplyPoint,
   isLoading = false,
   error = null,
   onDeleteRequest,
+  plantHref,
 }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
 
@@ -88,16 +97,33 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
       subtitle={supplyPoint?.address || "Dirección no disponible"}
       subtitleIcon={<LocationOnIcon />}
       status={
-        <Chip
-          label={supplyPoint?.enabled ? "Activo" : "Inactivo"}
-          color={supplyPoint?.enabled ? "success" : "error"}
-          size="small"
-          sx={{
-            fontWeight: 600,
-            color: "white",
-            backgroundColor: supplyPoint?.enabled ? colors.success.main : colors.error.main,
-          }}
-        />
+        <>
+          <Chip
+            label={supplyPoint?.enabled ? "Activo" : "Inactivo"}
+            color={supplyPoint?.enabled ? "success" : "error"}
+            size="small"
+            sx={{
+              fontWeight: 600,
+              color: "white",
+              backgroundColor: supplyPoint?.enabled ? colors.success.main : colors.error.main,
+            }}
+          />
+          {/* Read from the supply's own plant reference, never from its name (#252). */}
+          {supplyPoint?.plant &&
+            (plantHref ? (
+              <Chip
+                component={RouterLink}
+                to={plantHref}
+                clickable
+                label="Punto de planta"
+                aria-label={`Punto de planta: ver la planta ${supplyPoint.plant.name}`}
+                size="small"
+                sx={PLANT_TAG_SX}
+              />
+            ) : (
+              <Chip label="Punto de planta" size="small" sx={PLANT_TAG_SX} />
+            ))}
+        </>
       }
       keyFacts={keyFacts}
       details={details}

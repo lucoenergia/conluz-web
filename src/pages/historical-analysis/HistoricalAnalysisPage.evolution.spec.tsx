@@ -61,7 +61,7 @@ import {
 } from "../../api/memberships/memberships";
 import { HistoricalAnalysisPage } from "./HistoricalAnalysisPage";
 import { MEASURED_ZERO_EUR_TEXT, SELF_CONSUMPTION_SERIES, SAVINGS_SERIES } from "./consumptionSeries";
-import { ENERGY_COLORS, SAVINGS_COLOR } from "../home/member/energyColors";
+import { ENERGY_COLORS, SAVINGS_COLOR } from "../../components/EnergyFigures/energyColors";
 import {
   COMMUNITY_ID,
   HOME,

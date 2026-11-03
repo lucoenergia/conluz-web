@@ -5,7 +5,7 @@ import BarChartRoundedIcon from "@mui/icons-material/BarChartRounded";
 import { LoadErrorAlert } from "../../../components/LoadErrorAlert";
 import { colors } from "../../../theme/tokens";
 import { HomeCard } from "../HomeCard";
-import { NeutralNotice } from "../NeutralNotice";
+import { NeutralNotice } from "../../../components/EnergyFigures/NeutralNotice";
 import {
   GRID_IMPORT_SERIES,
   NOTHING_STORED_TEXT,
@@ -14,7 +14,7 @@ import {
   toMonthlySeriesView,
   type MonthlySeriesView,
 } from "./monthlySeries";
-import { ENERGY_COLORS, SAVINGS_COLOR, swatch } from "./energyColors";
+import { ENERGY_COLORS, SAVINGS_COLOR, swatch } from "../../../components/EnergyFigures/energyColors";
 import { SeriesLegend } from "./SeriesLegend";
 import { TwelveMonthChart } from "./TwelveMonthChart";
 import { useMemberEnergyMetrics, type ReferencePeriod } from "./useMemberEnergyMetrics";

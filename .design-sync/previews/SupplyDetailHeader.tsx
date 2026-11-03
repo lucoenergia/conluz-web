@@ -41,6 +41,16 @@ export const Inactive = () => (
   </Mui.Box>
 );
 
+/** A plant's own supply is tagged "Punto de planta", linked to the plant when the caller may open it. */
+export const PlantSupply = () => (
+  <Mui.Box sx={{ width: "100%" }}>
+    <SupplyDetailHeader
+      supplyPoint={{ ...supply, id: "sup-3", name: "Cubierta del polideportivo", plant: { id: "plant-1", name: "Planta Polideportivo" } }}
+      plantHref="/production/plant-1"
+    />
+  </Mui.Box>
+);
+
 /** Loading and error render the same shell (title fallback, no facts); the page shows the spinner or alert around it. */
 export const LoadingOrFailed = () => (
   <Mui.Box sx={{ width: "100%" }}>

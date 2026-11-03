@@ -34,7 +34,7 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-INT` | Integrations: the community integrations page and the plant's Huawei integration | [`integrations.md`](integrations.md) |
 | `UI-PLT` | Plant detail: the plant's production, and the status of its agreements and integration; a plant deletion's refusal and its confirmation | [`plant-detail.md`](plant-detail.md) |
 | `UI-PLS` | Plants: the plant list and its rows, its search, and the plant deletion dialog | [`plants.md`](plants.md) |
-| `UI-SUP` | Supplies: the supply list and its rows, deleting a supply from its row menu or its detail page, the CSV import, a create or edit refused for its CUPS or owner, and how a supply is named | [`supplies.md`](supplies.md) |
+| `UI-SUP` | Supplies: the supply list and its rows, deleting a supply from its row menu or its detail page, the CSV import, a create or edit refused for its CUPS or owner, how a supply is named, and the supply detail page's latest published month | [`supplies.md`](supplies.md) |
 | `UI-USR` | Users: the edit screen (removed in #285; tombstones only) | [`users.md`](users.md) |
 | `UI-MBR` | Members: registration, the CSV import, invitations, member status, the member record edit and suspension, and the last active admin's role change and removal on the members page | [`members.md`](members.md) |
 | `UI-PRF` | Profile: the email field | [`profile.md`](profile.md) |
@@ -43,7 +43,7 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-AGR` | Sharing agreements: the list, the detail page, the coefficient editor and their dialogs | [`sharing-agreements.md`](sharing-agreements.md) |
 | `UI-INV` | Invitation acceptance: joining a community, or the platform admins, from the emailed link | [`invitation-acceptance.md`](invitation-acceptance.md) |
 | `UI-HOM` | Home: the member and management home views | [`home.md`](home.md) |
-| `UI-HIS` | Historical analysis: the caller's own supplies over time, its menu entry and its supply selector | [`historical-analysis.md`](historical-analysis.md) |
+| `UI-HIS` | Historical analysis: the caller's own supplies over time, a community admin's view of one supply of the community, its menu entry and its supply selector | [`historical-analysis.md`](historical-analysis.md) |
 | `UI-ADM` | Community admins: the platform admin's list, invitation and management of a community's admins | [`community-admins.md`](community-admins.md) |
 | `UI-PAD` | Platform admins: the list, inviting to the role and the pending invitations, revoking the role, and what a platform admin with no membership can reach | [`platform-admins.md`](platform-admins.md) |
 | `UI-ERR` | API errors: where and in whose words a refused request's message is shown, across screens | [`api-errors.md`](api-errors.md) |

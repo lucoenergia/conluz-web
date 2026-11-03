@@ -9,7 +9,7 @@ import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
 import { HomeCard } from "./HomeCard";
 import { HomeViewSwitch } from "./HomeViewSwitch";
-import { NeutralNotice } from "./NeutralNotice";
+import { NeutralNotice } from "../../components/EnergyFigures/NeutralNotice";
 import { plantAgreementStatus, type PlantAgreementStatus } from "./management/plantAgreementStatus";
 import { useMemberCount, useSupplyPointCount, type CommunityCount } from "./management/useCommunityCounts";
 import { usePlantSharingAgreements } from "./management/usePlantSharingAgreements";

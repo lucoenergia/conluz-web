@@ -10,7 +10,7 @@ import { LoadErrorAlert } from "../../../components/LoadErrorAlert";
 import { formatMonth } from "../../../utils/formatEnergyFigures";
 import { colors } from "../../../theme/tokens";
 import { HomeCard } from "../HomeCard";
-import { NeutralNotice } from "../NeutralNotice";
+import { NeutralNotice } from "../../../components/EnergyFigures/NeutralNotice";
 import { compareWithPreviousMonth, type ChangeDirection, type FigureComparison } from "./monthComparison";
 import { useMemberEnergyMetrics, type ReferencePeriod } from "./useMemberEnergyMetrics";
 import { usePreviousMonthEnergyMetrics } from "./usePreviousMonthEnergyMetrics";

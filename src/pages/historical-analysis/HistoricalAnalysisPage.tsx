@@ -7,12 +7,12 @@ import { colors } from "../../theme/tokens";
 import { ActionStatus } from "../../components/ActionStatus/ActionStatus";
 import { LoadErrorAlert } from "../../components/LoadErrorAlert/LoadErrorAlert";
 import { Notice } from "../../components/Notice/Notice";
-import { NeutralNotice } from "../home/NeutralNotice";
+import { NeutralNotice } from "../../components/EnergyFigures/NeutralNotice";
 import { HistoricalPeriodContext } from "./HistoricalPeriodContext";
 import { PeriodDataTable } from "./PeriodDataTable";
 import { PeriodEvolution } from "./PeriodEvolution";
 import { PeriodFigures } from "./PeriodFigures";
-import { PeriodHeader } from "./PeriodHeader";
+import { PeriodHeader } from "../../components/EnergyFigures/PeriodHeader";
 import { PeriodSelector } from "./PeriodSelector";
 import { SupplySelector } from "./SupplySelector";
 import { useHistoricalAnchor, type HistoricalAnchor } from "./useHistoricalAnchor";
@@ -30,7 +30,7 @@ import { useSelectedSupply } from "./useSelectedSupply";
  */
 export const HistoricalAnalysisPage: FC = () => {
   const { supplies, isLoading, error } = useOwnSupplies();
-  const { selected, select } = useSelectedSupply(supplies);
+  const { selected, viewed, select } = useSelectedSupply(supplies);
   const anchor = useHistoricalAnchor(selected);
   const period = useHistoricalPeriodState(anchor, selected);
   const errorDispatch = useErrorDispatch();
@@ -52,7 +52,7 @@ export const HistoricalAnalysisPage: FC = () => {
         <>
           <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: "flex-start", gap: 2 }}>
             <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
-              <SupplySelector supplies={supplies} selected={selected} onSelect={select} />
+              <SupplySelector supplies={supplies} selected={selected} viewed={viewed} onSelect={select} />
             </Box>
             {anchor.status === "loading" && <Skeleton variant="rounded" height={56} sx={{ flex: 1, width: "100%" }} />}
             {anchor.status === "ready" && (

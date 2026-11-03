@@ -17,7 +17,7 @@ import { renderWithProviders } from "../../../test/renderWithProviders";
 import { colors } from "../../../theme/tokens";
 import { BestHours } from "./BestHours";
 import { BEST_HOURS_COUNT } from "./hourlyProfile";
-import { ENERGY_COLORS } from "./energyColors";
+import { ENERGY_COLORS } from "../../../components/EnergyFigures/energyColors";
 import { isPartialMonth } from "./memberHomeMessage";
 
 /**

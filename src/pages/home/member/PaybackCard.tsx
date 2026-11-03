@@ -9,8 +9,8 @@ import { formatEuros } from "../../../utils/formatEnergyFigures";
 import { formatPercentage } from "../../../utils/formatPercentage";
 import { pluralize } from "../../../utils/pluralize";
 import { colors, radii } from "../../../theme/tokens";
-import { SAVINGS_COLOR } from "./energyColors";
-import { EstimatedPriceLabel } from "./EstimatedPriceLabel";
+import { SAVINGS_COLOR } from "../../../components/EnergyFigures/energyColors";
+import { EstimatedPriceLabel } from "../../../components/EnergyFigures/EstimatedPriceLabel";
 import { HomeCard } from "../HomeCard";
 
 const TITLE = "Recuperación de tu inversión";
