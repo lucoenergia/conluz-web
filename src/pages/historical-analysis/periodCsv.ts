@@ -7,7 +7,7 @@ import { slotStateText } from "./slotStateText";
 
 export const CSV_MIME_TYPE = "text/csv;charset=utf-8";
 
-const BOM = "﻿";
+const BOM = "\uFEFF";
 const SEPARATOR = ";";
 const LINE_END = "\r\n";
 
