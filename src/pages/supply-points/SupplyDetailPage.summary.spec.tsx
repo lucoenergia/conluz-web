@@ -121,7 +121,7 @@ describe("UI-SUP-014 the supply detail page shows the latest published month, wi
     expect(screen.queryByRole("heading", { name: "Eficiencia" })).not.toBeInTheDocument();
     expect(screen.queryByText(/^Rango:/)).not.toBeInTheDocument();
     expect(screen.queryByText("CHART")).not.toBeInTheDocument();
-    // GraphFilter's controls: its range buttons and a date input.
+    // The removed period filter's controls: its range buttons and a date input.
     expect(screen.queryByRole("button", { name: /^(Día|Mes|Año|Totales|Fechas)$/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
     for (const hook of SERIES_HOOKS) expect(hook).not.toHaveBeenCalled();
