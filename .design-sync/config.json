@@ -89,7 +89,6 @@
     "CoefficientActionsMenuItems": "../groups/supplies-and-plants.md",
     "SharingAgreementActionButton": "../groups/sharing-agreements.md",
     "SharingAgreementApplicationPanel": "../groups/sharing-agreements.md",
-    "SharingAgreementCard": "../groups/sharing-agreements.md",
     "SharingAgreementCoefficientCard": "../groups/sharing-agreements.md",
     "SharingAgreementCoefficientTableRow": "../groups/sharing-agreements.md",
     "SharingAgreementCoefficientSumGauges": "../groups/sharing-agreements.md",
@@ -97,7 +96,6 @@
     "SharingAgreementNextStepBanner": "../groups/sharing-agreements.md",
     "SharingAgreementOutgoingSupplies": "../groups/sharing-agreements.md",
     "SharingAgreementStatusChip": "../groups/sharing-agreements.md",
-    "SharingAgreementTimeline": "../groups/sharing-agreements.md",
     "ApplyCoefficientDateConfirmationModal": "../groups/dialogs.md",
     "CloseCoefficientConfirmationModal": "../groups/dialogs.md",
     "CorrectCoefficientDateConfirmationModal": "../groups/dialogs.md",
@@ -209,9 +207,6 @@
       "cardMode": "column"
     },
     "SharingAgreementOutgoingSupplies": {
-      "cardMode": "column"
-    },
-    "SharingAgreementTimeline": {
       "cardMode": "column"
     },
     "SideMenu": {
