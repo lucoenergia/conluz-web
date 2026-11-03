@@ -80,7 +80,7 @@ describe("PlantDetailHeader", () => {
       expect(screen.getByText("63 kW")).toBeInTheDocument();
       expect(screen.getByText("ES0031300325733001FH0FA000")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Ver 5 datos más" })).toBeInTheDocument();
-      expect(screen.queryByText("HUAWEI")).not.toBeInTheDocument();
+      expect(screen.queryByText("Huawei")).not.toBeInTheDocument();
     });
 
     it("offers to copy the CAU", () => {
@@ -105,7 +105,9 @@ describe("PlantDetailHeader", () => {
       await expandDetails(user);
 
       expect(screen.getByText("NE=35899672")).toBeInTheDocument();
-      expect(screen.getByText("HUAWEI")).toBeInTheDocument();
+      // The provider by its name, not the API's code (UI-PLS-001).
+      expect(screen.getByText("Huawei")).toBeInTheDocument();
+      expect(screen.queryByText("HUAWEI")).not.toBeInTheDocument();
       expect(screen.getByText("20 abr 2024")).toBeInTheDocument();
       expect(screen.getByText("Huerto solar Luco Energía")).toBeInTheDocument();
     });

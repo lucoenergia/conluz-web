@@ -5,6 +5,7 @@ import type { RecordListItem } from "../../components/RecordList";
 import type { ListTableColumn, ListTableTitle } from "../../components/ListTable/ListTable";
 import { fontFamilies } from "../../theme/tokens";
 import { formatKilowatts } from "../../utils/formatKilowatts";
+import { inverterProviderLabel } from "../../utils/inverterProviderLabel";
 import { formatCalendarDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
 
 /**
@@ -36,7 +37,7 @@ const cauCode = (code: string) => (
 const connectionDateText = (plant: PlantResponse) =>
   plant.connectionDate ? formatCalendarDate(plant.connectionDate, SHORT_CALENDAR_DATE) : undefined;
 
-const inverterText = (plant: PlantResponse) => `Inversor ${plant.inverterProvider}`;
+const inverterText = (plant: PlantResponse) => `Inversor ${inverterProviderLabel(plant.inverterProvider)}`;
 
 /** The narrow layout's row. */
 export function toRecordListItem(plant: PlantResponse): RecordListItem {

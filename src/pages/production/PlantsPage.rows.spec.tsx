@@ -123,9 +123,18 @@ describe.each(LAYOUTS)("the plant rows, %s", (layout) => {
     expect(within(row).getByRole("link", { name: "Planta Norte" })).toHaveAttribute("href", "/production/north");
     expect(row).toHaveTextContent(layout === "narrow" ? "CAU ES0031300806333002ET1F" : "ES0031300806333002ET1F");
     expect(row).toHaveTextContent("100 kW");
-    expect(row).toHaveTextContent("Inversor HUAWEI");
+    expect(row).toHaveTextContent("Inversor Huawei");
     expect(row).toHaveTextContent(layout === "narrow" ? "Conectada el 10 may 2023" : "10 may 2023");
     expect(row).toHaveTextContent("Polígono Norte, Nave 3");
+  });
+
+  it("UI-PLS-001 names the inverter provider, not its code", () => {
+    setup({ plants: [COMPLETE, IN_SETUP], layout });
+
+    for (const name of ["Planta Norte", "Planta Sur"]) {
+      expect(rowOf(layout, name)).toHaveTextContent("Inversor Huawei");
+    }
+    expect(screen.queryByText(/HUAWEI/)).not.toBeInTheDocument();
   });
 
   it("UI-PLS-001 shows «Sin CAU» and «Sin fecha de conexión» for a plant still being set up", () => {
