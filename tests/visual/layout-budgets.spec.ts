@@ -51,6 +51,7 @@ import {
   mockMemberHome,
   mockPlantDetailRoutes,
   mockSharingAgreementDetailRoutes,
+  memberDailySeries,
   mockSharingAgreementsPlantRoutes,
   navigateToSharingAgreementDetail,
   navigateToSharingAgreements,
@@ -1027,6 +1028,80 @@ test.describe("#249: the historical analysis period card and totals", () => {
     for (const tile of await totals.getByRole("listitem").all()) {
       const widths = await tile.evaluate((node) => ({ scroll: node.scrollWidth, client: node.clientWidth, text: node.textContent }));
       expect(widths.scroll, `"${widths.text}" overflows its tile`).toBeLessThanOrEqual(widths.client);
+    }
+  });
+});
+
+/**
+ * #250. The evolution charts at phone width, over the longest daily period:
+ * 62 days. Each chart keeps a width its slots need and scrolls sideways
+ * inside the card; the card and the page never do; and the x-axis labels that
+ * are drawn do not overlap, which the axis thins them for. Measured, not
+ * captured: the risks are a box overflowing and two labels colliding, and
+ * jsdom lays out neither.
+ */
+test.describe("#250: the historical analysis evolution charts", () => {
+  test("UI-HIS-018 at 390px 62 daily slots scroll inside the card, the page never scrolls sideways, and no axis labels overlap", async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "The budget is a 390px viewport.");
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+    // Registered after mockAllApiRoutes so it wins for this path only: every
+    // day of July and August, the period asked for below.
+    const sixtyTwoDays = memberDailySeries("2026/07/01", 62);
+    await page.route(
+      (url) => /\/memberships\/[^/]+\/consumption\/daily$/.test(url.pathname),
+      (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(sixtyTwoDays) }),
+    );
+    await page.goto("/historical-analysis?period=custom&from=2026-07-01&to=2026-08-31");
+
+    const card = page.getByRole("region", { name: "Tu energía día a día" });
+    await expect(card).toBeVisible();
+    await expect(card.getByText("Del 1 de julio al 31 de agosto de 2026: 62 de 62 días con datos.")).toBeVisible();
+    await expect(card.getByText("Desliza el gráfico para ver todo el periodo.")).toBeVisible();
+    // Structural: ApexCharts' SVG has no role or name of its own.
+    await expect(card.locator("svg.apexcharts-svg")).toHaveCount(2);
+    await stabilizePage(page);
+
+    const pageWidths = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth,
+    }));
+    expect(pageWidths.document, "the page scrolls sideways").toBeLessThanOrEqual(pageWidths.viewport);
+    const cardBox = await card.boundingBox();
+    expect(cardBox!.x, "the card starts off-screen").toBeGreaterThanOrEqual(0);
+    expect(cardBox!.x + cardBox!.width, "the card is wider than the viewport").toBeLessThanOrEqual(390);
+
+    // Structural: each chart's scroll container is its canvas's nearest scrolling
+    // ancestor, and its x-axis labels are ApexCharts' text elements.
+    const charts = await card.evaluate((region) =>
+      [...region.querySelectorAll(".apexcharts-canvas")].map((canvas) => {
+        let scroller = canvas.parentElement;
+        while (scroller && getComputedStyle(scroller).overflowX !== "auto") scroller = scroller.parentElement;
+        const labels = [...canvas.querySelectorAll(".apexcharts-xaxis-label")]
+          .filter((label) => (label.textContent ?? "").trim() !== "")
+          .map((label) => {
+            const box = label.getBoundingClientRect();
+            return { text: label.textContent ?? "", left: box.left, right: box.right };
+          })
+          .sort((a, b) => a.left - b.left);
+        return { scroll: scroller?.scrollWidth ?? 0, client: scroller?.clientWidth ?? 0, labels };
+      }),
+    );
+    expect(charts).toHaveLength(2);
+    for (const [index, chart] of charts.entries()) {
+      const name = index === 0 ? "the energy chart" : "the savings chart";
+      expect(chart.scroll, `${name} keeps its width and scrolls inside the card`).toBeGreaterThan(chart.client);
+      expect(chart.client, `${name}'s scroller fits the card`).toBeLessThanOrEqual(cardBox!.width);
+      expect(chart.labels.length, `${name} draws its axis labels`).toBeGreaterThan(10);
+      for (let i = 1; i < chart.labels.length; i++) {
+        const [previous, next] = [chart.labels[i - 1], chart.labels[i]];
+        const overlap = previous.right - next.left;
+        expect(overlap, `${name}: "${previous.text}" overlaps "${next.text}" by ${overlap.toFixed(1)}px`).toBeLessThanOrEqual(0);
+      }
     }
   });
 });

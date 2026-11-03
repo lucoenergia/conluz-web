@@ -106,7 +106,7 @@ export function compareDays(a: CalendarDay, b: CalendarDay): number {
   return dayNumber(a) - dayNumber(b);
 }
 
-function addDays(day: CalendarDay, days: number): CalendarDay {
+export function addDays(day: CalendarDay, days: number): CalendarDay {
   return dayFromNumber(dayNumber(day) + days);
 }
 
@@ -133,6 +133,15 @@ const firstDayOf = ({ year, month }: CalendarMonth): CalendarDay => ({ year, mon
 function startOfDay(day: CalendarDay): string {
   return zonedIso({ ...day, hour: 0 });
 }
+
+/** The calendar day an instant falls on, read in the app's time zone: a period bound's day. */
+export function calendarDayOf(isoInstant: string): CalendarDay {
+  const { year, month, day } = wallTimeAt(Date.parse(isoInstant));
+  return { year, month, day };
+}
+
+/** A calendar day written as the API writes a bucket's `date`: "2026/07/01". */
+export const formatDayKey = ({ year, month, day }: CalendarDay) => `${year}/${pad(month)}/${pad(day)}`;
 
 /** The calendar month an anchor period starts in, read in the app's time zone. */
 export function anchorFromPeriodStart(startDate: string): CalendarMonth {
@@ -163,7 +172,7 @@ export const dayName = (day: CalendarDay) => `${dayMonthName(day)} de ${day.year
 const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 /** "1 de julio al 31 de agosto de 2026", "1 al 30 de septiembre de 2026", or one day alone. */
-function dayRangePhrase(from: CalendarDay, to: CalendarDay): string {
+export function dayRangePhrase(from: CalendarDay, to: CalendarDay): string {
   if (compareDays(from, to) === 0) return dayName(from);
   if (from.year !== to.year) return `${dayName(from)} al ${dayName(to)}`;
   if (from.month !== to.month) return `${dayMonthName(from)} al ${dayName(to)}`;

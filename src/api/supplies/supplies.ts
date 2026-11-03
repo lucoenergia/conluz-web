@@ -828,6 +828,11 @@ The consumption data includes:
 
 Data is aggregated by hour within the specified date range.
 
+**`date` and `time`:** the local calendar date and local time, in the time zone the
+application is configured with, at which each hour starts (`time` from `00:00` to
+`23:00`). On the day the clocks go back, two consecutive hours carry the same `date`
+and `time`; on the day they go forward, the local hour the clocks skip has no entry.
+
  * @summary Retrieves hourly consumption data for a specific supply
  */
 export const getSupplyHourlyConsumption = (
@@ -1122,6 +1127,9 @@ The consumption data includes:
 - Obtain method (Real/Estimated)
 
 Data is aggregated by year within the specified date range.
+
+**`date` and `time`:** `date` is 1 January and `time` is `00:00`: the local midnight,
+in the time zone the application is configured with, at which the year starts.
 
 **Time zone:** each year covers the local calendar year of the time zone the
 application is configured with, not the UTC one, so its total includes the first

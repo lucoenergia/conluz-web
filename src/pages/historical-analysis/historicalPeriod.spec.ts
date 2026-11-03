@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  addDays,
   anchorFromPeriodStart,
   calendarDayCount,
+  calendarDayOf,
+  dayRangePhrase,
+  formatDayKey,
   clampToAnchor,
   parseSelection,
   presetSummary,
@@ -334,5 +338,27 @@ describe("UI-HIS-009 the period is held in the query string (#248)", () => {
     const back = writeSelection(params("supplyId=a"), range);
     expect(back.toString()).toBe("supplyId=a&period=custom&from=2026-07-01&to=2026-08-31");
     expect(parseSelection(back)).toEqual(range);
+  });
+});
+
+describe("calendar helpers of the period (#250)", () => {
+  it("reads a bound's calendar day in Madrid, with either offset", () => {
+    expect(calendarDayOf("2026-07-01T00:00:00+02:00")).toEqual(day(2026, 7, 1));
+    expect(calendarDayOf("2026-11-01T00:00:00+01:00")).toEqual(day(2026, 11, 1));
+  });
+
+  it("writes a calendar day as a bucket's date", () => {
+    expect(formatDayKey(day(2026, 7, 1))).toBe("2026/07/01");
+    expect(formatDayKey(day(2026, 12, 31))).toBe("2026/12/31");
+  });
+
+  it("steps calendar days across a month end and the October change", () => {
+    expect(addDays(day(2026, 7, 31), 1)).toEqual(day(2026, 8, 1));
+    expect(addDays(day(2026, 10, 25), 1)).toEqual(day(2026, 10, 26));
+  });
+
+  it("phrases a range of days as the header does", () => {
+    expect(dayRangePhrase(day(2026, 7, 14), day(2026, 7, 16))).toBe("14 al 16 de julio de 2026");
+    expect(dayRangePhrase(day(2026, 7, 3), day(2026, 7, 3))).toBe("3 de julio de 2026");
   });
 });

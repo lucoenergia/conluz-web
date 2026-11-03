@@ -264,6 +264,11 @@ returned (an out-of-community supply is never confirmed to exist).
 
 Data is aggregated by day within the specified date range.
 
+**`date` and `time`:** each day is a UTC day, not a local calendar day. `date` and
+`time` are the UTC midnight that starts it, expressed in the time zone the
+application is configured with, so `time` is the zone's offset from UTC rather than
+`00:00` (in Europe/Madrid, `01:00` in winter and `02:00` in summer).
+
  * @summary Retrieves daily Datadis production data of a community within a given date interval.
  */
 export const getDatadisDailyProduction = (
@@ -373,6 +378,11 @@ returned (an out-of-community supply is never confirmed to exist).
 
 Data is aggregated by hour within the specified date range.
 
+**`date` and `time`:** the local calendar date and local time, in the time zone the
+application is configured with, at which each hour starts (`time` from `00:00` to
+`23:00`). On the day the clocks go back, two consecutive hours carry the same `date`
+and `time`; on the day they go forward, the local hour the clocks skip has no entry.
+
  * @summary Retrieves hourly Datadis production data of a community within a given date interval.
  */
 export const getDatadisHourlyProduction = (
@@ -481,6 +491,10 @@ Returns 404 if the community does not exist or the caller is not a member of it.
 returned (an out-of-community supply is never confirmed to exist).
 
 Data is aggregated by month within the specified date range.
+
+**`date` and `time`:** `date` is the first day of the month and `time` is `00:00`:
+the local midnight, in the time zone the application is configured with, at which
+the month starts.
 
  * @summary Retrieves monthly Datadis production data of a community within a given date interval.
  */
@@ -768,6 +782,9 @@ Returns 404 if the community does not exist or the caller is not a member of it.
 returned (an out-of-community supply is never confirmed to exist).
 
 Data is aggregated by year within the specified date range.
+
+**`date` and `time`:** `date` is 1 January and `time` is `00:00`: the local midnight,
+in the time zone the application is configured with, at which the year starts.
 
  * @summary Retrieves yearly Datadis production data of a community within a given date interval.
  */

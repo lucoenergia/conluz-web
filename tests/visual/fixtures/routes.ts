@@ -3,6 +3,7 @@ import type {
   CommunityAdminResponse,
   CommunityCapabilitiesResponse,
   GetDatadisConfigResponse,
+  MembershipDailyConsumptionBucketResponse,
   MembershipEnergyMetricsResponse,
   MembershipHourlyProfileResponse,
   MembershipMonthlyConsumptionBucketResponse,
@@ -22,6 +23,7 @@ import {
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_COMMUNITY_ID,
   MEMBER_COMMUNITY_CAPABILITIES,
+  MEMBER_DAILY_SERIES,
   MEMBER_ENERGY_METRICS,
   MEMBER_ENERGY_METRICS_PREVIOUS,
   MEMBER_HOURLY_PROFILE,
@@ -138,7 +140,7 @@ async function refuse(route: Route, capability: string) {
 
 
 const MEMBERSHIP_PRIVATE_DATA =
-  /\/api\/v1\/communities\/([^/]+)\/memberships\/([^/]+)\/(energy-metrics|energy-metrics\/hourly-profile|consumption\/monthly|payback)$/;
+  /\/api\/v1\/communities\/([^/]+)\/memberships\/([^/]+)\/(energy-metrics|energy-metrics\/hourly-profile|consumption\/monthly|consumption\/daily|payback)$/;
 
 /**
  * A membership's energy metrics and payback (#199), the energy metrics of the
@@ -162,12 +164,14 @@ export async function mockMemberHome(
     previousMetrics = MEMBER_ENERGY_METRICS_PREVIOUS,
     payback = MEMBER_PAYBACK,
     monthly = MEMBER_MONTHLY_SERIES,
+    daily = MEMBER_DAILY_SERIES,
     hourly = MEMBER_HOURLY_PROFILE,
   }: {
     metrics?: MembershipEnergyMetricsResponse;
     previousMetrics?: MembershipEnergyMetricsResponse;
     payback?: MembershipPaybackResponse;
     monthly?: MembershipMonthlyConsumptionBucketResponse[];
+    daily?: MembershipDailyConsumptionBucketResponse[];
     hourly?: MembershipHourlyProfileResponse;
   } = {},
 ) {
@@ -186,16 +190,13 @@ export async function mockMemberHome(
           body: JSON.stringify({ status: 404, message: "not found" }),
         });
       }
-      const body =
-        resource === "payback"
-          ? payback
-          : resource === "consumption/monthly"
-            ? monthly
-            : resource === "energy-metrics/hourly-profile"
-              ? hourly
-              : url.searchParams.has("startDate")
-                ? previousMetrics
-                : metrics;
+      const byPath: Record<string, unknown> = {
+        payback,
+        "consumption/monthly": monthly,
+        "consumption/daily": daily,
+        "energy-metrics/hourly-profile": hourly,
+      };
+      const body = byPath[resource] ?? (url.searchParams.has("startDate") ? previousMetrics : metrics);
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
     },
   );

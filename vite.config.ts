@@ -16,7 +16,7 @@ export default defineConfig({
           name: "unit",
           // Scope to src/ only so Playwright specs in tests/visual/ are not picked up by vitest
           include: ["src/**/*.spec.{ts,tsx}"],
-          exclude: ["src/**/*.tz.spec.{ts,tsx}"],
+          exclude: ["src/**/*.tz.spec.{ts,tsx}", "src/**/*.tz-east.spec.{ts,tsx}"],
         },
       },
       {
@@ -32,6 +32,23 @@ export default defineConfig({
           name: "app-time-zone",
           include: ["src/**/*.tz.spec.{ts,tsx}"],
           env: { TZ: "America/New_York" },
+          pool: "forks",
+          isolate: true,
+        },
+      },
+      {
+        // The same guarantee, as a device east of Madrid (#250). New York is
+        // behind Madrid, so a calendar date read as the device's midnight
+        // ("2026/07/01" -> 00:00 in New York) is still the same day in Madrid
+        // and a spec there cannot see the defect. Kiritimati is fourteen hours
+        // ahead of UTC: its midnight is the day before in Madrid, so the same
+        // defect moves every label back a day. Its own file suffix, because the
+        // New York specs pick instants for a zone behind Madrid.
+        extends: true,
+        test: {
+          name: "app-time-zone-east",
+          include: ["src/**/*.tz-east.spec.{ts,tsx}"],
+          env: { TZ: "Pacific/Kiritimati" },
           pool: "forks",
           isolate: true,
         },

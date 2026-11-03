@@ -1,12 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   formatAverageKilowattHours,
+  formatCalendarDay,
   formatCalendarMonth,
   formatEuros,
   formatEurosPerKilowattHour,
   formatHourOfDay,
   formatKilowattHours,
   formatMonth,
+  formatShortDay,
   formatShortMonth,
 } from "./formatEnergyFigures";
 
@@ -104,6 +106,22 @@ describe("calendar months (#201)", () => {
   it("names the month and year of a local calendar date", () => {
     expect(formatCalendarMonth("2026/08/01")).toBe("agosto de 2026");
     expect(formatCalendarMonth("2027/01/01")).toBe("enero de 2027");
+  });
+});
+
+describe("day labels of a local calendar date (#250)", () => {
+  it("labels the day of a local calendar date", () => {
+    expect(formatShortDay("2026/07/15")).toBe("15 jul");
+    expect(formatShortDay("2026/10/25")).toBe("25 oct");
+  });
+
+  it("names the day, month and year of a local calendar date", () => {
+    expect(formatCalendarDay("2026/07/01")).toBe("1 de julio de 2026");
+    expect(formatCalendarDay("2026/12/31")).toBe("31 de diciembre de 2026");
+  });
+
+  it("reads only the API's shape, so a drifted fixture fails loudly", () => {
+    expect(formatShortDay("2026-07-15")).toBe("Invalid Date");
   });
 });
 
