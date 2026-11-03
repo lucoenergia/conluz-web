@@ -5,6 +5,8 @@ import type { Granularity } from "./historicalPeriod";
 export const COMPLETE_TEXT = "Datos completos.";
 
 export interface SlotStateText {
+  /** The data table's "Datos" cell and the CSV's `datos` column (#251). */
+  short: string;
   /** The charts' tooltip status line (#250). */
   long: string;
 }
@@ -17,15 +19,19 @@ const SLOT_STATE_TEXT: {
   [Kind in SlotState["kind"]]: (state: Extract<SlotState, { kind: Kind }>, granularity: Granularity) => SlotStateText;
 } = {
   gap: (_state, granularity) => ({
+    short: "Sin datos",
     long: `Sin datos: no hay lecturas de este ${granularity === "daily" ? "día" : "mes"}. No cuenta como 0.`,
   }),
   partial: ({ reported, total }) => ({
+    short: `Parcial: ${reported} de ${total} puntos con datos`,
     long: `Datos parciales: ${reported} de ${total} puntos con datos.`,
   }),
   measuredZero: () => ({
+    short: "Cero medido",
     long: COMPLETE_TEXT,
   }),
   complete: () => ({
+    short: "Completo",
     long: COMPLETE_TEXT,
   }),
 };
