@@ -15,15 +15,18 @@ import {
   useTheme,
 } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import TableRowsRoundedIcon from "@mui/icons-material/TableRowsRounded";
 import type { SupplyResponse } from "../../api/models";
 import { LoadErrorAlert } from "../../components/LoadErrorAlert/LoadErrorAlert";
 import { colors } from "../../theme/tokens";
 import { formatEuros, formatEurosPerKilowattHour, formatKilowattHours } from "../../utils/formatEnergyFigures";
+import { triggerBrowserDownload } from "../../utils/triggerBrowserDownload";
 import { HomeCard } from "../home/HomeCard";
 import { GRID_IMPORT_SERIES, SAVINGS_SERIES, SELF_CONSUMPTION_SERIES, SURPLUS_SERIES, toConsumptionSeriesView, type SlotView } from "./consumptionSeries";
 import { useHistoricalPeriod } from "./HistoricalPeriodContext";
 import type { Granularity, HistoricalPeriod } from "./historicalPeriod";
+import { CSV_MIME_TYPE, periodCsv, periodCsvFileName } from "./periodCsv";
 import { PAGE_SIZE, showingText, totalsStateText } from "./periodDataTable";
 import { slotStateText } from "./slotStateText";
 import { usePeriodConsumptionSeries, type ConsumptionSeries } from "./usePeriodConsumptionSeries";
@@ -176,18 +179,34 @@ const MobileCards: FC<{ caption: string; rows: Row[]; total: Row }> = ({ caption
   </Box>
 );
 
+/** "Descargar CSV": disabled without a download, which only a loaded series and its metrics give. */
+const DownloadButton: FC<{ onDownload?: () => void }> = ({ onDownload }) => (
+  <Button
+    variant="outlined"
+    size="small"
+    startIcon={<DownloadOutlinedIcon />}
+    disabled={!onDownload}
+    onClick={onDownload}
+    sx={{ alignSelf: "flex-start", flexShrink: 0 }}
+  >
+    Descargar CSV
+  </Button>
+);
+
 /** Where the table goes while it cannot be shown: a region of its own, with no heading until there is a table. */
 const Placeholder: FC<{ children: ReactNode }> = ({ children }) => (
   <Box component="section" aria-label={TITLE} sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+    <DownloadButton />
     {children}
   </Box>
 );
 
-const ReadyTable: FC<{ period: HistoricalPeriod; series: ConsumptionSeries; metrics: PeriodEnergyMetrics }> = ({
-  period,
-  series,
-  metrics,
-}) => {
+const ReadyTable: FC<{
+  period: HistoricalPeriod;
+  series: ConsumptionSeries;
+  metrics: PeriodEnergyMetrics;
+  selected: SupplyResponse | null;
+}> = ({ period, series, metrics, selected }) => {
   const theme = useTheme();
   const isWide = useMediaQuery(theme.breakpoints.up("sm"), { noSsr: true });
   const [showAll, setShowAll] = useState(false);
@@ -199,12 +218,21 @@ const ReadyTable: FC<{ period: HistoricalPeriod; series: ConsumptionSeries; metr
   const subtitle = subtitleOf(period);
   const caption = `${TITLE}: ${subtitle}`;
   const { estimatedPrice } = metrics.savings;
+  // Every slot of the period, not only the rows on screen.
+  const download = () =>
+    triggerBrowserDownload(
+      new Blob([periodCsv(slots, granularity, estimatedPrice)], { type: CSV_MIME_TYPE }),
+      periodCsvFileName(selected, slots, granularity),
+    );
 
   return (
     <HomeCard title={TITLE} icon={TableRowsRoundedIcon}>
-      <Typography variant="body2" sx={{ color: colors.text.subtle }}>
-        {subtitle}
-      </Typography>
+      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+        <Typography variant="body2" sx={{ color: colors.text.subtle }}>
+          {subtitle}
+        </Typography>
+        <DownloadButton onDownload={download} />
+      </Box>
       {isWide ? (
         <DesktopTable caption={caption} granularity={granularity} rows={shown} total={total} />
       ) : (
@@ -233,8 +261,9 @@ const ReadyTable: FC<{ period: HistoricalPeriod; series: ConsumptionSeries; metr
 /**
  * The period's data as a table (#251): one row per slot of the evolution
  * charts (#250), with the same states in words, and the energy-metrics totals
- * of the same period and scope (#249) as its last row. Nothing renders, and
- * nothing is fetched, until the period is known.
+ * of the same period and scope (#249) as its last row; and the same slots as
+ * a CSV to download. Nothing renders, and nothing is fetched, until the
+ * period is known.
  */
 export const PeriodDataTable: FC<{ selected: SupplyResponse | null }> = ({ selected }) => {
   const period = useHistoricalPeriod();
@@ -257,5 +286,5 @@ export const PeriodDataTable: FC<{ selected: SupplyResponse | null }> = ({ selec
       </Placeholder>
     );
   }
-  return <ReadyTable period={period} series={series.series} metrics={metrics.metrics} />;
+  return <ReadyTable period={period} series={series.series} metrics={metrics.metrics} selected={selected} />;
 };
