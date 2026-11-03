@@ -29,11 +29,13 @@ the rules every records list shares are in [`record-lists.md`](record-lists.md).
 - **Status:** Active
 - **Rule:**
   - A plant row MUST show its name, its CAU or "Sin CAU", its installed power and inverter
-    provider, its connection date or "Sin fecha de conexión", and its address.
+    provider (by name, e.g. «Huawei»), its connection date or "Sin fecha de conexión", and its
+    address.
   - Missing values MUST be shown as neutral text.
   - It MUST NOT show the provider's station code or the description.
 - **Rationale:** A plant still being set up is not an error. The station code is an integration
-  key, not something a person identifies a plant by.
+  key, not something a person identifies a plant by, and the inverter provider's API code
+  ("HUAWEI") is not its name.
 - **Implements:** n/a
 - **Source:** #349
 
