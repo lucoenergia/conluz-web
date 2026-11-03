@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { useEffect, type FC, type ReactNode } from "react";
+import { useEffect, useSyncExternalStore, type FC, type ReactNode } from "react";
 import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
@@ -56,13 +56,45 @@ const PERSONAL_ID = "12345678Z";
 const COMMUNITY_NAME = "Sol de Lavapiés";
 const COMMUNITY_ID = "community-invited";
 
-const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
+const { mockCustomInstance, heldUser } = vi.hoisted(() => {
+  // A signed-in user held back from every reader of useLoggedUser, as if the
+  // provider had not re-rendered yet. Null, the default, holds nothing back.
+  let held: unknown = null;
+  const listeners = new Set<() => void>();
+  return {
+    mockCustomInstance: vi.fn(),
+    heldUser: {
+      get: () => held,
+      set: (user: unknown) => {
+        held = user;
+        listeners.forEach((listener) => listener());
+      },
+      subscribe: (listener: () => void) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
+    },
+  };
+});
 
 // Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from this module.
 vi.mock(import("../../http/custom-instance"), async (importOriginal) => ({
   ...(await importOriginal()),
   customInstance: (config) => mockCustomInstance(config),
 }));
+
+// The real provider and hook, unless a test holds a user back (UI-INV-018).
+vi.mock(import("../../context/logged-user.context"), async (importOriginal) => {
+  const real = await importOriginal();
+  return {
+    ...real,
+    useLoggedUser: () => {
+      const user = real.useLoggedUser();
+      const held = useSyncExternalStore(heldUser.subscribe, heldUser.get) as CurrentUserResponse | null;
+      return held ?? user;
+    },
+  };
+});
 
 function inspection(loginRequired: boolean): InvitationInspectionResponse {
   return {
@@ -254,6 +286,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  heldUser.set(null);
 });
 
 function writtenAnywhere(secret: string): boolean {
@@ -833,6 +866,69 @@ describe("UI-INV-010 signed in as the invited account (AC3)", () => {
     expect(bodiesTo(router, ACCEPT_AS_CURRENT_USER)).toEqual([{ token: TOKEN }]);
     expect(screen.getAllByText(invitationAcceptedMessage(COMMUNITY_NAME), VISIBLE)).toHaveLength(1);
     expect(window.sessionStorage.getItem("invitationAccepted")).toBeNull();
+  });
+});
+
+describe("UI-INV-018 the landing decides from the user the acceptance produced", () => {
+  // The acceptance re-reads the current user, but the signed-in user that "/"
+  // decides from can reach the components a render later. Holding it back
+  // makes that window as long as the test needs: landing in it sent a user
+  // who had just joined a community to the no-community screen.
+  it("UI-INV-018 waits for the signed-in user to show the new membership before landing", async () => {
+    const user = userEvent.setup();
+    const state = { accepted: false };
+    const currentUser = currentUserAcross(state, INVITED_BEFORE, INVITED_AFTER);
+    const router = routeRequests([
+      currentUser.route,
+      { method: "POST", url: INSPECT, respond: () => inspection(true) },
+      {
+        method: "POST",
+        url: ACCEPT_AS_CURRENT_USER,
+        respond: () => {
+          state.accepted = true;
+          return undefined;
+        },
+      },
+      communityRoute,
+    ]);
+    mockCustomInstance.mockImplementation(router.handle);
+
+    renderAt(`/accept-invitation#${TOKEN}`, { token: "invited-session" });
+    await findCommunityHeading();
+    expect(await screen.findByText("Lucía Invitada")).toBeInTheDocument();
+    act(() => heldUser.set(INVITED_BEFORE));
+
+    await user.click(screen.getByRole("button", { name: "Aceptar invitación" }));
+    // Accepted, and re-read with the membership, while the signed-in user
+    // still has none: the page stays.
+    await waitFor(() => expect(currentUser.served()).toBe(2));
+    await settle();
+    expect(currentPath()).toBe("/accept-invitation");
+    expect(visitedPaths).not.toContain("/no-community");
+
+    act(() => heldUser.set(null));
+
+    await screen.findByRole("heading", { level: 1, name: "Inicio" });
+    expect(visitedPaths).not.toContain("/no-community");
+  });
+
+  it("UI-INV-018 lands anyway when the re-read comes back without the membership", async () => {
+    const user = userEvent.setup();
+    const router = routeRequests([
+      // The backend accepted, yet answers with no membership: waiting for one
+      // would never end, so "/" decides from what there is.
+      { method: "GET", url: CURRENT_USER, respond: () => INVITED_BEFORE },
+      { method: "POST", url: INSPECT, respond: () => inspection(true) },
+      { method: "POST", url: ACCEPT_AS_CURRENT_USER, respond: () => undefined },
+      communityRoute,
+    ]);
+    mockCustomInstance.mockImplementation(router.handle);
+
+    renderAt(`/accept-invitation#${TOKEN}`, { token: "invited-session" });
+    await findCommunityHeading();
+    await user.click(await screen.findByRole("button", { name: "Aceptar invitación" }));
+
+    await waitFor(() => expect(currentPath()).toBe("/no-community"));
   });
 });
 

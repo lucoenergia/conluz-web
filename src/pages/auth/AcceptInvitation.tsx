@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FC, type FormEvent, type ReactNode } 
 import { Link as RouterLink, useLocation, useNavigate } from "react-router";
 import GroupAddOutlinedIcon from "@mui/icons-material/GroupAddOutlined";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import type { InvitationInspectionResponse } from "../../api/models";
+import type { CurrentUserResponse, InvitationInspectionResponse } from "../../api/models";
 import { radii, shadows, alphas, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { PasswordInput } from "../../components/Forms/PasswordInput";
@@ -56,6 +56,17 @@ const SESSION_ENDED_MESSAGE = "Tu sesión ha caducado. Vuelve a iniciar sesión.
 const INSPECT_FAILED_MESSAGE = "No se ha podido comprobar la invitación. Inténtalo de nuevo más tarde.";
 const ACCEPT_FAILED_MESSAGE = "No se ha podido aceptar la invitación. Inténtalo de nuevo más tarde.";
 export const LOGIN_INCOMPLETE_MESSAGE = "No se ha podido completar el inicio de sesión. Inténtalo de nuevo.";
+
+/**
+ * Whether `user` already shows what accepting `invitation` gives: the
+ * community's membership, or the platform-admin capability. Asks which
+ * community, never which role.
+ */
+function showsAcceptance(user: CurrentUserResponse | null | undefined, invitation: InvitationInspectionResponse | null): boolean {
+  if (!user || !invitation) return false;
+  if (invitation.kind === "PLATFORM") return user.platformCapabilities?.canAdministerPlatform === true;
+  return !!invitation.community && invitation.community.id in (user.memberships ?? {});
+}
 
 function statusOf(error: unknown): number | undefined {
   return (error as { response?: { status?: number } } | null | undefined)?.response?.status;
@@ -114,6 +125,9 @@ export const AcceptInvitation: FC = () => {
   const [acceptAfterLogin, setAcceptAfterLogin] = useState(false);
   const [confirmationCode, setConfirmationCode] = useState("");
   const [codeError, setCodeError] = useState<string | null>(null);
+  // An acceptance that went through, waiting to land: when the current user
+  // had last been read, or had last failed, before it was sent.
+  const [landingAfter, setLandingAfter] = useState<{ dataUpdatedAt: number; errorUpdatedAt: number } | null>(null);
 
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
@@ -213,10 +227,17 @@ export const AcceptInvitation: FC = () => {
 
   const acceptSignedIn = async (linkToken: string) => {
     setNotice(null);
+    const before = { dataUpdatedAt: currentUser.dataUpdatedAt, errorUpdatedAt: currentUser.errorUpdatedAt };
     const result = await acceptAsCurrentUser.run({ token: linkToken, ...code?.body() });
     if (result.ok) {
       markAccepted();
-      navigate("/", { replace: true });
+      // Not straight to "/": the acceptance re-reads the current user, but the
+      // signed-in user reaches the components a render or more later, and "/"
+      // decides where to land from the user it renders with. Sent there now,
+      // it could still render the user from before the acceptance -- no
+      // membership -- and land on /no-community. The effect below waits for
+      // the signed-in user to show the acceptance (UI-INV-012).
+      setLandingAfter(before);
       return;
     }
     const { failure } = result;
@@ -277,6 +298,20 @@ export const AcceptInvitation: FC = () => {
       acceptingRef.current = false;
     });
   }, [token, acceptAfterLogin, loggedUser]);
+
+  // Lands once "/" will decide from the user the acceptance produced: the
+  // signed-in user shows it. Not on this page's own read of the query alone:
+  // it can be a render ahead of LoggedUserProvider, which "/" reads. If the
+  // re-read failed, or came back without the acceptance, waiting would never
+  // end: "/" then decides from what there is, as it did before.
+  const acceptanceShown = showsAcceptance(loggedUser, invitation);
+  const reReadWithout =
+    !!landingAfter &&
+    (currentUser.errorUpdatedAt !== landingAfter.errorUpdatedAt ||
+      (currentUser.dataUpdatedAt !== landingAfter.dataUpdatedAt && !showsAcceptance(currentUser.data, invitation)));
+  useEffect(() => {
+    if (landingAfter && (acceptanceShown || reReadWithout)) navigate("/", { replace: true });
+  }, [landingAfter, acceptanceShown, reReadWithout, navigate]);
 
   const handleLoggedIn = (sessionToken: string) => {
     setNotice(null);
