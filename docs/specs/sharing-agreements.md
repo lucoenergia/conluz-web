@@ -7,11 +7,13 @@
 | **Routes** | `/production/:plantId/sharing-agreements`, `/production/:plantId/sharing-agreements/:sharingAgreementId` |
 | **Roles** | A caller with the plant's `canListSharingAgreements`. Authoring and lifecycle actions: the capabilities each agreement and coefficient carries |
 | **Domain rules** | n/a |
-| **Design reference** | n/a |
-| **Last reviewed against code** | #277 |
+| **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `ListPagination` (the list; its shared rules are `record-lists.md`) |
+| **Last reviewed against code** | #350 |
 
 Scope: the rules introduced in #277 for sharing-agreement states migrated from visual tests to
-Vitest. Not exhaustive: other sharing-agreement behaviour is not yet specified here.
+Vitest, and the rules #350 introduced for the list's rows and for how a status is shown. Not
+exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
+list shares, the agreement list among them, are in [`record-lists.md`](record-lists.md).
 
 ## Purpose
 
@@ -202,6 +204,30 @@ is in force today.
 - **Implements:** n/a
 - **Source:** #149
 
+### UI-AGR-015 — A row shows what the list response carries about the agreement, in the API's order
+
+- **Status:** Active
+- **Rule:** A sharing agreement row MUST show its name, its status, its installed power, its evidence
+  file (filename and upload date) or "Sin fichero", its last edit date ("Editado el …") or, if never
+  edited, its creation date ("Creado el …"), and its notes on one line when it has any. The list MUST
+  keep the API's order (newest first). It MUST NOT show the number of supplies or the coefficient sum.
+- **Rationale:** A row shows only data the list response carries; the coefficient sum and the number
+  of supplies are not in it. The backend owns the order, so the page does not sort.
+- **Implements:** n/a
+- **Source:** #350
+
+### UI-AGR-016 — A status is never shown as a failure
+
+- **Status:** Active
+- **Rule:** The agreement status MUST be shown with neutral or informational styling for every status
+  (Borrador, Vigente, Histórico), wherever it appears (for example the list, the detail header, the
+  coefficient history and the plant detail's agreements). It MUST NOT use warning or error colours. A selected
+  status filter MUST use the brand colour, whatever the status.
+- **Rationale:** Draft, published and superseded are lifecycle states, not failures, and colour is
+  reserved for failures.
+- **Implements:** n/a
+- **Source:** #350
+
 ## States
 
 | State | Rendered | Actions available |
@@ -211,6 +237,11 @@ is in force today.
 | Draft holding applied or closed rows | Anomaly warning, application columns and filter (UI-AGR-005) | Authoring actions |
 | Editing | Live sum (UI-AGR-001) and, in kW, the rounding caption (UI-AGR-003) | Save, cancel, add, remove and revert rows |
 | Published, rows selected | Selection bar with count and "Acciones" (UI-AGR-006) | The actions that apply to the selection |
+| List loading | Skeleton rows in the layout on screen | Creating, once the plant has arrived |
+| List empty, the plant has no agreements | "No se encontraron acuerdos de reparto" | Creating |
+| List with no results, a search or a status filter hiding every agreement | "No hay acuerdos de reparto que coincidan" (UI-AGR-015) | "Limpiar filtros", which clears both |
+| List read failed | "No se pudieron cargar los acuerdos de reparto." in place of the rows (UI-LST-004) | "Reintentar" |
+| List of more than 25 agreements | 25 rows and the pagination (UI-LST-005) | Changing page; a new search or filter returns to the first |
 
 ## Accepted exceptions
 

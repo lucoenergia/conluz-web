@@ -60,8 +60,11 @@ export async function navigateToSharingAgreements(page: Page) {
 export async function navigateToSharingAgreementDetail(page: Page, agreementName: string) {
   await navigateToSharingAgreements(page);
 
-  const agreementCard = page.locator(".MuiCard-root").filter({ hasText: agreementName });
-  await agreementCard.getByRole("link", { name: agreementName }).click();
+  // The row's title is its only link, the same in the table and in the stacked list.
+  await page.getByRole("main").getByRole("link", { name: agreementName, exact: true }).click();
+  // The pointer stays where the row's title was, which on the detail page is
+  // over whatever lands there; parked in the corner, nothing is captured hovered.
+  await page.mouse.move(0, 0);
 
   // The file panel's title always renders on load regardless of file/coefficient
   // state, so it's a reliable "detail page finished loading" signal across every

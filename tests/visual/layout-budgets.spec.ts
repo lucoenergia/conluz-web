@@ -725,8 +725,9 @@ test.describe("#247: the historical analysis supply selector", () => {
  * under the name instead. Measured at exactly 1024px, the narrowest viewport
  * that shows the table, on each of the four list pages, with values long
  * enough to need folding. The long values are copies of the shared fixtures,
- * served to these tests alone. The supply and plant lists are measured as a
- * community admin, the caller whose table has the most columns (#348, #349).
+ * served to these tests alone. The supply, plant and sharing agreement lists
+ * are measured as a community admin, the caller whose table has the most
+ * columns (#348, #349, #350).
  *
  * Desktop project only: the side menu is persistent from 768px, so it is open
  * at 1024px, and the real scrollbars this file runs with take their width.
@@ -786,6 +787,25 @@ test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side me
       regulatoryCode: null,
       connectionDate: null,
     },
+  ];
+
+  // Every value an agreement row shows, at its longest: a long name, long
+  // notes, a long filename and the longest edit date, and an agreement without
+  // a file, whose file line reads "Sin fichero" (as the superseded one does too).
+  const longAgreements = [
+    {
+      ...FIXED_SHARING_AGREEMENTS[0],
+      name: `Reparto vecinos bloque A ${LONG}`,
+      notes: `Coeficientes acordados en la asamblea anual de la comunidad. ${LONG}, ${LONG}`,
+      file: { ...FIXED_SHARING_AGREEMENTS[0].file, filename: `ES1234567890123456AB1F_2024_${LONG.replaceAll(" ", "_")}.txt` },
+    },
+    {
+      ...FIXED_SHARING_AGREEMENTS[1],
+      name: `Reparto ampliación bloque B ${LONG}`,
+      updatedAt: "2024-09-20T10:00:00Z",
+      file: null,
+    },
+    { ...FIXED_SHARING_AGREEMENTS[2], installedPowerKw: 12840.25 },
   ];
 
   /** `minNameWidth`: the narrowest the name column may be on that page; below it, long names are cut. */
@@ -849,6 +869,21 @@ test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side me
         // The long rows, not the shared fixture: a budget over the wrong rows proves nothing.
         await expect(page.getByRole("link", { name: longPlants[0].name })).toBeVisible();
         await expect(page.getByText("Sin fecha de conexión")).toBeVisible();
+      },
+    },
+    {
+      name: "/production/:plantId/sharing-agreements",
+      // The status, the power and the date have columns of their own; the file
+      // and the notes sit under the name, so the name keeps room to be read.
+      minNameWidth: 180,
+      open: async (page) => {
+        await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+        await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+        await mockSharingAgreementsPlantRoutes(page, longAgreements);
+        await page.goto(`/production/${FIXED_PLANT_ID}/sharing-agreements`);
+        // The long rows, not the shared fixture: a budget over the wrong rows proves nothing.
+        await expect(page.getByRole("link", { name: longAgreements[0].name })).toBeVisible();
+        await expect(page.getByText("Sin fichero").first()).toBeVisible();
       },
     },
     {

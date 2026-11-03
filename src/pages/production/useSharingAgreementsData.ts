@@ -46,6 +46,8 @@ export interface SharingAgreementsData {
   isLoading: boolean;
   isNotFound: boolean;
   error: unknown;
+  /** Sends the failed reads again: the retry of the list's load error (UI-LST-004). */
+  refetch: () => void;
 }
 
 export function useSharingAgreementsData(plantId: string): SharingAgreementsData {
@@ -55,12 +57,14 @@ export function useSharingAgreementsData(plantId: string): SharingAgreementsData
     data: agreements = [],
     isLoading: isLoadingAgreements,
     error: agreementsError,
+    refetch: refetchAgreements,
   } = useGetSharingAgreements(plantId);
 
   const {
     data: plant,
     isLoading: isLoadingPlant,
     error: plantError,
+    refetch: refetchPlant,
   } = useGetPlantById(plantId);
 
   const counts = useMemo(() => computeSharingAgreementCounts(agreements), [agreements]);
@@ -80,5 +84,9 @@ export function useSharingAgreementsData(plantId: string): SharingAgreementsData
     isLoading: isLoadingAgreements || isLoadingPlant,
     isNotFound: notFound,
     error: notFound ? null : (agreementsError ?? plantError),
+    refetch: () => {
+      if (agreementsError) void refetchAgreements();
+      if (plantError) void refetchPlant();
+    },
   };
 }
