@@ -4,14 +4,18 @@ import type { SupplyResponse } from "../../api/models";
 import { LoadErrorAlert } from "../../components/LoadErrorAlert/LoadErrorAlert";
 import { NeutralNotice } from "../home/NeutralNotice";
 import { useHistoricalPeriod } from "./HistoricalPeriodContext";
+import { toConsumptionSeriesView } from "./consumptionSeries";
 import { PeriodTotals } from "./PeriodTotals";
 import { PeriodUsageCard } from "./PeriodUsageCard";
 import { plantSupplyNotice } from "./periodUsage";
+import { usePeriodConsumptionSeries } from "./usePeriodConsumptionSeries";
 import { usePeriodEnergyMetrics } from "./usePeriodEnergyMetrics";
 
 const LOADING_LABEL = "Cargando tus datos…";
 const LOAD_ERROR = "No se pudieron cargar tus datos de energía. Comprueba tu conexión e inténtalo de nuevo.";
 const INCOMPLETE_DATA = "Faltan datos de parte de este periodo: las cifras suman solo los datos disponibles.";
+/** Appended when the evolution card below names the missing days or months (#250). */
+const SEE_EVOLUTION = { daily: "Consulta los días afectados en la evolución.", monthly: "Consulta los meses afectados en la evolución." };
 
 /**
  * The figures of the selected period and scope (#249): the period card, with
@@ -21,6 +25,10 @@ const INCOMPLETE_DATA = "Faltan datos de parte de este periodo: las cifras suman
 export const PeriodFigures: FC<{ selected: SupplyResponse | null }> = ({ selected }) => {
   const period = useHistoricalPeriod();
   const state = usePeriodEnergyMetrics(selected);
+  // The same series the evolution card reads, already cached: when it shows its
+  // gaps notice, the note points there for the dates (#250).
+  const series = usePeriodConsumptionSeries(selected);
+  const seriesHasGaps = !!period && series.status === "ready" && toConsumptionSeriesView(period, series.series).gapsNotice !== null;
   if (!period) return null;
 
   const plant = selected?.plant;
@@ -33,7 +41,9 @@ export const PeriodFigures: FC<{ selected: SupplyResponse | null }> = ({ selecte
         <>
           <PeriodUsageCard metrics={state.metrics} />
           {/* Stated from the response's own coverage, never inferred from the figures. */}
-          {state.metrics.coverage.hoursWithData < state.metrics.coverage.expectedHours && <NeutralNotice>{INCOMPLETE_DATA}</NeutralNotice>}
+          {state.metrics.coverage.hoursWithData < state.metrics.coverage.expectedHours && (
+            <NeutralNotice>{seriesHasGaps ? `${INCOMPLETE_DATA} ${SEE_EVOLUTION[period.granularity]}` : INCOMPLETE_DATA}</NeutralNotice>
+          )}
           <PeriodTotals metrics={state.metrics} isPlantSupply={!!plant} />
         </>
       )}

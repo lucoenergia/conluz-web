@@ -29,6 +29,8 @@ let mockLoggedUser: CurrentUserResponse;
 // The evolution charts (#250) are another block, with reads of their own;
 // HistoricalAnalysisPage.evolution.spec.tsx covers them.
 vi.mock(import("./PeriodEvolution"), () => ({ PeriodEvolution: () => null }));
+// The period figures read the series only to word their coverage note (#250).
+vi.mock(import("./usePeriodConsumptionSeries"), () => ({ usePeriodConsumptionSeries: vi.fn() }));
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
   ...(await importOriginal()),
   useLoggedUser: () => mockLoggedUser,
@@ -38,6 +40,7 @@ import { getSuppliesByUserId, useGetSuppliesByUserId } from "../../api/users/use
 import { getSupplyEnergyMetrics, useGetSupplyEnergyMetrics } from "../../api/supplies/supplies";
 import { getMembershipEnergyMetrics, useGetMembershipEnergyMetrics } from "../../api/memberships/memberships";
 import { HistoricalAnalysisPage } from "./HistoricalAnalysisPage";
+import { usePeriodConsumptionSeries } from "./usePeriodConsumptionSeries";
 import {
   COMMUNITY_ID,
   GARAGE,
@@ -49,6 +52,8 @@ import {
   derivedMembershipFigures,
   derivedSupplyFigures,
   member,
+  membershipDay,
+  membershipGapDay,
   membershipLatest,
   supplyLatest,
 } from "./historicalAnalysis.testData";
@@ -104,6 +109,7 @@ const card = () => screen.getByRole("region", { name: CARD });
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(usePeriodConsumptionSeries).mockReturnValue({ status: "loading" });
   mockLoggedUser = member();
   serve([HOME, GARAGE, PLANT_SUPPLY]);
   membershipAnswers(derivedMembershipFigures());
@@ -314,6 +320,34 @@ describe("UI-HIS-014 incomplete coverage is stated in words (#249)", () => {
     renderPage();
 
     expect(screen.getByRole("note")).toHaveTextContent(INCOMPLETE);
+  });
+
+  const SEPTEMBER_DAYS = Array.from({ length: 30 }, (_, index) => `2026/09/${String(index + 1).padStart(2, "0")}`);
+  const withHourGaps = () => {
+    const complete = derivedMembershipFigures();
+    membershipAnswers({ ...complete, coverage: { ...complete.coverage, hoursWithData: complete.coverage.expectedHours - 1 } });
+  };
+
+  it("UI-HIS-014 when the evolution card shows its gaps notice, the note points to it for the affected days", () => {
+    withHourGaps();
+    vi.mocked(usePeriodConsumptionSeries).mockReturnValue({
+      status: "ready",
+      series: { kind: "membershipDaily", buckets: SEPTEMBER_DAYS.map((date) => (date === "2026/09/10" ? membershipGapDay(date) : membershipDay(date))) },
+    });
+    renderPage();
+
+    expect(screen.getByRole("note").textContent).toBe(`${INCOMPLETE} Consulta los días afectados en la evolución.`);
+  });
+
+  it("UI-HIS-014 without gaps in the series, the note keeps its own text", () => {
+    withHourGaps();
+    vi.mocked(usePeriodConsumptionSeries).mockReturnValue({
+      status: "ready",
+      series: { kind: "membershipDaily", buckets: SEPTEMBER_DAYS.map((date) => membershipDay(date)) },
+    });
+    renderPage();
+
+    expect(screen.getByRole("note").textContent).toBe(INCOMPLETE);
   });
 
   it("UI-HIS-014 complete coverage states nothing", () => {
