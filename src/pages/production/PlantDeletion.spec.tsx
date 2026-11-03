@@ -115,6 +115,21 @@ describe("deleting a plant from the plant list", () => {
     expect(await screen.findByText(SUCCESS, VISIBLE)).toBeInTheDocument();
   });
 
+  it("UI-PLT-009 names the deleted plant by its name, in guillemets, shown and announced", async () => {
+    const user = userEvent.setup();
+    renderPlants(() => undefined);
+
+    await deleteNorthPlant(user);
+
+    expect(await screen.findByText("Planta «Planta Norte» eliminada.", VISIBLE)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getAllByRole("status").map((region) => region.textContent)).toContain(
+        "Planta «Planta Norte» eliminada.",
+      ),
+    );
+    expect(screen.queryByText(/NE=1/)).not.toBeInTheDocument();
+  });
+
   it("UI-PLT-009 announces no success when the deletion is refused", async () => {
     const user = userEvent.setup();
     renderPlants(() => {
