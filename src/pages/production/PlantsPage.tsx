@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FC, type MouseEvent } from "react";
+import { useMemo, useState, type FC, type MouseEvent } from "react";
 import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
@@ -11,12 +11,14 @@ import { DetailHeader } from "../../components/DetailHeader";
 import { ResponsiveRecordList } from "../../components/ResponsiveRecordList";
 import { ListTable } from "../../components/ListTable";
 import { RecordList, type RecordListItem } from "../../components/RecordList";
+import { ListPagination } from "../../components/ListPagination";
+import { useListPage } from "../../components/ListPagination/useListPage";
 import { EmptyState } from "../../components/EmptyState";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { Link, useNavigate } from "react-router";
-import { useErrorDispatch } from "../../context/error.context";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
+import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { useActiveCommunity } from "../../context/community.context";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
 import { useCommunityActions, usePlantActions } from "../../hooks/actions";
@@ -33,9 +35,8 @@ export const PlantsPage: FC = () => {
   const [menuPlantId, setMenuPlantId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const navigate = useNavigate();
-  const errorDispatch = useErrorDispatch();
   const activeCommunityId = useActiveCommunity();
-  const { data: { items: responseFromApi = [] } = {}, isLoading, error } = useGetAllPlants(
+  const { data: { items: responseFromApi = [] } = {}, isLoading, error, refetch } = useGetAllPlants(
     activeCommunityId ?? "",
     { size: 10000 },
     { query: { enabled: !!activeCommunityId } },
@@ -43,12 +44,6 @@ export const PlantsPage: FC = () => {
   const activeCommunity = useActiveCommunityResource();
   const { createPlant } = useCommunityActions().forCommunity(activeCommunity).actions;
   const { forPlant } = usePlantActions();
-
-  useEffect(() => {
-    if (error) {
-      errorDispatch("Ha habido un problema al cargar las plantas. Por favor, inténtalo más tarde");
-    }
-  }, [error, errorDispatch]);
 
   const filteredItems: PlantResponse[] = useMemo(() => {
     let items = responseFromApi;
@@ -66,6 +61,14 @@ export const PlantsPage: FC = () => {
 
     return items;
   }, [searchText, responseFromApi]);
+
+  // The whole list is read at once (size 10000) and paged here, 25 rows at a
+  // time (UI-LST-005). A new search starts again from the first page.
+  const { page, setPage, pageCount, pageRows } = useListPage(filteredItems);
+  const changeSearch = (text: string) => {
+    setSearchText(text);
+    setPage(1);
+  };
 
   const stats = useMemo(() => {
     const total = responseFromApi.length;
@@ -165,27 +168,36 @@ export const PlantsPage: FC = () => {
           )}
 
           {/* Search Bar */}
-          <SearchBar value={searchText} onChange={setSearchText} />
+          <SearchBar value={searchText} onChange={changeSearch} />
           </Box>
         </Paper>
       </Box>
 
       <Box sx={sxStyles.pageContainerFull}>
         <ResponsiveRecordList
+          // A failed read says so and offers the read again, never the empty state (UI-LST-004).
+          error={error ? { message: "No se pudieron cargar las plantas.", onRetry: () => void refetch() } : undefined}
           empty={
-            isLoading || error || filteredItems.length > 0 ? undefined : (
+            isLoading || error || filteredItems.length > 0 ? undefined : searchText ? (
+              <EmptyState
+                icon={SearchOffIcon}
+                title="No hay plantas que coincidan"
+                subtitle="Prueba con otra búsqueda."
+                actionButton={{ label: "Limpiar filtros", onClick: () => changeSearch("") }}
+              />
+            ) : (
               <EmptyState
                 icon={SolarPowerIcon}
                 title="No se encontraron plantas"
                 subtitle={
-                  searchText
-                    ? `No hay resultados para "${searchText}"`
-                    : createPlant
-                      ? "Comienza agregando tu primera planta de producción"
-                      : "Todavía no hay ninguna planta de producción en esta comunidad."
+                  createPlant
+                    ? "Comienza agregando tu primera planta de producción"
+                    // A member cannot add one, so inviting them to is an
+                    // instruction they can only fail to follow.
+                    : "Todavía no hay ninguna planta de producción en esta comunidad."
                 }
                 actionButton={
-                  !searchText && createPlant
+                  createPlant
                     ? {
                         label: "Crear Planta",
                         onClick: () => navigate("/production/new"),
@@ -198,7 +210,7 @@ export const PlantsPage: FC = () => {
           }
           wide={
             <ListTable
-              rows={filteredItems}
+              rows={pageRows}
               getRowKey={(plant) => plant.id}
               isLoading={isLoading}
               rowActions={{ label: rowActionsLabel, onClick: handleMenuOpen, has: hasRowActions }}
@@ -225,8 +237,19 @@ export const PlantsPage: FC = () => {
                   return !!plant && hasRowActions(plant);
                 },
               }}
-              items={filteredItems.map(toRecordListItem)}
+              items={pageRows.map(toRecordListItem)}
             />
+          }
+          footer={
+            !isLoading && (
+              <ListPagination
+                page={page}
+                pageCount={pageCount}
+                total={filteredItems.length}
+                noun={{ one: "planta", other: "plantas" }}
+                onChange={setPage}
+              />
+            )
           }
         />
       </Box>
