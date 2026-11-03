@@ -42,7 +42,6 @@ export { LabeledIcon } from "../../src/components/LabeledIcon/LabeledIcon";
 export { ListTable, ListTableHeaderText } from "../../src/components/ListTable/ListTable";
 export { RowActionsMenu } from "../../src/components/ListTable/RowActionsMenu";
 export { LoadErrorAlert } from "../../src/components/LoadErrorAlert/LoadErrorAlert";
-export { DisplayMenu } from "../../src/components/Menu/DisplayMenu";
 export { MenuLinkItem } from "../../src/components/Menu/MenuLinkItem";
 export { MenuTemplate } from "../../src/components/Menu/MenuTemplate";
 export { SideMenu } from "../../src/components/Menu/SideMenu";
@@ -91,7 +90,6 @@ export { SharingAgreementTimeline } from "../../src/components/SharingAgreementT
 export { Stat } from "../../src/components/Stat/Stat";
 export { LoadingStat } from "../../src/components/Stat/LoadingStat";
 export { StatsCard } from "../../src/components/StatsCard/StatsCard";
-export { SupplyCard } from "../../src/components/SupplyCard/SupplyCard";
 export { SupplyDetailCard } from "../../src/components/SupplyDetailCard/SupplyDetailCard";
 export { LoadingSupplyDetailCard } from "../../src/components/SupplyDetailCard/loadingSupplyDetailCard";
 export { SupplyDetailHeader } from "../../src/components/SupplyDetailHeader/SupplyDetailHeader";

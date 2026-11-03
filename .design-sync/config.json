@@ -35,7 +35,6 @@
     "SideMenu": "../groups/navigation.md",
     "MenuLinkItem": "../groups/navigation.md",
     "MenuTemplate": "../groups/navigation.md",
-    "DisplayMenu": "../groups/navigation.md",
     "PaginationOutlined": "../groups/navigation.md",
     "ListPagination": "../groups/navigation.md",
     "Logo": "../groups/navigation.md",
@@ -80,7 +79,6 @@
     "EnableSuccessModal": "../groups/dialogs.md",
     "CoefficientDialogErrorPanel": "../groups/dialogs.md",
     "CoefficientTargetSummary": "../groups/dialogs.md",
-    "SupplyCard": "../groups/supplies-and-plants.md",
     "SupplyDetailCard": "../groups/supplies-and-plants.md",
     "LoadingSupplyDetailCard": "../groups/supplies-and-plants.md",
     "SupplyDetailHeader": "../groups/supplies-and-plants.md",
@@ -225,10 +223,6 @@
     "MenuTemplate": {
       "cardMode": "single",
       "viewport": "480x360"
-    },
-    "DisplayMenu": {
-      "cardMode": "single",
-      "viewport": "640x360"
     },
     "GraphBar": {
       "cardMode": "column"
