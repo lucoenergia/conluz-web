@@ -32,10 +32,10 @@ export const PlantDeletionDialog: FC<PlantDeletionDialogProps> = ({ plant, onClo
   if (!plant || !remove) return null;
 
   const handleConfirm = async () => {
-    const { providerCode } = plant;
+    const { name } = plant;
     onClose();
     const result = await remove.run();
-    if ("ok" in result) successDispatch(`Planta ${providerCode} eliminada.`);
+    if ("ok" in result) successDispatch(`Planta «${name}» eliminada.`);
     else errorDispatch(plantDeletionRefusalMessage(result.error));
   };
 

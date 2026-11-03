@@ -53,7 +53,8 @@ const SOUTH = buildPlant({
   capabilities: buildPlantCapabilities({ canRead: true, canManage: true }),
 });
 
-const SUCCESS = "Planta NE=1 eliminada.";
+// Named by the plant's name, in guillemets, never by its provider code.
+const SUCCESS = "Planta «Planta Norte» eliminada.";
 
 function renderPlants(deleteNorth: () => unknown) {
   let deleted = false;
