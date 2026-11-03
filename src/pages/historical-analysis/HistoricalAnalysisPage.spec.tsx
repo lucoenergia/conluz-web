@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { Navigate, useLocation } from "react-router";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { query } from "../../test/queryState";
-import { buildCurrentUser } from "../../test/fixtures";
+import { buildCommunity, buildCommunityCapabilities, buildCurrentUser } from "../../test/fixtures";
 import { CAPTURED_SUPPLIES_BY_USER_ID } from "../../test/capturedResponses";
 import { apiError } from "../../test/apiError";
 import type { CurrentUserResponse, SupplyResponse } from "../../api/models";
@@ -19,9 +19,12 @@ vi.mock(import("../../api/users/users"), async (importOriginal) => ({
 }));
 // GET /communities is read by the real CommunityProvider for a caller with two
 // memberships (#237). The community is seeded, so its answer decides nothing here.
+// GET /communities/{id} answers whether the caller manages the active community,
+// asked only for an id that is not one of their own supplies (#252).
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetAllCommunities: vi.fn(),
+  useGetCommunityById: vi.fn(),
 }));
 // useGetAllSupplies is mocked only to prove the page never reads the
 // community's whole supply list. The energy metrics reads resolve the period's
@@ -51,7 +54,7 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
 import { getSuppliesByUserId, useGetSuppliesByUserId } from "../../api/users/users";
 import { getAllSupplies, useGetAllSupplies, useGetSupplyEnergyMetrics } from "../../api/supplies/supplies";
 import { useGetMembershipEnergyMetrics } from "../../api/memberships/memberships";
-import { useGetAllCommunities } from "../../api/communities/communities";
+import { getCommunityById, useGetAllCommunities, useGetCommunityById } from "../../api/communities/communities";
 import { useActiveCommunity } from "../../context/community.context";
 import { useCommunitySwitchRedirect } from "../../hooks/useCommunitySwitchRedirect";
 import { HistoricalAnalysisPage } from "./HistoricalAnalysisPage";
@@ -125,6 +128,14 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockLoggedUser = member();
   vi.mocked(useGetAllCommunities).mockReturnValue(query.disabled());
+  // A member: the active community grants no canManage, so no other supply is looked up.
+  vi.mocked(useGetCommunityById).mockImplementation((_communityId, options) =>
+    options?.query?.enabled === false
+      ? query.disabled()
+      : query.success<typeof getCommunityById>(
+          buildCommunity({ id: COMMUNITY_A, capabilities: buildCommunityCapabilities({ canRead: true }) }),
+        ),
+  );
   vi.mocked(useGetAllSupplies).mockReturnValue(
     query.success<typeof getAllSupplies>({ items: [], size: 10, totalElements: 0, totalPages: 0, number: 0 }),
   );

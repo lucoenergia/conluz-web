@@ -5,6 +5,7 @@ import {
   Chip,
   FormControlLabel,
   FormHelperText,
+  ListSubheader,
   MenuItem,
   Radio,
   RadioGroup,
@@ -23,10 +24,14 @@ const ALL = "all";
 const ALL_LABEL = "Todos mis puntos";
 const LABEL = "Punto de suministro";
 const FOOTER = "Solo aparecen tus puntos activos en esta comunidad.";
+const VIEWED_GROUP = "Punto que estás consultando";
+const OWN_GROUP = "Tus puntos";
 
 interface SupplySelectorProps {
   supplies: SupplyResponse[];
   selected: SupplyResponse | null;
+  /** A supply of the community the caller does not own, opened by a community admin (#252). */
+  viewed?: SupplyResponse | null;
   onSelect: (supplyId: string | null) => void;
 }
 
@@ -36,9 +41,19 @@ function supplyOptionLabel(supply: SupplyResponse): string {
   return name === supply.code ? supply.code : `${name} · ${supply.code}`;
 }
 
+/** The viewed supply also names its owner's member record, when the response carries one. */
+function viewedOptionLabel(supply: SupplyResponse): string {
+  const label = supplyOptionLabel(supply);
+  return supply.ownerRecord ? `${label} · ${supply.ownerRecord.fullName}` : label;
+}
+
 /**
  * Picks one of the caller's own supplies, or all of them (#247). A dropdown
  * from sm up; below it, a bottom sheet, as the contact channel editor is.
+ *
+ * A supply a community admin opened from its detail page sits in a group of
+ * its own above the caller's (#252); choosing anything else drops it, since it
+ * is offered only while the address holds it.
  */
 export const SupplySelector: FC<SupplySelectorProps> = (props) => {
   const theme = useTheme();
@@ -46,7 +61,7 @@ export const SupplySelector: FC<SupplySelectorProps> = (props) => {
   return isWide ? <SupplyDropdown {...props} /> : <SupplySheet {...props} />;
 };
 
-const SupplyDropdown: FC<SupplySelectorProps> = ({ supplies, selected, onSelect }) => (
+const SupplyDropdown: FC<SupplySelectorProps> = ({ supplies, selected, viewed, onSelect }) => (
   <TextField
     select
     label={LABEL}
@@ -56,6 +71,13 @@ const SupplyDropdown: FC<SupplySelectorProps> = ({ supplies, selected, onSelect 
     sx={{ maxWidth: 560 }}
     fullWidth
   >
+    {viewed && <ListSubheader>{VIEWED_GROUP}</ListSubheader>}
+    {viewed && (
+      <MenuItem value={viewed.id} sx={{ whiteSpace: "normal" }}>
+        <OptionContent supply={viewed} label={viewedOptionLabel(viewed)} />
+      </MenuItem>
+    )}
+    {viewed && <ListSubheader>{OWN_GROUP}</ListSubheader>}
     <MenuItem value={ALL}>{ALL_LABEL}</MenuItem>
     {supplies.map((supply) => (
       <MenuItem key={supply.id} value={supply.id} sx={{ whiteSpace: "normal" }}>
@@ -65,7 +87,7 @@ const SupplyDropdown: FC<SupplySelectorProps> = ({ supplies, selected, onSelect 
   </TextField>
 );
 
-const SupplySheet: FC<SupplySelectorProps> = ({ supplies, selected, onSelect }) => {
+const SupplySheet: FC<SupplySelectorProps> = ({ supplies, selected, viewed, onSelect }) => {
   const [open, setOpen] = useState(false);
   const labelId = useId();
   const valueId = useId();
@@ -95,7 +117,11 @@ const SupplySheet: FC<SupplySelectorProps> = ({ supplies, selected, onSelect }) 
         sx={{ justifyContent: "space-between", textAlign: "left", textTransform: "none", borderRadius: radii.default, minWidth: 0 }}
       >
         <Box id={valueId} component="span" sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
-          {selected ? <OptionContent supply={selected} /> : ALL_LABEL}
+          {selected ? (
+            <OptionContent supply={selected} label={selected === viewed ? viewedOptionLabel(selected) : undefined} />
+          ) : (
+            ALL_LABEL
+          )}
         </Box>
       </Button>
       <FormHelperText id={footerId}>{FOOTER}</FormHelperText>
@@ -120,6 +146,18 @@ const SupplySheet: FC<SupplySelectorProps> = ({ supplies, selected, onSelect }) 
           {LABEL}
         </Typography>
         <RadioGroup aria-labelledby={titleId} value={selected?.id ?? ALL} onChange={(event) => choose(event.target.value)}>
+          {viewed && (
+            <>
+              <GroupHeading>{VIEWED_GROUP}</GroupHeading>
+              <FormControlLabel
+                value={viewed.id}
+                control={<Radio />}
+                label={<OptionContent supply={viewed} label={viewedOptionLabel(viewed)} />}
+                sx={{ alignItems: "center", minWidth: 0, mr: 0 }}
+              />
+              <GroupHeading>{OWN_GROUP}</GroupHeading>
+            </>
+          )}
           <FormControlLabel value={ALL} control={<Radio />} label={ALL_LABEL} />
           {supplies.map((supply) => (
             <FormControlLabel
@@ -136,10 +174,16 @@ const SupplySheet: FC<SupplySelectorProps> = ({ supplies, selected, onSelect }) 
   );
 };
 
-const OptionContent: FC<{ supply: SupplyResponse }> = ({ supply }) => (
+const GroupHeading: FC<{ children: string }> = ({ children }) => (
+  <Typography variant="overline" component="h3" sx={{ color: colors.text.secondary, mt: 1 }}>
+    {children}
+  </Typography>
+);
+
+const OptionContent: FC<{ supply: SupplyResponse; label?: string }> = ({ supply, label }) => (
   <Box component="span" sx={{ display: "inline-flex", flexWrap: "wrap", alignItems: "center", gap: 1, minWidth: 0 }}>
     <Box component="span" sx={{ overflowWrap: "anywhere" }}>
-      {supplyOptionLabel(supply)}
+      {label ?? supplyOptionLabel(supply)}
     </Box>
     {supply.plant !== null && <Chip size="small" label="Punto de planta" />}
   </Box>

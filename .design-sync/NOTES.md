@@ -15,8 +15,11 @@
   GenerateDialog,UploadDialog}, CoefficientHistoryDrawer, SupplyCoefficientHistorySection,
   ScopeContext, AddSupplyDialog).
 - `GraphFilterDates` (src/components/Graph) is deliberately not exported: it takes the internal
-  `useGraphFilterRange` state object and only exists as a piece of `GraphFilter` / the plant period
+  `useGraphFilterRange` state object and only exists as a piece of the plant period
   control. `NextStepBanner` (the "Siguiente paso" shell) IS synced, in the layout group.
+- `src/components/EnergyFigures/` (`PeriodUsageCard`, `PeriodTotals`, `PeriodHeader`, `NeutralNotice`,
+  `EstimatedPriceLabel`) renders with `ConluzProvider` alone, so it is eligible, but it is not synced
+  yet: it moved out of the historical analysis and home pages in #252 without design-system work.
 - `ConluzProvider` (`.design-sync/pkg/ConluzProvider.tsx`) mirrors `src/main.tsx`: ThemeProvider +
   StyledEngineProvider(enableCssLayer) + the shell's GlobalStyles + LocalizationProvider(dayjs, es) +
   MemoryRouter, plus an inert QueryClient and `CommunityProvider`. Without the last two, every
@@ -80,19 +83,16 @@
   is the exports object ("Element type is invalid … got: object"). `cfg.tsconfig` →
   `.design-sync/pkg/tsconfig.bundle.json` aliases it to `.design-sync/pkg/shims/react-apexcharts.ts`.
   Charts animate (800 ms + 150 ms per bar) and expose no prop to turn it off, so a capture catches
-  half-height bars. The chart previews (Graph, GraphBar, MultiSeriesBar, GraphCard) speed up
+  half-height bars. The chart preview (GraphBar) speeds up
   `performance.now()` 20x behind a `window.__dsFastCharts` guard — ApexCharts times animations off it.
   Preview-only; an `animate` prop on the chart components would be the clean fix.
 - Overlay first cells occasionally capture with the menu closed — spot-check overlay sheets.
-- StatsCard's vertical Divider is absolutely positioned with no positioned ancestor (an app quirk);
-  previews wrap the card in `position: relative`.
 - `alphas` has no `primary` entry — use `alphas.info.light` for a primary-tinted circle.
 - Don't name a preview export `Error` (shadows the global).
 - Sharing-agreement banner/spine previews derive their state with the exported
   `selectSharingAgreementNextStep` / `selectSharingAgreementLifecycleView`; the spine's tones assume
   the banner's brand fill, so its previews sit in a `brand.main` box.
-- Not previewable statically: GraphFilter ranges other than "Día" (no controlled prop), the
-  banner/spine "Ver todos los pasos" expanded list.
+- Not previewable statically: the banner/spine "Ver todos los pasos" expanded list.
 - ResponsiveRecordList and ListPagination pick their layout from the window width (1024px), so a
   card narrower than that still shows the table unless the viewport is narrow.
 - App facts noticed: SupportCard has no usages in `src/`; PaginationOutlined passes

@@ -3,9 +3,9 @@ import { Box, Typography } from "@mui/material";
 import { formatEuros, formatKilowattHours } from "../../utils/formatEnergyFigures";
 import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
-import { ENERGY_COLORS, SAVINGS_COLOR } from "../home/member/energyColors";
-import { EstimatedPriceLabel } from "../home/member/EstimatedPriceLabel";
-import type { PeriodEnergyMetrics } from "./usePeriodEnergyMetrics";
+import { ENERGY_COLORS, SAVINGS_COLOR } from "./energyColors";
+import { EstimatedPriceLabel } from "./EstimatedPriceLabel";
+import type { PeriodEnergyMetrics } from "./periodEnergyMetrics";
 
 interface Tile {
   label: string;

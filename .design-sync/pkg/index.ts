@@ -31,12 +31,8 @@ export { FilterChipsBar } from "../../src/components/FilterChips/FilterChipsBar"
 export { DropdownSelector } from "../../src/components/Forms/DropdownSelector";
 export { PasswordInput } from "../../src/components/Forms/PasswordInput";
 export { PasswordPolicyHint } from "../../src/components/Forms/PasswordPolicyHint";
-export { Graph } from "../../src/components/Graph/Graph";
 export { GraphBar } from "../../src/components/Graph/GraphBar";
-export { GraphCard } from "../../src/components/Graph/GraphCard";
-export { GraphFilter } from "../../src/components/Graph/GraphFilter";
 export { LoadingGraphCard } from "../../src/components/Graph/LoadingGraphCard";
-export { MultiSeriesBar } from "../../src/components/Graph/MultiSeriesBar";
 export { Logo } from "../../src/components/Header/Logo";
 export { LabeledIcon } from "../../src/components/LabeledIcon/LabeledIcon";
 export { ListTable, ListTableHeaderText } from "../../src/components/ListTable/ListTable";
@@ -86,7 +82,6 @@ export { SharingAgreementOutgoingSupplies } from "../../src/components/SharingAg
 export { SharingAgreementStatusChip } from "../../src/components/SharingAgreementStatusChip/SharingAgreementStatusChip";
 export { Stat } from "../../src/components/Stat/Stat";
 export { LoadingStat } from "../../src/components/Stat/LoadingStat";
-export { StatsCard } from "../../src/components/StatsCard/StatsCard";
 export { SupplyDetailCard } from "../../src/components/SupplyDetailCard/SupplyDetailCard";
 export { LoadingSupplyDetailCard } from "../../src/components/SupplyDetailCard/loadingSupplyDetailCard";
 export { SupplyDetailHeader } from "../../src/components/SupplyDetailHeader/SupplyDetailHeader";

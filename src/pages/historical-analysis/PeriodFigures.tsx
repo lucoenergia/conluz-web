@@ -2,12 +2,12 @@ import type { FC } from "react";
 import { Box, Skeleton } from "@mui/material";
 import type { SupplyResponse } from "../../api/models";
 import { LoadErrorAlert } from "../../components/LoadErrorAlert/LoadErrorAlert";
-import { NeutralNotice } from "../home/NeutralNotice";
+import { NeutralNotice } from "../../components/EnergyFigures/NeutralNotice";
 import { useHistoricalPeriod } from "./HistoricalPeriodContext";
 import { toConsumptionSeriesView } from "./consumptionSeries";
-import { PeriodTotals } from "./PeriodTotals";
-import { PeriodUsageCard } from "./PeriodUsageCard";
-import { plantSupplyNotice } from "./periodUsage";
+import { PeriodTotals } from "../../components/EnergyFigures/PeriodTotals";
+import { PeriodUsageCard } from "../../components/EnergyFigures/PeriodUsageCard";
+import { plantSupplyNotice } from "../../components/EnergyFigures/periodUsage";
 import { usePeriodConsumptionSeries } from "./usePeriodConsumptionSeries";
 import { usePeriodEnergyMetrics } from "./usePeriodEnergyMetrics";
 

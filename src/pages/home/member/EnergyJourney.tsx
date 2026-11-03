@@ -5,7 +5,7 @@ import type { MembershipEnergyMetricsResponse } from "../../../api/models";
 import { formatKilowattHours } from "../../../utils/formatEnergyFigures";
 import { formatPercentage } from "../../../utils/formatPercentage";
 import { colors, radii } from "../../../theme/tokens";
-import { ENERGY_COLORS, swatch, type SwatchStyle } from "./energyColors";
+import { ENERGY_COLORS, swatch, type SwatchStyle } from "../../../components/EnergyFigures/energyColors";
 import { HomeCard } from "../HomeCard";
 
 const wholePercent = (ratio: number) => formatPercentage(ratio, { minimumFractionDigits: 0, maximumFractionDigits: 0 });

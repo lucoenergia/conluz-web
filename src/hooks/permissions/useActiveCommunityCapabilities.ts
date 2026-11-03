@@ -19,9 +19,13 @@ import { DENIED, PENDING, outcomeFromQuery, type CapabilityOutcome } from "./cap
  * capability, and a caller that waited would wait for one that is never coming.
  * But only once the selection has actually been made -- before that, null means
  * "not worked out yet" and the honest answer is `pending`.
+ *
+ * `enabled` exists for callers that need the answer only in some states, so
+ * they do not ask for it in the others; disabled reads as a denial.
  */
 export function useActiveCommunityCapabilities(
   capability: keyof CommunityCapabilitiesResponse,
+  { enabled = true }: { enabled?: boolean } = {},
 ): CapabilityOutcome {
   const activeCommunityId = useActiveCommunity();
   const isResolved = useIsActiveCommunityResolved();
@@ -30,9 +34,10 @@ export function useActiveCommunityCapabilities(
   // still be a community the caller has just lost (#237), and asking for it
   // would only be refused.
   const query = useGetCommunityById(activeCommunityId ?? "", {
-    query: { enabled: !!activeCommunityId && isResolved },
+    query: { enabled: enabled && !!activeCommunityId && isResolved },
   });
 
+  if (!enabled) return DENIED;
   if (!isResolved) return PENDING;
   if (!activeCommunityId) return DENIED;
 

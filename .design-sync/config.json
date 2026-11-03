@@ -41,7 +41,6 @@
     "CommunityScopeHeader": "../groups/navigation.md",
     "Stat": "../groups/data-display.md",
     "LoadingStat": "../groups/data-display.md",
-    "StatsCard": "../groups/data-display.md",
     "PlatformKpiCard": "../groups/data-display.md",
     "LabeledIcon": "../groups/data-display.md",
     "TagComponent": "../groups/data-display.md",
@@ -65,12 +64,8 @@
     "FilterChipsBar": "../groups/forms.md",
     "ContactChannelEditor": "../groups/dialogs.md",
     "ContactChannelReorderList": "../groups/forms.md",
-    "Graph": "../groups/charts.md",
     "GraphBar": "../groups/charts.md",
-    "GraphCard": "../groups/charts.md",
-    "GraphFilter": "../groups/charts.md",
     "LoadingGraphCard": "../groups/charts.md",
-    "MultiSeriesBar": "../groups/charts.md",
     "AlertModal": "../groups/dialogs.md",
     "AppModal": "../groups/dialogs.md",
     "BasicModal": "../groups/dialogs.md",
@@ -219,9 +214,6 @@
       "viewport": "480x360"
     },
     "GraphBar": {
-      "cardMode": "column"
-    },
-    "MultiSeriesBar": {
       "cardMode": "column"
     },
     "CommunityStatusChip": {

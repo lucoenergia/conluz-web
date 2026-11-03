@@ -5,9 +5,9 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { formatKilowattHourAmount, formatKilowattHours } from "../../utils/formatEnergyFigures";
 import { sxStyles } from "../../theme/sx";
 import { colors, radii } from "../../theme/tokens";
-import { ENERGY_COLORS } from "../home/member/energyColors";
+import { ENERGY_COLORS } from "./energyColors";
 import { boundedPercent, coverageSentence, excludedPlantsText, usageHeadline } from "./periodUsage";
-import type { PeriodEnergyMetrics } from "./usePeriodEnergyMetrics";
+import type { PeriodEnergyMetrics } from "./periodEnergyMetrics";
 
 const CAPTION = "De la energía que te tocó";
 /** The one place the technical names of the two ratios appear (UI-HIS-011). */

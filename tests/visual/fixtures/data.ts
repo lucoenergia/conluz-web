@@ -6,6 +6,7 @@ import type {
   GetShellyConfigResponse,
   MembershipDailyConsumptionBucketResponse,
   MembershipEnergyMetricsResponse,
+  SupplyEnergyMetricsResponse,
   MembershipHourlyProfileResponse,
   MembershipMonthlyConsumptionBucketResponse,
   MembershipPaybackResponse,
@@ -1228,6 +1229,23 @@ export const MEMBER_ENERGY_METRICS_NO_MONTH: MembershipEnergyMetricsResponse = {
   selfSufficiencyRatio: null,
   selfConsumptionRatioStatus: "NOTHING_ASSIGNED",
   selfConsumptionRatioBasis: { selfConsumptionKWh: 0, assignedProductionKWh: 0, excludedPlantSupplyCount: 0 },
+};
+
+/**
+ * The latest published month of FIXED_SUPPLY (#252), as
+ * GET /supplies/{id}/energy-metrics?period=LATEST_PUBLISHED_MONTH answers it:
+ * August 2026, complete, the member home's figures for one supply.
+ */
+export const SUPPLY_ENERGY_METRICS: SupplyEnergyMetricsResponse = {
+  supply: { id: FIXED_SUPPLY_ID, code: "ES0021000000000000AA", name: FIXED_SUPPLY_NAME },
+  period: REFERENCE_AUGUST_2026,
+  coverage: { hoursWithData: 744, expectedHours: 744 },
+  energy: MEMBER_ENERGY_METRICS.energy,
+  savings: MEMBER_ENERGY_METRICS.savings,
+  selfConsumptionRatio: MEMBER_ENERGY_METRICS.selfConsumptionRatio,
+  selfSufficiencyRatio: MEMBER_ENERGY_METRICS.selfSufficiencyRatio,
+  selfConsumptionRatioStatus: "AVAILABLE",
+  selfConsumptionRatioBasis: MEMBER_ENERGY_METRICS.selfConsumptionRatioBasis,
 };
 
 // The month before the reference month (#200), as the comparison requests

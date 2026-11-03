@@ -12,7 +12,7 @@ import { BestHours } from "./member/BestHours";
 import { EnergyJourney } from "./member/EnergyJourney";
 import { HomeCard } from "./HomeCard";
 import { chooseMemberHomeMessage, type MemberHomeMessage } from "./member/memberHomeMessage";
-import { NeutralNotice } from "./NeutralNotice";
+import { NeutralNotice } from "../../components/EnergyFigures/NeutralNotice";
 import { PaybackCard } from "./member/PaybackCard";
 import { PreviousMonthComparison } from "./member/PreviousMonthComparison";
 import { SavingsCard } from "./member/SavingsCard";

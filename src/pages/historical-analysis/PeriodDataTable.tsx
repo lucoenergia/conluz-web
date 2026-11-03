@@ -29,7 +29,8 @@ import { CSV_MIME_TYPE, periodCsv, periodCsvFileName } from "./periodCsv";
 import { PAGE_SIZE, showingText, totalsStateText } from "./periodDataTable";
 import { slotStateText } from "./slotStateText";
 import { usePeriodConsumptionSeries, type ConsumptionSeries } from "./usePeriodConsumptionSeries";
-import { usePeriodEnergyMetrics, type PeriodEnergyMetrics } from "./usePeriodEnergyMetrics";
+import type { PeriodEnergyMetrics } from "../../components/EnergyFigures/periodEnergyMetrics";
+import { usePeriodEnergyMetrics } from "./usePeriodEnergyMetrics";
 
 const TITLE = "Tus datos";
 const GRANULARITY_PHRASE = { daily: "por días", monthly: "por meses" } as const;

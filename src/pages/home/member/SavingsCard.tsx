@@ -4,8 +4,8 @@ import SavingsRoundedIcon from "@mui/icons-material/SavingsRounded";
 import type { MembershipEnergyMetricsResponse } from "../../../api/models";
 import { formatEuros, formatKilowattHours } from "../../../utils/formatEnergyFigures";
 import { colors } from "../../../theme/tokens";
-import { SAVINGS_COLOR } from "./energyColors";
-import { EstimatedPriceLabel } from "./EstimatedPriceLabel";
+import { SAVINGS_COLOR } from "../../../components/EnergyFigures/energyColors";
+import { EstimatedPriceLabel } from "../../../components/EnergyFigures/EstimatedPriceLabel";
 import { HomeCard } from "../HomeCard";
 
 /** What the community energy the member used in the reference month was worth. */

@@ -1,7 +1,7 @@
 import type { FC } from "react";
 import { Box, Typography } from "@mui/material";
 import { colors, radii } from "../../../theme/tokens";
-import type { SwatchStyle } from "./energyColors";
+import type { SwatchStyle } from "../../../components/EnergyFigures/energyColors";
 
 export interface LegendItem {
   label: string;

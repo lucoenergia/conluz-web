@@ -5,10 +5,10 @@
 | **Prefix** | `UI-SUP` |
 | **Status** | Active |
 | **Routes** | `/supply-points`, `/supply-points?personId=…` (a member's supplies), `/supply-points/:supplyPointId`, `/supply-points/new`, `/supply-points/:supplyPointId/edit` |
-| **Roles** | Any member of the active community reads them. Deleting: a caller to whom the supply reports `canDelete`. Creating and importing, and seeing each supply's owner in the list: a caller to whom the active community reports `canManage`. Editing: a caller to whom the supply reports `canEdit` |
-| **Domain rules** | `lucoenergia/conluz`: SUP-001, SUP-002, SUP-004, SUP-005, SUP-006, SUP-007, MEM-026, EPR-003 |
-| **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `FilterChipsBar` (the list; its shared rules are `record-lists.md`) |
-| **Last reviewed against code** | #348 |
+| **Roles** | Any member of the active community reads them. Deleting: a caller to whom the supply reports `canDelete`. Creating and importing, and seeing each supply's owner in the list: a caller to whom the active community reports `canManage`. Editing: a caller to whom the supply reports `canEdit`. The supply's figures and "Ver análisis completo": a caller to whom the supply reports `canRead` |
+| **Domain rules** | `lucoenergia/conluz`: SUP-001, SUP-002, SUP-004, SUP-005, SUP-006, SUP-007, MEM-026, EPR-003, SEM-001 (lucoenergia/conluz#408) |
+| **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `FilterChipsBar` (the list; its shared rules are `record-lists.md`); the detail page's latest published month reuses `src/components/EnergyFigures/` (`PeriodHeader`, `PeriodUsageCard`, `PeriodTotals`), as the historical analysis page does |
+| **Last reviewed against code** | #252 |
 
 ## Purpose
 
@@ -25,7 +25,11 @@ List a community's supplies, or one member's, with only what the supply itself s
 named, its CUPS, its owner for whoever manages the community, whether a plant produces onto it, and
 whether it has left the community.
 
-This document covers only the rules #290, #302, #324, #339 and #348 introduced.
+Make the supply detail page the supply's record: what it is, its coefficients, and what it used and
+saved in its latest published month, with the same figures the historical analysis page shows for
+it, and a way into that page for whoever may read them.
+
+This document covers only the rules #290, #302, #324, #339, #348 and #252 introduced.
 
 ## Rules
 
@@ -107,7 +111,8 @@ This document covers only the rules #290, #302, #324, #339 and #348 introduced.
 
 ### UI-SUP-006 — A consumption period that has not started yet is shown as empty
 
-- **Status:** Active
+- **Status:** Removed (#252: the supply detail page no longer asks for a period of its own; its
+  figures are the latest published month, which the server resolves, UI-SUP-014)
 - **Rule:** On the supply detail page, a consumption refusal with
   `ENERGY_METRICS_PERIOD_START_IN_FUTURE` MUST be shown as an empty period, not as a load failure.
   Any other error MUST still be shown as a load failure. The page MUST decide by the error detail's
@@ -115,7 +120,7 @@ This document covers only the rules #290, #302, #324, #339 and #348 introduced.
 - **Rationale:** Under EPR-003 a period that has not started is refused; for the current month or
   year in its first hour, or a custom range starting later, that is "nothing yet", not a fault.
 - **Implements:** EPR-003
-- **Source:** #324, lucoenergia/conluz#409
+- **Source:** #324, lucoenergia/conluz#409; removed in #252
 
 ### UI-SUP-007 — The supply import explains its columns and what it requires, in the member import's dialog
 
@@ -212,12 +217,16 @@ This document covers only the rules #290, #302, #324, #339 and #348 introduced.
 
 - **Status:** Active
 - **Rule:** A supply that a plant of the active community produces onto MUST be marked "Punto de la
-  planta <plant name>", without alert colours. The mark MUST come from the supply's own `plant`.
+  planta <plant name>", without alert colours. The mark MUST come from the supply's own `plant`. On
+  the supply detail header, the mark MUST be the tag "Punto de planta". It MUST link to the plant's
+  detail when the active community reports `canRead`. Otherwise it MUST be plain text.
 - **Rationale:** A plant's supply is not a consumer, and the reader must not mistake it for one. The
   supply names its plant itself, so the mark needs no second read: the plants listing would need a
-  capability a member does not hold, and could fail on its own.
+  capability a member does not hold, and could fail on its own. The plant reference carries no
+  capabilities, and a plant opens to whoever may read its community, so the tag links on the active
+  community's `canRead`, the requirement of the plant's route.
 - **Implements:** SUP-004
-- **Source:** #348
+- **Source:** #348; changed in #252 (the detail header's tag)
 
 ### UI-SUP-013 — A disabled supply is "Dado de baja", and status is never coloured as a failure
 
@@ -231,6 +240,40 @@ This document covers only the rules #290, #302, #324, #339 and #348 introduced.
 - **Implements:** n/a
 - **Source:** #348
 
+### UI-SUP-014 — The supply detail page shows the latest published month with the historical analysis page's components
+
+- **Status:** Active
+- **Rule:**
+  - The supply detail page MUST show the supply's latest published month through the same
+    components and endpoint as the historical analysis page: the period header, the period card and
+    the four totals, fed by the supply's energy metrics asked for `LATEST_PUBLISHED_MONTH`.
+  - It MUST NOT show its own period selector or charts.
+  - It MUST ask for the month only for a supply that reports `canRead`.
+  - With no published month, it MUST say "Todavía no hay datos publicados de este punto." in a
+    neutral notice. A failed request MUST be a load error with "Reintentar".
+  - For a plant's own supply, it MUST show the period card's not-applicable state and the plant
+    notice, as the historical analysis page does.
+- **Rationale:** The page computed its own figures from a period the device's clock chose and a
+  production source no other screen uses, so they disagreed with "Mi consumo y ahorro" for the same
+  supply and month. One request and one set of components leave a single source of figures, and the
+  full analysis stays on one page instead of a second, smaller one here. The month is the one the
+  server resolves, never the device's previous month.
+- **Implements:** SEM-001
+- **Source:** #252
+
+### UI-SUP-015 — "Ver análisis completo" is offered to whoever may read the supply's figures
+
+- **Status:** Active
+- **Rule:** "Ver análisis completo" MUST be offered to the supply's owner and to a community admin of
+  its community, and to no one else. It MUST be decided by the supply's `canRead`, and MUST link to
+  `/historical-analysis?supplyId={id}`.
+- **Rationale:** It opens the supply's figures, which the backend opens to the owner and to an
+  enabled admin of the supply's community and reports as the supply's `canRead`. Reading the
+  capability rather than comparing the owner's id or the caller's role keeps the rule where the
+  backend decides it. A platform admin holds neither by virtue of the flag.
+- **Implements:** n/a
+- **Source:** #252
+
 ## States
 
 The supply list follows the states of `record-lists.md`. What is particular to it:
@@ -241,6 +284,16 @@ The supply list follows the states of `record-lists.md`. What is particular to i
 | Empty | "No se encontraron puntos de suministro", with "Crear Punto de Suministro" where `createSupply` is offered | As in Loading |
 | No results | "No hay puntos de suministro que coincidan" | "Limpiar filtros", which clears the search and the filter |
 | Error | "No se pudieron cargar los puntos de suministro." | "Reintentar" |
+
+The supply detail page's latest published month (UI-SUP-014):
+
+| State | Rendered | Actions available |
+| --- | --- | --- |
+| Loading | A placeholder where the figures go | "Ver análisis completo" where offered |
+| Published | The period header, the period card and the four totals | As in Loading |
+| Nothing published | "Todavía no hay datos publicados de este punto." | As in Loading |
+| Error | "No se pudieron cargar los datos de energía de este punto." | "Reintentar", and as in Loading |
+| Not readable | The section's title only; nothing is asked | None |
 
 The import dialog, as the member import's (`members.md`):
 

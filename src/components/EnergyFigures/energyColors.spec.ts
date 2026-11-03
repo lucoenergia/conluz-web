@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { colors } from "../../../theme/tokens";
+import { colors } from "../../theme/tokens";
 import { ENERGY_COLORS, SAVINGS_COLOR } from "./energyColors";
 
 /** sRGB channel to linear light. */

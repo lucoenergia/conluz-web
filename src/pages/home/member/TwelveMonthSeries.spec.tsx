@@ -20,7 +20,7 @@ import {
 } from "../../../test/fixtures";
 import { query } from "../../../test/queryState";
 import { renderWithProviders } from "../../../test/renderWithProviders";
-import { ENERGY_COLORS, SAVINGS_COLOR } from "./energyColors";
+import { ENERGY_COLORS, SAVINGS_COLOR } from "../../../components/EnergyFigures/energyColors";
 import { TwelveMonthSeries } from "./TwelveMonthSeries";
 
 /**

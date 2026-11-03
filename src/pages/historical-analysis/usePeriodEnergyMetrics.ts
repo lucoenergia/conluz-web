@@ -1,11 +1,10 @@
 import { useGetMembershipEnergyMetrics } from "../../api/memberships/memberships";
 import { useGetSupplyEnergyMetrics } from "../../api/supplies/supplies";
-import type { MembershipEnergyMetricsResponse, SupplyEnergyMetricsResponse, SupplyResponse } from "../../api/models";
+import type { SupplyResponse } from "../../api/models";
+import type { PeriodEnergyMetrics } from "../../components/EnergyFigures/periodEnergyMetrics";
 import { useActiveCommunity } from "../../context/community.context";
 import { useLoggedUser } from "../../context/logged-user.context";
 import { useHistoricalPeriod } from "./HistoricalPeriodContext";
-
-export type PeriodEnergyMetrics = MembershipEnergyMetricsResponse | SupplyEnergyMetricsResponse;
 
 export type PeriodEnergyMetricsState =
   | { status: "loading" }

@@ -5,9 +5,9 @@ import type { SupplyResponse } from "../../api/models";
 import { LoadErrorAlert } from "../../components/LoadErrorAlert/LoadErrorAlert";
 import { colors } from "../../theme/tokens";
 import { HomeCard } from "../home/HomeCard";
-import { NeutralNotice } from "../home/NeutralNotice";
-import { ENERGY_COLORS, SAVINGS_COLOR, swatch } from "../home/member/energyColors";
-import { EstimatedPriceLabel } from "../home/member/EstimatedPriceLabel";
+import { NeutralNotice } from "../../components/EnergyFigures/NeutralNotice";
+import { ENERGY_COLORS, SAVINGS_COLOR, swatch } from "../../components/EnergyFigures/energyColors";
+import { EstimatedPriceLabel } from "../../components/EnergyFigures/EstimatedPriceLabel";
 import { SeriesLegend, type LegendItem } from "../home/member/SeriesLegend";
 import {
   GRID_IMPORT_SERIES,

@@ -1,6 +1,6 @@
 import type { EstimatedPriceResponse, SupplyResponse } from "../../api/models";
 import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
-import { estimatedPriceText } from "../home/member/estimatedPriceText";
+import { estimatedPriceText } from "../../components/EnergyFigures/estimatedPriceText";
 import type { SlotView } from "./consumptionSeries";
 import { formatDayParam, lastDayOf, type Granularity } from "./historicalPeriod";
 import { slotStateText } from "./slotStateText";

@@ -9,7 +9,7 @@ import { SuccessDisplay } from "../../components/Success/SuccessDisplay";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { routeRequests, type RequestConfig } from "../../test/requestRouter";
 import { apiError } from "../../test/apiError";
-import { buildSupply, buildMemberRecord, buildSupplyCapabilities } from "../../test/fixtures";
+import { buildCommunity, buildSupply, buildMemberRecord, buildSupplyCapabilities } from "../../test/fixtures";
 import { VISIBLE } from "../../test/visibleText";
 
 /**
@@ -23,8 +23,8 @@ import { VISIBLE } from "../../test/visibleText";
 const COMMUNITY_ID = "community-1";
 const SUPPLY_ID = "supply-1";
 const SUPPLY_URL = `/api/v1/supplies/${SUPPLY_ID}`;
-// The page's consumption and production series, which are not the subject.
-const SERIES_URL = new RegExp(`^${SUPPLY_URL}/(consumption|production)/`);
+// The active community, which the plant tag asks about (#252); not the subject.
+const COMMUNITY_URL = `/api/v1/communities/${COMMUNITY_ID}`;
 
 const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
 
@@ -34,8 +34,6 @@ vi.mock(import("../../http/custom-instance"), async (importOriginal) => ({
   customInstance: (config) => mockCustomInstance(config),
 }));
 
-// The charts need a layout engine jsdom does not have, and are not the subject.
-vi.mock("react-apexcharts", () => ({ default: () => <div /> }));
 
 const SUPPLY = buildSupply({
   id: SUPPLY_ID,
@@ -50,7 +48,7 @@ const SUPPLY = buildSupply({
 function renderDetail(onDelete: () => unknown) {
   const router = routeRequests([
     { method: "GET", url: SUPPLY_URL, respond: () => SUPPLY },
-    { method: "GET", url: SERIES_URL, respond: () => [] },
+    { method: "GET", url: COMMUNITY_URL, respond: () => buildCommunity({ id: COMMUNITY_ID }) },
     { method: "DELETE", url: SUPPLY_URL, respond: onDelete },
   ]);
   mockCustomInstance.mockImplementation(router.handle);

@@ -137,7 +137,7 @@ Like `vivid`, a `marks` tone clears the 3:1 graphic-object bar and nothing more.
 
 The member home gives each energy concept one colour across the whole screen —
 the journey bars, both charts and every legend — and no colour two concepts
-(#231). The mapping lives in `src/pages/home/member/energyColors.ts`, the only
+(#231). The mapping lives in `src/components/EnergyFigures/energyColors.ts`, the only
 place a series colour is chosen; `energyColors.spec.ts` pins it.
 
 Every mark clears 3:1 on the white card, and community energy sits at that floor, so every other

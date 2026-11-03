@@ -26,6 +26,7 @@ import {
   MEMBER_DAILY_SERIES,
   MEMBER_ENERGY_METRICS,
   MEMBER_ENERGY_METRICS_PREVIOUS,
+  SUPPLY_ENERGY_METRICS,
   MEMBER_HOURLY_PROFILE,
   MEMBER_MONTHLY_SERIES,
   MEMBER_PAYBACK,
@@ -289,6 +290,11 @@ export async function mockAllApiRoutes(page: Page, currentUser: object) {
           contentType: "application/json",
           body: JSON.stringify({ status: 404, message: "not found" }),
         });
+      }
+      // GET /supplies/{id}/energy-metrics shares the supply's URL space and its
+      // canRead (#252); without this branch it was answered with the supply.
+      if (url.includes("/energy-metrics")) {
+        return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(SUPPLY_ENERGY_METRICS) });
       }
       return route.fulfill({
         status: 200,
