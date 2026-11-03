@@ -61,6 +61,7 @@ import {
 } from "../../api/memberships/memberships";
 import { HistoricalAnalysisPage } from "./HistoricalAnalysisPage";
 import { MEASURED_ZERO_EUR_TEXT, SELF_CONSUMPTION_SERIES, SAVINGS_SERIES } from "./consumptionSeries";
+import { ENERGY_COLORS, SAVINGS_COLOR } from "../home/member/energyColors";
 import {
   COMMUNITY_ID,
   HOME,
@@ -329,6 +330,15 @@ describe("UI-HIS-017 the energy chart is option A (#250)", () => {
       ["De la red", "consumption"],
       ["Se fue a la red", "assignedUnused"],
     ]);
+  });
+});
+
+describe("UI-HIS-017 the charts' colours (#250)", () => {
+  it("UI-HIS-017 draws every series in its ENERGY_COLORS or SAVINGS_COLOR token, and nothing else", () => {
+    renderPage();
+
+    expect(chartProps("energy").options.colors).toEqual([ENERGY_COLORS.community, ENERGY_COLORS.grid, ENERGY_COLORS.exported]);
+    expect(chartProps("savings").options.colors).toEqual([SAVINGS_COLOR]);
   });
 });
 
