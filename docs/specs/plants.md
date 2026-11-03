@@ -40,10 +40,13 @@ the rules every records list shares are in [`record-lists.md`](record-lists.md).
 ### UI-PLS-002 — The search matches only what the row shows
 
 - **Status:** Active
-- **Rule:** The plants search MUST match only what the row shows: the name, the CAU and the
-  address, case-insensitively. It MUST NOT match the provider's station code.
+- **Rule:**
+  - The plants search MUST match only what the row shows: the name, the CAU and the address,
+    case-insensitively. It MUST NOT match the provider's station code.
+  - The search box MUST be named for what it matches ("Buscar por nombre, CAU o dirección").
 - **Rationale:** A search that matches a hidden field returns rows with no visible reason for the
-  match.
+  match. A box named for something else (it read "Buscar punto de suministro...") tells a
+  screen-reader user they are searching another list.
 - **Implements:** n/a
 - **Source:** #349
 
