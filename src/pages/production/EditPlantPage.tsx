@@ -9,6 +9,7 @@ import { PlantForm, type PlantFormValues } from "../../components/PlantForm/Plan
 import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
 import { usePlantActions } from "../../hooks/actions";
 import { useErrorDispatch } from "../../context/error.context";
+import { getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { EmptyState } from "../../components/EmptyState";
@@ -43,7 +44,8 @@ export const EditPlantPage: FC = () => {
     if ("ok" in result) {
       navigate("/production");
     } else {
-      errorDispatch("Ha habido un problema al editar la planta. Por favor, inténtalo más tarde");
+      // The refusal is worded by its code (UI-ERR-001, UI-ERR-005); without one, the generic text.
+      errorDispatch(getFirstApiErrorMessage(result.error, "Ha habido un problema al editar la planta. Por favor, inténtalo más tarde"));
     }
   };
 

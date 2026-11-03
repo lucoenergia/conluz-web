@@ -8,6 +8,7 @@ import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResour
 import { useCommunityActions } from "../../hooks/actions";
 import { PlantForm, type PlantFormValues } from "../../components/PlantForm/PlantForm";
 import { useErrorDispatch } from "../../context/error.context";
+import { getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
@@ -44,7 +45,8 @@ export const CreatePlantPage: FC = () => {
     if ("ok" in result) {
       navigate("/production");
     } else {
-      errorDispatch("Ha habido un problema al crear una nueva planta. Por favor, inténtalo más tarde");
+      // The refusal is worded by its code (UI-ERR-001, UI-ERR-005); without one, the generic text.
+      errorDispatch(getFirstApiErrorMessage(result.error, "Ha habido un problema al crear una nueva planta. Por favor, inténtalo más tarde"));
     }
   };
 

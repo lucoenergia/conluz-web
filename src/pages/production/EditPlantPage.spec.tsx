@@ -4,6 +4,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { apiError } from "../../test/apiError";
 import { mutation, query } from "../../test/queryState";
 import {
   buildPlant,
@@ -26,6 +27,12 @@ vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
 vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
   ...(await importOriginal()),
   useUpdatePlant: vi.fn(),
+}));
+
+const mockErrorDispatch = vi.fn();
+vi.mock(import("../../context/error.context"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useErrorDispatch: () => mockErrorDispatch,
 }));
 
 const mockNavigate = vi.fn();
@@ -137,5 +144,26 @@ describe("EditPlantPage", () => {
     setup({ canManage: true });
 
     expect(screen.getByDisplayValue(/ES0001/)).toBeInTheDocument();
+  });
+
+  it("UI-ERR-005 AC7 a 409 SUPPLY_ALREADY_HAS_PLANT shows the catalogue's text, not the server's message", async () => {
+    mockMutateAsync.mockRejectedValue(apiError(409, { code: "SUPPLY_ALREADY_HAS_PLANT" }));
+    const user = userEvent.setup();
+    setup({ canManage: true });
+
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalledWith("Este punto de suministro ya pertenece a otra planta."));
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it("keeps the generic message for a failure without an error detail (#253)", async () => {
+    mockMutateAsync.mockRejectedValue(apiError(500));
+    const user = userEvent.setup();
+    setup({ canManage: true });
+
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalledWith("Ha habido un problema al editar la planta. Por favor, inténtalo más tarde"));
   });
 });
