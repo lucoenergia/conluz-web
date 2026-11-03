@@ -101,7 +101,7 @@ describe("a refused plant deletion", () => {
     expect(message).toHaveTextContent("guarda el historial de reparto de la comunidad y hay que conservarla");
     expect(message).not.toHaveTextContent(/inténtalo/i);
     expect(router.requests.filter((request) => request.method === "DELETE")).toHaveLength(1);
-    expect(screen.getByRole("heading", { name: "Planta Norte" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Planta Norte" })).toBeInTheDocument();
     // Nothing was deleted, so the list was not read again.
     expect(plantsServed()).toBe(1);
   });
@@ -115,6 +115,6 @@ describe("a refused plant deletion", () => {
     expect(
       await screen.findByText("Ha habido un problema al eliminar la planta. Por favor inténtalo más tarde"),
     ).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Planta Norte" })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("link", { name: "Planta Norte" })).toBeInTheDocument());
   });
 });

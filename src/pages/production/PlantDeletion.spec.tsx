@@ -13,8 +13,8 @@ import { buildCommunity, buildCommunityCapabilities, buildPlant, buildPlantCapab
 
 /**
  * A plant deleted from the plant list (#311). The list refreshes once the
- * deletion succeeds, and the deleted plant's card leaves it -- so whatever
- * confirms the deletion must outlive the card.
+ * deletion succeeds, and the deleted plant's row leaves it -- so whatever
+ * confirms the deletion must outlive the row.
  *
  * Tier 2: the subject is what survives the list refetch, so the real action
  * hook and QueryClient run, with only the HTTP layer mocked.
@@ -53,7 +53,8 @@ const SOUTH = buildPlant({
   capabilities: buildPlantCapabilities({ canRead: true, canManage: true }),
 });
 
-const SUCCESS = "Planta NE=1 eliminada.";
+// Named by the plant's name, in guillemets, never by its provider code.
+const SUCCESS = "Planta «Planta Norte» eliminada.";
 
 function renderPlants(deleteNorth: () => unknown) {
   let deleted = false;
@@ -101,17 +102,32 @@ describe("deleting a plant from the plant list", () => {
     mockCustomInstance.mockReset();
   });
 
-  it("UI-PLT-009 announces the deletion after the plant's card has left the list", async () => {
+  it("UI-PLT-009 announces the deletion after the plant's row has left the list", async () => {
     const user = userEvent.setup();
     renderPlants(() => undefined);
 
     await deleteNorthPlant(user);
 
-    // The refetched list no longer has the plant, so its card is gone...
-    await waitFor(() => expect(screen.queryByRole("heading", { name: "Planta Norte" })).not.toBeInTheDocument());
-    expect(screen.getByRole("heading", { name: "Planta Sur" })).toBeInTheDocument();
+    // The refetched list no longer has the plant, so its row is gone...
+    await waitFor(() => expect(screen.queryByRole("link", { name: "Planta Norte" })).not.toBeInTheDocument());
+    expect(screen.getByRole("link", { name: "Planta Sur" })).toBeInTheDocument();
     // ...and the confirmation is still there, because the page owns it.
     expect(await screen.findByText(SUCCESS, VISIBLE)).toBeInTheDocument();
+  });
+
+  it("UI-PLT-009 names the deleted plant by its name, in guillemets, shown and announced", async () => {
+    const user = userEvent.setup();
+    renderPlants(() => undefined);
+
+    await deleteNorthPlant(user);
+
+    expect(await screen.findByText("Planta «Planta Norte» eliminada.", VISIBLE)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getAllByRole("status").map((region) => region.textContent)).toContain(
+        "Planta «Planta Norte» eliminada.",
+      ),
+    );
+    expect(screen.queryByText(/NE=1/)).not.toBeInTheDocument();
   });
 
   it("UI-PLT-009 announces no success when the deletion is refused", async () => {
@@ -127,6 +143,6 @@ describe("deleting a plant from the plant list", () => {
     ).toBeInTheDocument();
     // Neither shown nor announced: the live region carries the same text.
     expect(screen.queryAllByText(SUCCESS)).toEqual([]);
-    expect(screen.getByRole("heading", { name: "Planta Norte" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Planta Norte" })).toBeInTheDocument();
   });
 });

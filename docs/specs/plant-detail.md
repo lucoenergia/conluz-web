@@ -8,7 +8,7 @@
 | **Roles** | Any member of the plant's community (the plant's `canRead`). Agreements: a caller with the plant's `canListSharingAgreements`. Integration and "Siguiente paso": a caller with the plant's `canManage` |
 | **Domain rules** | `lucoenergia/conluz`: PLT-001 (UI-PLT-008) |
 | **Design reference** | Claude Design canvas "Conluz · Detalle de planta"; visual language of the member home ("Tu energía") |
-| **Last reviewed against code** | #311 |
+| **Last reviewed against code** | #349 |
 
 ## Purpose
 
@@ -148,18 +148,22 @@ keep those in [`formatting.md`](formatting.md).
 - **Implements:** PLT-001
 - **Source:** #290, lucoenergia/conluz#437
 
-### UI-PLT-009 — A deleted plant is confirmed by the page, after its card has gone
+### UI-PLT-009 — A deleted plant is confirmed by the page, after its row has gone
 
 - **Status:** Active
 - **Rule:**
   - After a successful deletion from the plant list, the page MUST confirm it with a success
-    message naming the plant's code ("Planta <código> eliminada."), shown and announced.
+    message naming the plant by its name, in guillemets ("Planta «<nombre>» eliminada."), shown
+    and announced.
   - The confirmation MUST still be there once the refreshed list no longer shows the plant.
   - A refused deletion MUST NOT show or announce the confirmation.
-- **Rationale:** The deletion refreshes the list, and the deleted plant's card leaves it. A
-  confirmation mounted in the card unmounted with it, so the success flashed for one round trip,
-  or never appeared. The page outlives the card, as it does for a supply deletion (UI-SUP-003).
-- **Source:** #311
+- **Rationale:** The deletion refreshes the list, and the deleted plant's row leaves it. A
+  confirmation mounted in the row would unmount with it, so the success would flash for one round
+  trip, or never appear. The page outlives the row, as it outlived the card, and as it does for a
+  supply deletion (UI-SUP-003). The provider's station code is a technical join key the row does
+  not show; the user knows the plant by its name, and the guillemets keep a name that already
+  starts with "Planta" readable.
+- **Source:** #311, #349
 
 ## States
 

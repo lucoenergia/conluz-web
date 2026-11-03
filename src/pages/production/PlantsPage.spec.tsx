@@ -7,7 +7,7 @@ import { buildCommunity, buildCommunityCapabilities, buildPlant, buildPlantCapab
 import type { CommunityCapabilitiesResponse, PlantCapabilitiesResponse } from "../../api/models";
 
 // Only the reads are replaced. The actions layer runs for real -- which is the
-// point: what is under test is that a card's menu and the page's buttons follow
+// point: what is under test is that a row's menu and the page's buttons follow
 // the capabilities on the payload, and stubbing the action hooks would mean
 // restating that rule in the test instead of exercising it. Mutation hooks are
 // inert until called, so leaving them real reaches no network.
@@ -80,7 +80,7 @@ describe("PlantsPage", () => {
       expect(screen.queryByRole("link", { name: NEW_BUTTON })).not.toBeInTheDocument();
     });
 
-    it("gets a card with no actions menu for a plant they may only read", () => {
+    it("gets a row with no actions menu for a plant they may only read", () => {
       setup({ community: { canCreatePlants: false }, plants: [plant({})] });
 
       expect(screen.queryByRole("button", { name: MENU_BUTTON })).not.toBeInTheDocument();
@@ -102,7 +102,7 @@ describe("PlantsPage", () => {
       expect(screen.getByRole("link", { name: NEW_BUTTON })).toHaveAttribute("href", "/production/new");
     });
 
-    it("gets a card with the actions menu", () => {
+    it("gets a row with the actions menu", () => {
       setup({ community: { canCreatePlants: true }, plants: [plant({ canManage: true })] });
 
       expect(screen.getByRole("button", { name: MENU_BUTTON })).toBeInTheDocument();
@@ -116,7 +116,7 @@ describe("PlantsPage", () => {
     });
   });
 
-  it("decides each card from its own plant, not from the community", () => {
+  it("decides each row from its own plant, not from the community", () => {
     setup({
       community: { canCreatePlants: true },
       plants: [

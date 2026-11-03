@@ -21,7 +21,7 @@
  */
 
 import { type Page } from "@playwright/test";
-import type { CommunityResponse, SupplyResponse } from "../../src/api/models";
+import type { CommunityResponse, PlantResponse, SupplyResponse } from "../../src/api/models";
 import { colors } from "../../src/theme/tokens";
 import {
   test,
@@ -34,6 +34,7 @@ import {
   FIXED_COMMUNITY_ID,
   FIXED_MEMBER_USER,
   FIXED_MEMBERSHIPS,
+  FIXED_PLANT,
   FIXED_PLANT_ID,
   FIXED_PLATFORM_ADMIN_USER,
   FIXED_PLATFORM_ADMINS,
@@ -56,6 +57,7 @@ import {
   navigateToSharingAgreementDetail,
   navigateToSharingAgreements,
   openPlantDetail,
+  PAGED_PLANTS,
   PAGED_SUPPLIES,
   PUBLISHED_AGREEMENT,
   seedActiveCommunity,
@@ -724,8 +726,8 @@ test.describe("#247: the historical analysis supply selector", () => {
  * under the name instead. Measured at exactly 1024px, the narrowest viewport
  * that shows the table, on each of the four list pages, with values long
  * enough to need folding. The long values are copies of the shared fixtures,
- * served to these tests alone. The supply list is measured as a community
- * admin, the caller whose table has the most columns (#348).
+ * served to these tests alone. The supply and plant lists are measured as a
+ * community admin, the caller whose table has the most columns (#348, #349).
  *
  * Desktop project only: the side menu is persistent from 768px, so it is open
  * at 1024px, and the real scrollbars this file runs with take their width.
@@ -769,6 +771,24 @@ test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side me
     },
   ];
 
+  // Every value a plant row shows, at its longest, and a plant still being set
+  // up, whose CAU and connection date read "Sin CAU" and "Sin fecha de conexión".
+  const longPlants: PlantResponse[] = [
+    {
+      ...FIXED_PLANT,
+      name: `Planta fotovoltaica ${LONG}`,
+      address: `${LONG}, Avenida de la Constitución Española 1978, Bloque 4, Escalera B, 03300 Orihuela`,
+      totalPower: 12840.25,
+    },
+    {
+      ...FIXED_PLANT,
+      id: "dddddddd-eeee-ffff-0000-333333333333",
+      name: `Cubierta del polideportivo ${LONG}`,
+      regulatoryCode: null,
+      connectionDate: null,
+    },
+  ];
+
   /** `minNameWidth`: the narrowest the name column may be on that page; below it, long names are cut. */
   const LIST_TABLES: { name: string; open: (page: Page) => Promise<void>; minNameWidth?: number }[] = [
     {
@@ -806,6 +826,30 @@ test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side me
         await page.goto("/supply-points");
         // The long rows, not the shared fixture: a budget over the wrong rows proves nothing.
         await expect(page.getByRole("link", { name: longSupplies[0].name ?? "" })).toBeVisible();
+      },
+    },
+    {
+      name: "/production",
+      // The CAU, the power and the connection date have columns of their own;
+      // the inverter sits under the name, so the name keeps room to be read.
+      minNameWidth: 180,
+      open: async (page) => {
+        await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+        await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+        // Registered last, so it wins for the community's listing.
+        await page.route(
+          (url) => url.pathname === `/api/v1/communities/${FIXED_COMMUNITY_ID}/plants`,
+          (route) =>
+            route.fulfill({
+              status: 200,
+              contentType: "application/json",
+              body: JSON.stringify({ ...PAGED_PLANTS, items: longPlants, totalElements: longPlants.length }),
+            }),
+        );
+        await page.goto("/production");
+        // The long rows, not the shared fixture: a budget over the wrong rows proves nothing.
+        await expect(page.getByRole("link", { name: longPlants[0].name })).toBeVisible();
+        await expect(page.getByText("Sin fecha de conexión")).toBeVisible();
       },
     },
     {

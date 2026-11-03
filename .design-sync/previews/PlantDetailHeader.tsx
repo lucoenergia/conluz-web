@@ -9,7 +9,7 @@ const plant = {
   name: "Planta Polideportivo",
   address: "Calle del Polideportivo 3, 46900 Torrent, Valencia",
   description: "Cubierta fotovoltaica del polideportivo municipal, 112 módulos de 410 W orientados al sur.",
-  inverterProvider: "Huawei",
+  inverterProvider: "HUAWEI",
   totalPower: 45.6,
   connectionDate: "2024-03-12",
   community: { id: "com-1", name: "Comunidad Energética de Torrent" },

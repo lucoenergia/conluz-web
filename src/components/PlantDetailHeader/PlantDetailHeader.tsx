@@ -9,6 +9,7 @@ import { DetailHeader, type DetailFact, type DetailKeyFacts } from "../DetailHea
 import { formatCalendarDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
 import { colors } from "../../theme/tokens";
 import { formatKilowatts } from "../../utils/formatKilowatts";
+import { inverterProviderLabel } from "../../utils/inverterProviderLabel";
 import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 
 export interface PlantDetailHeaderProps {
@@ -32,7 +33,7 @@ export const PlantDetailHeader: FC<PlantDetailHeaderProps> = ({ plant, isLoading
 
   const details: DetailFact[] = [
     { label: "Código de proveedor", value: plant?.providerCode || "-" },
-    { label: "Proveedor de inversor", value: plant?.inverterProvider || "-" },
+    { label: "Proveedor de inversor", value: plant?.inverterProvider ? inverterProviderLabel(plant.inverterProvider) : "-" },
     { label: "Fecha de conexión", value: formatCalendarDate(plant?.connectionDate ?? undefined, SHORT_CALENDAR_DATE) },
   ];
 
