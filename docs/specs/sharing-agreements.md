@@ -220,8 +220,8 @@ is in force today.
 
 - **Status:** Active
 - **Rule:** The agreement status MUST be shown with neutral or informational styling for every status
-  (Borrador, Vigente, Histórico), wherever it appears: the list, the detail header, the coefficient
-  history and the plant detail's agreements. It MUST NOT use warning or error colours. A selected
+  (Borrador, Vigente, Histórico), wherever it appears (for example the list, the detail header, the
+  coefficient history and the plant detail's agreements). It MUST NOT use warning or error colours. A selected
   status filter MUST use the brand colour, whatever the status.
 - **Rationale:** Draft, published and superseded are lifecycle states, not failures, and colour is
   reserved for failures.
