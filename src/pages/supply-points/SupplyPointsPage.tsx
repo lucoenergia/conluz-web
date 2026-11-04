@@ -308,7 +308,7 @@ export const SupplyPointsPage: FC = () => {
           <FilterChipsBar value={filterStatus} onChange={changeFilter} />
 
           {/* Search Bar */}
-          <SearchBar value={searchText} onChange={changeSearch} />
+          <SearchBar value={searchText} onChange={changeSearch} placeholder="Buscar punto de suministro..." />
           </Box>
         </Paper>
       </Box>

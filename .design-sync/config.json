@@ -26,11 +26,8 @@
     "AppCard": "../groups/layout.md",
     "AppAccordion": "../groups/layout.md",
     "LoadingAppAccordion": "../groups/layout.md",
-    "CardGrid": "../groups/layout.md",
-    "LoadingCardGrid": "../groups/layout.md",
     "SectionHeading": "../groups/layout.md",
     "DetailHeader": "../groups/layout.md",
-    "PaginatedList": "../groups/layout.md",
     "RecordList": "../groups/layout.md",
     "ResponsiveRecordList": "../groups/layout.md",
     "SupportCard": "../groups/layout.md",
@@ -38,7 +35,6 @@
     "SideMenu": "../groups/navigation.md",
     "MenuLinkItem": "../groups/navigation.md",
     "MenuTemplate": "../groups/navigation.md",
-    "DisplayMenu": "../groups/navigation.md",
     "PaginationOutlined": "../groups/navigation.md",
     "ListPagination": "../groups/navigation.md",
     "Logo": "../groups/navigation.md",
@@ -78,19 +74,16 @@
     "EnableSuccessModal": "../groups/dialogs.md",
     "CoefficientDialogErrorPanel": "../groups/dialogs.md",
     "CoefficientTargetSummary": "../groups/dialogs.md",
-    "SupplyCard": "../groups/supplies-and-plants.md",
     "SupplyDetailCard": "../groups/supplies-and-plants.md",
     "LoadingSupplyDetailCard": "../groups/supplies-and-plants.md",
     "SupplyDetailHeader": "../groups/supplies-and-plants.md",
     "SupplyStatsCard": "../groups/supplies-and-plants.md",
     "LoadingSupplyStatsCard": "../groups/supplies-and-plants.md",
-    "PlantCard": "../groups/supplies-and-plants.md",
     "PlantDetailHeader": "../groups/supplies-and-plants.md",
     "CoefficientHistory": "../groups/supplies-and-plants.md",
     "CoefficientActionsMenuItems": "../groups/supplies-and-plants.md",
     "SharingAgreementActionButton": "../groups/sharing-agreements.md",
     "SharingAgreementApplicationPanel": "../groups/sharing-agreements.md",
-    "SharingAgreementCard": "../groups/sharing-agreements.md",
     "SharingAgreementCoefficientCard": "../groups/sharing-agreements.md",
     "SharingAgreementCoefficientTableRow": "../groups/sharing-agreements.md",
     "SharingAgreementCoefficientSumGauges": "../groups/sharing-agreements.md",
@@ -98,7 +91,6 @@
     "SharingAgreementNextStepBanner": "../groups/sharing-agreements.md",
     "SharingAgreementOutgoingSupplies": "../groups/sharing-agreements.md",
     "SharingAgreementStatusChip": "../groups/sharing-agreements.md",
-    "SharingAgreementTimeline": "../groups/sharing-agreements.md",
     "ApplyCoefficientDateConfirmationModal": "../groups/dialogs.md",
     "CloseCoefficientConfirmationModal": "../groups/dialogs.md",
     "CorrectCoefficientDateConfirmationModal": "../groups/dialogs.md",
@@ -197,12 +189,6 @@
     "DetailHeader": {
       "cardMode": "column"
     },
-    "CardGrid": {
-      "cardMode": "column"
-    },
-    "LoadingCardGrid": {
-      "cardMode": "column"
-    },
     "SupportCard": {
       "cardMode": "column"
     },
@@ -218,9 +204,6 @@
     "SharingAgreementOutgoingSupplies": {
       "cardMode": "column"
     },
-    "SharingAgreementTimeline": {
-      "cardMode": "column"
-    },
     "SideMenu": {
       "cardMode": "single",
       "primaryStory": "CommunityAdmin",
@@ -229,10 +212,6 @@
     "MenuTemplate": {
       "cardMode": "single",
       "viewport": "480x360"
-    },
-    "DisplayMenu": {
-      "cardMode": "single",
-      "viewport": "640x360"
     },
     "GraphBar": {
       "cardMode": "column"
@@ -250,9 +229,6 @@
       "cardMode": "column"
     },
     "PlatformKpiCard": {
-      "cardMode": "column"
-    },
-    "PaginatedList": {
       "cardMode": "column"
     },
     "CoefficientActionsMenuItems": {

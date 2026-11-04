@@ -35,7 +35,6 @@ conluz-web/
 │   │   ├── AppCard/       # Base card primitive
 │   │   ├── Auth/
 │   │   ├── Breadcrumb/
-│   │   ├── CardGrid/
 │   │   ├── DetailHeader/  # Shared header for detail pages
 │   │   ├── ErrorBoundries/
 │   │   ├── Errors/
@@ -45,11 +44,9 @@ conluz-web/
 │   │   ├── Header/
 │   │   ├── Menu/
 │   │   ├── Modals/        # AppModal + confirmation/import modals
-│   │   ├── PaginatedList/
 │   │   ├── Pagination/
 │   │   ├── SearchBar/
 │   │   ├── Stat/
-│   │   ├── SupplyCard/
 │   │   ├── SupplyDetailCard/
 │   │   ├── SupplyForm/
 │   │   └── PageHeader/
@@ -357,7 +354,7 @@ fresh clone does not have it. The converter scripts that produce it come with Cl
    - `http://localhost:3000/.review.html`: every component card on one page, grouped (the closest
      thing to a Storybook overview).
    - `http://localhost:3000/components/<group>/<Name>/<Name>.html`: a single component, for example
-     `/components/supplies-and-plants/SupplyCard/SupplyCard.html`.
+     `/components/supplies-and-plants/SupplyDetailCard/SupplyDetailCard.html`.
    - Each component folder also holds `<Name>.d.ts` (its props) and `<Name>.prompt.md` (its usage
      notes).
 

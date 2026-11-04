@@ -8,7 +8,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 export interface SearchBarProps {
   value?: string;
   onChange?: (value: string) => void;
-  placeholder?: string;
+  placeholder: string;
   className?: string;
   /** Accessible name for the field. Defaults to the placeholder, which
    *  disappears on input and so cannot be the only label. */
@@ -18,7 +18,7 @@ export interface SearchBarProps {
 export const SearchBar: FC<SearchBarProps> = ({
   value = "",
   onChange,
-  placeholder = "Buscar punto de suministro...",
+  placeholder,
   className,
   label,
 }) => {

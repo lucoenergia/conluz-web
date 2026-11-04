@@ -23,7 +23,7 @@
 - `ConluzProvider` (`.design-sync/pkg/ConluzProvider.tsx`) mirrors `src/main.tsx`: ThemeProvider +
   StyledEngineProvider(enableCssLayer) + the shell's GlobalStyles + LocalizationProvider(dayjs, es) +
   MemoryRouter, plus an inert QueryClient and `CommunityProvider`. Without the last two, every
-  component that embeds a confirmation modal (SupplyCard, …) throws: those modals call
+  confirmation modal (`DeleteSupplyConfirmationModal`, …) throws: those modals call
   `useActiveCommunityName` → `useActiveCommunityDispatch` (throws outside CommunityProvider) and
   `useQueryClient`. No user is provided, so no query is ever enabled — community names fall back to
   "la comunidad activa".
@@ -59,7 +59,6 @@
   `radii`, `shadows`, `alphas`, `sxStyles`). React hooks from `"react"` are fine (shimmed).
 - Realistic Spanish content (the app's language): Valencian addresses, CUPS codes like
   `ES0031406912345678JN0F`, kWh/kW with comma decimals.
-- Cards that sit in `CardGrid` in the app look cramped below ~420px — give them `maxWidth: 420–440`.
 - Props typed with API models (`SharingAgreementResponse`, …) — build the object inline and cast
   `as any`; enum values are their string literals (`"DRAFT"`).
 - Overlays (menus, dialogs): render open via `useRef` + `useEffect` anchor, and set
@@ -67,7 +66,7 @@
 
 - Overlays: open them with a **callback ref** (`ref={setAnchor}`), not `useRef` + `useEffect`
   — the effect version misses the first captured cell (screenshot lands before Grow finishes).
-  Components with no open prop (DisplayMenu, AppAccordion, DetailHeader's details) are opened by
+  Components with no open prop (AppAccordion, DetailHeader's details) are opened by
   `.click()`ing their trigger from a wrapper ref in `useEffect`. MenuTemplate opens after 300 ms
   (opening immediately anchored it ~120 px low). In a flex wrapper add `alignItems: "flex-start"` or
   the trigger button stretches.
@@ -75,10 +74,8 @@
   Community-scoped dialogs read "Comunidad · cargando…" / "en la comunidad activa" — no user in the
   provider; expected.
 - Capture width is 900px; the default grid cell is ~650–670px wide and clips at ~490px tall. Page-width
-  sections (detail headers, CardGrid, SideMenu, sharing-agreement panels) use
+  sections (detail headers, SideMenu, sharing-agreement panels) use
   `cardMode: "column"`; previews use `width: "100%"`, never a fixed 900.
-- `CardGrid` fades/grows its cards in: pass `fadeTimeout={0}` and `animationDelay={0}` or a capture can
-  come out blank.
 - SideMenu: its paper is `position: fixed`; the preview wraps it in a `transform: translateZ(0)` frame so
   it stays in-cell at full height. Below 768px viewport it becomes a modal drawer. Selection comes from
   `useLocation()`; the harness router sits at `/`, so the preview's Inicio item points at `/`.
@@ -98,7 +95,7 @@
 - Not previewable statically: the banner/spine "Ver todos los pasos" expanded list.
 - ResponsiveRecordList and ListPagination pick their layout from the window width (1024px), so a
   card narrower than that still shows the table unless the viewport is narrow.
-- App facts noticed: PaginatedList and SupportCard have no usages in `src/`; PaginationOutlined passes
+- App facts noticed: SupportCard has no usages in `src/`; PaginationOutlined passes
   Tailwind classes via `className` (no effect, no Tailwind loaded); LoadingStat requires `label`.
 
 ## Known render warns

@@ -47,7 +47,7 @@ community context the dialogs read. There is no signed-in user, so community-sco
   table draws its actions column only while some row has actions. No row hover; only the title (the
   table's `title` column) may link to a detail page. The one inline control a row may carry is a selection checkbox in the leading slot
   (`ListTable`'s `selection`, `RecordListItem.selection`), named "Seleccionar <nombre>", with a
-  tri-state "select all"; the actions on the selection sit outside the rows. Card grids: `CardGrid` (pass `fadeTimeout={0}` for static mockups).
+  tri-state "select all"; the actions on the selection sit outside the rows.
 - Any action that changes data opens a confirmation dialog (`ConfirmationModal`,
   `DeleteConfirmationModal`, …); success is confirmed with the matching `*SuccessModal`, or with a
   toast when the item leaves the screen (deleting a supply: `DeleteSupplyConfirmationModal`).
@@ -58,7 +58,7 @@ community context the dialogs read. There is no signed-in user, so community-sco
 - A guide, an explanation or a confirmation is a `Notice` (a note; the result of an action is also
   announced through an `ActionStatus` mounted before it), never a `Mui.Alert`: an `Alert` is announced as urgent, so it is kept for errors and
   warnings the user must act on now.
-- Components that take API records (`SharingAgreementCard`, `PlantDetailHeader`, the coefficient
+- Components that take API records (`PlantDetailHeader`, the coefficient
   rows…) need realistic objects: their shapes are in `guidelines/data-shapes.md`.
   `selectSharingAgreementNextStep` / `selectSharingAgreementLifecycleView` derive the
   `SharingAgreementNextStepBanner` / `SharingAgreementLifecycleSpine` view as the app does.
@@ -71,7 +71,7 @@ and its role), `guidelines/data-shapes.md`, and each `components/<group>/<Name>/
 ## Example
 
 ```jsx
-const { ConluzProvider, Mui, Icons, SupplyCard } = window.ConluzWeb;
+const { ConluzProvider, Mui, Icons, RecordList } = window.ConluzWeb;
 
 <ConluzProvider initialPath="/supply-points">
   <Mui.Box sx={{ p: 3, bgcolor: "background.default" }}>
@@ -79,9 +79,21 @@ const { ConluzProvider, Mui, Icons, SupplyCard } = window.ConluzWeb;
       <Mui.Typography variant="h5" sx={{ fontWeight: 600 }}>Puntos de suministro</Mui.Typography>
       <Mui.Button variant="contained" startIcon={<Icons.Add />}>Añadir punto</Mui.Button>
     </Mui.Stack>
-    <SupplyCard id="s1" code="ES0031406912345678JN0F" name="Casa de Lucía"
-      address="Calle del Sol 14, 46900 Torrent, Valencia" enabled
-      lastConnection="Hace 2 horas" lastMeasurement={37} />
+    <RecordList
+      label="Puntos de suministro"
+      rowActions={{ label: (item) => `Más acciones para ${item.title}`, onClick: () => {} }}
+      items={[
+        {
+          id: "s1",
+          title: "Casa de Lucía",
+          status: <Mui.Chip label="Activo" color="success" size="small" />,
+          fields: [
+            { label: "CUPS", value: "ES0031406912345678JN0F" },
+            { label: "Dirección", value: "Calle del Sol 14, 46900 Torrent, Valencia" },
+          ],
+        },
+      ]}
+    />
   </Mui.Box>
 </ConluzProvider>
 ```
