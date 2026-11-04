@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import {
   getGetCurrentUserQueryKey,
   getGetPlatformAdminsQueryKey,
@@ -43,12 +43,12 @@ const refusal = (status: number, code?: string) => ({
   response: { status, data: { status, message: "refused", errors: code ? [{ message: "refused", code }] : [] } },
 });
 
-let mutateAsync: ReturnType<typeof vi.fn>;
-let inviteMutateAsync: ReturnType<typeof vi.fn>;
-let resendMutateAsync: ReturnType<typeof vi.fn>;
-let revokeInvitationMutateAsync: ReturnType<typeof vi.fn>;
-let inviteReset: ReturnType<typeof vi.fn>;
-let resendReset: ReturnType<typeof vi.fn>;
+let mutateAsync: Mock;
+let inviteMutateAsync: Mock;
+let resendMutateAsync: Mock;
+let revokeInvitationMutateAsync: Mock;
+let inviteReset: Mock;
+let resendReset: Mock;
 
 const CODE = "TEST-CODE";
 const INVITE_BODY = { personalId: "TEST-PERSONAL-ID", fullName: "TEST-FULL-NAME", email: "TEST@example.test" };

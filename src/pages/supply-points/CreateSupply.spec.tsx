@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
@@ -59,7 +59,7 @@ import { CreateSupplyPage } from "./CreateSupply";
 
 const OWNER = buildUser({ id: "u-ana", fullName: "Ana García", personalId: "12345678Z" });
 
-let mutateAsync: ReturnType<typeof vi.fn>;
+let mutateAsync: Mock;
 
 beforeEach(() => {
   vi.clearAllMocks();

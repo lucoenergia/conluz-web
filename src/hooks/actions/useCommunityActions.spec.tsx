@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import {
   getGetAllCommunitiesQueryKey,
   getGetCommunityByIdQueryKey,
@@ -76,9 +76,9 @@ const communityWith = (capabilities: Parameters<typeof buildCommunityCapabilitie
 const render = (community: ReturnType<typeof buildCommunity> | undefined) =>
   renderHookWithProviders(() => useCommunityActions().forCommunity(community));
 
-let mutateAsync: ReturnType<typeof vi.fn>;
-let enableDatadis: ReturnType<typeof vi.fn>;
-let disableDatadis: ReturnType<typeof vi.fn>;
+let mutateAsync: Mock;
+let enableDatadis: Mock;
+let disableDatadis: Mock;
 
 beforeEach(() => {
   mutateAsync = vi.fn().mockResolvedValue(undefined);

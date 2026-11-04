@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import {
   useDeleteMembership,
   useDisableMembership,
@@ -66,7 +66,7 @@ const membershipWith = (capabilities: Parameters<typeof buildMembershipCapabilit
 const communityWith = (capabilities: Parameters<typeof buildCommunityCapabilities>[0]) =>
   buildCommunity({ id: COMMUNITY_ID, capabilities: buildCommunityCapabilities(capabilities) });
 
-let mutateAsync: ReturnType<typeof vi.fn>;
+let mutateAsync: Mock;
 
 beforeEach(() => {
   mutateAsync = vi.fn().mockResolvedValue(undefined);

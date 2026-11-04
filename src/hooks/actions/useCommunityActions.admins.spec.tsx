@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import {
   getGetCommunityAdminsQueryKey,
   useDisableCommunityAdmin,
@@ -43,7 +43,7 @@ const communityWith = (capabilities: Parameters<typeof buildCommunityCapabilitie
 
 const refusal = (code: string) => ({ response: { status: 409, data: { errors: [{ code, message: "refused" }] } } });
 
-let mutateAsync: ReturnType<typeof vi.fn>;
+let mutateAsync: Mock;
 
 beforeEach(() => {
   mutateAsync = vi.fn().mockResolvedValue(ADMIN);

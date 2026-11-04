@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import {
   getGetAllCommunitiesQueryKey,
   useCreateCommunity,
@@ -37,7 +37,7 @@ function renderWith(platformCapabilities: PlatformCapabilitiesResponse | undefin
   return renderHookWithProviders(() => usePlatformActions());
 }
 
-let mutateAsync: ReturnType<typeof vi.fn>;
+let mutateAsync: Mock;
 
 beforeEach(() => {
   mutateAsync = vi.fn().mockResolvedValue(undefined);
