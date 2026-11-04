@@ -7,6 +7,7 @@ import {
   SAVINGS_SERIES,
   SELF_CONSUMPTION_SERIES,
   SURPLUS_SERIES,
+  TECHNICAL_TERM,
   type ConsumptionSeriesView,
   type SlotView,
 } from "./consumptionSeries";
@@ -16,8 +17,14 @@ import {
 
 export const PLANT_TOOLTIP_TEXT = "En el punto de la planta, «se fue a la red» siempre es 0 kWh.";
 
+/** A home term, and the technical term it carries muted after it (UI-HIS-027). */
+function pairedTermHtml(term: string): string {
+  const technical = TECHNICAL_TERM[term];
+  return technical ? `${term} <span style="color:${colors.text.secondary};">· ${technical}</span>` : term;
+}
+
 function tooltipRow(label: string, swatch: string, value: string): string {
-  return `<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;"><span style="display:flex;align-items:center;gap:6px;color:${colors.text.secondary};"><span style="width:8px;height:8px;border-radius:2px;background:${swatch};"></span>${label}</span><span style="font-weight:600;color:${colors.text.primary};">${value}</span></div>`;
+  return `<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;"><span style="display:flex;align-items:center;gap:6px;color:${colors.text.body};"><span style="flex:none;width:8px;height:8px;border-radius:2px;background:${swatch};"></span><span>${pairedTermHtml(label)}</span></span><span style="font-weight:600;color:${colors.text.primary};white-space:nowrap;">${value}</span></div>`;
 }
 
 /**

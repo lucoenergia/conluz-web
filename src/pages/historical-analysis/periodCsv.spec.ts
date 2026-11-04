@@ -28,7 +28,7 @@ const THREE_JULY_DAYS = period("2026-07-01T00:00:00+02:00", "2026-07-04T00:00:00
 const FOUR_MONTHS = period("2025-11-01T00:00:00+01:00", "2026-03-01T00:00:00+01:00", "monthly");
 
 const HEADER =
-  "fecha;de_la_comunidad_kwh;de_la_red_kwh;se_fue_a_la_red_kwh;ahorro_estimado_eur;precio_referencia_eur_kwh;nota_ahorro;datos";
+  "fecha;de_la_comunidad_autoconsumo_kwh;de_la_red_kwh;se_fue_a_la_red_excedentes_kwh;ahorro_estimado_eur;precio_referencia_eur_kwh;nota_ahorro;datos";
 const PRICE = { eurPerKWh: 0.1234 };
 const NOTE = "Estimado con un precio de 0,1234 €/kWh para la energía, sin impuestos.";
 

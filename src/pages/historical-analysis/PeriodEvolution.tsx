@@ -14,6 +14,7 @@ import {
   SAVINGS_SERIES,
   SELF_CONSUMPTION_SERIES,
   SURPLUS_SERIES,
+  TECHNICAL_TERM,
   toConsumptionSeriesView,
   type ConsumptionSeriesView,
 } from "./consumptionSeries";
@@ -27,7 +28,7 @@ const TITLE = { daily: "Tu energía día a día", monthly: "Tu energía mes a me
 const LOADING_LABEL = "Cargando la evolución de tu energía…";
 const LOAD_ERROR = "No se pudo cargar la evolución de tu energía. Comprueba tu conexión e inténtalo de nuevo.";
 const CAPTION =
-  "La barra apilada es tu consumo. La barra de al lado es energía asignada que no usaste: no forma parte de tu consumo.";
+  "La barra apilada es tu consumo. La barra morada, a su lado, es energía asignada que no usaste: no forma parte de tu consumo.";
 const MOBILE_HINT = "Desliza el gráfico para ver todo el periodo.";
 
 /** A legend group: its heading, then its swatches. */
@@ -104,11 +105,14 @@ const Evolution: FC<{
       <LegendGroup
         heading="Tu consumo"
         items={[
-          { label: SELF_CONSUMPTION_SERIES, swatch: swatch.solid(ENERGY_COLORS.community) },
+          { label: SELF_CONSUMPTION_SERIES, companion: TECHNICAL_TERM[SELF_CONSUMPTION_SERIES], swatch: swatch.solid(ENERGY_COLORS.community) },
           { label: GRID_IMPORT_SERIES, swatch: swatch.solid(ENERGY_COLORS.grid) },
         ]}
       />
-      <LegendGroup heading="Asignada que no usaste" items={[{ label: SURPLUS_SERIES, swatch: swatch.solid(ENERGY_COLORS.exported) }]} />
+      <LegendGroup
+        heading="Asignada que no usaste"
+        items={[{ label: SURPLUS_SERIES, companion: TECHNICAL_TERM[SURPLUS_SERIES], swatch: swatch.solid(ENERGY_COLORS.exported) }]}
+      />
     </Box>
     <Typography variant="body2" sx={{ color: colors.text.body }}>
       {CAPTION}

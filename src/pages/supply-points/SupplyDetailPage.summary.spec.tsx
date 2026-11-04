@@ -153,6 +153,8 @@ describe("UI-SUP-014 the supply detail page shows the latest published month, wi
       expect.stringContaining(formatKilowattHours(figures.energy.surplusKWh)),
       expect.stringContaining(formatEuros(figures.savings.amountEur!)),
     ]);
+    // The shared totals' words, the same as on the historical analysis page.
+    expect(totals[1]).toHaveTextContent("Lo que te vendrá en la factura");
   });
 
   it("UI-SUP-014 AC3 with no published month, says so in a neutral notice, with no figures", () => {

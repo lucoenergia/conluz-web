@@ -370,7 +370,7 @@ describe("UI-HIS-010 the totals are fields of the same response (#249)", () => {
     expect(tile("De la comunidad")).toHaveTextContent("485 kWh");
     expect(tile("De la comunidad")).toHaveTextContent("Energía asignada que usaste");
     expect(tile("De la red")).toHaveTextContent("670 kWh");
-    expect(tile("De la red")).toHaveTextContent("Comprada a tu comercializadora");
+    expect(tile("De la red")).toHaveTextContent("Lo que te vendrá en la factura");
     expect(tile("Se fue a la red")).toHaveTextContent("239 kWh");
     expect(tile("Se fue a la red")).toHaveTextContent("Se te asignó y no la usaste");
     expect(tile("Ahorro estimado")).toHaveTextContent("72,75 €");
@@ -402,8 +402,7 @@ describe("UI-HIS-010 the totals are fields of the same response (#249)", () => {
   it("UI-HIS-011 neither the card nor the totals name the technical terms outside the tooltip", () => {
     renderPage();
 
-    expect(card()).toBeInTheDocument();
-    expect(totals()).toBeInTheDocument();
-    expect(document.body.textContent).not.toMatch(/autoconsumo|autosuficiencia|excedentes|÷/);
+    // The charts, the table and the CSV may pair them with their home terms (UI-HIS-027); the card and the totals never do.
+    for (const block of [card(), totals()]) expect(block.textContent).not.toMatch(/autoconsumo|autosuficiencia|excedentes|÷/);
   });
 });

@@ -13,9 +13,10 @@ const LINE_END = "\r\n";
 
 const HEADER = [
   "fecha",
-  "de_la_comunidad_kwh",
+  // The technical terms ride in the column names, after their home terms (UI-HIS-027).
+  "de_la_comunidad_autoconsumo_kwh",
   "de_la_red_kwh",
-  "se_fue_a_la_red_kwh",
+  "se_fue_a_la_red_excedentes_kwh",
   "ahorro_estimado_eur",
   "precio_referencia_eur_kwh",
   "nota_ahorro",

@@ -92,6 +92,15 @@ export const GRID_IMPORT_SERIES = "De la red";
 export const SURPLUS_SERIES = "Se fue a la red";
 export const SAVINGS_SERIES = "Ahorro estimado";
 
+/**
+ * The technical term a home term carries after it, in muted type, wherever
+ * the page pairs them (UI-HIS-027). A technical term never appears alone.
+ */
+export const TECHNICAL_TERM: Readonly<Partial<Record<string, string>>> = {
+  [SELF_CONSUMPTION_SERIES]: "autoconsumo",
+  [SURPLUS_SERIES]: "excedentes",
+};
+
 /** The stack the consumption bar is made of, and the separate bar beside it. */
 export const CONSUMPTION_GROUP = "consumption";
 export const ASSIGNED_UNUSED_GROUP = "assignedUnused";

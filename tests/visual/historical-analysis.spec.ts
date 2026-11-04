@@ -36,7 +36,7 @@ import {
 } from "./fixtures";
 
 const ENERGY_CAPTION =
-  "La barra apilada es tu consumo. La barra de al lado es energía asignada que no usaste: no forma parte de tu consumo.";
+  "La barra apilada es tu consumo. La barra morada, a su lado, es energía asignada que no usaste: no forma parte de tu consumo.";
 
 /** A member in the fixed community, with the shared mocks; a test adds its own routes after this, so they win. */
 async function openAsMember(page: Page) {
