@@ -7,13 +7,14 @@
 | **Routes** | `/historical-analysis` |
 | **Roles** | A caller who may read the active community (`canRead`): members and community admins |
 | **Domain rules** | EPR-001, EPR-003, EPR-004 (lucoenergia/conluz#409); SEM-001 (lucoenergia/conluz#408); SEM-002, SEM-003, SEM-004, ENM-006, ENM-007, ENM-008 (lucoenergia/conluz#411); MCS-001, MCS-002 (lucoenergia/conluz#410); ADR-0005 in lucoenergia/conluz |
-| **Design reference** | Claude Design round 2 copy deck; round 3 copy deck for the period (#248); the member consumption analysis design, option A, for the evolution charts (#250) and the data table and CSV (#251) |
-| **Last reviewed against code** | #252 |
+| **Design reference** | Claude Design round 2 copy deck; round 3 copy deck for the period (#248); the member consumption analysis design, option A, for the evolution charts (#250) and the data table and CSV (#251); its round 3, for the mobile charts and the paired terms (#361) |
+| **Last reviewed against code** | #361 |
 
 Scope: the page shell, its menu entry and its supply selector (#247), the period: its anchor,
 selector, custom range picker, header and query string (#248), the period's card and totals
 (#249), the energy and savings evolution charts (#250), and the data table with its CSV download
-(#251), and a community admin's way in to a supply of the community from its detail page (#252).
+(#251), and a community admin's way in to a supply of the community from its detail page (#252);
+the mobile charts and the terms paired across the charts, the table and the CSV (#361).
 All of them read the period through `useHistoricalPeriod`
 (`src/pages/historical-analysis/HistoricalPeriodContext.tsx`).
 
@@ -209,12 +210,16 @@ here too, and opens another member's supply from its detail page, one at a time.
   coverage of their consumption, from `selfSufficiencyRatio`, MUST be expressed as a sentence of
   the form "Eso cubrió {n} de cada 10 kWh de tu consumo", following the fraction rule (UI-HIS-012),
   at body size with only the fraction emphasised. The words "autoconsumo", "autosuficiencia" and
-  "excedentes", and any formula, MUST appear only in the tooltip of the card's caption.
+  "excedentes", and any formula, MUST NOT appear on the period card or the totals, except in the
+  tooltip of the card's caption. Elsewhere on the page, "autoconsumo" and "excedentes" MAY appear
+  only as UI-HIS-027 allows.
 - **Rationale:** Two percentages of equal weight invite comparing numbers that measure different
   things; one figure and its consequence in words read without knowing either technical term. The
-  terms stay one tap away for whoever knows them.
+  terms stay one tap away for whoever knows them. The card and the totals are read first, by every
+  member, so they keep the home terms alone. The charts, the table and the file are read by members
+  who look further, and meet the technical terms there next to the home terms (UI-HIS-027).
 - **Implements:** n/a
-- **Source:** #249
+- **Source:** #249, #361
 
 ### UI-HIS-012 — The headline and the fraction never state a share the ratio does not reach
 
@@ -328,28 +333,33 @@ here too, and opens another member's supply from its detail page, one at a time.
 - **Rule:** The energy chart MUST show each slot's consumption as one bar, with community energy
   stacked with grid energy. It MUST show the assigned energy that went to the grid unused as a
   separate bar beside it. The legend MUST group the series into the consumption bar and the unused
-  assigned energy, and a caption MUST say that the separate bar is not part of the caller's
-  consumption.
+  assigned energy. A caption MUST say that the separate bar is not part of the caller's
+  consumption, and where it sits: beside the consumption bar from `sm` up, and beneath it below
+  `sm` (UI-HIS-025).
 - **Rationale:** Energy that went to the grid unused is not part of what the caller consumed.
   Stacked onto the consumption bar, it would overstate consumption. The legend and the caption say
-  so in words, rather than leaving the difference to the bars' positions.
+  so in words, rather than leaving the difference to the bars' positions. The two layouts put the
+  bar in different places, and a caption naming the wrong place sends the reader looking for a bar
+  that is not there.
 - **Implements:** n/a
-- **Source:** #250, design option A chosen by the maintainer
+- **Source:** #250, design option A chosen by the maintainer; #361
 
 ### UI-HIS-018 — Bucket labels are calendar dates read from the bucket's date
 
 - **Status:** Active
 - **Rule:** Bucket labels MUST be calendar dates read from the bucket's `date` string (`yyyy/MM/dd`),
-  formatted in `APP_TIME_ZONE`, on the axis and in the tooltips. A `date` MUST never be parsed as
-  an instant, and the device's clock and zone MUST never be read. Below `sm`, each chart MUST keep
-  a width its slots need and scroll sideways inside its card, with a hint saying so, while the page
-  MUST NOT scroll sideways. The axis MUST label only every Nth slot, never rotated, so that at 62
-  daily slots on 390 px no two labels overlap.
+  formatted in `APP_TIME_ZONE`, on the axis, in the tooltips, on the rows and in the row detail. A
+  `date` MUST never be parsed as an instant, and the device's clock and zone MUST never be read.
+  From `sm` up, each chart MUST keep the width its slots need and scroll sideways inside its card
+  when the card is narrower, and the axis MUST label only every Nth slot, never rotated, so that no
+  two labels overlap. Below `sm`, every row MUST carry its own label (UI-HIS-025).
 - **Rationale:** A bucket's `date` is a day in the community's calendar. Read as a midnight in the
   device's zone, it lands on the previous day east of Madrid (Kiritimati), and the label and the
-  slot it is matched to move with it. A label on every one of 62 days does not fit at 390 px.
+  slot it is matched to move with it. A label on every one of 62 days does not fit along an axis
+  narrower than the slots need. Below `sm` the charts are rows, so every slot's label fits, and the
+  page scrolls only vertically.
 - **Implements:** n/a
-- **Source:** #250
+- **Source:** #250, #361
 
 ### UI-HIS-019 — The series is requested for the selected scope, granularity and bounds
 
@@ -388,15 +398,18 @@ here too, and opens another member's supply from its detail page, one at a time.
 - **Status:** Active
 - **Rule:** The data table MUST have exactly one row per slot of the evolution charts, in the
   charts' axis order, with each slot's state in the same words the charts use; a gap MUST show no
-  value.
+  value. Each value column's header (below `sm`, each card's label) MUST name the column's unit, and
+  its cells, the totals row included, MUST hold the bare figure without its unit. The headers and
+  the labels pair the terms as UI-HIS-027 says.
 - **Rationale:** The table is the accessible alternative to the charts, so it must say what they
   draw, slot for slot. Reading the rows from the charts' own slots, and the words from the one
   module that holds every state's short and long form (`slotStateText.ts`), keeps the two from
   drifting apart. A gap written as a figure would read as a measured 0, which UI-HIS-015 forbids on
-  the charts for the same reason.
+  the charts for the same reason. A unit stated once per column leaves the cells as figures that
+  line up and compare at a glance; repeated on every row, it crowds them.
 - **Implements:** MCS-001 and MCS-002 (lucoenergia/conluz#410), through the slot states of
   UI-HIS-015.
-- **Source:** #251, #250
+- **Source:** #251, #250, #361
 
 ### UI-HIS-022 — The table's totals row is the energy metrics' totals
 
@@ -416,14 +429,16 @@ here too, and opens another member's supply from its detail page, one at a time.
 - **Status:** Active
 - **Rule:** The CSV MUST contain the same rows as the table, with the API's unrounded values and a
   decimal comma, empty cells on a gap, the slot's state in `datos`, and, when `estimatedPrice` is
-  present, the estimated price and its note on every line.
+  present, the estimated price and its note on every line. The columns that hold community energy
+  and unused assigned energy MUST carry both terms in their names (UI-HIS-027).
 - **Rationale:** A file taken away must carry the measurements, not the screen's rounding of them,
   and must keep a gap distinct from a measured 0. A spreadsheet in Spanish reads `;`-separated
   columns with a decimal comma, and needs the UTF-8 byte order mark to keep accents. The price and
   its note repeat on every line so that any row copied out of the file still says its savings are
-  an estimate; both stay empty without `estimatedPrice`, keyed as UI-HIS-020 keys the legend.
+  an estimate; both stay empty without `estimatedPrice`, keyed as UI-HIS-020 keys the legend. A
+  file is read without the page's labels, so its column names carry the same pairs the page shows.
 - **Implements:** n/a
-- **Source:** #251
+- **Source:** #251, #361
 
 ### UI-HIS-024 — The CSV file name is the scope's ASCII slug and the period's first and last day
 
@@ -436,6 +451,52 @@ here too, and opens another member's supply from its detail page, one at a time.
   half-open `endDate`, so the name never states a day the file has no row for.
 - **Implements:** EPR-001 (lucoenergia/conluz#409), under which a period is half-open.
 - **Source:** #251
+
+### UI-HIS-025 — Below sm, the evolution charts are rows, one per slot
+
+- **Status:** Active
+- **Rule:** Below `sm`, each evolution chart MUST be a list of rows, one per slot of the axis
+  (UI-HIS-016), in axis order, with horizontal bars on one scale per chart. The energy row MUST show
+  the consumption bar, community energy stacked with grid energy, with the unused assigned energy
+  as a thinner bar beneath it, and the slot's consumption as a figure. The savings row MUST show
+  one bar and the slot's savings. A gap MUST read "Sin datos" with its mark and no figure; a
+  measured zero and a partial slot MUST carry their marks (UI-HIS-015). Neither the page nor a
+  chart MAY scroll sideways.
+- **Rationale:** At phone width a vertical-bar chart of 62 days fits only by scrolling it sideways,
+  and a member then sees a few days at a time. Rows read top to bottom, like the rest of the page.
+  The consumption figure is the bucket's community energy plus its grid energy: the bucket carries
+  no total, and that sum is the bar the chart already draws. The figure is bare, because the scale
+  above the rows names the unit.
+- **Implements:** MCS-001 and MCS-002 (lucoenergia/conluz#410), through the slot states of
+  UI-HIS-015.
+- **Source:** #361, the member consumption analysis design (copy deck `chart.mobile`)
+
+### UI-HIS-026 — Below sm, activating an energy row opens its detail beneath it
+
+- **Status:** Active
+- **Rule:** Below `sm`, each energy row MUST be a button, named by its date and value, that opens
+  the slot's detail just below it and reports its state through `aria-expanded`. The detail MUST
+  give what the tooltip gives (UI-HIS-015): the date, the state, the plant line for a plant's own
+  supply, and the figures except on a gap. Activating the open row MUST close it, and opening a row
+  MUST close any other.
+- **Rationale:** A phone has no hover, so the tooltip's content needs a tap. One open row at a time
+  keeps the list a list rather than a stack of open details.
+- **Implements:** n/a
+- **Source:** #361, the member consumption analysis design (copy deck `chart.mobile`)
+
+### UI-HIS-027 — A technical term accompanies its home term, never stands alone
+
+- **Status:** Active
+- **Rule:** In the energy legend, the tooltips and the row detail, and the data table's headers and
+  cards, "autoconsumo" MUST follow "De la comunidad", and "excedentes" MUST follow "Se fue a la
+  red", in muted type. Neither MAY appear alone or in its home term's place. The CSV columns carry
+  both terms in their names (UI-HIS-023).
+- **Rationale:** Members read the home terms first. Members who know the technical terms, or meet
+  them on a bill, find them next to the words they explain. Alone, a technical term would need the
+  explanation that the home term already is.
+- **Implements:** n/a
+- **Source:** #361, the member consumption analysis design ("El término de la home va primero y
+  manda; el técnico le acompaña en gris, nunca solo ni en su lugar.")
 
 ## States
 
@@ -452,7 +513,7 @@ here too, and opens another member's supply from its detail page, one at a time.
 | Supplies, period, figures | The selectors, the period header, the card in the state its status gives (UI-HIS-013) and the totals | Choosing a supply or a period |
 | Supplies, period, series pending | Under the figures, a placeholder where the evolution charts go (UI-HIS-019) | Choosing a supply or a period |
 | Supplies, period, series failed | Under the figures, an error with "Reintentar" (UI-HIS-019) | Choosing a supply or a period, retrying |
-| Supplies, period, series | Under the figures, the evolution card: coverage line, notices, the energy chart (UI-HIS-017) and the savings chart, every slot complete, measured zero, gap or partial (UI-HIS-015), and the marks' key | Choosing a supply or a period; hovering a slot for its tooltip |
+| Supplies, period, series | Under the figures, the evolution card: coverage line, notices, the energy chart (UI-HIS-017) and the savings chart, every slot complete, measured zero, gap or partial (UI-HIS-015), and the marks' key; below `sm`, the same as rows (UI-HIS-025) | Choosing a supply or a period; hovering a slot for its tooltip; below `sm`, activating an energy row for its detail (UI-HIS-026) |
 | Supplies, period, table pending | Under the evolution card, a placeholder where the data table goes, and "Descargar CSV" disabled | Choosing a supply or a period |
 | Supplies, period, table failed | Under the evolution card, the neutral line "La tabla estará disponible cuando se carguen tus datos." and "Descargar CSV" disabled; the failure itself is reported, with "Reintentar", only by the period card (UI-HIS-010) or the evolution charts (UI-HIS-019) that own the request | Choosing a supply or a period; retrying from the block that reports the failure |
 | Supplies, period, table | Under the evolution card, "Tus datos": a row per slot (UI-HIS-021), the totals row (UI-HIS-022), seven rows until "Ver todos"; below `sm`, a card per row | Choosing a supply or a period; "Ver todos" / "Ver menos"; "Descargar CSV" (UI-HIS-023, UI-HIS-024) |

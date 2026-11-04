@@ -4,11 +4,11 @@
 | --- | --- |
 | **Prefix** | `UI-FMT` |
 | **Status** | Active |
-| **Routes** | Every route that shows a figure with a unit, a date or a time chart: `/`, `/production`, `/production/:plantId`, `/supply-points`, `/supply-points/:supplyPointId`, and the sharing agreement screens |
+| **Routes** | Every route that shows a figure with a unit, a date or a time chart: `/`, `/production`, `/production/:plantId`, `/supply-points`, `/supply-points/:supplyPointId`, `/historical-analysis`, and the sharing agreement screens |
 | **Roles** | Every signed-in caller |
 | **Domain rules** | n/a |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #255 |
+| **Last reviewed against code** | #361 |
 
 ## Purpose
 
@@ -26,13 +26,17 @@ values a screen shows.
   shared formatting helpers in `src/utils/` (`formatKilowattHours`, `formatAverageKilowattHours`,
   `formatKilowatts`, `formatPercentage`, `formatEuros`, `formatEurosPerKilowattHour`). Components MUST
   NOT format a displayed figure with `toFixed` or by interpolating the raw number. This includes chart
-  axis labels and tooltips.
+  axis labels and tooltips. A figure whose unit is stated once for its column, in a table header,
+  MUST be formatted through the amount helpers (`formatKilowattHourAmount`, `formatEuroAmount`), which
+  write the number exactly as the unit-bearing helpers do, without the unit.
 - **Rationale:** One formatting path keeps the decimal separator, the precision and the unit spacing
   consistent: a figure built by hand rendered "12.57 kWh" where the shared formatter writes "12,57 kWh". It is
   also the single place to make locale-aware later. A helper's input scale is part of its contract:
-  `formatPercentage` takes a 0–1 share, so a caller holding a 0–100 number divides it first.
+  `formatPercentage` takes a 0–1 share, so a caller holding a 0–100 number divides it first. A bare
+  figure written by hand would drift from the same figure written with its unit elsewhere on the
+  page.
 - **Implements:** n/a
-- **Source:** #255
+- **Source:** #255, #361
 
 ### UI-FMT-002 — Dates and chart time labels are in the app time zone
 
