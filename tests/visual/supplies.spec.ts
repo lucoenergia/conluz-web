@@ -4,6 +4,7 @@
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
 
+import type { Page } from "@playwright/test";
 import {
   test,
   expect,
@@ -21,6 +22,18 @@ import {
   seedActiveCommunity,
   stabilizePage,
 } from "./fixtures";
+
+/**
+ * The supply detail captures picture the latest published month's summary
+ * (#252); asserted first, so a fixture that empties it fails here instead of
+ * being regenerated into a baseline.
+ */
+async function expectLatestMonthSummary(page: Page) {
+  const summary = page.getByRole("region", { name: "Último mes publicado" });
+  await expect(summary.getByRole("heading", { name: "Datos de agosto de 2026" })).toBeVisible();
+  await expect(summary.getByRole("region", { name: "De la energía que te tocó" }).getByText("Usaste el 45 %")).toBeVisible();
+  await expect(summary.getByRole("list", { name: "Totales del periodo" }).getByRole("listitem")).toHaveCount(4);
+}
 
 test.describe("Visual baselines", () => {
   // Member-fixture tests: home, supply-points, supply-detail, supply modals
@@ -40,17 +53,17 @@ test.describe("Visual baselines", () => {
   });
 
   test("supply detail page", async ({ page }) => {
-    // Frozen as before #252, when the capture included a date input that
-    // defaulted to today; the page no longer reads the clock.
+    // The page reads no clock since #252; frozen anyway, so no capture can encode the day it ran.
     await freezeClock(page);
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
     await mockAllApiRoutes(page, FIXED_MEMBER_USER);
 
     await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
+    await expectLatestMonthSummary(page);
     await stabilizePage(page);
 
-    // Layout subject: the main region, with the app bar masked (see mainRegion).
+    // Layout subject: the supply's record with its latest-month summary (#252), with the app bar hidden (see mainRegion).
     await expect(page).toHaveScreenshot("supply-detail.png", await mainRegion(page));
   });
 
@@ -276,8 +289,7 @@ test.describe("Visual baselines", () => {
   // caller who may delete, which moves the title's wrapping on a phone. The
   // member capture above is the header without it.
   test("supply detail page (community admin)", async ({ page }) => {
-    // Frozen as before #252, when the capture included a date input that
-    // defaulted to today; the page no longer reads the clock.
+    // The page reads no clock since #252; frozen anyway, so no capture can encode the day it ran.
     await freezeClock(page);
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
@@ -285,9 +297,10 @@ test.describe("Visual baselines", () => {
 
     await page.goto(`/supply-points/${FIXED_SUPPLY_ID}`);
     await expect(page.getByRole("button", { name: "Más opciones del punto de suministro" })).toBeVisible();
+    await expectLatestMonthSummary(page);
     await stabilizePage(page);
 
-    // Layout subject: the main region, with the app bar hidden (see mainRegion).
+    // Layout subject: the supply's record with its latest-month summary (#252), with the app bar hidden (see mainRegion).
     await expect(page).toHaveScreenshot("supply-detail-admin.png", await mainRegion(page));
   });
 });
