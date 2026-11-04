@@ -27,26 +27,41 @@ function tooltipRow(label: string, swatch: string, value: string): string {
   return `<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;"><span style="display:flex;align-items:center;gap:6px;color:${colors.text.body};"><span style="flex:none;width:8px;height:8px;border-radius:2px;background:${swatch};"></span><span>${pairedTermHtml(label)}</span></span><span style="font-weight:600;color:${colors.text.primary};white-space:nowrap;">${value}</span></div>`;
 }
 
+/** One figure of a slot's detail: its series' home term, swatch and value. */
+export interface SlotFigure {
+  term: string;
+  swatch: string;
+  value: string;
+}
+
 /**
- * A slot in words: its date, its state, its figures when it has any, and the
- * plant line when the selected supply is a plant's own. Both charts show the
- * same tooltip, so a reader gets every figure of the slot from either.
+ * A slot in words: its date, its state, the plant line when the selected
+ * supply is a plant's own, and its figures when it has any. The tooltip and,
+ * below sm, a row's detail (UI-HIS-026) both say exactly this.
  */
-export function slotTooltip(slot: SlotView, isPlantSupply: boolean): string {
-  const line = (text: string) => `<div style="font-size:12px;color:${colors.text.body};margin-bottom:4px;">${text}</div>`;
+export function slotDetail(slot: SlotView, isPlantSupply: boolean): { title: string; lines: string[]; figures: SlotFigure[] } {
   const rows: [string, string, string | null][] = [
     [SELF_CONSUMPTION_SERIES, ENERGY_COLORS.community, slot.selfConsumptionText],
     [GRID_IMPORT_SERIES, ENERGY_COLORS.grid, slot.gridImportText],
     [SURPLUS_SERIES, ENERGY_COLORS.exported, slot.surplusText],
     [SAVINGS_SERIES, SAVINGS_COLOR, slot.savingsText],
   ];
-  const figures = rows.flatMap(([label, swatch, value]) => (value === null ? [] : [tooltipRow(label, swatch, value)])).join("");
+  return {
+    title: slot.name,
+    lines: isPlantSupply ? [slot.stateText, PLANT_TOOLTIP_TEXT] : [slot.stateText],
+    figures: rows.flatMap(([term, swatch, value]) => (value === null ? [] : [{ term, swatch, value }])),
+  };
+}
+
+/** The slot's detail as the charts' tooltip. Both charts show the same one, so a reader gets every figure of the slot from either. */
+export function slotTooltip(slot: SlotView, isPlantSupply: boolean): string {
+  const { title, lines, figures } = slotDetail(slot, isPlantSupply);
+  const line = (text: string) => `<div style="font-size:12px;color:${colors.text.body};margin-bottom:4px;">${text}</div>`;
   return (
     `<div style="padding:8px 12px;max-width:280px;white-space:normal;background:${colors.background.paper};box-shadow:${shadows.dropdown};">` +
-    `<div style="font-weight:600;margin-bottom:4px;color:${colors.text.primary};">${slot.name}</div>` +
-    line(slot.stateText) +
-    (isPlantSupply ? line(PLANT_TOOLTIP_TEXT) : "") +
-    figures +
+    `<div style="font-weight:600;margin-bottom:4px;color:${colors.text.primary};">${title}</div>` +
+    lines.map(line).join("") +
+    figures.map(({ term, swatch, value }) => tooltipRow(term, swatch, value)).join("") +
     `</div>`
   );
 }

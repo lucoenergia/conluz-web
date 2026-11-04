@@ -10,7 +10,7 @@
  * Fixtures, route mocks and navigation helpers live in ./fixtures.
  */
 
-import type { Locator, Page } from "@playwright/test";
+import type { Locator, Page, TestInfo } from "@playwright/test";
 import {
   test,
   expect,
@@ -35,8 +35,13 @@ import {
   stabilizePage,
 } from "./fixtures";
 
-const ENERGY_CAPTION =
-  "La barra apilada es tu consumo. La barra morada, a su lado, es energía asignada que no usaste: no forma parte de tu consumo.";
+/** The energy chart's caption on each project: it says where the separate bar sits (UI-HIS-017). */
+const ENERGY_CAPTION = {
+  desktop: "La barra apilada es tu consumo. La barra morada, a su lado, es energía asignada que no usaste: no forma parte de tu consumo.",
+  mobile: "La barra gruesa es tu consumo. La fina morada, debajo, es energía asignada que no usaste: no forma parte de tu consumo.",
+} as const;
+
+const isMobile = (testInfo: TestInfo) => testInfo.project.name === "mobile";
 
 /** A member in the fixed community, with the shared mocks; a test adds its own routes after this, so they win. */
 async function openAsMember(page: Page) {
@@ -47,8 +52,17 @@ async function openAsMember(page: Page) {
   await mockAllApiRoutes(page, FIXED_MEMBER_USER);
 }
 
-/** Both evolution charts have drawn: ApexCharts' SVG has no role or name of its own. */
-async function expectChartsDrawn(evolution: Locator) {
+/**
+ * Both evolution charts have drawn: on desktop, ApexCharts' SVG, which has no
+ * role or name of its own; below sm, the rows of both charts (UI-HIS-025).
+ */
+async function expectChartsDrawn(evolution: Locator, testInfo: TestInfo, rows: number) {
+  if (isMobile(testInfo)) {
+    await expect(evolution.getByRole("list", { name: /^Tu energía por / }).getByRole("button")).toHaveCount(rows);
+    await expect(evolution.getByRole("list", { name: /^Tu ahorro estimado por / }).getByRole("listitem")).toHaveCount(rows);
+    await expect(evolution.locator("svg.apexcharts-svg")).toHaveCount(0);
+    return;
+  }
   await expect(evolution.locator("svg.apexcharts-svg")).toHaveCount(2);
 }
 
@@ -62,8 +76,9 @@ function innermostContaining(page: Page, ...parts: Locator[]): Locator {
 }
 
 test.describe("Visual baselines", () => {
-  // Risk: the composed page -- the period card, the totals, both charts with the grouped legend and caption, the table.
-  test("UI-HIS-017 'Todos mis puntos', latest published month, complete data", async ({ page }) => {
+  // Risk: the composed page -- the period card, the totals, both charts with the grouped, paired legend and caption, the table.
+  // On mobile, the charts as rows (UI-HIS-025).
+  test("UI-HIS-017 'Todos mis puntos', latest published month, complete data", async ({ page }, testInfo) => {
     await openAsMember(page);
     await mockHistoricalMembership(page, FIXED_MEMBER_USER, { anchor: MEMBER_ENERGY_METRICS, period: MEMBER_ENERGY_METRICS });
     await page.goto("/historical-analysis");
@@ -74,8 +89,8 @@ test.describe("Visual baselines", () => {
     const evolution = page.getByRole("region", { name: "Tu energía día a día" });
     await expect(evolution.getByRole("group", { name: "Tu consumo" })).toBeVisible();
     await expect(evolution.getByRole("group", { name: "Asignada que no usaste" })).toBeVisible();
-    await expect(evolution.getByText(ENERGY_CAPTION)).toBeVisible();
-    await expectChartsDrawn(evolution);
+    await expect(evolution.getByText(ENERGY_CAPTION[isMobile(testInfo) ? "mobile" : "desktop"])).toBeVisible();
+    await expectChartsDrawn(evolution, testInfo, 31);
     await expect(page.getByRole("region", { name: "Tus datos" })).toBeVisible();
     await stabilizePage(page);
 
@@ -83,8 +98,8 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("historical-analysis-latest-month.png", await mainRegion(page));
   });
 
-  // Risk: the gap and partial marks, both notices and the monthly axis labels of the evolution card.
-  test("UI-HIS-015 'Últimos 12 meses' with a gap month and a partial month", async ({ page }) => {
+  // Risk: the gap and partial marks, both notices and the monthly axis labels of the evolution card; on mobile, the row labels.
+  test("UI-HIS-015 'Últimos 12 meses' with a gap month and a partial month", async ({ page }, testInfo) => {
     await openAsMember(page);
     await mockHistoricalMembership(page, FIXED_MEMBER_USER, {
       anchor: MEMBER_ENERGY_METRICS,
@@ -97,7 +112,7 @@ test.describe("Visual baselines", () => {
     await expect(evolution.getByRole("note").filter({ hasText: /^Faltan datos .*diciembre de 2025/ })).toBeVisible();
     await expect(evolution.getByRole("note").filter({ hasText: /^En febrero de 2026 solo hay datos de 1 de tus 2 puntos/ })).toBeVisible();
     await expect(evolution.getByRole("list", { name: "Marcas de estado" })).toBeVisible();
-    await expectChartsDrawn(evolution);
+    await expectChartsDrawn(evolution, testInfo, 12);
     await stabilizePage(page);
 
     await expect(evolution).toHaveScreenshot("historical-analysis-last-12-evolution.png", await hideAppBar(page));
@@ -121,7 +136,7 @@ test.describe("Visual baselines", () => {
     // The desktop selector is a select; below sm it is a button that opens a sheet.
     const trigger = page.getByRole(testInfo.project.name === "mobile" ? "button" : "combobox", { name: /^Punto de suministro/ });
     await expect(trigger.getByText("Punto de planta")).toBeVisible();
-    await expectChartsDrawn(page.getByRole("region", { name: "Tu energía día a día" }));
+    await expectChartsDrawn(page.getByRole("region", { name: "Tu energía día a día" }), testInfo, 31);
     await stabilizePage(page);
 
     // Soft, so the selector below is still compared when the figures differ.
@@ -153,7 +168,7 @@ test.describe("Visual baselines", () => {
   });
 
   // Risk: the header's snapped text, beside the monthly title and granularity chip.
-  test("UI-HIS-006 a custom range snapped to whole months", async ({ page }) => {
+  test("UI-HIS-006 a custom range snapped to whole months", async ({ page }, testInfo) => {
     await openAsMember(page);
     await mockHistoricalMembership(page, FIXED_MEMBER_USER, {
       anchor: MEMBER_ENERGY_METRICS,
@@ -168,7 +183,7 @@ test.describe("Visual baselines", () => {
     );
     await expect(heading).toBeVisible();
     await expect(snapped).toBeVisible();
-    await expectChartsDrawn(page.getByRole("region", { name: "Tu energía mes a mes" }));
+    await expectChartsDrawn(page.getByRole("region", { name: "Tu energía mes a mes" }), testInfo, 6);
     await stabilizePage(page);
 
     await expect(innermostContaining(page, heading, snapped)).toHaveScreenshot(

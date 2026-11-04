@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ApexOptions } from "apexcharts";
@@ -183,8 +183,35 @@ function enabledSeriesCalls() {
 
 const card = (title = DAILY_TITLE) => screen.getByRole("region", { name: title });
 
+/**
+ * jsdom answers no media query, which reads as a phone, where the charts are
+ * rows (UI-HIS-025, in HistoricalAnalysisPage.evolutionRows.spec.tsx). These
+ * tests are about the charts, so every (min-width) query answers as a wide screen.
+ */
+function wideScreen() {
+  vi.stubGlobal(
+    "matchMedia",
+    (mediaQuery: string) =>
+      ({
+        matches: mediaQuery.includes("min-width"),
+        media: mediaQuery,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+      }) as MediaQueryList,
+  );
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 beforeEach(() => {
   vi.clearAllMocks();
+  wideScreen();
   mockLoggedUser = member();
   seriesState = "ready";
   membershipDaily = SEPTEMBER_DAYS.map((date) => membershipDay(date));
@@ -323,7 +350,6 @@ describe("UI-HIS-017 the energy chart is option A (#250)", () => {
     expect(card()).toHaveTextContent(
       "La barra apilada es tu consumo. La barra morada, a su lado, es energía asignada que no usaste: no forma parte de tu consumo.",
     );
-    expect(card()).toHaveTextContent("Desliza el gráfico para ver todo el periodo.");
 
     const { options, series } = chartProps("energy");
     expect(options.chart!.stacked).toBe(true);

@@ -1,5 +1,5 @@
 import { useMemo, type FC } from "react";
-import { Box, Skeleton, Typography } from "@mui/material";
+import { Box, Skeleton, Typography, useMediaQuery, useTheme } from "@mui/material";
 import BarChartRoundedIcon from "@mui/icons-material/BarChartRounded";
 import type { SupplyResponse } from "../../api/models";
 import { LoadErrorAlert } from "../../components/LoadErrorAlert/LoadErrorAlert";
@@ -19,6 +19,8 @@ import {
   type ConsumptionSeriesView,
 } from "./consumptionSeries";
 import { EnergyEvolutionChart, SavingsEvolutionChart } from "./EvolutionCharts";
+import { EnergyEvolutionRows, SavingsEvolutionRows } from "./EvolutionRows";
+import { StateMark, type StateMarkKind } from "./StateMark";
 import { useHistoricalPeriod } from "./HistoricalPeriodContext";
 import type { HistoricalPeriod } from "./historicalPeriod";
 import { usePeriodConsumptionSeries, type ConsumptionSeries } from "./usePeriodConsumptionSeries";
@@ -27,9 +29,11 @@ import { usePeriodEnergyMetrics } from "./usePeriodEnergyMetrics";
 const TITLE = { daily: "Tu energía día a día", monthly: "Tu energía mes a mes" } as const;
 const LOADING_LABEL = "Cargando la evolución de tu energía…";
 const LOAD_ERROR = "No se pudo cargar la evolución de tu energía. Comprueba tu conexión e inténtalo de nuevo.";
-const CAPTION =
-  "La barra apilada es tu consumo. La barra morada, a su lado, es energía asignada que no usaste: no forma parte de tu consumo.";
-const MOBILE_HINT = "Desliza el gráfico para ver todo el periodo.";
+/** Where the separate bar sits, on each layout (UI-HIS-017). */
+const CAPTION = {
+  wide: "La barra apilada es tu consumo. La barra morada, a su lado, es energía asignada que no usaste: no forma parte de tu consumo.",
+  narrow: "La barra gruesa es tu consumo. La fina morada, debajo, es energía asignada que no usaste: no forma parte de tu consumo.",
+} as const;
 
 /** A legend group: its heading, then its swatches. */
 const LegendGroup: FC<{ heading: string; items: LegendItem[] }> = ({ heading, items }) => (
@@ -41,32 +45,7 @@ const LegendGroup: FC<{ heading: string; items: LegendItem[] }> = ({ heading, it
   </Box>
 );
 
-/** One mark of the key: a ring, a dot or an asterisk, as the charts draw them. */
-const KeyMark: FC<{ kind: "ring" | "dot" | "asterisk" }> = ({ kind }) => {
-  if (kind === "asterisk") {
-    return (
-      <Typography aria-hidden component="span" sx={{ fontWeight: 700, color: colors.text.primary, lineHeight: 1, width: 10, textAlign: "center" }}>
-        *
-      </Typography>
-    );
-  }
-  return (
-    <Box
-      aria-hidden
-      sx={{
-        width: 10,
-        height: 10,
-        borderRadius: "50%",
-        boxSizing: "border-box",
-        ...(kind === "ring"
-          ? { border: `2px solid ${colors.text.muted}`, bgcolor: colors.background.paper }
-          : { bgcolor: colors.text.primary }),
-      }}
-    />
-  );
-};
-
-const MARKER_KEY: { kind: "ring" | "dot" | "asterisk"; label: string }[] = [
+const MARKER_KEY: { kind: StateMarkKind; label: string }[] = [
   { kind: "ring", label: "Sin datos: no hay lecturas" },
   { kind: "dot", label: "Cero medido" },
   { kind: "asterisk", label: "Datos parciales" },
@@ -81,7 +60,7 @@ const MarkerKey: FC = () => (
   >
     {MARKER_KEY.map(({ kind, label }) => (
       <Box component="li" key={kind} sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-        <KeyMark kind={kind} />
+        <StateMark kind={kind} />
         <Typography variant="body2" sx={{ color: colors.text.body }}>
           {label}
         </Typography>
@@ -94,39 +73,41 @@ const Evolution: FC<{
   view: ConsumptionSeriesView;
   isPlantSupply: boolean;
   estimatedPrice: Parameters<typeof EstimatedPriceLabel>[0]["estimatedPrice"];
-}> = ({ view, isPlantSupply, estimatedPrice }) => (
-  <HomeCard title={TITLE[view.granularity]} icon={BarChartRoundedIcon}>
-    <Typography variant="body2" sx={{ color: colors.text.subtle }}>
-      {view.coverageText}
-    </Typography>
-    {view.gapsNotice && <NeutralNotice>{view.gapsNotice}</NeutralNotice>}
-    {view.partialNotice && <NeutralNotice>{view.partialNotice}</NeutralNotice>}
-    <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: 4, rowGap: 0.5 }}>
-      <LegendGroup
-        heading="Tu consumo"
-        items={[
-          { label: SELF_CONSUMPTION_SERIES, companion: TECHNICAL_TERM[SELF_CONSUMPTION_SERIES], swatch: swatch.solid(ENERGY_COLORS.community) },
-          { label: GRID_IMPORT_SERIES, swatch: swatch.solid(ENERGY_COLORS.grid) },
-        ]}
-      />
-      <LegendGroup
-        heading="Asignada que no usaste"
-        items={[{ label: SURPLUS_SERIES, companion: TECHNICAL_TERM[SURPLUS_SERIES], swatch: swatch.solid(ENERGY_COLORS.exported) }]}
-      />
-    </Box>
-    <Typography variant="body2" sx={{ color: colors.text.body }}>
-      {CAPTION}
-    </Typography>
-    <Typography variant="caption" sx={{ display: { xs: "block", sm: "none" }, color: colors.text.subtle }}>
-      {MOBILE_HINT}
-    </Typography>
-    <EnergyEvolutionChart view={view} isPlantSupply={isPlantSupply} />
-    <SeriesLegend items={[{ label: SAVINGS_SERIES, swatch: swatch.solid(SAVINGS_COLOR) }]} />
-    <EstimatedPriceLabel estimatedPrice={estimatedPrice} />
-    <SavingsEvolutionChart view={view} isPlantSupply={isPlantSupply} />
-    <MarkerKey />
-  </HomeCard>
-);
+}> = ({ view, isPlantSupply, estimatedPrice }) => {
+  const theme = useTheme();
+  // Below sm the charts are rows, and the page scrolls only vertically (UI-HIS-025).
+  const isWide = useMediaQuery(theme.breakpoints.up("sm"), { noSsr: true });
+  return (
+    <HomeCard title={TITLE[view.granularity]} icon={BarChartRoundedIcon}>
+      <Typography variant="body2" sx={{ color: colors.text.subtle }}>
+        {view.coverageText}
+      </Typography>
+      {view.gapsNotice && <NeutralNotice>{view.gapsNotice}</NeutralNotice>}
+      {view.partialNotice && <NeutralNotice>{view.partialNotice}</NeutralNotice>}
+      <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: 4, rowGap: 0.5 }}>
+        <LegendGroup
+          heading="Tu consumo"
+          items={[
+            { label: SELF_CONSUMPTION_SERIES, companion: TECHNICAL_TERM[SELF_CONSUMPTION_SERIES], swatch: swatch.solid(ENERGY_COLORS.community) },
+            { label: GRID_IMPORT_SERIES, swatch: swatch.solid(ENERGY_COLORS.grid) },
+          ]}
+        />
+        <LegendGroup
+          heading="Asignada que no usaste"
+          items={[{ label: SURPLUS_SERIES, companion: TECHNICAL_TERM[SURPLUS_SERIES], swatch: swatch.solid(ENERGY_COLORS.exported) }]}
+        />
+      </Box>
+      <Typography variant="body2" sx={{ color: colors.text.body }}>
+        {isWide ? CAPTION.wide : CAPTION.narrow}
+      </Typography>
+      {isWide ? <EnergyEvolutionChart view={view} isPlantSupply={isPlantSupply} /> : <EnergyEvolutionRows view={view} isPlantSupply={isPlantSupply} />}
+      <SeriesLegend items={[{ label: SAVINGS_SERIES, swatch: swatch.solid(SAVINGS_COLOR) }]} />
+      <EstimatedPriceLabel estimatedPrice={estimatedPrice} />
+      {isWide ? <SavingsEvolutionChart view={view} isPlantSupply={isPlantSupply} /> : <SavingsEvolutionRows view={view} />}
+      <MarkerKey />
+    </HomeCard>
+  );
+};
 
 const ReadyEvolution: FC<{ period: HistoricalPeriod; series: ConsumptionSeries; selected: SupplyResponse | null }> = ({
   period,

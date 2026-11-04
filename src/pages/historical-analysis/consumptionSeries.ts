@@ -47,12 +47,24 @@ export interface SlotView {
   axisLabel: string;
   /** "15 de julio de 2026", "Febrero de 2026": the tooltip's header. */
   name: string;
+  /** Below sm, the row's label, on every slot: "1 ago", "sept 25". */
+  rowLabel: string;
+  /** The 1st of a month on a daily axis, or January on a monthly one: the row label is set apart. */
+  startsMonthOrYear: boolean;
+  /** A daily row that closes a week of the axis: a separator follows it. */
+  endsWeek: boolean;
   state: SlotState;
   /** What the charts plot: null on a gap, never 0. */
   selfConsumptionKWh: number | null;
   gridImportKWh: number | null;
   surplusKWh: number | null;
   savingsEur: number | null;
+  /**
+   * Below sm, the row's consumption figure: community energy plus grid energy,
+   * the bar the chart draws, since a bucket carries no total (UI-HIS-025).
+   * Null on a gap.
+   */
+  consumptionKWh: number | null;
   /** The state in words, the tooltip's status line. */
   stateText: string;
   /** The figures in words, for the tooltip; null on a gap, which has none. */
@@ -85,6 +97,8 @@ export interface ConsumptionSeriesView {
   partialNotice: string | null;
   /** Wide enough that every slot keeps its width: a narrower screen scrolls the chart. */
   minChartWidth: number;
+  /** Below sm, where each chart's scale ends: a round figure at or above its longest bar (UI-HIS-025). */
+  rowScale: { energyKWh: number; savingsEur: number };
 }
 
 export const SELF_CONSUMPTION_SERIES = "De la comunidad";
@@ -121,6 +135,17 @@ const UNIT = {
 } as const;
 
 const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+/**
+ * The smallest of 1, 2, 2.5 and 5 times a power of ten at or above `value`,
+ * so a scale ends on a figure that reads at a glance; 1 when nothing is drawn.
+ */
+export function scaleEnd(value: number): number {
+  if (!(value > 0)) return 1;
+  const power = 10 ** Math.floor(Math.log10(value));
+  const step = [1, 2, 2.5, 5, 10].find((candidate) => candidate * power >= value * (1 - 1e-9))!;
+  return step * power;
+}
 
 /**
  * The slots of a period: every calendar day for a daily period, every month
@@ -207,6 +232,11 @@ function axisLabelOf(day: CalendarDay, index: number, granularity: Granularity, 
   return index === 0 || day.month === 1 ? `${formatShortMonth(key)} ${String(day.year).slice(2)}` : formatShortMonth(key);
 }
 
+function rowLabelOf(day: CalendarDay, granularity: Granularity): string {
+  const key = formatDayKey(day);
+  return granularity === "daily" ? formatShortDay(key) : `${formatShortMonth(key)} ${String(day.year).slice(2)}`;
+}
+
 function slotOf(day: CalendarDay, index: number, reading: BucketReading | undefined, granularity: Granularity, step: number): SlotView {
   const key = formatDayKey(day);
   const state = stateOf(reading);
@@ -215,6 +245,9 @@ function slotOf(day: CalendarDay, index: number, reading: BucketReading | undefi
     day,
     axisLabel: axisLabelOf(day, index, granularity, step),
     name: granularity === "daily" ? formatCalendarDay(key) : capitalise(formatCalendarMonth(key)),
+    rowLabel: rowLabelOf(day, granularity),
+    startsMonthOrYear: granularity === "daily" ? day.day === 1 : day.month === 1,
+    endsWeek: granularity === "daily" && (index + 1) % 7 === 0,
     state,
     stateText: slotStateText(state, granularity).long,
   };
@@ -225,6 +258,7 @@ function slotOf(day: CalendarDay, index: number, reading: BucketReading | undefi
       gridImportKWh: null,
       surplusKWh: null,
       savingsEur: null,
+      consumptionKWh: null,
       selfConsumptionText: null,
       gridImportText: null,
       surplusText: null,
@@ -237,6 +271,7 @@ function slotOf(day: CalendarDay, index: number, reading: BucketReading | undefi
     gridImportKWh: reading.gridImportKWh,
     surplusKWh: reading.surplusKWh,
     savingsEur: reading.savingsEur,
+    consumptionKWh: reading.selfConsumptionKWh + reading.gridImportKWh,
     selfConsumptionText: kilowattHoursText(reading.selfConsumptionKWh),
     gridImportText: kilowattHoursText(reading.gridImportKWh),
     surplusText: kilowattHoursText(reading.surplusKWh),
@@ -373,9 +408,11 @@ function coverageTextOf(slots: SlotView[], period: HistoricalPeriod): string {
  * still on it, as a gap. Buckets are matched to slots by their `date` string,
  * never parsed as an instant.
  *
- * Every figure is a bucket's own: nothing is added up. What the client does
- * count is slots by state (the coverage line, the notices) and where a partial
- * slot's bar ends, to place its marker.
+ * Every figure is a bucket's own, but one: below sm, a row states the slot's
+ * consumption, its community energy plus its grid energy, which no bucket
+ * carries (UI-HIS-025). What the client also counts is slots by state (the
+ * coverage line, the notices), where a partial slot's bar ends, to place its
+ * marker, and where each row scale ends.
  *
  * A slot's state follows the first signal that applies:
  * gap > partial > measuredZero > complete. A day no supply reported is a gap
@@ -414,5 +451,10 @@ export function toConsumptionSeriesView(period: HistoricalPeriod, series: Consum
     gapsNotice: gapsNoticeOf(slots, granularity),
     partialNotice: isMembership ? partialNoticeOf(slots, granularity) : null,
     minChartWidth: slots.length * SLOT_WIDTH[granularity],
+    // One scale per chart: the energy rows' two bars share it (UI-HIS-025).
+    rowScale: {
+      energyKWh: scaleEnd(Math.max(0, ...slots.map((slot) => Math.max(slot.consumptionKWh ?? 0, slot.surplusKWh ?? 0)))),
+      savingsEur: scaleEnd(Math.max(0, ...slots.map((slot) => slot.savingsEur ?? 0))),
+    },
   };
 }
