@@ -159,6 +159,11 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   PLANT_HAS_PARTITION_COEFFICIENTS:
     "No puedes eliminar esta planta porque tiene coeficientes de reparto: guarda el historial de reparto de la comunidad y hay que conservarla.",
 
+  // Creating or editing a plant on a supply that is already another plant's
+  // own supply (lucoenergia/conluz#411; #253). A supply is the own supply of
+  // at most one plant, so no retry would succeed.
+  SUPPLY_ALREADY_HAS_PLANT: "Este punto de suministro ya pertenece a otra planta.",
+
   // Deleting a supply that a plant or a sharing agreement still references
   // (lucoenergia/conluz#412; #290). Disabling is what stops using it.
   SUPPLY_HAS_PLANTS:

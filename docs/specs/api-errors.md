@@ -6,9 +6,9 @@
 | **Status** | Active |
 | **Routes** | Every screen that shows the message of an API error detail |
 | **Roles** | Any caller |
-| **Domain rules** | n/a |
+| **Domain rules** | `lucoenergia/conluz`: PLT-002 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #339 |
+| **Last reviewed against code** | #253 |
 
 ## Purpose
 
@@ -20,7 +20,7 @@ Screens that word a code their own way, such as the member invitation actions or
 of UI-MBR-023 and UI-SUP-008, are covered by the exception in UI-ERR-001. UI-SUP-009 applies
 UI-ERR-001 and UI-ERR-002 to the supply forms.
 
-This document covers only the rules #232 and #324 introduced.
+This document covers only the rules #232, #324 and #253 introduced.
 
 ## Rules
 
@@ -62,6 +62,21 @@ This document covers only the rules #232 and #324 introduced.
   server's English message.
 - **Implements:** n/a
 - **Source:** #324, lucoenergia/conluz#409
+
+### UI-ERR-005 — `SUPPLY_ALREADY_HAS_PLANT` has a catalogue entry
+
+- **Status:** Active
+- **Rule:**
+  - `SUPPLY_ALREADY_HAS_PLANT` MUST have a catalogue entry, which takes no params: "Este punto de
+    suministro ya pertenece a otra planta."
+  - The plant create and edit forms MUST show a refusal's error detail by UI-ERR-001 and UI-ERR-003,
+    and their own generic text when the refusal carries none.
+- **Rationale:** The client translates by code; without an entry, a community admin who picks a
+  supply that already belongs to another plant would read the server's English message (UI-ERR-003).
+  The forms showed one generic text for every refusal, which never says that this one cannot be
+  retried.
+- **Implements:** PLT-002
+- **Source:** #253, lucoenergia/conluz#411
 
 ## States
 

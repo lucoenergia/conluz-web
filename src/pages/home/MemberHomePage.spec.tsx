@@ -32,6 +32,7 @@ import {
   buildMembershipPayback,
   buildSupply,
 } from "../../test/fixtures";
+import { DOCUMENTED_MEMBERSHIP_ENERGY_METRICS } from "../../test/documentedResponses";
 import { query } from "../../test/queryState";
 import { declaredStyle } from "../../test/declaredStyle";
 import { colors } from "../../theme/tokens";
@@ -97,8 +98,46 @@ function monthWith(overrides: Partial<MembershipEnergyMetricsResponse> = {}): Me
     savings: { amountEur: 27, tariffSource: "REAL_TARIFF", estimatedPrice: null },
     selfConsumptionRatio: 0.6716,
     selfSufficiencyRatio: 0.4369,
+    // No plant's own supply: the ratio's basis is the totals.
+    selfConsumptionRatioStatus: "AVAILABLE",
+    selfConsumptionRatioBasis: { selfConsumptionKWh: 180, assignedProductionKWh: 268, excludedPlantSupplyCount: 0 },
     ...overrides,
   });
+}
+
+/** The ratio's basis when nothing was assigned to the supplies it covers. */
+const NOTHING_ASSIGNED_BASIS: MembershipEnergyMetricsResponse["selfConsumptionRatioBasis"] = {
+  selfConsumptionKWh: 0,
+  assignedProductionKWh: 0,
+  excludedPlantSupplyCount: 0,
+};
+
+/**
+ * A member with one regular supply and one plant's own supply, derived from
+ * the response documented in api-docs.json: AUGUST, complete, and the ratio's
+ * basis apart from the totals. The regular supply used 100,001 of 200,002 kWh;
+ * the plant's supply used 50 of 50 and, as the Datadis sync stores it, fed
+ * nothing back. Each figure is rounded after its own sum, so the surplus is
+ * 0,005 kWh off the basis's difference: a figure derived here would show it.
+ */
+function derivedMonthWithPlantSupply(overrides: Partial<MembershipEnergyMetricsResponse> = {}): MembershipEnergyMetricsResponse {
+  return {
+    ...DOCUMENTED_MEMBERSHIP_ENERGY_METRICS,
+    period: AUGUST,
+    coverage: { hoursWithData: 1488, expectedHours: 1488, supplyCount: 2, suppliesWithData: 2 },
+    energy: {
+      assignedProductionKWh: 250.002,
+      selfConsumptionKWh: 150.001,
+      surplusKWh: 100.006,
+      totalConsumptionKWh: 400,
+      gridImportKWh: 249.999,
+    },
+    selfConsumptionRatio: 0.5,
+    selfSufficiencyRatio: 0.375,
+    selfConsumptionRatioStatus: "AVAILABLE",
+    selfConsumptionRatioBasis: { selfConsumptionKWh: 100.001, assignedProductionKWh: 200.002, excludedPlantSupplyCount: 1 },
+    ...overrides,
+  };
 }
 
 /** A member who has recovered 40 % of a 500 € investment. */
@@ -449,6 +488,8 @@ describe("MemberHomePage (#199)", () => {
       answer({
         metrics: monthWith({
           selfConsumptionRatio: null,
+          selfConsumptionRatioStatus: "NOTHING_ASSIGNED",
+          selfConsumptionRatioBasis: NOTHING_ASSIGNED_BASIS,
           selfSufficiencyRatio: null,
           energy: { assignedProductionKWh: 0, selfConsumptionKWh: 0, surplusKWh: 0, totalConsumptionKWh: 0, gridImportKWh: 0 },
           savings: { amountEur: null, tariffSource: "ESTIMATE", estimatedPrice: null },
@@ -669,7 +710,7 @@ describe("MemberHomePage (#199)", () => {
 
     describe("AC5 -- a figure null in either month gets no change", () => {
       it("null in the month before", () => {
-        answer({ previous: previousMonthWith({ selfConsumptionRatio: null }) });
+        answer({ previous: previousMonthWith({ selfConsumptionRatio: null, selfConsumptionRatioStatus: "NOTHING_ASSIGNED", selfConsumptionRatioBasis: NOTHING_ASSIGNED_BASIS }) });
         openHome();
 
         expect(row("Energía asignada que usaste")).toBe("Energía asignada que usasteSin comparación: no hay dato de julio de 2026.");
@@ -924,7 +965,7 @@ describe("MemberHomePage (#199)", () => {
     });
 
     it("AC1 -- shows no figure when nothing was assigned, and keeps saying why", () => {
-      answer({ metrics: monthWith({ selfConsumptionRatio: null }) });
+      answer({ metrics: monthWith({ selfConsumptionRatio: null, selfConsumptionRatioStatus: "NOTHING_ASSIGNED", selfConsumptionRatioBasis: NOTHING_ASSIGNED_BASIS }) });
       openHome();
 
       expect(primaryFigure()).not.toBeInTheDocument();
@@ -1050,6 +1091,111 @@ describe("MemberHomePage (#199)", () => {
       openHome();
 
       expect(alertColoured()).not.toEqual([]);
+    });
+  });
+
+  describe("the ratio's basis and status (#253)", () => {
+    const primaryFigure = () => screen.getByRole("group", { name: "Energía asignada que usaste" });
+    const assignedBar = () => screen.getByRole("heading", { name: "La energía que se te asignó" }).parentElement!.parentElement!;
+    const consumptionBar = () => screen.getByRole("heading", { name: "Tu consumo" }).parentElement!.parentElement!;
+
+    it("UI-HOM-012 AC1 -- the headline, its detail line, the assigned-energy bar and the advice show the basis, never the totals", () => {
+      answer({ metrics: derivedMonthWithPlantSupply() });
+      openHome();
+
+      expect(text(primaryFigure())).toContain("50 %");
+      expect(text(primaryFigure())).toContain("100 kWh de 200 kWh");
+      expect(text(assignedBar())).toContain("de 200 kWh asignados");
+      expect(text(assignedBar())).toContain("La usaste tú: 100 kWh (50 %)");
+      expect(text(assignedBar())).toContain("Se fue a la red: 100,01 kWh (50 %)");
+      expect(text(advice()[0])).toContain("Aprovechaste el 50 % de la energía que se te asignó. Los 100,01 kWh restantes se fueron a la red");
+      for (const element of [primaryFigure(), assignedBar(), advice()[0]]) {
+        expect(text(element)).not.toContain("150 kWh");
+        expect(text(element)).not.toContain("250 kWh");
+      }
+    });
+
+    it("UI-HOM-012 AC2 -- the consumption bar still counts both supplies, from the totals", () => {
+      answer({ metrics: derivedMonthWithPlantSupply() });
+      openHome();
+
+      expect(text(consumptionBar())).toContain("de 400 kWh consumidos");
+      expect(text(consumptionBar())).toContain("De la comunidad: 150 kWh (38 %)");
+      expect(text(consumptionBar())).toContain("De la red: 250 kWh (63 %)");
+    });
+
+    it("UI-HOM-012 AC5 -- nothing assigned, decided by the status, keeps its neutral state", () => {
+      answer({
+        metrics: monthWith({ selfConsumptionRatio: null, selfConsumptionRatioStatus: "NOTHING_ASSIGNED", selfConsumptionRatioBasis: NOTHING_ASSIGNED_BASIS }),
+      });
+      openHome();
+      const journey = text(card("El recorrido de tu energía"));
+
+      expect(journey).toContain("Este mes no se te asignó energía de la comunidad.");
+      expect(journey).not.toContain("No aplica");
+      expect(screen.queryByRole("group", { name: "Energía asignada que usaste" })).not.toBeInTheDocument();
+      expect(advice()).toHaveLength(0);
+    });
+
+    it("UI-HOM-012 AC5 -- a null ratio the status calls available is not read as nothing assigned", () => {
+      answer({ metrics: monthWith({ selfConsumptionRatio: null, selfConsumptionRatioStatus: "AVAILABLE" }) });
+      openHome();
+
+      expect(text(card("El recorrido de tu energía"))).not.toContain("Este mes no se te asignó energía de la comunidad.");
+    });
+
+    it("UI-HOM-013 AC1 -- states the plant's own supply the headline leaves out, next to it", () => {
+      answer({ metrics: derivedMonthWithPlantSupply() });
+      openHome();
+
+      expect(text(primaryFigure())).toBe("Energía asignada que usaste50 %100 kWh de 200 kWhNo incluye 1 punto de planta");
+    });
+
+    it("UI-HOM-013 AC1 -- names several plants' own supplies in the plural", () => {
+      const metrics = derivedMonthWithPlantSupply();
+      answer({ metrics: { ...metrics, selfConsumptionRatioBasis: { ...metrics.selfConsumptionRatioBasis, excludedPlantSupplyCount: 2 } } });
+      openHome();
+
+      expect(text(primaryFigure())).toContain("No incluye 2 puntos de planta");
+    });
+
+    it("UI-HOM-013 AC3 -- a member without plants' own supplies is told nothing about them", () => {
+      openHome();
+
+      expect(page()).not.toContain("No incluye");
+    });
+
+    describe("every supply a plant's own supply (#253)", () => {
+      const notApplicable = () =>
+        derivedMonthWithPlantSupply({
+          energy: { assignedProductionKWh: 50, selfConsumptionKWh: 50, surplusKWh: 0, totalConsumptionKWh: 120, gridImportKWh: 70 },
+          selfConsumptionRatio: null,
+          selfSufficiencyRatio: 0.4167,
+          selfConsumptionRatioStatus: "NOT_APPLICABLE",
+          selfConsumptionRatioBasis: { selfConsumptionKWh: 0, assignedProductionKWh: 0, excludedPlantSupplyCount: 2 },
+        });
+
+      it("UI-HOM-013 AC4 -- shows the neutral not-applicable text in place of the headline, with no figure and no alert colour", () => {
+        answer({ metrics: notApplicable() });
+        openHome();
+        const statusColours = [...Object.values(colors.error), ...Object.values(colors.warning), ...Object.values(colors.success)];
+
+        expect(text(primaryFigure())).toBe("Energía asignada que usasteNo aplica al punto de la planta");
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+        for (const element of primaryFigure().querySelectorAll("*")) {
+          expect(statusColours).not.toContain(declaredStyle(element).color);
+        }
+      });
+
+      it("UI-HOM-013 AC4 -- hides the assigned-energy bar and the advice, and keeps the consumption bar", () => {
+        answer({ metrics: notApplicable() });
+        openHome();
+
+        expect(screen.queryByRole("heading", { name: "La energía que se te asignó" })).not.toBeInTheDocument();
+        expect(text(card("El recorrido de tu energía"))).not.toContain("Este mes no se te asignó energía de la comunidad.");
+        expect(advice()).toHaveLength(0);
+        expect(text(consumptionBar())).toContain("De la comunidad: 50 kWh (42 %)");
+      });
     });
   });
 });

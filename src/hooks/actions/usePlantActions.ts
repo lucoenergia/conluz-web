@@ -55,9 +55,15 @@ export type HuaweiWriteResult = { ok: true } | { error: unknown };
  */
 export type PlantDeleteResult = { ok: true } | { error: unknown };
 
+/**
+ * A plant edit: success, or the refusal itself rather than a bare `false`, so
+ * the screen can word a refusal by its code.
+ */
+export type PlantEditResult = { ok: true } | { error: unknown };
+
 export interface PlantRowActions {
   actions: {
-    edit: MaybeAction<[UpdatePlantBody], boolean>;
+    edit: MaybeAction<[UpdatePlantBody], PlantEditResult>;
     remove: MaybeAction<[], PlantDeleteResult>;
     configureHuawei: MaybeAction<[ConfigureHuaweiBody], HuaweiWriteResult>;
     enableHuawei: MaybeAction<[], HuaweiWriteResult>;
@@ -117,14 +123,14 @@ export function usePlantActions(): PlantActions {
         actions: {
           edit: grant(
             manage,
-            async (data: UpdatePlantBody) => {
+            async (data: UpdatePlantBody): Promise<PlantEditResult> => {
               try {
                 await updateMutation.mutateAsync({ plantId, data });
                 queryClient.invalidateQueries({ queryKey: getGetPlantByIdQueryKey(plantId) });
                 invalidateList();
-                return true;
-              } catch {
-                return false;
+                return { ok: true };
+              } catch (error) {
+                return { error };
               }
             },
             updateMutation.isPending,

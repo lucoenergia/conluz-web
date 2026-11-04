@@ -85,8 +85,9 @@ interface ResolvedMonth {
 function useResolvedMonth(): ResolvedMonth | null {
   const { metrics, referencePeriod } = useMemberEnergyMetrics();
   if (!metrics || !referencePeriod) return null;
+  // Advice only on a ratio the status says is there (UI-HOM-012).
   const message =
-    metrics.selfConsumptionRatio === null
+    metrics.selfConsumptionRatioStatus !== "AVAILABLE" || metrics.selfConsumptionRatio === null
       ? null
       : chooseMemberHomeMessage({
           coverage: metrics.coverage,

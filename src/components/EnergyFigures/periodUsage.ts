@@ -66,6 +66,9 @@ export function coverageText(sentence: CoverageSentence): string {
   return `${sentence.lead}${sentence.fraction ?? ""}${sentence.tail}`;
 }
 
+/** In place of the headline, when every supply it covers is a plant's own supply. */
+export const NOT_APPLICABLE_TITLE = "No aplica al punto de la planta";
+
 /** Under the detail line, when "Todos mis puntos" leaves plants' own supplies out of the headline. */
 export function excludedPlantsText(count: number): string {
   return count === 1 ? "No incluye 1 punto de planta" : `No incluye ${count} puntos de planta`;

@@ -517,3 +517,11 @@ describe("getIndexedApiErrorDetails", () => {
     expect(getIndexedApiErrorDetails(new Error("network"))).toEqual({ formLevel: [], indexed: [] });
   });
 });
+
+describe("the supply already in another plant (#253)", () => {
+  it("UI-ERR-005 shows SUPPLY_ALREADY_HAS_PLANT with the catalogue's text, and without params", () => {
+    expect(getFirstApiErrorMessage(apiError(409, { code: "SUPPLY_ALREADY_HAS_PLANT", params: null }), "fallback")).toBe(
+      "Este punto de suministro ya pertenece a otra planta.",
+    );
+  });
+});
