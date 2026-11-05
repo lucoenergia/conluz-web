@@ -484,12 +484,13 @@ here too, and opens another member's supply from its detail page, one at a time.
   chart MAY scroll sideways.
 - **Rationale:** At phone width a vertical-bar chart of 62 days fits only by scrolling it sideways,
   and a member then sees a few days at a time. Rows read top to bottom, like the rest of the page.
-  The consumption figure is the bucket's community energy plus its grid energy: the bucket carries
-  no total, and that sum is the bar the chart already draws. The figure is bare, because the scale
-  above the rows names the unit.
+  The consumption figure is the bucket's community energy plus its grid energy, the bar the chart
+  already draws. The bucket carries no total, so the client computes it, under the accepted
+  exception to UI-HIS-010 recorded below. The figure is bare, because the scale above the rows names
+  the unit.
 - **Implements:** MCS-001 and MCS-002 (lucoenergia/conluz#410), through the slot states of
   UI-HIS-015.
-- **Source:** #361, the member consumption analysis design (copy deck `chart.mobile`)
+- **Source:** #361, the member consumption analysis design (copy deck `chart.mobile`); #378
 
 ### UI-HIS-026 — Below sm, activating an energy row opens its detail beneath it
 
@@ -577,3 +578,4 @@ here too, and opens another member's supply from its detail page, one at a time.
 | Exception | Reason | Expires when | Source |
 | --- | --- | --- | --- |
 | Disabled supplies are hidden from the selector | What a disabled supply means is not decided yet | The disabled-supply decision is made | #247 |
+| Below `sm`, each energy row of the evolution card shows `consumptionKWh`, computed in the client as `selfConsumptionKWh + gridImportKWh` of the same bucket (`consumptionSeries.ts` `slotOf`, shown by `EvolutionRows.tsx`, UI-HIS-025) | Departs from UI-HIS-010, under which the client never computes a sum shown as text. Accepted because it adds two fields of one bucket, for one slot, never across buckets or periods. Since each field is rounded to 3 decimals, it can differ from a server total by at most 0.001 kWh. A backend field would add a column to the five consumption bucket schemas behind the six series operations for this one figure | A series bucket carries a server-computed consumption total, or another client needs that total | #378 |
