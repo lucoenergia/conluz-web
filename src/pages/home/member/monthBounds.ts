@@ -48,9 +48,25 @@ export function zonedIso({ year, month, day, hour }: WallTime): string {
   const wallAsUtc = Date.UTC(year, month - 1, day, hour);
   const firstGuess = offsetMinutesAt(wallAsUtc);
   const offset = offsetMinutesAt(wallAsUtc - firstGuess * 60_000);
-  const sign = offset < 0 ? "-" : "+";
-  const absolute = Math.abs(offset);
-  return `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:00:00${sign}${pad(Math.floor(absolute / 60))}:${pad(absolute % 60)}`;
+  return `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:00:00${offsetText(offset)}`;
+}
+
+/** "+02:00", "-05:00". */
+function offsetText(offsetMinutes: number): string {
+  const sign = offsetMinutes < 0 ? "-" : "+";
+  const absolute = Math.abs(offsetMinutes);
+  return `${sign}${pad(Math.floor(absolute / 60))}:${pad(absolute % 60)}`;
+}
+
+/**
+ * An instant written as the app's time zone reads it, with the offset in
+ * force at that instant: "2026-10-25T02:00:00+01:00". Unlike a wall time, an
+ * instant names one hour even on the day the clocks go back, when 02:00
+ * happens twice, so two instants never share this text.
+ */
+export function localIsoAt(instantMs: number): string {
+  const { year, month, day, hour, minute, second } = wallTimeAt(instantMs);
+  return `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:${pad(second)}${offsetText(offsetMinutesAt(instantMs))}`;
 }
 
 /**

@@ -167,6 +167,17 @@ export function axisOf(period: HistoricalPeriod): CalendarDay[] {
   return slots;
 }
 
+/** A slot of the axis before it meets the buckets: the key buckets are matched by, and its calendar day. */
+interface AxisSlot {
+  key: string;
+  day: CalendarDay;
+}
+
+/** The axis of a period, each slot keyed as its bucket will be: by `date`. */
+function axisSlotsOf(period: HistoricalPeriod): AxisSlot[] {
+  return axisOf(period).map((day) => ({ key: formatDayKey(day), day }));
+}
+
 /** One series' bucket reduced to what decides a slot. */
 interface BucketReading {
   /** No record stored. */
@@ -187,7 +198,7 @@ function readingsOf(series: ConsumptionSeries): Map<string, BucketReading> {
   if (series.kind === "membershipDaily" || series.kind === "membershipMonthly") {
     return new Map(
       series.buckets.map((bucket) => [
-        bucket.date,
+        bucketKeyOf(bucket),
         {
           isGap: bucket.savingsEur === null,
           partial: bucket.suppliesWithData < bucket.supplyCount ? { reported: bucket.suppliesWithData, total: bucket.supplyCount } : null,
@@ -199,8 +210,11 @@ function readingsOf(series: ConsumptionSeries): Map<string, BucketReading> {
       ]),
     );
   }
-  return new Map(series.buckets.map((bucket: SupplyConsumptionBucketResponse) => [bucket.date, supplyReading(bucket)]));
+  return new Map(series.buckets.map((bucket: SupplyConsumptionBucketResponse) => [bucketKeyOf(bucket), supplyReading(bucket)]));
 }
+
+/** The key of the slot a bucket belongs to: its `date` string, never parsed as an instant. */
+const bucketKeyOf = (bucket: { date: string }) => bucket.date;
 
 function supplyReading(bucket: SupplyConsumptionBucketResponse): BucketReading {
   return {
@@ -237,8 +251,7 @@ function rowLabelOf(day: CalendarDay, granularity: Granularity): string {
   return granularity === "daily" ? formatShortDay(key) : `${formatShortMonth(key)} ${String(day.year).slice(2)}`;
 }
 
-function slotOf(day: CalendarDay, index: number, reading: BucketReading | undefined, granularity: Granularity, step: number): SlotView {
-  const key = formatDayKey(day);
+function slotOf({ key, day }: AxisSlot, index: number, reading: BucketReading | undefined, granularity: Granularity, step: number): SlotView {
   const state = stateOf(reading);
   const base = {
     key,
@@ -424,7 +437,7 @@ export function toConsumptionSeriesView(period: HistoricalPeriod, series: Consum
   const { granularity } = period;
   const readings = readingsOf(series);
   const step = Math.max(1, Math.ceil(LABEL_WIDTH / SLOT_WIDTH[granularity]));
-  const slots = axisOf(period).map((day, index) => slotOf(day, index, readings.get(formatDayKey(day)), granularity, step));
+  const slots = axisSlotsOf(period).map((slot, index) => slotOf(slot, index, readings.get(slot.key), granularity, step));
   const isMembership = series.kind === "membershipDaily" || series.kind === "membershipMonthly";
 
   return {
