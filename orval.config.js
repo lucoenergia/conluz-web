@@ -4,6 +4,8 @@ export const conluz = {
     target: "src/api",
     schemas: "./src/api/models",
     client: "react-query",
+    // Orval 8 defaults to fetch; the customInstance mutator is axios-shaped.
+    httpClient: "axios",
     mock: false,
     // Empties src/api/ and src/api/models/ before every generation, so a schema
     // or endpoint the backend removes takes its generated files with it. Nothing
@@ -15,6 +17,9 @@ export const conluz = {
         path: "./src/http/custom-instance.ts",
         name: "customInstance",
       },
+      // Keeps the v7 output shape (named aliases for anyOf/oneOf types), so the
+      // regenerated diff stays reviewable.
+      aliasCombinedTypes: true,
     },
   },
   // Keeps src/contracts/generatedMutationHooks.json in step with the client.

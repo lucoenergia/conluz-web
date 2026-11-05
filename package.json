@@ -4,6 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "engines": {
+    "node": ">=22.18.0",
     "npm": ">=10.9.0 <11"
   },
   "scripts": {
@@ -49,7 +50,7 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.2.0",
     "jsdom": "^26.1.0",
-    "orval": "^7.10.0",
+    "orval": "^8.45.0",
     "react-router-dom": "^7.6.3",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.34.1",
