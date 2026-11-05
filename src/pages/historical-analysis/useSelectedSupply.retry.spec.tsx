@@ -1,7 +1,6 @@
 import "@testing-library/jest-dom";
 import { describe, expect, it, vi } from "vitest";
 import { waitFor } from "@testing-library/react";
-import { QueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 import { renderHookWithProviders } from "../../test/renderWithProviders";
 import { apiError } from "../../test/apiError";
@@ -10,10 +9,10 @@ import { buildCommunity, buildCommunityCapabilities, buildCurrentUser } from "..
 import type { CurrentUserResponse } from "../../api/models";
 
 // Tier 2: the subject is the cache's retry behaviour, so the real community
-// and supply hooks run against a mocked customInstance. Production keeps React
-// Query's default of three retries (src/queryClient.ts); asking again for a
-// supply that is refused or missing changes nothing and only delays the
-// fallback to "Todos mis puntos" (#252).
+// and supply hooks run against a mocked customInstance and the app's own query
+// client, whose retry policy (UI-DATA-002, #327) is what keeps a refused or
+// missing supply from being asked for again: that changes nothing and only
+// delays the fallback to "Todos mis puntos" (#252).
 const { mockCustomInstance } = vi.hoisted(() => ({ mockCustomInstance: vi.fn() }));
 
 // Spread the original: the harness's AuthProvider uses AXIOS_INSTANCE from it.
@@ -28,6 +27,7 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
   useLoggedUser: () => mockLoggedUser,
 }));
 
+import { createAppQueryClient } from "../../queryClient";
 import { useSelectedSupply } from "./useSelectedSupply";
 import { COMMUNITY_ID, HOME, OWNER_ID } from "./historicalAnalysis.testData";
 
@@ -52,8 +52,10 @@ describe("UI-HIS-002 a refused or missing supply is not asked for again (#252)",
       },
     ]);
     mockCustomInstance.mockImplementation(router.handle);
-    // Production's retry count, without its delay, so a retry would show here at once.
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retryDelay: 0 } } });
+    // Production's retry policy, without its delay, so a retry would show here at once.
+    const queryClient = createAppQueryClient();
+    const defaults = queryClient.getDefaultOptions();
+    queryClient.setDefaultOptions({ ...defaults, queries: { ...defaults.queries, retryDelay: 0 } });
 
     const { result } = renderHookWithProviders(
       () => ({ selection: useSelectedSupply([HOME]), params: useSearchParams()[0] }),

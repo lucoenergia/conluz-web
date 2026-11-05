@@ -123,7 +123,7 @@ describe("PlantIntegrationsSection", () => {
     it("UI-INT-005 reads the configuration of the plant it is given", () => {
       setup();
 
-      expect(useGetHuaweiConfig).toHaveBeenCalledWith(PLANT_ID, expect.anything());
+      expect(useGetHuaweiConfig).toHaveBeenCalledWith(PLANT_ID);
     });
   });
 

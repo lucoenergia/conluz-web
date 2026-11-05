@@ -27,7 +27,7 @@ import {
   storedPasswordFrom,
   type CredentialsField,
 } from "../../utils/integrationCredentials";
-import { DISABLED_TEXT, incompleteText, isNotFound, retryUnlessNotFound } from "../../utils/integrationStatus";
+import { DISABLED_TEXT, incompleteText, isNotFound } from "../../utils/integrationStatus";
 import { ActionStatus } from "../../components/ActionStatus";
 
 /**
@@ -170,7 +170,7 @@ export const IntegrationsPage: FC = () => {
   } = useGetDatadisConfig(
     activeCommunityId ?? "",
     // A 404 is the create form, answered at once, as for Huawei (UI-INT-014).
-    { query: { enabled: !!activeCommunityId, staleTime: CONFIG_STALE_TIME, retry: retryUnlessNotFound } },
+    { query: { enabled: !!activeCommunityId, staleTime: CONFIG_STALE_TIME } },
   );
 
   // Live from the read, not copied into state: the refetch after a save is what

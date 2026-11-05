@@ -1,6 +1,6 @@
 import { useGetHuaweiConfig } from "../../../api/production/production";
 import type { PlantResponse } from "../../../api/models";
-import { isNotFound, retryUnlessNotFound } from "../../../utils/integrationStatus";
+import { isNotFound } from "../../../utils/integrationStatus";
 
 /**
  * Where the plant's Huawei integration stands, as the plant detail summarises it:
@@ -21,7 +21,7 @@ export type PlantIntegrationStatus = "active" | "disabled" | "not-configured" | 
 export function usePlantIntegrationStatus(plant: PlantResponse | undefined): PlantIntegrationStatus {
   const canManage = plant?.capabilities.canManage === true;
   const { data, error, isLoading } = useGetHuaweiConfig(plant?.id ?? "", {
-    query: { enabled: canManage, retry: retryUnlessNotFound },
+    query: { enabled: canManage },
   });
 
   if (!canManage) return "unknown";
