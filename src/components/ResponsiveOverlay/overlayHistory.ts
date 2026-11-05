@@ -166,8 +166,10 @@ export function afterPendingBacks(task: () => void): void {
  * Returning `true` keeps the layer open and guarded; anything else means the
  * caller closed it.
  *
- * `ResponsiveOverlay` uses it for itself. It is exported for a layer that is
- * not on the overlay yet, so back still closes the top layer first.
+ * `ResponsiveOverlay` uses it for itself. Exported only as a transitional
+ * hook, for a stacked layer that is not a `ResponsiveOverlay` yet, so back
+ * still closes the top layer first. Every use outside this folder carries a
+ * `// temporary: #<issue>` comment naming the issue that migrates the layer.
  */
 export function useBackDismiss(open: boolean, onBack: () => boolean | void): void {
   const owner = useRef({});
@@ -185,10 +187,11 @@ export function useBackDismiss(open: boolean, onBack: () => boolean | void): voi
 }
 
 /**
- * Resolves once every back this module issued has landed, releases deferred
- * by an unmount included. For tests that start from a quiet history: jsdom
- * drops a pending back when anything pushes an entry, and its `popstate` would
- * then never come.
+ * Test-only: not exported from the index, and imported by specs from this
+ * file. Resolves once every back this module issued has landed, releases
+ * deferred by an unmount included, so a test starts from a quiet history:
+ * jsdom drops a pending back when anything pushes an entry, and its
+ * `popstate` would then never come.
  */
 export async function overlayHistorySettled(): Promise<void> {
   // Let the releases queued by an unmount that just happened issue their backs.

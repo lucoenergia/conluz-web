@@ -203,7 +203,7 @@ export const ManagedContactChannels: FC<ManagedContactChannelsProps> = ({
   // The confirmation sits over the sheet but is not on the shared overlay yet
   // (#369), so it joins the back stack itself: back closes it first, and the
   // sheet stays open (#368).
-  useBackDismiss(deleteConfirmationOpen, () => setConfirmingDelete(false));
+  useBackDismiss(deleteConfirmationOpen, () => setConfirmingDelete(false)); // temporary: #369
   const editor = sheet && (
     <ContactChannelEditor
       key={sheet.key}
