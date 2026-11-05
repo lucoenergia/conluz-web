@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   DOCUMENTED_MEMBERSHIP_DAILY_CONSUMPTION_BUCKET,
   DOCUMENTED_MEMBERSHIP_ENERGY_METRICS,
+  DOCUMENTED_MEMBERSHIP_HOURLY_CONSUMPTION_BUCKET,
   DOCUMENTED_MEMBERSHIP_MONTHLY_CONSUMPTION_BUCKET,
   DOCUMENTED_SUPPLY_CONSUMPTION_BUCKET,
   DOCUMENTED_SUPPLY_ENERGY_METRICS,
+  DOCUMENTED_SUPPLY_HOURLY_CONSUMPTION_BUCKET,
 } from "./documentedResponses";
 
 /**
@@ -56,6 +58,20 @@ describe("documented consumption series buckets (#250)", () => {
   it("the supply bucket is its schema's examples, unedited", () => {
     expect(DOCUMENTED_SUPPLY_CONSUMPTION_BUCKET).toEqual(
       fromExamples(SCHEMAS.SupplyConsumptionBucketResponse, "SupplyConsumptionBucketResponse"),
+    );
+  });
+});
+
+describe("documented hourly consumption series buckets (#378)", () => {
+  it("the membership hourly bucket is its schema's examples, unedited", () => {
+    expect(DOCUMENTED_MEMBERSHIP_HOURLY_CONSUMPTION_BUCKET).toEqual(
+      fromExamples(SCHEMAS.MembershipHourlyConsumptionBucketResponse, "MembershipHourlyConsumptionBucketResponse"),
+    );
+  });
+
+  it("the supply hourly bucket is its schema's examples, unedited", () => {
+    expect(DOCUMENTED_SUPPLY_HOURLY_CONSUMPTION_BUCKET).toEqual(
+      fromExamples(SCHEMAS.SupplyHourlyConsumptionBucketResponse, "SupplyHourlyConsumptionBucketResponse"),
     );
   });
 });

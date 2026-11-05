@@ -8,6 +8,7 @@ import type {
   MembershipEnergyMetricsResponse,
   SupplyConsumptionBucketResponse,
   SupplyEnergyMetricsResponse,
+  MembershipHourlyConsumptionBucketResponse,
   MembershipHourlyProfileResponse,
   MembershipMonthlyConsumptionBucketResponse,
   MembershipPaybackResponse,
@@ -1376,6 +1377,34 @@ export function memberDailySeries(firstDay: string, days: number): MembershipDai
       time: "00:00",
       selfConsumptionKWh,
       gridImportKWh: Math.round((6 + (index % 7) * 0.5) * 1000) / 1000,
+      surplusKWh,
+      assignedProductionKWh: Math.round((selfConsumptionKWh + surplusKWh) * 1000) / 1000,
+      savingsEur: Math.round(selfConsumptionKWh * 15) / 100,
+      tariffSource: "ESTIMATE",
+      supplyCount: 2,
+      suppliesWithData: 2,
+    };
+  });
+}
+
+/**
+ * The membership's 24 hours of `day` ("2026-09-01"), a day with no clock
+ * change whose offset is `offset` ("+02:00"), as
+ * GET /communities/{id}/memberships/{userId}/consumption/hourly returns them
+ * (#378): each `startsAt` with its offset, and figures that vary from hour to
+ * hour. A clock-change day has 23 or 25 hours and two offsets: not built here.
+ */
+export function memberHourlySeries(day: string, offset: string): MembershipHourlyConsumptionBucketResponse[] {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return Array.from({ length: 24 }, (_, hour) => {
+    const selfConsumptionKWh = Math.round((0.1 + (hour % 6) * 0.08) * 1000) / 1000;
+    const surplusKWh = Math.round((0.05 + (hour % 4) * 0.03) * 1000) / 1000;
+    return {
+      startsAt: `${day}T${pad(hour)}:00:00${offset}`,
+      date: day.replaceAll("-", "/"),
+      time: `${pad(hour)}:00`,
+      selfConsumptionKWh,
+      gridImportKWh: Math.round((0.3 + (hour % 5) * 0.06) * 1000) / 1000,
       surplusKWh,
       assignedProductionKWh: Math.round((selfConsumptionKWh + surplusKWh) * 1000) / 1000,
       savingsEur: Math.round(selfConsumptionKWh * 15) / 100,
