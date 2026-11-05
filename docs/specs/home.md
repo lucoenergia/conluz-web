@@ -8,7 +8,7 @@
 | **Roles** | A caller to whom the view is open (`useHomeViews`) |
 | **Domain rules** | `lucoenergia/conluz`: EPR-001, ENM-006, ENM-007, ENM-008, SEM-003 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #253 |
+| **Last reviewed against code** | #358 |
 
 Scope: the rules introduced in #280 for home states migrated from visual tests to Vitest, the
 month bounds of #324, and the self-consumption ratio's basis and status of #253. Not exhaustive: other home behaviour is not yet specified here.
@@ -191,12 +191,24 @@ view may present a missing figure as a zero or a normal setup stage as a failure
 - **Implements:** ENM-007, ENM-008, SEM-003
 - **Source:** #253, lucoenergia/conluz#411
 
+### UI-HOM-014 — No investment recorded says whom to ask, and links to them
+
+- **Status:** Active
+- **Rule:** When the member's payback has no investment recorded, the payback card MUST say that,
+  if they made a contribution, they should ask whoever manages their community to record it, and
+  MUST link to the community's contact page (`/community/contact`).
+- **Rationale:** Only the community's admins can record an investment (UI-MBR-043), so a member who
+  is only told that none is recorded is left at a dead end.
+- **Implements:** n/a
+- **Source:** #358
+
 ## States
 
 | State | Rendered | Actions available |
 | --- | --- | --- |
 | Normal | Every block, from the caller's own membership (UI-HOM-010), each priced as its response says (UI-HOM-001), the comparison with its directions (UI-HOM-003) | The view switch, for a caller with both views (UI-HOM-008) |
 | Nothing resolved yet | The payback sentence without a large figure (UI-HOM-002); neutral notices in place of empty blocks (UI-HOM-007) | — |
+| No investment recorded | The saving so far, that no investment is recorded, and whom to ask to record it (UI-HOM-014) | The link to the community's contact page |
 | Incomplete month | The comparison said to be affected (UI-HOM-004); no best hours named (UI-HOM-006) | — |
 | Management setup | No plant, or a plant without an agreement, explained without an alert (UI-HOM-009) | — |
 | A plant's own supply left out | The headline, its bar and the advice from the ratio's basis (UI-HOM-012), the supplies left out stated (UI-HOM-013) | — |

@@ -4,7 +4,7 @@
 | --- | --- |
 | **Prefix** | `UI-OVL` |
 | **Status** | Active |
-| **Routes** | Every route whose page opens a create, edit, action or confirmation flow; on the overlay today: `/community/contact` (the contact channel editor) |
+| **Routes** | Every route whose page opens a create, edit, action or confirmation flow; on the overlay today: `/community/contact` (the contact channel editor), `/members` (the investment editor and its removal confirmation, #358) |
 | **Roles** | Whoever may start the flow; the overlay adds no rule of its own |
 | **Domain rules** | `lucoenergia/conluz`: none |
 | **Design reference** | Design system: `ContactChannelEditor` (dialogs), the reference the overlay was taken from |
