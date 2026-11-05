@@ -1,5 +1,5 @@
 import type { ApexOptions } from "apexcharts";
-import type { SupplyConsumptionBucketResponse } from "../../api/models";
+import type { MembershipHourlyConsumptionBucketResponse, SupplyConsumptionBucketResponse } from "../../api/models";
 import {
   formatCalendarDay,
   formatCalendarMonth,
@@ -24,6 +24,7 @@ import {
   type HistoricalPeriod,
 } from "./historicalPeriod";
 import { slotStateText } from "./slotStateText";
+import { localIsoAt, wallTimeAt } from "../home/member/monthBounds";
 import type { ConsumptionSeries } from "./usePeriodConsumptionSeries";
 
 /**
@@ -39,13 +40,28 @@ export type SlotState =
   | { kind: "measuredZero" }
   | { kind: "complete" };
 
+/** The hour an hourly slot stands for (#378). */
+export interface SlotHour {
+  /** The instant it starts at, in the app's time zone with its offset: "2026-10-25T02:00:00+01:00". */
+  startsAt: string;
+  /** The hour the clock shows when it starts, 0-23. */
+  clockHour: number;
+  /** The clock shows this hour twice that day: the October change. */
+  repeated: boolean;
+}
+
 export interface SlotView {
-  /** The slot's first day, written as a bucket's `date`: "2026/07/01". The chart's category. */
+  /**
+   * The chart's category, unique on the axis. A day or a month: its first day
+   * written as a bucket's `date`, "2026/07/01". An hour: its `startsAt`.
+   */
   key: string;
   day: CalendarDay;
+  /** An hourly slot's hour; null on a day or a month. */
+  hour: SlotHour | null;
   /** The x-axis label, or "" where the axis is thinned so labels never overlap. */
   axisLabel: string;
-  /** "15 de julio de 2026", "Febrero de 2026": the tooltip's header. */
+  /** "15 de julio de 2026", "Febrero de 2026", "De 14:00 a 15:00": the tooltip's header. */
   name: string;
   /** Below sm, the row's label, on every slot: "1 ago", "sept 25". */
   rowLabel: string;
@@ -121,6 +137,8 @@ export const ASSIGNED_UNUSED_GROUP = "assignedUnused";
 const SAVINGS_GROUP = "savings";
 
 export { COMPLETE_TEXT } from "./slotStateText";
+/** Both hours the clock shows twice on the October change day carry it. */
+export const REPEATED_HOUR_NOTE = "(hora repetida por el cambio de hora)";
 export const MEASURED_ZERO_KWH_TEXT = "0,0 kWh (medido)";
 export const MEASURED_ZERO_EUR_TEXT = `${formatEuros(0)} (medido)`;
 
@@ -169,15 +187,41 @@ export function axisOf(period: HistoricalPeriod): CalendarDay[] {
   return slots;
 }
 
-/** A slot of the axis before it meets the buckets: the key buckets are matched by, and its calendar day. */
+/** A slot of the axis before it meets the buckets: the key buckets are matched by, its calendar day, and its hour if it is one. */
 interface AxisSlot {
   key: string;
   day: CalendarDay;
+  hour: SlotHour | null;
 }
 
-/** The axis of a period, each slot keyed as its bucket will be: by `date`. */
+const MS_PER_HOUR = 3_600_000;
+
+/**
+ * The hours of an hourly period (#378): every whole hour that starts inside
+ * it, stepped on the instant line from `startDate` up to `endDate`, which is
+ * excluded -- 23, 24 or 25 for a day, as the backend emits them (SCS-001,
+ * MCS-003). Each is keyed by its instant written in the app's time zone,
+ * which stays unique on the day the clocks go back, and read on the clock
+ * there: never in the device's zone.
+ */
+export function hourAxisOf(period: HistoricalPeriod): AxisSlot[] {
+  const starts: number[] = [];
+  for (let instant = Date.parse(period.startDate); instant < Date.parse(period.endDate); instant += MS_PER_HOUR) starts.push(instant);
+  const walls = starts.map((instant) => wallTimeAt(instant));
+  // Counting the clock's hours is how the repeated one is found: no figure.
+  const timesShown = new Map<number, number>();
+  for (const wall of walls) timesShown.set(wall.hour, (timesShown.get(wall.hour) ?? 0) + 1);
+  return starts.map((instant, index) => {
+    const { year, month, day, hour } = walls[index];
+    const startsAt = localIsoAt(instant);
+    return { key: startsAt, day: { year, month, day }, hour: { startsAt, clockHour: hour, repeated: timesShown.get(hour)! > 1 } };
+  });
+}
+
+/** The axis of a period. A day or a month is keyed as its bucket is, by `date`; an hour by its instant. */
 function axisSlotsOf(period: HistoricalPeriod): AxisSlot[] {
-  return axisOf(period).map((day) => ({ key: formatDayKey(day), day }));
+  if (period.granularity === "hourly") return hourAxisOf(period);
+  return axisOf(period).map((day) => ({ key: formatDayKey(day), day, hour: null }));
 }
 
 /** One series' bucket reduced to what decides a slot. */
@@ -192,33 +236,54 @@ interface BucketReading {
 }
 
 /**
- * How each series marks its states (#250):
+ * How each series marks its states (#250, #378):
  * - membership: a gap is `savingsEur: null`; partial is `suppliesWithData < supplyCount`;
- * - supply: a gap is `obtainMethod: null`, whose zeros are placeholders, not readings.
+ * - supply: a gap is `obtainMethod: null`, whose zeros and 0.00 € are placeholders, not readings.
+ *
+ * A day or a month is keyed by its `date` string, never parsed as an
+ * instant. An hour is keyed by its `startsAt` instant, never by `date` and
+ * `time`, which two hours share on the day the clocks go back.
  */
 function readingsOf(series: ConsumptionSeries): Map<string, BucketReading> {
-  if (series.kind === "membershipDaily" || series.kind === "membershipMonthly") {
-    return new Map(
-      series.buckets.map((bucket) => [
-        bucketKeyOf(bucket),
-        {
-          isGap: bucket.savingsEur === null,
-          partial: bucket.suppliesWithData < bucket.supplyCount ? { reported: bucket.suppliesWithData, total: bucket.supplyCount } : null,
-          selfConsumptionKWh: bucket.selfConsumptionKWh,
-          gridImportKWh: bucket.gridImportKWh,
-          surplusKWh: bucket.surplusKWh,
-          savingsEur: bucket.savingsEur ?? 0,
-        },
-      ]),
-    );
+  switch (series.kind) {
+    case "membershipHourly":
+      return new Map(series.buckets.flatMap((bucket) => hourEntry(bucket, membershipReading(bucket))));
+    case "membershipDaily":
+    case "membershipMonthly":
+      return new Map(series.buckets.map((bucket) => [bucket.date, membershipReading(bucket)]));
+    case "supplyHourly":
+      return new Map(series.buckets.flatMap((bucket) => hourEntry(bucket, supplyReading(bucket))));
+    case "supplyDaily":
+    case "supplyMonthly":
+      return new Map(series.buckets.map((bucket) => [bucket.date, supplyReading(bucket)]));
   }
-  return new Map(series.buckets.map((bucket: SupplyConsumptionBucketResponse) => [bucketKeyOf(bucket), supplyReading(bucket)]));
 }
 
-/** The key of the slot a bucket belongs to: its `date` string, never parsed as an instant. */
-const bucketKeyOf = (bucket: { date: string }) => bucket.date;
+/** An hourly bucket under the key of the hour it starts: its instant, as the axis writes it. One that names no instant matches no hour. */
+function hourEntry(bucket: { startsAt: string }, reading: BucketReading): [string, BucketReading][] {
+  const instant = Date.parse(bucket.startsAt);
+  return Number.isNaN(instant) ? [] : [[localIsoAt(instant), reading]];
+}
 
-function supplyReading(bucket: SupplyConsumptionBucketResponse): BucketReading {
+type MembershipBucket = Pick<
+  MembershipHourlyConsumptionBucketResponse,
+  "savingsEur" | "suppliesWithData" | "supplyCount" | "selfConsumptionKWh" | "gridImportKWh" | "surplusKWh"
+>;
+
+function membershipReading(bucket: MembershipBucket): BucketReading {
+  return {
+    isGap: bucket.savingsEur === null,
+    partial: bucket.suppliesWithData < bucket.supplyCount ? { reported: bucket.suppliesWithData, total: bucket.supplyCount } : null,
+    selfConsumptionKWh: bucket.selfConsumptionKWh,
+    gridImportKWh: bucket.gridImportKWh,
+    surplusKWh: bucket.surplusKWh,
+    savingsEur: bucket.savingsEur ?? 0,
+  };
+}
+
+type SupplyBucket = Pick<SupplyConsumptionBucketResponse, "obtainMethod" | "selfConsumptionKWh" | "gridImportKWh" | "surplusKWh" | "savingsEur">;
+
+function supplyReading(bucket: SupplyBucket): BucketReading {
   return {
     isGap: bucket.obtainMethod === null,
     partial: null,
@@ -240,28 +305,56 @@ function stateOf(reading: BucketReading | undefined): SlotState {
 const kilowattHoursText = (value: number) => (value === 0 ? MEASURED_ZERO_KWH_TEXT : formatKilowattHours(value));
 const eurosText = (value: number) => (value === 0 ? MEASURED_ZERO_EUR_TEXT : formatEuros(value));
 
-function axisLabelOf(day: CalendarDay, index: number, granularity: Granularity, step: number): string {
+const pad = (value: number) => String(value).padStart(2, "0");
+
+/** "14:00": an hour as the clock shows it. */
+const clockText = (hour: number) => `${pad(hour)}:00`;
+
+/**
+ * "De 14:00 a 15:00", named by the clock: it ends at the next hour by name,
+ * so the hour before the March change reads "De 01:00 a 02:00" although the
+ * clock jumps to 03:00, and both October 02:00 read "De 02:00 a 03:00".
+ */
+export const hourRangeText = (first: SlotHour, last: SlotHour = first) =>
+  `de ${clockText(first.clockHour)} a ${clockText((last.clockHour + 1) % 24)}`;
+
+/** The hour's name in the tooltip: "De 14:00 a 15:00", with the note on a repeated hour. */
+function hourName(hour: SlotHour): string {
+  const name = capitalise(hourRangeText(hour));
+  return hour.repeated ? `${name} ${REPEATED_HOUR_NOTE}` : name;
+}
+
+function axisLabelOf({ day, hour }: AxisSlot, index: number, granularity: Granularity, step: number): string {
   if (index % step !== 0) return "";
+  if (hour) return `${hour.clockHour} h`;
   const key = formatDayKey(day);
   if (granularity === "daily") return formatShortDay(key);
   // The year where it changes, and on the first month, so 24 months read unambiguously.
   return index === 0 || day.month === 1 ? `${formatShortMonth(key)} ${String(day.year).slice(2)}` : formatShortMonth(key);
 }
 
-function rowLabelOf(day: CalendarDay, granularity: Granularity): string {
+function rowLabelOf({ day, hour }: AxisSlot, granularity: Granularity): string {
+  if (hour) return `${hour.clockHour} h`;
   const key = formatDayKey(day);
   return granularity === "daily" ? formatShortDay(key) : `${formatShortMonth(key)} ${String(day.year).slice(2)}`;
 }
 
-function slotOf({ key, day }: AxisSlot, index: number, reading: BucketReading | undefined, granularity: Granularity, step: number): SlotView {
+function nameOf({ key, hour }: AxisSlot, granularity: Granularity): string {
+  if (hour) return hourName(hour);
+  return granularity === "daily" ? formatCalendarDay(key) : capitalise(formatCalendarMonth(key));
+}
+
+function slotOf(slot: AxisSlot, index: number, reading: BucketReading | undefined, granularity: Granularity, step: number): SlotView {
+  const { key, day, hour } = slot;
   const state = stateOf(reading);
   const base = {
     key,
     day,
-    axisLabel: axisLabelOf(day, index, granularity, step),
-    name: granularity === "daily" ? formatCalendarDay(key) : capitalise(formatCalendarMonth(key)),
-    rowLabel: rowLabelOf(day, granularity),
-    startsMonthOrYear: granularity === "daily" ? day.day === 1 : day.month === 1,
+    hour,
+    axisLabel: axisLabelOf(slot, index, granularity, step),
+    name: nameOf(slot, granularity),
+    rowLabel: rowLabelOf(slot, granularity),
+    startsMonthOrYear: granularity === "daily" ? day.day === 1 : granularity === "monthly" && day.month === 1,
     endsWeek: granularity === "daily" && (index + 1) % 7 === 0,
     state,
     stateText: slotStateText(state, granularity).long,
@@ -361,14 +454,19 @@ function runsOf(slots: SlotView[], belongs: (slot: SlotView) => boolean): [SlotV
 const joinPhrases = (phrases: string[]) =>
   phrases.length <= 1 ? (phrases[0] ?? "") : `${phrases.slice(0, -1).join(", ")} y ${phrases[phrases.length - 1]}`;
 
-/** "del 14 al 16 de julio de 2026", "de febrero a marzo de 2026", "de julio de 2026". */
+/** "del 14 al 16 de julio de 2026", "de febrero a marzo de 2026", "de julio de 2026", "de 14:00 a 16:00". */
 function gapRangePhrase([first, last]: [SlotView, SlotView], granularity: Granularity): string {
+  if (first.hour && last.hour) return hourRangeText(first.hour, last.hour);
   if (granularity === "daily") return compareDays(first.day, last.day) === 0 ? `del ${dayName(first.day)}` : `del ${dayRangePhrase(first.day, last.day)}`;
   return compareDays(first.day, last.day) === 0 ? `de ${monthYearName(first.day)}` : `de ${monthRangePhrase(first.day, last.day)}`;
 }
 
-/** "el 3 de julio de 2026", "los días del 14 al 16 de julio de 2026", "julio de 2026", "los meses de febrero a marzo de 2026". */
+/**
+ * "el 3 de julio de 2026", "los días del 14 al 16 de julio de 2026", "julio de 2026",
+ * "los meses de febrero a marzo de 2026", "la hora de 14:00 a 15:00", "las horas de 14:00 a 16:00".
+ */
 function partialRangePhrase([first, last]: [SlotView, SlotView], granularity: Granularity): string {
+  if (first.hour && last.hour) return `${first === last ? "la hora" : "las horas"} ${hourRangeText(first.hour, last.hour)}`;
   const single = compareDays(first.day, last.day) === 0;
   if (granularity === "daily") return single ? `el ${dayName(first.day)}` : `los días del ${dayRangePhrase(first.day, last.day)}`;
   return single ? monthYearName(first.day) : `los meses de ${monthRangePhrase(first.day, last.day)}`;
@@ -419,14 +517,16 @@ function coverageTextOf(slots: SlotView[], period: HistoricalPeriod): string {
  *
  * The axis comes from the period, not from the buckets: a slot the series
  * omits (the supply monthly series leaves out a month with nothing stored) is
- * still on it, as a gap. Buckets are matched to slots by their `date` string,
- * never parsed as an instant.
+ * still on it, as a gap. A day's or a month's bucket is matched to its slot
+ * by its `date` string, never parsed as an instant; an hour's by its
+ * `startsAt` instant, never by `date` and `time` (#378).
  *
  * Every figure is a bucket's own, but one: below sm, a row states the slot's
  * consumption, its community energy plus its grid energy, which no bucket
  * carries (UI-HIS-025). What the client also counts is slots by state (the
- * coverage line, the notices), where a partial slot's bar ends, to place its
- * marker, and where each row scale ends.
+ * coverage line, the notices), the clock's hours on an hourly axis, to find
+ * the one shown twice, where a partial slot's bar ends, to place its marker,
+ * and where each row scale ends.
  *
  * A slot's state follows the first signal that applies:
  * gap > partial > measuredZero > complete. A day no supply reported is a gap
@@ -439,7 +539,7 @@ export function toConsumptionSeriesView(period: HistoricalPeriod, series: Consum
   const readings = readingsOf(series);
   const step = Math.max(1, Math.ceil(LABEL_WIDTH / SLOT_WIDTH[granularity]));
   const slots = axisSlotsOf(period).map((slot, index) => slotOf(slot, index, readings.get(slot.key), granularity, step));
-  const isMembership = series.kind === "membershipDaily" || series.kind === "membershipMonthly";
+  const isMembership = series.kind === "membershipHourly" || series.kind === "membershipDaily" || series.kind === "membershipMonthly";
 
   return {
     granularity,

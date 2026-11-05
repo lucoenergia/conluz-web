@@ -7,6 +7,7 @@ import {
   MEASURED_ZERO_KWH_TEXT,
   SELF_CONSUMPTION_SERIES,
   SURPLUS_SERIES,
+  REPEATED_HOUR_NOTE,
   axisOf,
   scaleEnd,
   toConsumptionSeriesView,
@@ -15,7 +16,14 @@ import {
 import type { HistoricalPeriod } from "./historicalPeriod";
 import {
   HOME,
+  hoursOf,
   membershipDay,
+  membershipGapHour,
+  membershipHour,
+  membershipPartialHour,
+  supplyGapHour,
+  supplyHour,
+  supplyMeasuredZeroHour,
   membershipGapDay,
   membershipMonth,
   membershipPartialDay,
@@ -359,5 +367,153 @@ describe("the rows below sm (#361)", () => {
     [0.0004, 0.0005],
   ])("scaleEnd(%s) is %s", (value, end) => {
     expect(scaleEnd(value)).toBeCloseTo(end, 10);
+  });
+});
+
+// ─── Hourly (#378) ───────────────────────────────────────────────────────────
+
+/** A day picked as a one-day custom range, as the period module bounds it. */
+const dayPeriod = (startDate: string, endDate: string, label: string) => period(startDate, endDate, "hourly", label);
+const SEPTEMBER_1 = dayPeriod("2026-09-01T00:00:00+02:00", "2026-09-02T00:00:00+02:00", "1 de septiembre de 2026");
+const MARCH_29 = dayPeriod("2026-03-29T00:00:00+01:00", "2026-03-30T00:00:00+02:00", "29 de marzo de 2026");
+const OCTOBER_25 = dayPeriod("2026-10-25T00:00:00+02:00", "2026-10-26T00:00:00+01:00", "25 de octubre de 2026");
+const REPEATED_NAME = `De 02:00 a 03:00 ${REPEATED_HOUR_NOTE}`;
+
+describe("toConsumptionSeriesView, hourly (#378)", () => {
+  describe("UI-HIS-028 the axis covers every whole local hour of the day, keyed by its instant", () => {
+    it("UI-HIS-028 a day with no clock change has 24 hours, from 00:00 to 23:00, and the next midnight gets no slot", () => {
+      const view = toConsumptionSeriesView(SEPTEMBER_1, { kind: "supplyHourly", buckets: [] });
+
+      expect(view.slots).toHaveLength(24);
+      expect(view.slots.map((slot) => slot.hour?.clockHour)).toEqual(Array.from({ length: 24 }, (_, hour) => hour));
+      expect(view.slots[0].key).toBe("2026-09-01T00:00:00+02:00");
+      expect(view.slots[23].key).toBe("2026-09-01T23:00:00+02:00");
+      expect(view.slots.map((slot) => slot.name).slice(0, 2)).toEqual(["De 00:00 a 01:00", "De 01:00 a 02:00"]);
+      expect(view.slots[14].name).toBe("De 14:00 a 15:00");
+      expect(view.slots[23].name).toBe("De 23:00 a 00:00");
+      expect(view.slots.map((slot) => slot.rowLabel).slice(0, 3)).toEqual(["0 h", "1 h", "2 h"]);
+      expect(view.categories).toEqual(view.slots.map((slot) => slot.key));
+    });
+
+    it("UI-HIS-028 AC3 -- the March change day has 23 hours, with no 02:00, and none repeated", () => {
+      const view = toConsumptionSeriesView(MARCH_29, { kind: "supplyHourly", buckets: [] });
+
+      expect(view.slots).toHaveLength(23);
+      expect(view.slots.map((slot) => slot.hour?.clockHour)).toEqual([0, 1, ...Array.from({ length: 21 }, (_, index) => index + 3)]);
+      expect(view.slots.map((slot) => slot.key).slice(1, 3)).toEqual(["2026-03-29T01:00:00+01:00", "2026-03-29T03:00:00+02:00"]);
+      expect(view.slots[1].name).toBe("De 01:00 a 02:00");
+      expect(view.slots.some((slot) => slot.hour?.repeated)).toBe(false);
+      expect(new Set(view.categories).size).toBe(23);
+    });
+
+    it("UI-HIS-028 AC3 -- the October change day has 25 hours, two at 02:00 with distinct keys, both named as repeated", () => {
+      const view = toConsumptionSeriesView(OCTOBER_25, { kind: "supplyHourly", buckets: [] });
+
+      expect(view.slots).toHaveLength(25);
+      expect(new Set(view.categories).size).toBe(25);
+      const twoAm = view.slots.filter((slot) => slot.hour?.clockHour === 2);
+      expect(twoAm.map((slot) => slot.key)).toEqual(["2026-10-25T02:00:00+02:00", "2026-10-25T02:00:00+01:00"]);
+      expect(twoAm.map((slot) => slot.name)).toEqual([REPEATED_NAME, REPEATED_NAME]);
+      expect(view.slots.filter((slot) => slot.hour?.repeated)).toHaveLength(2);
+      expect(view.slots[1].name).toBe("De 01:00 a 02:00");
+      expect(view.slots[4].name).toBe("De 03:00 a 04:00");
+    });
+
+    it("UI-HIS-028 AC3 -- buckets are matched by startsAt, so two sharing a date and a time land in the hours they start", () => {
+      // The documented bucket's date and time ("2023/04/10", "00:00") stay on both: only startsAt tells them apart.
+      const first = supplyHour("2026-10-25T02:00:00+02:00", { selfConsumptionKWh: 1.1, savingsEur: 0.11 });
+      const second = supplyHour("2026-10-25T02:00:00+01:00", { selfConsumptionKWh: 2.2, savingsEur: 0.22 });
+      expect([first.date, first.time]).toEqual([second.date, second.time]);
+
+      const view = toConsumptionSeriesView(OCTOBER_25, { kind: "supplyHourly", buckets: [second, first] });
+
+      expect(slotOf(view.slots, "2026-10-25T02:00:00+02:00").selfConsumptionKWh).toBe(1.1);
+      expect(slotOf(view.slots, "2026-10-25T02:00:00+01:00").selfConsumptionKWh).toBe(2.2);
+      expect(view.slots.filter((slot) => slot.state.kind !== "gap")).toHaveLength(2);
+    });
+
+    it("UI-HIS-028 a startsAt written with another offset is the same instant, and lands in the same hour", () => {
+      const view = toConsumptionSeriesView(OCTOBER_25, {
+        kind: "membershipHourly",
+        buckets: [membershipHour("2026-10-25T01:00:00Z", { gridImportKWh: 0.9 }), membershipHour("2026-10-25T12:00:00+01:00", { gridImportKWh: 0.4 })],
+      });
+
+      expect(slotOf(view.slots, "2026-10-25T02:00:00+01:00").gridImportKWh).toBe(0.9);
+      expect(slotOf(view.slots, "2026-10-25T12:00:00+01:00").gridImportKWh).toBe(0.4);
+    });
+  });
+
+  describe("UI-HIS-015 AC4 -- the hourly states, by series", () => {
+    it("UI-HIS-015 a supply hour with obtainMethod null is a gap with no values, though it reports 0.00 €; zeros with obtainMethod set are a measured zero", () => {
+      const [first, second, third] = hoursOf(SEPTEMBER_1.startDate, SEPTEMBER_1.endDate);
+      const gapBucket = supplyGapHour(second);
+      expect(gapBucket.savingsEur).toBe(0);
+
+      const view = toConsumptionSeriesView(SEPTEMBER_1, {
+        kind: "supplyHourly",
+        buckets: [supplyHour(first), gapBucket, supplyMeasuredZeroHour(third)],
+      });
+
+      const gap = slotOf(view.slots, second);
+      expect(gap.state).toEqual({ kind: "gap" });
+      expect([gap.selfConsumptionKWh, gap.gridImportKWh, gap.surplusKWh, gap.savingsEur, gap.savingsText]).toEqual([null, null, null, null, null]);
+      expect(gap.stateText).toBe("Sin datos: no hay lecturas de esta hora. No cuenta como 0.");
+      expect(view.savingsSeries[0].data[1]).toBeNull();
+      expect(view.energySeries.map((series) => series.data[1])).toEqual([null, null, null]);
+
+      const zero = slotOf(view.slots, third);
+      expect(zero.state).toEqual({ kind: "measuredZero" });
+      expect(zero.savingsEur).toBe(0);
+      expect(slotOf(view.slots, first).state).toEqual({ kind: "complete" });
+    });
+
+    it("UI-HIS-015 a membership hour with savingsEur null is a gap, and one with fewer supplies reporting than it has is partial", () => {
+      const [first, second, third] = hoursOf(SEPTEMBER_1.startDate, SEPTEMBER_1.endDate);
+      const view = toConsumptionSeriesView(SEPTEMBER_1, {
+        kind: "membershipHourly",
+        buckets: [membershipHour(first), membershipGapHour(second), membershipPartialHour(third, 1, 2)],
+      });
+
+      expect(slotOf(view.slots, first).state).toEqual({ kind: "complete" });
+      expect(slotOf(view.slots, second).state).toEqual({ kind: "gap" });
+      expect(slotOf(view.slots, second).savingsEur).toBeNull();
+      expect(slotOf(view.slots, third).state).toEqual({ kind: "partial", reported: 1, total: 2 });
+    });
+
+    it("UI-HIS-015 an hour missing from the response is a gap", () => {
+      const [first] = hoursOf(SEPTEMBER_1.startDate, SEPTEMBER_1.endDate);
+      const view = toConsumptionSeriesView(SEPTEMBER_1, { kind: "membershipHourly", buckets: [membershipHour(first)] });
+
+      expect(view.slots.filter((slot) => slot.state.kind === "gap")).toHaveLength(23);
+      expect(view.slots[5].savingsEur).toBeNull();
+    });
+
+    it("UI-HIS-015 the card names the missing and the partial hours, and counts hours", () => {
+      const hours = hoursOf(SEPTEMBER_1.startDate, SEPTEMBER_1.endDate);
+      const view = toConsumptionSeriesView(SEPTEMBER_1, {
+        kind: "membershipHourly",
+        buckets: hours.map((startsAt, index) => {
+          if (index === 2 || index === 3) return membershipGapHour(startsAt);
+          if (index === 9) return membershipGapHour(startsAt);
+          if (index === 14) return membershipPartialHour(startsAt, 1, 2);
+          return membershipHour(startsAt);
+        }),
+      });
+
+      expect(view.coverageText).toBe("1 de septiembre de 2026: 21 de 24 horas con datos; faltan 3.");
+      expect(view.gapsNotice).toBe("Faltan datos de 02:00 a 04:00 y de 09:00 a 10:00. Los totales suman solo las horas con datos.");
+      expect(view.partialNotice).toBe("En la hora de 14:00 a 15:00 solo hay datos de 1 de tus 2 puntos. Esa hora se marca como parcial.");
+    });
+
+    it("UI-HIS-015 several partial hours are named as a run", () => {
+      const hours = hoursOf(SEPTEMBER_1.startDate, SEPTEMBER_1.endDate);
+      const view = toConsumptionSeriesView(SEPTEMBER_1, {
+        kind: "membershipHourly",
+        buckets: hours.map((startsAt, index) => (index === 14 || index === 15 ? membershipPartialHour(startsAt, 1, 2) : membershipHour(startsAt))),
+      });
+
+      expect(view.coverageText).toBe("1 de septiembre de 2026: 24 de 24 horas con datos; 2 con datos parciales.");
+      expect(view.partialNotice).toBe("En las horas de 14:00 a 16:00 solo hay datos de 1 de tus 2 puntos. Esas horas se marcan como parciales.");
+    });
   });
 });
