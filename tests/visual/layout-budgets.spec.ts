@@ -22,6 +22,7 @@
 
 import { type Page } from "@playwright/test";
 import type { CommunityResponse, PlantResponse, SupplyResponse } from "../../src/api/models";
+import { theme } from "../../src/theme";
 import { colors } from "../../src/theme/tokens";
 import {
   test,
@@ -53,6 +54,7 @@ import {
   mockPlantDetailRoutes,
   mockSharingAgreementDetailRoutes,
   memberDailySeries,
+  memberHourlySeries,
   mockSharingAgreementsPlantRoutes,
   navigateToSharingAgreementDetail,
   navigateToSharingAgreements,
@@ -1346,6 +1348,144 @@ test.describe("#251: the historical analysis data table", () => {
       expect(box.left, `${box.name} starts off-screen`).toBeGreaterThanOrEqual(0);
       expect(box.right, `${box.name} is wider than the viewport`).toBeLessThanOrEqual(390);
       expect(box.scroll, `${box.name}'s content is wider than the card (${box.scroll}px)`).toBeLessThanOrEqual(box.client);
+    }
+  });
+});
+
+/**
+ * #378. The evolution charts of a single day, hour by hour: 24 slots. Below
+ * sm they are rows, one per hour, and nothing scrolls sideways. At sm, the
+ * narrowest width the charts are drawn at, each chart fits or scrolls inside
+ * the card, and the x-axis labels that are drawn do not overlap, which the
+ * axis thins them for. The width is the theme's own sm breakpoint, the one
+ * the card switches at, never a number of this test's. Measured, not
+ * captured: jsdom lays out neither a box nor a label.
+ */
+test.describe("#378: the historical analysis evolution charts, hour by hour", () => {
+  async function openOneDay(page: Page) {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+    // Registered after mockAllApiRoutes so it wins for this path only: the
+    // 24 hours of 5 August 2026, in the anchor month, the period asked for below.
+    const hours = memberHourlySeries("2026-08-05", "+02:00");
+    await page.route(
+      (url) => /\/memberships\/[^/]+\/consumption\/hourly$/.test(url.pathname),
+      (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(hours) }),
+    );
+    await page.goto("/historical-analysis?period=custom&from=2026-08-05&to=2026-08-05");
+
+    const card = page.getByRole("region", { name: "Tu energía hora a hora" });
+    await expect(card).toBeVisible();
+    await expect(card.getByText("5 de agosto de 2026: 24 de 24 horas con datos.")).toBeVisible();
+    return card;
+  }
+
+  async function expectNoSidewaysPageScroll(page: Page) {
+    const pageWidths = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth,
+    }));
+    expect(pageWidths.document, "the page scrolls sideways").toBeLessThanOrEqual(pageWidths.viewport);
+  }
+
+  test("UI-HIS-025 AC7 -- at 390px 24 hourly slots are 24 rows per chart, nothing scrolls sideways, and no row overflows", async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "The budget is a 390px viewport.");
+
+    const card = await openOneDay(page);
+    const energyRows = card.getByRole("list", { name: "Tu energía por hora" }).getByRole("button");
+    const savingsRows = card.getByRole("list", { name: "Tu ahorro estimado por hora" }).getByRole("listitem");
+    await expect(energyRows).toHaveCount(24);
+    await expect(savingsRows).toHaveCount(24);
+    await expect(card.locator("svg.apexcharts-svg")).toHaveCount(0);
+    await stabilizePage(page);
+
+    await expectNoSidewaysPageScroll(page);
+    const cardBox = await card.boundingBox();
+    expect(cardBox!.x, "the card starts off-screen").toBeGreaterThanOrEqual(0);
+    expect(cardBox!.x + cardBox!.width, "the card is wider than the viewport").toBeLessThanOrEqual(390);
+    const scrollers = await card.evaluate((region) =>
+      [region, ...region.querySelectorAll("*")]
+        .filter((node) => node.scrollWidth > node.clientWidth && ["auto", "scroll"].includes(getComputedStyle(node).overflowX))
+        .map((node) => node.outerHTML.slice(0, 80)),
+    );
+    expect(scrollers, "something in the card scrolls sideways").toEqual([]);
+
+    for (const [name, rows] of [
+      ["energy", energyRows],
+      ["savings", savingsRows],
+    ] as const) {
+      const boxes = await rows.evaluateAll((items) =>
+        items.map((item) => {
+          const box = item.getBoundingClientRect();
+          return {
+            name: item.getAttribute("aria-label"),
+            left: box.left,
+            right: box.right,
+            scroll: item.scrollWidth,
+            client: item.clientWidth,
+            widest: Math.max(...[...item.querySelectorAll("*")].map((child) => child.getBoundingClientRect().right)),
+            spilling: [...item.querySelectorAll("*")]
+              .filter((child) => child.clientWidth > 0 && child.scrollWidth > child.clientWidth + 1)
+              .map((child) => `"${child.textContent}" (${child.scrollWidth}px in ${child.clientWidth}px)`),
+          };
+        }),
+      );
+      for (const box of boxes) {
+        expect(box.left, `${name} row "${box.name}" starts outside the card`).toBeGreaterThanOrEqual(cardBox!.x);
+        expect(box.right, `${name} row "${box.name}" ends outside the card`).toBeLessThanOrEqual(cardBox!.x + cardBox!.width);
+        expect(box.scroll, `${name} row "${box.name}"'s content is wider than the row (${box.scroll}px)`).toBeLessThanOrEqual(box.client);
+        expect(box.widest, `${name} row "${box.name}" draws past its right edge`).toBeLessThanOrEqual(box.right + 0.5);
+        expect(box.spilling, `${name} row "${box.name}" has content wider than its box`).toEqual([]);
+      }
+    }
+  });
+
+  test("UI-HIS-018 AC7 -- at the sm breakpoint 24 hourly slots fit or scroll inside the card, the page never scrolls sideways, and no axis labels overlap", async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop", "The budget is the narrowest width the charts are drawn at: the theme's sm breakpoint.");
+    const narrowestChartWidth = theme.breakpoints.values.sm;
+    await page.setViewportSize({ width: narrowestChartWidth, height: 900 });
+
+    const card = await openOneDay(page);
+    // Structural: ApexCharts' SVG has no role or name of its own.
+    await expect(card.locator("svg.apexcharts-svg")).toHaveCount(2);
+    await stabilizePage(page);
+
+    await expectNoSidewaysPageScroll(page);
+    const cardBox = await card.boundingBox();
+    expect(cardBox!.x, "the card starts off-screen").toBeGreaterThanOrEqual(0);
+    expect(cardBox!.x + cardBox!.width, "the card is wider than the viewport").toBeLessThanOrEqual(narrowestChartWidth);
+
+    // Structural: each chart's scroll container is its canvas's nearest scrolling
+    // ancestor, and its x-axis labels are ApexCharts' text elements.
+    const charts = await card.evaluate((region) =>
+      [...region.querySelectorAll(".apexcharts-canvas")].map((canvas) => {
+        let scroller = canvas.parentElement;
+        while (scroller && getComputedStyle(scroller).overflowX !== "auto") scroller = scroller.parentElement;
+        const labels = [...canvas.querySelectorAll(".apexcharts-xaxis-label")]
+          .filter((label) => (label.textContent ?? "").trim() !== "")
+          .map((label) => {
+            const box = label.getBoundingClientRect();
+            return { text: label.textContent ?? "", left: box.left, right: box.right };
+          })
+          .sort((a, b) => a.left - b.left);
+        return { client: scroller?.clientWidth ?? 0, labels };
+      }),
+    );
+    expect(charts).toHaveLength(2);
+    for (const [index, chart] of charts.entries()) {
+      const name = index === 0 ? "the energy chart" : "the savings chart";
+      expect(chart.client, `${name}'s scroller fits the card`).toBeLessThanOrEqual(cardBox!.width);
+      expect(chart.labels.length, `${name} draws its axis labels`).toBeGreaterThanOrEqual(10);
+      for (let i = 1; i < chart.labels.length; i++) {
+        const [previous, next] = [chart.labels[i - 1], chart.labels[i]];
+        const overlap = previous.right - next.left;
+        expect(overlap, `${name}: "${previous.text}" overlaps "${next.text}" by ${overlap.toFixed(1)}px`).toBeLessThanOrEqual(0);
+      }
     }
   });
 });
