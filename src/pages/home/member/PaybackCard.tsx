@@ -1,5 +1,6 @@
 import type { FC, ReactNode } from "react";
-import { Box, LinearProgress, Typography } from "@mui/material";
+import { Box, LinearProgress, Link, Typography } from "@mui/material";
+import { Link as RouterLink } from "react-router";
 import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import RemoveCircleOutlineRoundedIcon from "@mui/icons-material/RemoveCircleOutlineRounded";
@@ -76,6 +77,12 @@ export const PaybackCard: FC<{ payback: MembershipPaybackResponse }> = ({ paybac
         {saved}
         <QuietPanel>
           No consta ninguna inversión tuya registrada en esta comunidad, así que no se puede calcular cuánto llevas recuperado.
+          {/* Only the community's admins can record it (#358), so the member is told whom to ask. */}{" "}
+          Si hiciste una aportación, pide a{" "}
+          <Link component={RouterLink} to="/community/contact">
+            quien gestiona tu comunidad
+          </Link>{" "}
+          que la registre.
         </QuietPanel>
         <EstimatedPriceLabel estimatedPrice={estimatedPrice} />
       </HomeCard>
