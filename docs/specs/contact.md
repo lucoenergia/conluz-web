@@ -8,7 +8,7 @@
 | **Roles** | Any signed-in caller (`/community/contact`), who edits the channels there when they may manage the active community; a platform admin who may update the community (`/communities/:communityId/edit`); a signed-out visitor (`/contact`) |
 | **Domain rules** | `lucoenergia/conluz`: CTC-001, CTC-004 |
 | **Design reference** | Design system: `ContactChannelList` (data display), `ContactChannelReorderList` (forms), `ContactChannelEditor` and `DeleteContactChannelConfirmationModal` (dialogs) |
-| **Last reviewed against code** | #296 |
+| **Last reviewed against code** | #368 |
 
 ## Purpose
 
@@ -129,15 +129,15 @@ date from the same page, seeing them as members do, one channel at a time.
 | No channels, or no community (in-app page) | The instruction, then the operator contact when configured and retrieved | Tap the operator's phone or email |
 | No channels, caller may manage (in-app page) | A neutral configure panel; no instruction, no operator (UI-CTU-007) | "Configurar contacto", which opens the sheet for a new channel |
 | No channels, caller's capability not yet known (in-app page) | A progress indicator; neither the instruction nor the configure panel | None |
-| Sheet, no changes | The channel in a bottom sheet below `md`, a 560 px dialog from `md` up; focus trapped | Save, delete (an existing channel), close directly |
-| Sheet, with changes | The same; closing by any means replaces the footer with the unsaved-changes question | Keep editing (focus back on the last field), discard |
+| Sheet, no changes | The channel in the shared overlay, size `form` (UI-OVL-001, UI-OVL-006, UI-OVL-007) | Save, delete (an existing channel), close directly, back included (UI-OVL-004) |
+| Sheet, with changes | The same; a close attempt asks first in the footer (UI-OVL-003, UI-OVL-004), and leaving the page prompts (UI-OVL-005) | Keep editing, discard |
 | Sheet, with errors | Each reason below its field; focus on the first one | Correct and save again, close |
-| Sheet, saving | Read-only fields and a single "Guardando…"; no close or delete control; no other sheet or order mode can be opened (UI-CTU-008) | None |
+| Sheet, saving | Read-only fields and a single "Guardando…"; no close or delete control (UI-OVL-002); no other sheet or order mode can be opened (UI-CTU-008) | None |
 | Sheet, server error | An error alert at the top, focused, with the input kept | Save again, close |
 | Sheet, offline | The offline message at the top, focused, with the input kept | Save again, close |
 | Sheet, lost rights (403 or 404) | The lost-rights message; the input read-only but selectable; no "Guardar" | Close, which refreshes the community and shows the member view |
 | Order mode | Numbered rows with "Subir" and "Bajar"; no add or edit controls; each move announced, focus on the moved channel | Move, save the order, cancel |
-| Delete confirmation | The channel's name and the effect on the others, over the sheet; nothing sent until confirmed | Confirm, cancel |
+| Delete confirmation | The channel's name and the effect on the others, over the sheet; nothing sent until confirmed | Confirm, cancel; back cancels it and keeps the sheet (UI-OVL-004) |
 | Last channel deleted | The configure panel and a neutral notice; focus on "Configurar contacto" | "Configurar contacto" |
 | No channels (platform admin section) | The neutral "not configured" text, no alert colour | None |
 | Channels request failed | An error with a retry | Retry |
