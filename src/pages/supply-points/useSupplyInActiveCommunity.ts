@@ -34,10 +34,11 @@ export function useSupplyInActiveCommunity(
   options: { retry?: (failureCount: number, error: unknown) => boolean } = {},
 ): SupplyInActiveCommunity {
   const activeCommunityId = useActiveCommunity();
-  const { data: supply, isLoading, error, refetch } = useGetSupply(
-    supplyId,
-    options.retry ? { query: { retry: options.retry } } : undefined,
-  );
+  // Callers pass "" when there is no supply to ask about. The generated hook
+  // only disables itself for null or undefined (#337), so "" is gated here.
+  const { data: supply, isLoading, error, refetch } = useGetSupply(supplyId, {
+    query: { enabled: supplyId !== "", ...(options.retry ? { retry: options.retry } : {}) },
+  });
 
   const isForeign = isSupplyOutsideActiveCommunity(supply, activeCommunityId);
   const isNotFound =
