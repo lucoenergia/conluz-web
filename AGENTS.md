@@ -111,8 +111,38 @@ are referenced by ID, never restated. Conventions: `docs/specs/README.md`.
 - **Tables:** build with `ListTable` + `RowActionsMenu` (`src/components/ListTable`). Row actions live **only** in the kebab menu; never place a button, `<Select>` or toggle inline in a row. The one inline control a row may carry is a selection checkbox in the leading slot (`ListTable`'s `selection`, `RecordListItem.selection`), named "Seleccionar <nombre>", with a tri-state "select all"; the actions on the selection sit outside the rows. An action that changes server state opens a confirmation dialog. Details: the `conluz-web-list-tables` skill.
 - **Forms:** controlled MUI inputs; `SupplyForm` is the reference for complex forms.
 - **Notes are not alerts.** An info or success message, a guide or an explanation is a `Notice` (`src/components/Notice`, `role="note"`). When it reports the result of an action, or a page arrives with it, it is also announced through an `ActionStatus` mounted before the text appears: a live region inserted together with its text is announced unreliably, and `ActionStatus` holds back a message it mounts with. A plain `Alert` (`role="alert"`, announced at once) is only for an error or a warning the user must act on now. ESLint refuses an info, success or severity-less `Alert`.
-- **Dialogs are named, and stay open while their write is in flight.** A modal renders `role="dialog"` named by its title (`AppModal`/`BasicModal` do not compile without a name). While a dialog's write is pending, Escape and a backdrop click do nothing and "Cancelar" (or any close button) is shown disabled; once it settles, the dialog closes or shows its result. Every request has a timeout (`REQUEST_TIMEOUT_MS`, `UPLOAD_TIMEOUT_MS` in `src/http/custom-instance.ts`), so a write the network never answers still settles. Use `inFlight` on `ConfirmationModal`, `dismissible` on `AppModal`/`BasicModal`, and `inFlightDialogProps` (`src/utils/inFlightDialog.ts`) on an MUI `Dialog`. A dialog that replaces its content with progress shows no buttons instead. A dialog that closes before it awaits holds no request and is exempt.
+- **Dialogs are named, and stay open while their write is in flight.** A modal renders `role="dialog"` named by its title (`AppModal`/`BasicModal` do not compile without a name). While a dialog's write is pending, Escape and a backdrop click do nothing and "Cancelar" (or any close button) is shown disabled; once it settles, the dialog closes or shows its result. Every request has a timeout (`REQUEST_TIMEOUT_MS`, `UPLOAD_TIMEOUT_MS` in `src/http/custom-instance.ts`), so a write the network never answers still settles. Use `inFlight` on `ResponsiveOverlay` and `ConfirmationModal`, `dismissible` on `AppModal`/`BasicModal`, and `inFlightDialogProps` (`src/utils/inFlightDialog.ts`) on an MUI `Dialog` still on the allowlist below. A dialog that replaces its content with progress shows no buttons instead. A dialog that closes before it awaits holds no request and is exempt.
 - **Environment variables** use the `CONLUZ_` prefix (`CONLUZ_API_URL`); `docker/env.sh` swaps them at container startup.
+
+### Overlays
+
+Every create, edit, action and confirmation flow uses `ResponsiveOverlay`
+(`src/components/ResponsiveOverlay`): a dialog from `md` up (`size="form"` or `"compact"`), a bottom
+sheet below, one close path, back and the leave-page prompt handled once. Rules:
+[`docs/specs/overlays.md`](docs/specs/overlays.md) (UI-OVL).
+
+- **Forbidden imports.** Outside `src/components/ResponsiveOverlay/`, never import `Dialog`, `Modal`,
+  `Drawer` or `SwipeableDrawer` from `@mui/material`, nor from `@mui/material/Dialog`, `/Modal`,
+  `/Drawer` or `/SwipeableDrawer`. A type-only import of their props is allowed. ESLint enforces it
+  (`@typescript-eslint/no-restricted-imports` in `eslint.config.js`).
+- **No route for a create or edit flow.** Never add a route whose path ends in `new` or `edit`; the
+  flow opens in the overlay over the page it belongs to. `src/contracts/overlayRoutes.spec.ts`
+  enforces it.
+- **Allowlist entries need a reason or an issue.** The exceptions live in `OVERLAY_PRIMITIVE_ALLOWLIST`
+  (`eslint.config.js`) and `CREATE_EDIT_ROUTE_ALLOWLIST` (`overlayRoutes.spec.ts`), one per line:
+  `// permanent: <reason>` or `// temporary: #<issue>`, naming the issue that removes it. Never add
+  an entry without one; a migration removes its own entries.
+- **Leaving the page as an overlay closes** (a create that opens the new record, a delete from a
+  detail page) navigates with `useOverlayNavigate`, never a plain `navigate`: it cannot be undone
+  by the back that gives up the overlay's history entry.
+- **`useBackDismiss` is transitional.** It is only for a layer stacked over an overlay that is not a
+  `ResponsiveOverlay` yet, so back closes the top layer first. Every use carries a
+  `// temporary: #<issue>` comment naming the issue that migrates the layer.
+- **Read-only while in flight is the consumer's job.** While `inFlight` is true, consumers MUST set
+  their inputs `readOnly` (or disable their controls); the overlay locks closing, not its content.
+- **Open an overlay only from a user interaction** (a click, a tap, a key press). Chrome's history
+  intervention lets back skip entries added without user activation, so an overlay opened on load or
+  after a redirect would not be closed by back.
 
 ### Styling Contract
 

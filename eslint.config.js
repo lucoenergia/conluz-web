@@ -278,6 +278,63 @@ const API_BARREL = {
   message: "Import generated code from its tag module (src/api/<tag>/<tag>), never from the API barrel.",
 };
 
+// ─── Overlay guard rail ───────────────────────────────────────────────────────
+// Every create, edit, action and confirmation flow renders in ResponsiveOverlay
+// (#368): a dialog from md up, a bottom sheet below, one close path, back and
+// the leave-page prompt handled once. Importing MUI's overlay primitives
+// directly is how each flow came to re-implement the switch at its own width,
+// or to stay a centred dialog on a phone.
+//
+// The typescript-eslint rule rather than the core one, for two reasons: it
+// allows a type-only import of a props type, and its options do not collide
+// with the core no-restricted-imports blocks below, where a later block's
+// options replace an earlier one's for the files they share.
+const OVERLAY_MESSAGE =
+  "Use ResponsiveOverlay (src/components/ResponsiveOverlay) for create, edit, action and confirmation flows. See docs/specs/overlays.md.";
+
+const OVERLAY_IMPORT_RESTRICTION = {
+  paths: [
+    {
+      name: "@mui/material",
+      importNames: ["Dialog", "Modal", "Drawer", "SwipeableDrawer"],
+      message: OVERLAY_MESSAGE,
+      allowTypeImports: true,
+    },
+  ],
+  patterns: [
+    {
+      regex: "^@mui/material/(Dialog|Modal|Drawer|SwipeableDrawer)(/.*)?$",
+      message: OVERLAY_MESSAGE,
+      allowTypeImports: true,
+    },
+  ],
+};
+
+// Files still allowed to import them. A permanent entry says why it is not an
+// overlay flow; a temporary one names the issue that migrates it, and that
+// issue removes it from here. src/contracts/overlayImports.spec.ts fails on an
+// entry that no longer imports a primitive.
+const OVERLAY_PRIMITIVE_ALLOWLIST = [
+  "src/components/Menu/SideMenu.tsx", // permanent: the navigation drawer, not an overlay flow
+  "src/components/CoefficientHistoryDrawer/CoefficientHistoryDrawer.tsx", // permanent: a read-only side panel, a documented exception
+  "src/pages/historical-analysis/SupplySelector.tsx", // permanent: a picker, not a flow
+  "src/pages/historical-analysis/PeriodSelector.tsx", // permanent: a picker, not a flow
+  "src/pages/historical-analysis/CustomRangePicker.tsx", // permanent: a picker, not a flow
+  "src/components/Modals/BasicModal.tsx", // temporary: #369
+  "src/pages/members/RegisterMemberDialog.tsx", // temporary: #370
+  "src/pages/members/MemberRecordDialog.tsx", // temporary: #370
+  "src/pages/members/SendInvitationsDialog.tsx", // temporary: #370
+  "src/pages/members/InvitationActionDialog.tsx", // temporary: #370
+  "src/pages/members/MembersPage.tsx", // temporary: #370
+  "src/pages/communities/InviteAdminDialog.tsx", // temporary: #370
+  "src/pages/communities/CommunityAdminsPage.tsx", // temporary: #370
+  "src/pages/platform-admins/InvitePlatformAdminDialog.tsx", // temporary: #370
+  "src/pages/platform-admins/PlatformInvitationActionDialog.tsx", // temporary: #370
+  "src/pages/platform-admins/PlatformAdminsPage.tsx", // temporary: #370
+  "src/components/CsvImportDialog/CsvImportDialog.tsx", // temporary: #371
+  "src/pages/production/HuaweiConfigDialog.tsx", // temporary: #371
+];
+
 export default tseslint.config([
   // .design-sync/ holds the claude.ai/design sync inputs (previews import from a
   // virtual "conluz-web" package); .ds-sync/ and ds-bundle/ are its tooling and output.
@@ -373,6 +430,18 @@ export default tseslint.config([
       "no-restricted-imports": ["error", { patterns: [...COMMUNITY_IMPLICIT_HOOKS, ...PERMISSION_HOOKS, API_BARREL] }],
     },
   },
+  {
+    // Overlay guard rail, specs included: a spec has no reason to build an
+    // overlay of its own. ResponsiveOverlay is the one place that wraps them.
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/api/**", "src/components/ResponsiveOverlay/**"],
+    rules: { "@typescript-eslint/no-restricted-imports": ["error", OVERLAY_IMPORT_RESTRICTION] },
+  },
+  {
+    // The overlay allowlist: the one override block for it.
+    files: OVERLAY_PRIMITIVE_ALLOWLIST,
+    rules: { "@typescript-eslint/no-restricted-imports": "off" },
+  },
 ]);
 
 // Read by src/contracts/mutationHooks.spec.ts, which is what keeps the list
@@ -383,3 +452,7 @@ export default tseslint.config([
 // mutationHooks.spec.ts asserts that over the whole tree rather than over a
 // list of names.
 export { COMMUNITY_SCOPE_WRAPPERS };
+
+// Read by src/contracts/overlayImports.spec.ts, which fails on a stale entry
+// and lints probes against the restriction.
+export { OVERLAY_PRIMITIVE_ALLOWLIST, OVERLAY_IMPORT_RESTRICTION };
