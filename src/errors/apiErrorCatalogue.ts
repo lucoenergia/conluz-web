@@ -103,6 +103,26 @@ const IMPORT_TOO_MANY_ROWS: ApiErrorTemplate = (params) =>
     ? `El archivo tiene más de ${params.maxRows} filas. Divídelo en varios archivos.`
     : "El archivo tiene demasiadas filas. Divídelo en varios archivos.";
 
+/**
+ * A refused period that runs past the limit the endpoint enforces, which
+ * `params` states (lucoenergia/conluz#546): `amount` with `unit` MONTHS or
+ * DAYS -- 24 months on most operations, 31 days on the hourly series. The
+ * contract writes `amount` as a string ("31"); a number is read too. Anything
+ * else, or no params, gives a sentence without a limit, never a wrong one.
+ */
+const PERIOD_TOO_LONG: ApiErrorTemplate = (params) => {
+  const amount = positiveCount((params as Record<string, unknown> | undefined)?.amount);
+  const unit = params?.unit === "MONTHS" ? { one: "mes", many: "meses" } : params?.unit === "DAYS" ? { one: "día", many: "días" } : undefined;
+  if (amount === undefined || !unit) return "El periodo es demasiado largo.";
+  return `El periodo puede abarcar como máximo ${amount} ${amount === 1 ? unit.one : unit.many}.`;
+};
+
+/** A whole number from 1 up, given as a number or as its digits; otherwise undefined. */
+function positiveCount(value: unknown): number | undefined {
+  const count = typeof value === "number" ? value : typeof value === "string" && /^\d+$/.test(value) ? Number(value) : NaN;
+  return Number.isInteger(count) && count >= 1 ? count : undefined;
+}
+
 const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, ApiErrorTemplate>> = {
   SHARING_AGREEMENT_NOT_DRAFT: "Este acuerdo ya no está en borrador, así que esta acción no está disponible.",
   SHARING_AGREEMENT_HAS_NO_COEFFICIENTS:
@@ -339,14 +359,15 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   SUPPLY_REGISTERED_IN_ANOTHER_COMMUNITY: "Este CUPS ya está registrado en otra comunidad.",
   SUPPLY_OWNER_NOT_FOUND: "No hay ningún miembro de la comunidad con ese DNI/NIE/NIF.",
 
-  // A refused energy metrics or consumption period (#324). The server sends
-  // no params. CONFLICTING and INCOMPLETE come from how a screen built the
-  // request, never from anything the user did, so they tell the user nothing to do.
+  // A refused energy metrics or consumption period (#324). Only TOO_LONG
+  // carries params, the limit it enforces (#378). CONFLICTING and INCOMPLETE
+  // come from how a screen built the request, never from anything the user
+  // did, so they tell the user nothing to do.
   ENERGY_METRICS_PERIOD_CONFLICTING: "No se ha podido interpretar el periodo.",
   ENERGY_METRICS_PERIOD_INCOMPLETE: "No se ha podido interpretar el periodo: falta una de sus fechas.",
   ENERGY_METRICS_PERIOD_START_AFTER_END: "La fecha de inicio del periodo debe ser anterior a la de fin.",
   ENERGY_METRICS_PERIOD_START_IN_FUTURE: "Este periodo todavía no ha empezado.",
-  ENERGY_METRICS_PERIOD_TOO_LONG: "El periodo puede abarcar como máximo 24 meses.",
+  ENERGY_METRICS_PERIOD_TOO_LONG: PERIOD_TOO_LONG,
 
   // Creating or editing a community whose code or NIF another community
   // already has (#232). params.field names which: `code` or `legalId`. A

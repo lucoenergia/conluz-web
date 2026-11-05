@@ -385,12 +385,48 @@ describe("energy metrics period refusals (#324)", () => {
 
   it.each<[RestErrorDetailCode, string]>([
     ["ENERGY_METRICS_PERIOD_START_IN_FUTURE", "Este periodo todavía no ha empezado."],
-    ["ENERGY_METRICS_PERIOD_TOO_LONG", "El periodo puede abarcar como máximo 24 meses."],
+    ["ENERGY_METRICS_PERIOD_TOO_LONG", "El periodo es demasiado largo."],
     ["ENERGY_METRICS_PERIOD_START_AFTER_END", "La fecha de inicio del periodo debe ser anterior a la de fin."],
     ["ENERGY_METRICS_PERIOD_CONFLICTING", "No se ha podido interpretar el periodo."],
     ["ENERGY_METRICS_PERIOD_INCOMPLETE", "No se ha podido interpretar el periodo: falta una de sus fechas."],
   ])("UI-ERR-001 shows %s with the catalogue's text, and without params", (code, expected) => {
     expect(getFirstApiErrorMessage(apiError(400, { code, params: null }), "fallback")).toBe(expected);
+  });
+});
+
+describe("UI-ERR-006 the too-long refusal states the limit it carries (#378)", () => {
+  const tooLong = (params: Record<string, string> | null) =>
+    getFirstApiErrorMessage(apiError(400, { code: "ENERGY_METRICS_PERIOD_TOO_LONG", params }), "fallback");
+
+  it.each<[Record<string, string>, string]>([
+    [{ amount: "31", unit: "DAYS" }, "El periodo puede abarcar como máximo 31 días."],
+    [{ amount: "1", unit: "DAYS" }, "El periodo puede abarcar como máximo 1 día."],
+    [{ amount: "24", unit: "MONTHS" }, "El periodo puede abarcar como máximo 24 meses."],
+    [{ amount: "1", unit: "MONTHS" }, "El periodo puede abarcar como máximo 1 mes."],
+  ])("UI-ERR-006 AC8 -- params %j, as the contract writes them, read %j", (params, expected) => {
+    expect(tooLong(params)).toBe(expected);
+  });
+
+  it("UI-ERR-006 AC8 -- an amount sent as a number is read the same", () => {
+    // Off the contract, which types params as strings: a backend writing a JSON number must still be read.
+    const params = { amount: 31, unit: "DAYS" } as unknown as Record<string, string>;
+    expect(tooLong(params)).toBe("El periodo puede abarcar como máximo 31 días.");
+  });
+
+  it.each<[string, Record<string, string> | null]>([
+    ["no params", null],
+    ["empty params", {}],
+    ["no unit", { amount: "31" }],
+    ["no amount", { unit: "DAYS" }],
+    ["an unknown unit", { amount: "31", unit: "WEEKS" }],
+    ["an amount that is not a number", { amount: "abc", unit: "DAYS" }],
+    ["an amount of 0", { amount: "0", unit: "DAYS" }],
+    ["a fractional amount", { amount: "1.5", unit: "MONTHS" }],
+    ["a negative amount", { amount: "-3", unit: "MONTHS" }],
+  ])("UI-ERR-006 AC8 -- with %s, the generic text, never the server's message", (_case, params) => {
+    const message = tooLong(params);
+    expect(message).toBe("El periodo es demasiado largo.");
+    expect(message).not.toBe("raw backend message");
   });
 });
 
