@@ -168,3 +168,33 @@ export function extractSplatRoutes(source: string): SplatRoute[] {
   walk(file, []);
   return splats;
 }
+
+/**
+ * The full path of every Route that names one, under every layout, prefix
+ * routes included. A path that is not a string literal cannot be read, so it
+ * throws rather than drop out of what the contract tests check.
+ */
+export function extractRoutePaths(source: string): string[] {
+  const file = ts.createSourceFile(APP_PATH, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const paths = new Set<string>();
+
+  function walk(node: ts.Node, segments: string[]) {
+    if (tagName(node) === "Route") {
+      const pathAttr = attribute(openingOf(node)!, "path");
+      let here = segments;
+      if (pathAttr) {
+        if (!pathAttr.initializer || !ts.isStringLiteral(pathAttr.initializer)) {
+          throw new Error(`A Route path in ${APP_PATH} is not a string literal: ${pathAttr.getText()}`);
+        }
+        here = [...segments, pathAttr.initializer.text];
+        paths.add(joinPath(here));
+      }
+      node.forEachChild((child) => walk(child, here));
+      return;
+    }
+    node.forEachChild((child) => walk(child, segments));
+  }
+
+  walk(file, []);
+  return [...paths];
+}

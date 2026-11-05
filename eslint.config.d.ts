@@ -8,3 +8,9 @@
 
 /** Modules allowed to import the community-implicit read hooks. */
 export declare const COMMUNITY_SCOPE_WRAPPERS: string[];
+
+/** Files still allowed to import MUI's overlay primitives, each with a reason or the issue that migrates it. */
+export declare const OVERLAY_PRIMITIVE_ALLOWLIST: string[];
+
+/** The options of the overlay import restriction (`@typescript-eslint/no-restricted-imports`). */
+export declare const OVERLAY_IMPORT_RESTRICTION: Record<string, unknown>;
