@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -28,7 +28,7 @@ vi.mock(import("../../api/users/users"), async (importOriginal) => ({
 const SERVER_MESSAGE = "TEST-SERVER-MESSAGE";
 const GENERIC = "Ha habido un problema al crear la comunidad. Por favor, inténtalo más tarde.";
 
-let mutateAsync: ReturnType<typeof vi.fn>;
+let mutateAsync: Mock;
 
 beforeEach(() => {
   mockErrorDispatch.mockClear();

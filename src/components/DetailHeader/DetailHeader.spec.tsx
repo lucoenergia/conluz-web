@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -19,7 +19,7 @@ vi.mock("@mui/material", async () => {
   return { ...actual, useMediaQuery: vi.fn() };
 });
 
-const mockUseMediaQuery = useMediaQuery as unknown as ReturnType<typeof vi.fn>;
+const mockUseMediaQuery = useMediaQuery as unknown as Mock;
 
 /** `useMediaQuery` is queried with `breakpoints.down("sm")`, so true means xs. */
 const setViewport = (compact: boolean) => mockUseMediaQuery.mockReturnValue(compact);

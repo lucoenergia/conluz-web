@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router";
@@ -177,7 +177,7 @@ function declaredStyle(element: HTMLElement): Record<string, string> {
   );
 }
 
-let scrollIntoView: ReturnType<typeof vi.fn>;
+let scrollIntoView: Mock;
 
 beforeEach(() => {
   vi.clearAllMocks();

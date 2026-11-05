@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import {
   getGetAllSuppliesQueryKey,
   getGetSupplyQueryKey,
@@ -66,7 +66,7 @@ const render = (supply: ReturnType<typeof buildSupply> | undefined) =>
     activeCommunityId: COMMUNITY_ID,
   });
 
-let mutateAsync: ReturnType<typeof vi.fn>;
+let mutateAsync: Mock;
 
 beforeEach(() => {
   mutateAsync = vi.fn().mockResolvedValue(undefined);

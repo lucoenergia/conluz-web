@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import {
   useLogin,
   useLogout,
@@ -55,7 +55,7 @@ vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   useChangePassword: vi.fn(),
 }));
 
-let mutateAsync: ReturnType<typeof vi.fn>;
+let mutateAsync: Mock;
 
 beforeEach(() => {
   mutateAsync = vi.fn().mockResolvedValue(undefined);

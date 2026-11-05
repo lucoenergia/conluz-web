@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
@@ -13,7 +13,7 @@ vi.mock("@mui/material", async () => {
   return { ...actual, useMediaQuery: vi.fn() };
 });
 
-const mockUseMediaQuery = useMediaQuery as unknown as ReturnType<typeof vi.fn>;
+const mockUseMediaQuery = useMediaQuery as unknown as Mock;
 
 const linkedSupply = buildSupplyReference({
   id: "supply-7",
