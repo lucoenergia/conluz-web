@@ -48,6 +48,7 @@ import type {
   RestError,
   SupplyConsumptionBucketResponse,
   SupplyEnergyMetricsResponse,
+  SupplyHourlyConsumptionBucketResponse,
   SupplyResponse,
   UpdateSupplyBody
 } from '../models';
@@ -715,6 +716,8 @@ export const useUpdateSupply = <TError = ErrorType<RestError>,
  *    (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
  * 5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
  *    period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+ *    The refusal states the limit in `params`: `amount`, a whole number written as a
+ *    string, and `unit`, `MONTHS` or `DAYS` -- here `{"amount": "24", "unit": "MONTHS"}`.
  *
  * A period that passes them and ends after the start of the current hour is then clipped
  * to end there, before any data is read: no hour that has not fully happened is read or
@@ -855,12 +858,72 @@ export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof g
  * - Self-consumption energy
  * - Obtain method (Real/Estimated)
  *
- * Data is aggregated by hour within the specified date range.
+ * **Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
+ * included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
+ * next period. A calendar day runs from `00:00` of that day to `00:00` of the following
+ * day, and a calendar month from `00:00` of its first day to `00:00` of the first day of
+ * the next month, each bound with the offset in force at that instant -- for example
+ * `2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in
+ * Europe/Madrid.
+ *
+ * **Period checks:** a requested period is checked in this order, and the first rule it
+ * breaks is answered 400 with that rule's code:
+ *
+ * 1. `period` is not combined with `startDate` or `endDate`, on the operations that accept
+ *    `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).
+ * 2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).
+ *    On the operations where both are required, a missing one is a bad request before any
+ *    of these checks.
+ * 3. `startDate` is strictly before `endDate`: equal bounds make an empty period
+ *    (`ENERGY_METRICS_PERIOD_START_AFTER_END`).
+ * 4. `startDate` is before the start of the current hour, read in the period's time zone
+ *    (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
+ * 5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
+ *    period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+ *    The refusal states the limit in `params`: `amount`, a whole number written as a
+ *    string, and `unit`, `MONTHS` or `DAYS` -- here `{"amount": "24", "unit": "MONTHS"}`.
+ *
+ * A period that passes them and ends after the start of the current hour is then clipped
+ * to end there, before any data is read: no hour that has not fully happened is read or
+ * counted as expected. Energy metrics report the clipped end in `period`, and a series
+ * emits no bucket starting at or after it.
+ *
+ * **Maximum length:** on this operation the limit of rule 5 is **31 calendar days**
+ * instead of 24 calendar months: `endDate` must be no later than 31 calendar days after
+ * `startDate`, counted in the period's time zone on the bounds as requested
+ * (`ENERGY_METRICS_PERIOD_TOO_LONG`, with `params` `{"amount": "31", "unit": "DAYS"}`).
+ *
+ * **Every hour:** one bucket is returned for every hour that starts inside the period,
+ * in chronological order: 24 for a whole local day, 23 on the day the clocks go forward
+ * and 25 on the day they go back. An hour with no stored record is returned with zero
+ * energy and a null `obtainMethod` rather than omitted; an hour whose records carry no
+ * energy has its `obtainMethod` set.
+ *
+ * Every energy figure is in kWh, rounded to 3 decimals.
+ *
+ * **`startsAt`:** the instant the hour starts at, with the offset in force in the
+ * supply's time zone at that instant -- for example `2026-10-25T02:00:00+02:00` and
+ * then `2026-10-25T02:00:00+01:00` for the two hours the clocks repeat in
+ * Europe/Madrid. It is unique within the series and is the key to identify an hour by.
  *
  * **`date` and `time`:** the local calendar date and local time, in the time zone the
  * application is configured with, at which each hour starts (`time` from `00:00` to
  * `23:00`). On the day the clocks go back, two consecutive hours carry the same `date`
  * and `time`; on the day they go forward, the local hour the clocks skip has no entry.
+ *
+ * **Savings:** `savingsEur` is an **estimate** of what the hour's self-consumed energy
+ * was worth, priced with the same tariff resolution as a day of the daily series, over
+ * the hour itself; an `endDate` in the middle of an hour leaves a partial last hour,
+ * priced over the part its energy covers. It prices the **energy term before taxes**
+ * only: the power term, access tolls, charges and electricity tax are all excluded, and
+ * VAT is applied only where the resolved tariff carries a rate. `tariffSource` says
+ * where the prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`
+ * for the supply's contracted tariff. An hour with no self-consumption, and an hour with
+ * no stored record at all, reports `0.00`.
+ *
+ * Datadis publishes a month's self-consumption around the 10th of the following
+ * month, so the current month has no self-consumption data yet and its savings
+ * come back as zero.
  * @summary Retrieves hourly consumption data for a specific supply
  */
 export const getSupplyHourlyConsumption = (
@@ -870,7 +933,7 @@ export const getSupplyHourlyConsumption = (
 ) => {
 
 
-      return customInstance<DatadisConsumption[]>(
+      return customInstance<SupplyHourlyConsumptionBucketResponse[]>(
       {url: `/api/v1/supplies/${supplyId}/consumption/hourly`, method: 'GET',
         params, signal
     },
@@ -1011,6 +1074,8 @@ export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof 
  *    (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
  * 5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
  *    period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+ *    The refusal states the limit in `params`: `amount`, a whole number written as a
+ *    string, and `unit`, `MONTHS` or `DAYS` -- here `{"amount": "24", "unit": "MONTHS"}`.
  *
  * A period that passes them and ends after the start of the current hour is then clipped
  * to end there, before any data is read: no hour that has not fully happened is read or
@@ -1478,6 +1543,8 @@ export const useEnableSupply = <TError = ErrorType<RestError>,
  *    (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
  * 5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
  *    period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+ *    The refusal states the limit in `params`: `amount`, a whole number written as a
+ *    string, and `unit`, `MONTHS` or `DAYS` -- here `{"amount": "24", "unit": "MONTHS"}`.
  *
  * A period that passes them and ends after the start of the current hour is then clipped
  * to end there, before any data is read: no hour that has not fully happened is read or

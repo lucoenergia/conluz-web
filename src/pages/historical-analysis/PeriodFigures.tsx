@@ -15,7 +15,11 @@ const LOADING_LABEL = "Cargando tus datos…";
 const LOAD_ERROR = "No se pudieron cargar tus datos de energía. Comprueba tu conexión e inténtalo de nuevo.";
 const INCOMPLETE_DATA = "Faltan datos de parte de este periodo: las cifras suman solo los datos disponibles.";
 /** Appended when the evolution card below names the missing days or months (#250). */
-const SEE_EVOLUTION = { daily: "Consulta los días afectados en la evolución.", monthly: "Consulta los meses afectados en la evolución." };
+const SEE_EVOLUTION = {
+  hourly: "Consulta las horas afectadas en la evolución.",
+  daily: "Consulta los días afectados en la evolución.",
+  monthly: "Consulta los meses afectados en la evolución.",
+};
 
 /**
  * The figures of the selected period and scope (#249): the period card, with

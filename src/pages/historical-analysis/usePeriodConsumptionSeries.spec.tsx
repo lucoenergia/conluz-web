@@ -1,12 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   useGetMembershipDailyConsumption,
+  useGetMembershipHourlyConsumption,
   useGetMembershipMonthlyConsumption,
   type getMembershipDailyConsumption,
+  type getMembershipHourlyConsumption,
 } from "../../api/memberships/memberships";
 import {
   useGetSupplyDailyConsumption,
+  useGetSupplyHourlyConsumption,
   useGetSupplyMonthlyConsumption,
+  type getSupplyHourlyConsumption,
   type getSupplyMonthlyConsumption,
 } from "../../api/supplies/supplies";
 import { useLoggedUser } from "../../context/logged-user.context";
@@ -15,16 +19,27 @@ import { query } from "../../test/queryState";
 import { renderHookWithProviders } from "../../test/renderWithProviders";
 import type { HistoricalPeriod } from "./historicalPeriod";
 import { useHistoricalPeriod } from "./HistoricalPeriodContext";
-import { COMMUNITY_ID, HOME, OWNER_ID, member, membershipDay, supplyBucket } from "./historicalAnalysis.testData";
+import {
+  COMMUNITY_ID,
+  HOME,
+  OWNER_ID,
+  member,
+  membershipDay,
+  membershipHour,
+  supplyBucket,
+  supplyHour,
+} from "./historicalAnalysis.testData";
 import { usePeriodConsumptionSeries } from "./usePeriodConsumptionSeries";
 
 vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
   ...(await importOriginal()),
+  useGetMembershipHourlyConsumption: vi.fn(),
   useGetMembershipDailyConsumption: vi.fn(),
   useGetMembershipMonthlyConsumption: vi.fn(),
 }));
 vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
   ...(await importOriginal()),
+  useGetSupplyHourlyConsumption: vi.fn(),
   useGetSupplyDailyConsumption: vi.fn(),
   useGetSupplyMonthlyConsumption: vi.fn(),
 }));
@@ -49,14 +64,32 @@ const LAST_12: HistoricalPeriod = {
   granularity: "monthly",
   label: "De septiembre de 2025 a agosto de 2026",
 };
+/** 1 September 2026, picked as a one-day custom range: hour by hour (#378). */
+const ONE_DAY: HistoricalPeriod = {
+  startDate: "2026-09-01T00:00:00+02:00",
+  endDate: "2026-09-02T00:00:00+02:00",
+  granularity: "hourly",
+  label: "1 de septiembre de 2026",
+};
 const BOUNDS_OF = ({ startDate, endDate }: HistoricalPeriod) => ({ startDate, endDate });
 
 const HOOKS = {
+  membershipHourly: useGetMembershipHourlyConsumption,
   membershipDaily: useGetMembershipDailyConsumption,
   membershipMonthly: useGetMembershipMonthlyConsumption,
+  supplyHourly: useGetSupplyHourlyConsumption,
   supplyDaily: useGetSupplyDailyConsumption,
   supplyMonthly: useGetSupplyMonthlyConsumption,
 } as const;
+
+const NONE_ENABLED = {
+  membershipHourly: false,
+  membershipDaily: false,
+  membershipMonthly: false,
+  supplyHourly: false,
+  supplyDaily: false,
+  supplyMonthly: false,
+};
 
 /** Whether each hook was last asked to run. */
 function enabledHooks() {
@@ -86,7 +119,7 @@ describe("usePeriodConsumptionSeries (#250)", () => {
     expect(useGetMembershipDailyConsumption).toHaveBeenLastCalledWith(COMMUNITY_ID, OWNER_ID, BOUNDS_OF(JULY_AUGUST), {
       query: { enabled: true },
     });
-    expect(enabledHooks()).toEqual({ membershipDaily: true, membershipMonthly: false, supplyDaily: false, supplyMonthly: false });
+    expect(enabledHooks()).toEqual({ ...NONE_ENABLED, membershipDaily: true });
   });
 
   it("UI-HIS-019 asks the membership monthly series by the period's bounds, and nothing else", () => {
@@ -96,7 +129,7 @@ describe("usePeriodConsumptionSeries (#250)", () => {
     expect(useGetMembershipMonthlyConsumption).toHaveBeenLastCalledWith(COMMUNITY_ID, OWNER_ID, BOUNDS_OF(LAST_12), {
       query: { enabled: true },
     });
-    expect(enabledHooks()).toEqual({ membershipDaily: false, membershipMonthly: true, supplyDaily: false, supplyMonthly: false });
+    expect(enabledHooks()).toEqual({ ...NONE_ENABLED, membershipMonthly: true });
   });
 
   it("UI-HIS-019 asks the selected supply's daily series by the period's bounds, and nothing else", () => {
@@ -104,7 +137,7 @@ describe("usePeriodConsumptionSeries (#250)", () => {
     render(HOME);
 
     expect(useGetSupplyDailyConsumption).toHaveBeenLastCalledWith(HOME.id, BOUNDS_OF(JULY_AUGUST), { query: { enabled: true } });
-    expect(enabledHooks()).toEqual({ membershipDaily: false, membershipMonthly: false, supplyDaily: true, supplyMonthly: false });
+    expect(enabledHooks()).toEqual({ ...NONE_ENABLED, supplyDaily: true });
   });
 
   it("UI-HIS-019 asks the selected supply's monthly series by the period's bounds, and nothing else", () => {
@@ -112,14 +145,43 @@ describe("usePeriodConsumptionSeries (#250)", () => {
     render(HOME);
 
     expect(useGetSupplyMonthlyConsumption).toHaveBeenLastCalledWith(HOME.id, BOUNDS_OF(LAST_12), { query: { enabled: true } });
-    expect(enabledHooks()).toEqual({ membershipDaily: false, membershipMonthly: false, supplyDaily: false, supplyMonthly: true });
+    expect(enabledHooks()).toEqual({ ...NONE_ENABLED, supplyMonthly: true });
+  });
+
+  it("UI-HIS-019 AC2 -- asks the membership hourly series of the active community by the day's bounds, and nothing else", () => {
+    vi.mocked(useHistoricalPeriod).mockReturnValue(ONE_DAY);
+    render(null);
+
+    expect(useGetMembershipHourlyConsumption).toHaveBeenLastCalledWith(COMMUNITY_ID, OWNER_ID, BOUNDS_OF(ONE_DAY), {
+      query: { enabled: true },
+    });
+    expect(enabledHooks()).toEqual({ ...NONE_ENABLED, membershipHourly: true });
+  });
+
+  it("UI-HIS-019 AC2 -- asks the selected supply's hourly series by the day's bounds, and nothing else", () => {
+    vi.mocked(useHistoricalPeriod).mockReturnValue(ONE_DAY);
+    render(HOME);
+
+    expect(useGetSupplyHourlyConsumption).toHaveBeenLastCalledWith(HOME.id, BOUNDS_OF(ONE_DAY), { query: { enabled: true } });
+    expect(enabledHooks()).toEqual({ ...NONE_ENABLED, supplyHourly: true });
+  });
+
+  it("UI-HIS-019 AC2 -- hands back the hourly buckets tagged with the series they came from", () => {
+    vi.mocked(useHistoricalPeriod).mockReturnValue(ONE_DAY);
+    const hours = [membershipHour("2026-09-01T00:00:00+02:00"), membershipHour("2026-09-01T01:00:00+02:00")];
+    vi.mocked(useGetMembershipHourlyConsumption).mockReturnValue(query.success<typeof getMembershipHourlyConsumption>(hours));
+    expect(render(null).result.current).toEqual({ status: "ready", series: { kind: "membershipHourly", buckets: hours } });
+
+    const supplyHours = [supplyHour("2026-09-01T00:00:00+02:00"), supplyHour("2026-09-01T01:00:00+02:00")];
+    vi.mocked(useGetSupplyHourlyConsumption).mockReturnValue(query.success<typeof getSupplyHourlyConsumption>(supplyHours));
+    expect(render(HOME).result.current).toEqual({ status: "ready", series: { kind: "supplyHourly", buckets: supplyHours } });
   });
 
   it("UI-HIS-019 asks nothing while the period is unknown", () => {
     vi.mocked(useHistoricalPeriod).mockReturnValue(undefined);
     const { result } = render(null);
 
-    expect(Object.values(enabledHooks())).toEqual([false, false, false, false]);
+    expect(enabledHooks()).toEqual(NONE_ENABLED);
     expect(result.current).toEqual({ status: "loading" });
   });
 

@@ -11,6 +11,9 @@ export interface SlotStateText {
   long: string;
 }
 
+/** A slot named as the one at hand: "hora" is feminine. */
+const THIS_SLOT: Readonly<Record<Granularity, string>> = { hourly: "esta hora", daily: "este día", monthly: "este mes" };
+
 /**
  * The words for every state a slot can be in, the one place they are written.
  * Each state is one entry, so every form of it is read from the same place.
@@ -20,7 +23,7 @@ const SLOT_STATE_TEXT: {
 } = {
   gap: (_state, granularity) => ({
     short: "Sin datos",
-    long: `Sin datos: no hay lecturas de este ${granularity === "daily" ? "día" : "mes"}. No cuenta como 0.`,
+    long: `Sin datos: no hay lecturas de ${THIS_SLOT[granularity]}. No cuenta como 0.`,
   }),
   partial: ({ reported, total }) => ({
     short: `Parcial: ${reported} de ${total} puntos con datos`,

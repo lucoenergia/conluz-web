@@ -26,7 +26,7 @@ import type { HistoricalPeriod } from "./historicalPeriod";
 import { usePeriodConsumptionSeries, type ConsumptionSeries } from "./usePeriodConsumptionSeries";
 import { usePeriodEnergyMetrics } from "./usePeriodEnergyMetrics";
 
-const TITLE = { daily: "Tu energía día a día", monthly: "Tu energía mes a mes" } as const;
+const TITLE = { hourly: "Tu energía hora a hora", daily: "Tu energía día a día", monthly: "Tu energía mes a mes" } as const;
 const LOADING_LABEL = "Cargando la evolución de tu energía…";
 const LOAD_ERROR = "No se pudo cargar la evolución de tu energía. Comprueba tu conexión e inténtalo de nuevo.";
 /** Where the separate bar sits, on each layout (UI-HIS-017). */

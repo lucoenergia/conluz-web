@@ -1,9 +1,11 @@
 import type {
   MembershipDailyConsumptionBucketResponse,
   MembershipEnergyMetricsResponse,
+  MembershipHourlyConsumptionBucketResponse,
   MembershipMonthlyConsumptionBucketResponse,
   SupplyConsumptionBucketResponse,
   SupplyEnergyMetricsResponse,
+  SupplyHourlyConsumptionBucketResponse,
 } from "../api/models";
 
 /**
@@ -146,6 +148,41 @@ export const DOCUMENTED_SUPPLY_CONSUMPTION_BUCKET: SupplyConsumptionBucketRespon
   obtainMethod: "Real",
   savingsEur: 0.83,
   selfConsumptionKWh: 5.5,
+  surplusKWh: 3.25,
+  tariffSource: "ESTIMATE",
+  time: "00:00",
+};
+
+/**
+ * One bucket of `GET /api/v1/communities/{communityId}/memberships/{userId}/consumption/hourly`
+ * (lucoenergia/conluz#546), from its schema examples. Its `startsAt` is the
+ * second 02:00 of 2026-10-25, while its `date` and `time` name another day and
+ * hour: the examples were written one field at a time.
+ */
+export const DOCUMENTED_MEMBERSHIP_HOURLY_CONSUMPTION_BUCKET: MembershipHourlyConsumptionBucketResponse = {
+  assignedProductionKWh: 0.75,
+  date: "2024/01/15",
+  gridImportKWh: 0.75,
+  savingsEur: 0.08,
+  selfConsumptionKWh: 0.5,
+  startsAt: "2026-10-25T02:00:00+01:00",
+  suppliesWithData: 2,
+  supplyCount: 3,
+  surplusKWh: 0.25,
+  tariffSource: "ESTIMATE",
+  time: "13:00",
+};
+
+/** One bucket of `GET /api/v1/supplies/{supplyId}/consumption/hourly` (lucoenergia/conluz#545), from its schema examples. */
+export const DOCUMENTED_SUPPLY_HOURLY_CONSUMPTION_BUCKET: SupplyHourlyConsumptionBucketResponse = {
+  assignedProductionKWh: 8.75,
+  cups: "ES0031406912345678JN0F",
+  date: "2023/04/10",
+  gridImportKWh: 12.5,
+  obtainMethod: "Real",
+  savingsEur: 0.83,
+  selfConsumptionKWh: 5.5,
+  startsAt: "2026-10-25T02:00:00+01:00",
   surplusKWh: 3.25,
   tariffSource: "ESTIMATE",
   time: "00:00",

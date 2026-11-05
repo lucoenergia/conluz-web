@@ -8,7 +8,7 @@
 | **Roles** | Any caller |
 | **Domain rules** | `lucoenergia/conluz`: PLT-002 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #253 |
+| **Last reviewed against code** | #378 |
 
 ## Purpose
 
@@ -20,7 +20,7 @@ Screens that word a code their own way, such as the member invitation actions or
 of UI-MBR-023 and UI-SUP-008, are covered by the exception in UI-ERR-001. UI-SUP-009 applies
 UI-ERR-001 and UI-ERR-002 to the supply forms.
 
-This document covers only the rules #232, #324 and #253 introduced.
+This document covers only the rules #232, #324, #253 and #378 introduced.
 
 ## Rules
 
@@ -77,6 +77,23 @@ This document covers only the rules #232, #324 and #253 introduced.
   retried.
 - **Implements:** PLT-002
 - **Source:** #253, lucoenergia/conluz#411
+
+### UI-ERR-006 — The too-long period refusal states the limit it carries
+
+- **Status:** Active
+- **Rule:**
+  - When `params.amount` is a whole number from 1 up (the contract's string, or a number) and
+    `params.unit` is `MONTHS` or `DAYS`, the `ENERGY_METRICS_PERIOD_TOO_LONG` entry MUST read "El
+    periodo puede abarcar como máximo {amount} {meses|días}.", with "1 mes" and "1 día" singular.
+  - Without params, or with an amount or unit it cannot read, the entry MUST read "El periodo es
+    demasiado largo.".
+  - The server's message MUST never be shown for this code.
+- **Rationale:** One code carries two limits: 24 months on most operations, and 31 days on the
+  hourly series. A fixed limit in the text would be wrong for one of them. A sentence without a
+  limit is less useful than one with the right limit, but never misleading.
+- **Implements:** EPR-005 (lucoenergia/conluz#545, #546), under which the refusal carries the limit
+  it enforces.
+- **Source:** #378, lucoenergia/conluz#546
 
 ## States
 

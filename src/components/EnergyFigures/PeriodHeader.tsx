@@ -4,7 +4,7 @@ import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import { colors } from "../../theme/tokens";
 import { monthYearName, type CalendarMonth, type PeriodResolution } from "../../pages/historical-analysis/historicalPeriod";
 
-const GRANULARITY_LABEL = { daily: "Por días", monthly: "Por meses" } as const;
+const GRANULARITY_LABEL = { hourly: "Por horas", daily: "Por días", monthly: "Por meses" } as const;
 
 const publicationText = (anchor: CalendarMonth) =>
   "Los datos de cada mes se publican hacia el día 10 del mes siguiente, así que lo más reciente que puedes ver es " +

@@ -24,7 +24,7 @@ import { triggerBrowserDownload } from "../../utils/triggerBrowserDownload";
 import { HomeCard } from "../home/HomeCard";
 import { GRID_IMPORT_SERIES, SAVINGS_SERIES, SELF_CONSUMPTION_SERIES, SURPLUS_SERIES, toConsumptionSeriesView, type SlotView } from "./consumptionSeries";
 import { useHistoricalPeriod } from "./HistoricalPeriodContext";
-import type { Granularity, HistoricalPeriod } from "./historicalPeriod";
+import { GRANULARITY_PHRASE, type Granularity, type HistoricalPeriod } from "./historicalPeriod";
 import { PairedTerm } from "./PairedTerm";
 import { CSV_MIME_TYPE, periodCsv, periodCsvFileName } from "./periodCsv";
 import { PAGE_SIZE, showingText, totalsStateText } from "./periodDataTable";
@@ -34,8 +34,7 @@ import type { PeriodEnergyMetrics } from "../../components/EnergyFigures/periodE
 import { usePeriodEnergyMetrics } from "./usePeriodEnergyMetrics";
 
 const TITLE = "Tus datos";
-const GRANULARITY_PHRASE = { daily: "por días", monthly: "por meses" } as const;
-const DATE_HEADER = { daily: "Día", monthly: "Mes" } as const;
+const DATE_HEADER = { hourly: "Hora", daily: "Día", monthly: "Mes" } as const;
 const STATE_HEADER = "Datos";
 const TOTAL_LABEL = "Total del periodo";
 const GAP_CELL = "—";
@@ -69,7 +68,7 @@ const eurosCell = (value: number | null) => (value === null ? GAP_CELL : formatE
 function slotRow(slot: SlotView, granularity: Granularity): Row {
   return {
     key: slot.key,
-    label: slot.name,
+    label: slot.tableLabel,
     values: [
       kilowattHoursCell(slot.selfConsumptionKWh),
       kilowattHoursCell(slot.gridImportKWh),

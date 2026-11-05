@@ -6,7 +6,12 @@ import { CSV_MIME_TYPE, csvDecimal, csvField, periodCsv, periodCsvFileName } fro
 import { slotStateText } from "./slotStateText";
 import {
   HOME,
+  hoursOf,
   membershipDay,
+  membershipGapHour,
+  membershipHour,
+  supplyGapHour,
+  supplyHour,
   membershipGapDay,
   membershipMonth,
   membershipPartialDay,
@@ -219,5 +224,52 @@ describe("periodCsvFileName (#251)", () => {
 
     expect(periodCsvFileName(null, days, "daily")).toBe("conluz-consumo-todos-2026-07-01-2026-07-03.csv");
     expect(periodCsvFileName(null, months, "monthly")).toBe("conluz-consumo-todos-2025-11-01-2026-02-28.csv");
+  });
+});
+
+describe("periodCsv, hourly (#378)", () => {
+  const SEPTEMBER_1 = period("2026-09-01T00:00:00+02:00", "2026-09-02T00:00:00+02:00", "hourly");
+  const OCTOBER_25 = period("2026-10-25T00:00:00+02:00", "2026-10-26T00:00:00+01:00", "hourly");
+
+  it("UI-HIS-023 AC5 -- one line per hour in axis order, fecha the hour's local start with its offset", () => {
+    const hours = hoursOf(SEPTEMBER_1.startDate, SEPTEMBER_1.endDate);
+    const slots = toConsumptionSeriesView(SEPTEMBER_1, {
+      kind: "membershipHourly",
+      buckets: hours.map((startsAt, index) => membershipHour(startsAt, { selfConsumptionKWh: index / 10 })),
+    }).slots;
+
+    const lines = linesOf(periodCsv(slots, "hourly", null));
+
+    expect(lines[0]).toBe(HEADER);
+    expect(lines).toHaveLength(1 + 24);
+    expect(cellsOf(lines[1]).slice(0, 2)).toEqual(["2026-09-01T00:00+02:00", "0"]);
+    expect(cellsOf(lines[15]).slice(0, 2)).toEqual(["2026-09-01T14:00+02:00", "1,4"]);
+    expect(cellsOf(lines[24]).slice(0, 2)).toEqual(["2026-09-01T23:00+02:00", "2,3"]);
+  });
+
+  it("UI-HIS-023 AC5 -- the October change day has 25 lines, its two 02:00 told apart by their offsets", () => {
+    const slots = toConsumptionSeriesView(OCTOBER_25, { kind: "membershipHourly", buckets: [] }).slots;
+
+    const fechas = linesOf(periodCsv(slots, "hourly", null))
+      .slice(1)
+      .map((line) => cellsOf(line)[0]);
+
+    expect(fechas).toHaveLength(25);
+    expect(fechas.slice(1, 5)).toEqual(["2026-10-25T01:00+02:00", "2026-10-25T02:00+02:00", "2026-10-25T02:00+01:00", "2026-10-25T03:00+01:00"]);
+  });
+
+  it("UI-HIS-023 a gap hour has empty cells, even a supply's reporting 0.00 €, and its state in words", () => {
+    const [first, second] = hoursOf(SEPTEMBER_1.startDate, SEPTEMBER_1.endDate);
+    const supplySlots = toConsumptionSeriesView(SEPTEMBER_1, { kind: "supplyHourly", buckets: [supplyHour(first), supplyGapHour(second)] }).slots;
+    const membershipSlots = toConsumptionSeriesView(SEPTEMBER_1, { kind: "membershipHourly", buckets: [membershipGapHour(first)] }).slots;
+
+    expect(cellsOf(linesOf(periodCsv(supplySlots, "hourly", null))[2])).toEqual(["2026-09-01T01:00+02:00", "", "", "", "", "", "", "Sin datos"]);
+    expect(cellsOf(linesOf(periodCsv(membershipSlots, "hourly", null))[1])).toEqual(["2026-09-01T00:00+02:00", "", "", "", "", "", "", "Sin datos"]);
+  });
+
+  it("UI-HIS-024 an hourly period's file is named by its day, twice", () => {
+    const slots = toConsumptionSeriesView(SEPTEMBER_1, { kind: "membershipHourly", buckets: [] }).slots;
+
+    expect(periodCsvFileName(null, slots, "hourly")).toBe("conluz-consumo-todos-2026-09-01-2026-09-01.csv");
   });
 });

@@ -12,7 +12,7 @@ export interface SupplyConsumptionBucketResponse {
   assignedProductionKWh: number;
   /** CUPS code of the supply the bucket belongs to. */
   cups: string;
-  /** Local calendar date the bucket starts on: the day itself on the daily series, the first day of the month on the monthly one. */
+  /** Local calendar date the bucket starts on: the day itself on the daily series, the first day of the month on the monthly one, the hour's day on the hourly one. */
   date: string;
   /** Energy taken from the grid by this supply over the bucket. Does not include self-consumed energy. In kWh, rounded to 3 decimals. */
   gridImportKWh: number;
@@ -29,6 +29,6 @@ export interface SupplyConsumptionBucketResponse {
   surplusKWh: number;
   /** Whether the prices behind the amount are the supply's contracted tariff or an estimate. A single estimated stretch of the bucket makes the whole amount an estimate. */
   tariffSource: SupplyConsumptionBucketResponseTariffSource;
-  /** Local time the bucket starts at, in the zone the application is configured with. */
+  /** Local time the bucket starts at, in the zone the application is configured with. On the hourly series, two consecutive hours share it on the day the clocks go back. */
   time: string;
 }

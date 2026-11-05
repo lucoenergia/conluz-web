@@ -30,6 +30,7 @@ import type {
   CommunityAdminResponse,
   GetMembershipDailyConsumptionParams,
   GetMembershipEnergyMetricsParams,
+  GetMembershipHourlyConsumptionParams,
   GetMembershipMonthlyConsumptionParams,
   ImportMembersBody,
   ImportMembersResponse,
@@ -39,6 +40,7 @@ import type {
   MemberResponse,
   MembershipDailyConsumptionBucketResponse,
   MembershipEnergyMetricsResponse,
+  MembershipHourlyConsumptionBucketResponse,
   MembershipHourlyProfileResponse,
   MembershipMonthlyConsumptionBucketResponse,
   MembershipPaybackResponse,
@@ -1031,6 +1033,8 @@ export const useUpdateMembershipRole = <TError = ErrorType<RestError>,
  *    (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
  * 5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
  *    period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+ *    The refusal states the limit in `params`: `amount`, a whole number written as a
+ *    string, and `unit`, `MONTHS` or `DAYS` -- here `{"amount": "24", "unit": "MONTHS"}`.
  *
  * A period that passes them and ends after the start of the current hour is then clipped
  * to end there, before any data is read: no hour that has not fully happened is read or
@@ -1172,6 +1176,199 @@ export function useGetMembershipDailyConsumption<TData = Awaited<ReturnType<type
 
 
 /**
+ * For each hour of the requested period, the energy and the estimated savings of
+ * **every** supply the member owns in this community that stored a record that hour,
+ * added up. Each energy figure sums the unrounded per-supply hourly figures and is
+ * rounded once, to 3 decimals, on the result; the savings are likewise summed
+ * unrounded and rounded once, to cents. A figure can therefore differ from adding
+ * up the rounded figures of the per-supply hourly series. Supplies in the member's
+ * other communities are not counted.
+ *
+ * **Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
+ * included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
+ * next period. A calendar day runs from `00:00` of that day to `00:00` of the following
+ * day, and a calendar month from `00:00` of its first day to `00:00` of the first day of
+ * the next month, each bound with the offset in force at that instant -- for example
+ * `2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in
+ * Europe/Madrid.
+ *
+ * **Period checks:** a requested period is checked in this order, and the first rule it
+ * breaks is answered 400 with that rule's code:
+ *
+ * 1. `period` is not combined with `startDate` or `endDate`, on the operations that accept
+ *    `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).
+ * 2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).
+ *    On the operations where both are required, a missing one is a bad request before any
+ *    of these checks.
+ * 3. `startDate` is strictly before `endDate`: equal bounds make an empty period
+ *    (`ENERGY_METRICS_PERIOD_START_AFTER_END`).
+ * 4. `startDate` is before the start of the current hour, read in the period's time zone
+ *    (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
+ * 5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
+ *    period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+ *    The refusal states the limit in `params`: `amount`, a whole number written as a
+ *    string, and `unit`, `MONTHS` or `DAYS` -- here `{"amount": "24", "unit": "MONTHS"}`.
+ *
+ * A period that passes them and ends after the start of the current hour is then clipped
+ * to end there, before any data is read: no hour that has not fully happened is read or
+ * counted as expected. Energy metrics report the clipped end in `period`, and a series
+ * emits no bucket starting at or after it.
+ *
+ * **Maximum length:** on this operation the limit of rule 5 is **31 calendar days**
+ * instead of 24 calendar months: `endDate` must be no later than 31 calendar days after
+ * `startDate`, counted in the period's time zone on the bounds as requested
+ * (`ENERGY_METRICS_PERIOD_TOO_LONG`, with `params` `{"amount": "31", "unit": "DAYS"}`).
+ *
+ * **Every hour is emitted:**
+ * A bucket is returned for every whole hour that starts inside the period, in
+ * chronological order, whether or not any supply stored a record that hour, so the
+ * series has a regular time axis: 24 for a whole local day of the community's time
+ * zone, 23 on the day the clocks go forward and 25 on the day they go back. A period
+ * starting in the middle of an hour starts with the next whole hour; an `endDate` in
+ * the middle of an hour leaves a partial last hour, counted only up to the end.
+ *
+ * **`startsAt`:** the instant the hour starts at, with the offset in force in the
+ * community's time zone at that instant -- for example `2026-10-25T02:00:00+02:00`
+ * and then `2026-10-25T02:00:00+01:00` for the two hours the clocks repeat in
+ * Europe/Madrid. It is unique within the series and is the key to identify an hour by.
+ * `date` and `time` are the local date and time the hour starts at; on the day the
+ * clocks go back, two consecutive hours carry the same ones.
+ *
+ * **Completeness:**
+ * `supplyCount` is the number of supplies the member **currently** owns in the
+ * community, and `suppliesWithData` how many of them stored a record that hour. An
+ * hour with `suppliesWithData` below `supplyCount` is incomplete. The model records
+ * no date a supply joined its community, so the count is the same for every hour,
+ * and the hours before a supply started reporting show as incomplete. The aggregated
+ * energy metrics measure their `suppliesWithData` over the whole period, so the two
+ * are not comparable.
+ *
+ * **Gaps and measured zeros:**
+ * The energy figures add up only the supplies that stored a record that hour; an
+ * hour in which no supply stored one reports zero energy. `savingsEur` is an
+ * **estimate** of what the hour's self-consumed energy was worth, pricing the
+ * **energy term before taxes** only, exactly as the per-supply series does. It is
+ * `null` when no supply stored a record that hour (`suppliesWithData` is 0), and
+ * only then: an hour with nothing stored is a different statement from an hour that
+ * saved nothing, which reports `0.00` -- as does an hour whose stored records carry
+ * no self-consumption, a measured zero. This differs from the per-supply series,
+ * which reports `0.00` for every bucket it emits. `tariffSource` says where the
+ * prices came from -- `ESTIMATE` or `REAL_TARIFF` -- and a single estimated supply
+ * makes the whole hour an estimate; it is `null` exactly when `savingsEur` is.
+ *
+ * Readable by the member themself and by community admins of this community.
+ * Platform admins are **not** granted access on that basis alone and are answered
+ * 404, as is every other caller who may not read it, so the membership's existence
+ * is not disclosed. A membership without supplies is answered successfully, not
+ * with 404: every hour in range, with zero totals, null savings and a
+ * `supplyCount` of 0.
+ * @summary Retrieves the hourly consumption of every supply of a membership, added up per hour.
+ */
+export const getMembershipHourlyConsumption = (
+    communityId: string,
+    userId: string,
+    params: GetMembershipHourlyConsumptionParams,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<MembershipHourlyConsumptionBucketResponse[]>(
+      {url: `/api/v1/communities/${communityId}/memberships/${userId}/consumption/hourly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+
+
+
+
+export const getGetMembershipHourlyConsumptionQueryKey = (communityId: string,
+    userId: string,
+    params?: GetMembershipHourlyConsumptionParams,) => {
+    return [
+    `/api/v1/communities/${communityId}/memberships/${userId}/consumption/hourly`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetMembershipHourlyConsumptionQueryOptions = <TData = Awaited<ReturnType<typeof getMembershipHourlyConsumption>>, TError = ErrorType<RestError>>(communityId: string,
+    userId: string,
+    params: GetMembershipHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyConsumption>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMembershipHourlyConsumptionQueryKey(communityId,userId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMembershipHourlyConsumption>>> = ({ signal }) => getMembershipHourlyConsumption(communityId,userId,params, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: communityId !== null && communityId !== undefined && userId !== null && userId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyConsumption>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMembershipHourlyConsumptionQueryResult = NonNullable<Awaited<ReturnType<typeof getMembershipHourlyConsumption>>>
+export type GetMembershipHourlyConsumptionQueryError = ErrorType<RestError>
+
+
+export function useGetMembershipHourlyConsumption<TData = Awaited<ReturnType<typeof getMembershipHourlyConsumption>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    userId: string,
+    params: GetMembershipHourlyConsumptionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyConsumption>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMembershipHourlyConsumption>>,
+          TError,
+          Awaited<ReturnType<typeof getMembershipHourlyConsumption>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMembershipHourlyConsumption<TData = Awaited<ReturnType<typeof getMembershipHourlyConsumption>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    userId: string,
+    params: GetMembershipHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyConsumption>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMembershipHourlyConsumption>>,
+          TError,
+          Awaited<ReturnType<typeof getMembershipHourlyConsumption>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMembershipHourlyConsumption<TData = Awaited<ReturnType<typeof getMembershipHourlyConsumption>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    userId: string,
+    params: GetMembershipHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyConsumption>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the hourly consumption of every supply of a membership, added up per hour.
+ */
+
+export function useGetMembershipHourlyConsumption<TData = Awaited<ReturnType<typeof getMembershipHourlyConsumption>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    userId: string,
+    params: GetMembershipHourlyConsumptionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMembershipHourlyConsumption>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMembershipHourlyConsumptionQueryOptions(communityId,userId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
  * For each month of the requested period, the energy and the estimated savings of
  * **every** supply the member owns in this community, added up. Each energy figure
  * sums the unrounded per-supply monthly totals and is rounded once, to 3 decimals,
@@ -1226,6 +1423,8 @@ export function useGetMembershipDailyConsumption<TData = Awaited<ReturnType<type
  *    (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
  * 5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
  *    period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+ *    The refusal states the limit in `params`: `amount`, a whole number written as a
+ *    string, and `unit`, `MONTHS` or `DAYS` -- here `{"amount": "24", "unit": "MONTHS"}`.
  *
  * A period that passes them and ends after the start of the current hour is then clipped
  * to end there, before any data is read: no hour that has not fully happened is read or
@@ -1586,6 +1785,8 @@ export const useEnableMembership = <TError = ErrorType<RestError>,
  *    (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
  * 5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
  *    period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+ *    The refusal states the limit in `params`: `amount`, a whole number written as a
+ *    string, and `unit`, `MONTHS` or `DAYS` -- here `{"amount": "24", "unit": "MONTHS"}`.
  *
  * A period that passes them and ends after the start of the current hour is then clipped
  * to end there, before any data is read: no hour that has not fully happened is read or

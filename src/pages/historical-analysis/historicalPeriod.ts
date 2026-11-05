@@ -33,7 +33,7 @@ export type PresetKind = "latest" | "year" | "last12";
 /** What the caller picked. A custom range's days are both included, as the user reads them. */
 export type PeriodSelection = { kind: PresetKind } | { kind: "custom"; from: CalendarDay; to: CalendarDay };
 
-export type Granularity = "daily" | "monthly";
+export type Granularity = "hourly" | "daily" | "monthly";
 
 /** A period ready to request: what later issues fetch the figures for. */
 export interface HistoricalPeriod {
@@ -72,6 +72,9 @@ export type PeriodResolution =
   | { status: "tooLong"; pickedDays: number }
   /** A custom range that ends after the anchor month, or runs backwards. */
   | { status: "unpickable" };
+
+/** A custom range of this many calendar days is shown hour by hour (#378). */
+export const HOURLY_DAYS = 1;
 
 /** Up to this many calendar days a period is shown day by day. */
 export const DAILY_LIMIT_DAYS = 62;
@@ -184,6 +187,9 @@ export function monthRangePhrase(from: CalendarMonth, to: CalendarMonth): string
   return from.year === to.year ? `${monthName(from)} a ${monthYearName(to)}` : `${monthYearName(from)} a ${monthYearName(to)}`;
 }
 
+/** How the granularity reads after a period's name: "por días". */
+export const GRANULARITY_PHRASE: Readonly<Record<Granularity, string>> = { hourly: "por horas", daily: "por días", monthly: "por meses" };
+
 const isWholeMonth = (from: CalendarDay, to: CalendarDay) =>
   from.day === 1 && from.year === to.year && from.month === to.month && to.day === lastDayOf(to).day;
 
@@ -216,21 +222,29 @@ function snappedText(from: CalendarDay, to: CalendarDay, months: number): string
 
 // ─── Resolution ──────────────────────────────────────────────────────────────
 
+/** Hourly for a single day picked as a custom range; daily up to DAILY_LIMIT_DAYS; monthly above. */
+function granularityOf(pickedDays: number, hourlyAllowed: boolean): Granularity {
+  if (hourlyAllowed && pickedDays === HOURLY_DAYS) return "hourly";
+  return pickedDays <= DAILY_LIMIT_DAYS ? "daily" : "monthly";
+}
+
 /**
- * A range of calendar days as the page shows it. Up to DAILY_LIMIT_DAYS days
- * it is shown day by day, as picked. Longer, it is widened to the whole months
- * containing its first and last day and shown month by month, so the totals
- * and the monthly buckets cover the same period (ADR-0005). The cap applies
- * to the snapped period, which is what gets requested.
+ * A range of calendar days as the page shows it. A single day picked as a
+ * custom range is shown hour by hour (#378); a preset never is. Up to
+ * DAILY_LIMIT_DAYS days it is shown day by day, as picked. Longer, it is
+ * widened to the whole months containing its first and last day and shown
+ * month by month, so the totals and the monthly buckets cover the same period
+ * (ADR-0005). The cap applies to the snapped period, which is what gets
+ * requested.
  */
-function resolveRange(from: CalendarDay, to: CalendarDay): PeriodResolution {
+function resolveRange(from: CalendarDay, to: CalendarDay, hourlyAllowed = false): PeriodResolution {
   const pickedDays = calendarDayCount(from, to);
-  const granularity: Granularity = pickedDays <= DAILY_LIMIT_DAYS ? "daily" : "monthly";
+  const granularity = granularityOf(pickedDays, hourlyAllowed);
   const months = monthIndex(to) - monthIndex(from) + 1;
   if (granularity === "monthly" && months > MAX_MONTHS) return { status: "tooLong", pickedDays };
 
-  const first = granularity === "daily" ? from : firstDayOf(from);
-  const last = granularity === "daily" ? to : lastDayOf(to);
+  const first = granularity === "monthly" ? firstDayOf(from) : from;
+  const last = granularity === "monthly" ? lastDayOf(to) : to;
   const { label, title } = describe(first, last, granularity);
   const moved = compareDays(first, from) !== 0 || compareDays(last, to) !== 0;
 
@@ -262,7 +276,7 @@ export function resolvePeriod(anchor: CalendarMonth, selection: PeriodSelection)
       if (compareDays(selection.from, selection.to) > 0 || compareDays(selection.to, anchorEnd) > 0) {
         return { status: "unpickable" };
       }
-      return resolveRange(selection.from, selection.to);
+      return resolveRange(selection.from, selection.to, true);
   }
 }
 
@@ -270,6 +284,7 @@ export function resolvePeriod(anchor: CalendarMonth, selection: PeriodSelection)
 export function rangeResultText(resolution: PeriodResolution): string | null {
   if (resolution.status !== "ok") return null;
   const days = `${resolution.pickedDays} ${resolution.pickedDays === 1 ? "día" : "días"}`;
+  if (resolution.period.granularity === "hourly") return `${days}: se mostrará por horas.`;
   if (resolution.period.granularity === "daily") return `${days}: se mostrará por días.`;
   return `${days}: se mostrará por meses, de ${monthRangePhrase(resolution.firstDay, resolution.lastDay)}.`;
 }
@@ -285,7 +300,7 @@ export const yearPresetName = (anchor: CalendarMonth) => `Año ${anchor.year}`;
 export function presetSummary(anchor: CalendarMonth, kind: PresetKind): string {
   const resolution = resolvePeriod(anchor, { kind });
   if (resolution.status !== "ok") return "";
-  const granularity = resolution.period.granularity === "daily" ? "por días" : "por meses";
+  const granularity = GRANULARITY_PHRASE[resolution.period.granularity];
   if (kind !== "year") return `${resolution.period.label} · ${granularity}`;
   const months = anchor.month === 1 ? capitalise(monthName(anchor)) : `De enero a ${monthName(anchor)}`;
   return `${months} · ${granularity}`;

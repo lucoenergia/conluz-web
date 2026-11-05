@@ -4,9 +4,11 @@ import type { Granularity } from "./historicalPeriod";
 /** Rows shown before "Ver todos". */
 export const PAGE_SIZE = 7;
 
+/** A slot's noun, and how "completo" agrees with it: "hora" is feminine. */
 const UNIT = {
-  daily: { one: "día", many: "días" },
-  monthly: { one: "mes", many: "meses" },
+  hourly: { one: "hora", many: "horas", complete: "completa", allComplete: "completas" },
+  daily: { one: "día", many: "días", complete: "completo", allComplete: "completos" },
+  monthly: { one: "mes", many: "meses", complete: "completo", allComplete: "completos" },
 } as const;
 
 const unitOf = (count: number, granularity: Granularity) => (count === 1 ? UNIT[granularity].one : UNIT[granularity].many);
@@ -22,7 +24,7 @@ export function totalsStateText(slots: SlotView[], granularity: Granularity): st
   const partial = slots.filter((slot) => slot.state.kind === "partial").length;
   if (gaps > 0) return `Suma ${total - gaps} de ${total} ${unitOf(total, granularity)} con datos`;
   if (partial > 0) return `${total} de ${total} ${unitOf(total, granularity)} con datos; ${partial} ${partial === 1 ? "parcial" : "parciales"}`;
-  return `${total} de ${total} ${unitOf(total, granularity)} ${total === 1 ? "completo" : "completos"}`;
+  return `${total} de ${total} ${unitOf(total, granularity)} ${total === 1 ? UNIT[granularity].complete : UNIT[granularity].allComplete}`;
 }
 
 /** "Mostrando 7 de 62 días.": the rows on screen out of the period's. */
