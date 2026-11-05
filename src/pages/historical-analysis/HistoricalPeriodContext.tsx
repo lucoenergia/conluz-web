@@ -20,8 +20,9 @@ export const HistoricalPeriodContext = createContext<HistoricalPeriod | undefine
  * the request cannot be refused with ENERGY_METRICS_PERIOD_START_IN_FUTURE,
  * ENERGY_METRICS_PERIOD_START_AFTER_END or ENERGY_METRICS_PERIOD_TOO_LONG.
  *
- * Bucket by `granularity`: "daily" is up to 62 calendar days, "monthly" whole
- * months, so the buckets and the totals cover the same period.
+ * Bucket by `granularity`: "hourly" is a single day picked as a custom range
+ * (#378), "daily" up to 62 calendar days, "monthly" whole months, so the
+ * buckets and the totals cover the same period.
  */
 export function useHistoricalPeriod(): HistoricalPeriod | undefined {
   return useContext(HistoricalPeriodContext);

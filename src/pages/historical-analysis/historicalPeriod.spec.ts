@@ -203,8 +203,48 @@ describe("UI-HIS-006 granularity follows calendar days in Madrid (#248)", () => 
       "108 días: se mostrará por meses, de noviembre de 2025 a febrero de 2026.",
     );
     expect(rangeResultText(resolvePeriod(SEPTEMBER_2026, custom(day(2026, 7, 1), day(2026, 7, 1))))).toBe(
-      "1 día: se mostrará por días.",
+      "1 día: se mostrará por horas.",
     );
+  });
+
+  it("UI-HIS-006 AC1 -- a custom range of one day is hourly, bounded by that day's midnight and the next", () => {
+    const resolution = ok(resolvePeriod(SEPTEMBER_2026, custom(day(2026, 9, 1), day(2026, 9, 1))));
+    expect(resolution.period).toEqual({
+      startDate: "2026-09-01T00:00:00+02:00",
+      endDate: "2026-09-02T00:00:00+02:00",
+      granularity: "hourly",
+      label: "1 de septiembre de 2026",
+    });
+    expect(resolution.title).toBe("Datos del 1 de septiembre de 2026");
+    expect(resolution.pickedDays).toBe(1);
+    expect(resolution.snapped).toBeNull();
+  });
+
+  it("UI-HIS-006 AC1 -- a custom range of two days is daily", () => {
+    const { period } = ok(resolvePeriod(SEPTEMBER_2026, custom(day(2026, 9, 1), day(2026, 9, 2))));
+    expect(period).toMatchObject({ startDate: "2026-09-01T00:00:00+02:00", endDate: "2026-09-03T00:00:00+02:00", granularity: "daily" });
+  });
+
+  it("UI-HIS-006 AC1 -- a one-day range on a clock-change day keeps the offsets of its two midnights", () => {
+    expect(ok(resolvePeriod({ year: 2026, month: 10 }, custom(day(2026, 10, 25), day(2026, 10, 25)))).period).toMatchObject({
+      startDate: "2026-10-25T00:00:00+02:00",
+      endDate: "2026-10-26T00:00:00+01:00",
+      granularity: "hourly",
+    });
+    expect(ok(resolvePeriod({ year: 2026, month: 3 }, custom(day(2026, 3, 29), day(2026, 3, 29)))).period).toMatchObject({
+      startDate: "2026-03-29T00:00:00+01:00",
+      endDate: "2026-03-30T00:00:00+02:00",
+      granularity: "hourly",
+    });
+  });
+
+  it("UI-HIS-006 AC1 -- no preset is ever hourly, whatever the anchor", () => {
+    for (let month = 1; month <= 12; month++) {
+      for (const kind of ["latest", "year", "last12"] as const) {
+        const { period } = ok(resolvePeriod({ year: 2026, month }, { kind }));
+        expect(period.granularity, `${kind} anchored to 2026-${month}`).not.toBe("hourly");
+      }
+    }
   });
 
   it("UI-HIS-005 the year preset is named after the anchor's year, whatever its month", () => {

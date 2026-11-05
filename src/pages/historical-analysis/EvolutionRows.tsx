@@ -16,7 +16,7 @@ const LABEL_WIDTH = 52;
 const VALUE_WIDTH = { energy: 44, savings: 60 } as const;
 const GAP_TEXT = "Sin datos";
 const CONSUMPTION_HEADER = "Consumo";
-const UNIT = { daily: "día", monthly: "mes" } as const;
+const UNIT = { hourly: "hora", daily: "día", monthly: "mes" } as const;
 
 const share = (value: number | null, scaleEnd: number) => `${Math.min(Math.max((value ?? 0) / scaleEnd, 0), 1) * 100}%`;
 

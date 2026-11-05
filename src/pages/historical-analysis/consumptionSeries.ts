@@ -125,13 +125,15 @@ export const MEASURED_ZERO_KWH_TEXT = "0,0 kWh (medido)";
 export const MEASURED_ZERO_EUR_TEXT = `${formatEuros(0)} (medido)`;
 
 /** Each slot at least this wide, in px: a day's pair of bars stays readable. */
-const SLOT_WIDTH = { daily: 20, monthly: 48 } as const;
+const SLOT_WIDTH = { hourly: 20, daily: 20, monthly: 48 } as const;
 /** The room one axis label needs, its gap to the next included, in px: "15 sept", "ene 26". */
 const LABEL_WIDTH = 46;
 
+/** A slot's noun, and the words that agree with it: "hora" is feminine. */
 const UNIT = {
-  daily: { one: "día", many: "días" },
-  monthly: { one: "mes", many: "meses" },
+  hourly: { one: "hora", many: "horas", the: "las", thatOne: "Esa", those: "Esas" },
+  daily: { one: "día", many: "días", the: "los", thatOne: "Ese", those: "Esos" },
+  monthly: { one: "mes", many: "meses", the: "los", thatOne: "Ese", those: "Esos" },
 } as const;
 
 const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
@@ -376,7 +378,8 @@ function gapsNoticeOf(slots: SlotView[], granularity: Granularity): string | nul
   const runs = runsOf(slots, (slot) => slot.state.kind === "gap");
   if (runs.length === 0) return null;
   const ranges = joinPhrases(runs.map((run) => gapRangePhrase(run, granularity)));
-  return `Faltan datos ${ranges}. Los totales suman solo los ${UNIT[granularity].many} con datos.`;
+  const unit = UNIT[granularity];
+  return `Faltan datos ${ranges}. Los totales suman solo ${unit.the} ${unit.many} con datos.`;
 }
 
 /** One sentence per count of reporting supplies, so each names its own "{n} de tus {total}". */
@@ -390,9 +393,7 @@ function partialNoticeOf(slots: SlotView[], granularity: Granularity): string | 
       const runs = runsOf(slots, isThisCount);
       const several = slots.filter(isThisCount).length > 1;
       const unit = UNIT[granularity];
-      const marked = several
-        ? `Esos ${unit.many} se marcan como parciales.`
-        : `${granularity === "daily" ? "Ese día" : "Ese mes"} se marca como parcial.`;
+      const marked = several ? `${unit.those} ${unit.many} se marcan como parciales.` : `${unit.thatOne} ${unit.one} se marca como parcial.`;
       const where = joinPhrases(runs.map((run) => partialRangePhrase(run, granularity)));
       return `En ${where} solo hay datos de ${reported} de tus ${total} puntos. ${marked}`;
     })

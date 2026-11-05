@@ -64,7 +64,7 @@ const OTHER_COMMUNITY_ID = CAPTURED_OTHER_COMMUNITY_SUPPLY.community.id;
 const PERIOD = /^Periodo/;
 const PUBLICATION_SEPTEMBER =
   "Los datos de cada mes se publican hacia el día 10 del mes siguiente, así que lo más reciente que puedes ver es septiembre de 2026.";
-const RULE = "Hasta 62 días se ve por días; si eliges más, se ajusta a meses completos. Como máximo, 24 meses.";
+const RULE = "Un solo día se ve por horas; hasta 62 días, por días; si eliges más, se ajusta a meses completos. Como máximo, 24 meses.";
 const TOO_LONG = "El rango puede ser de 24 meses como máximo. Acorta las fechas.";
 const CLAMPED_TO_AUGUST_SUPPLY = "Este punto tiene datos publicados hasta agosto de 2026, así que hemos ajustado el periodo.";
 const CLAMPED_TO_AUGUST_ALL = "Tus puntos tienen datos publicados hasta agosto de 2026, así que hemos ajustado el periodo.";
@@ -191,6 +191,13 @@ describe("UI-HIS-005 the period ends no later than the latest month published fo
       "Últimos 12 mesesDe octubre de 2025 a septiembre de 2026 · por meses",
       "Rango personalizadoElige las fechas, hasta 24 meses",
     ]);
+  });
+
+  it("UI-HIS-006 AC1 -- a one-day custom range is that day, hour by hour", () => {
+    renderPage("?period=custom&from=2026-09-01&to=2026-09-01");
+
+    expect(heading()).toHaveTextContent("Datos del 1 de septiembre de 2026");
+    expect(screen.getByText("Por horas")).toBeInTheDocument();
   });
 
   it("UI-HIS-005 a supply's presets end at its own latest published month", async () => {

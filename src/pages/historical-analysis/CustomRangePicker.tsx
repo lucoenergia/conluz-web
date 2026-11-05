@@ -25,7 +25,8 @@ import {
 } from "./historicalPeriod";
 
 const RANGE_TITLE = "Rango personalizado";
-const RANGE_RULE = "Hasta 62 días se ve por días; si eliges más, se ajusta a meses completos. Como máximo, 24 meses.";
+const RANGE_RULE =
+  "Un solo día se ve por horas; hasta 62 días, por días; si eliges más, se ajusta a meses completos. Como máximo, 24 meses.";
 const RANGE_TOO_LONG = "El rango puede ser de 24 meses como máximo. Acorta las fechas.";
 
 const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
