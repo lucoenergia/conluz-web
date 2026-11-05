@@ -6,15 +6,16 @@
 | **Status** | Active |
 | **Routes** | `/historical-analysis` |
 | **Roles** | A caller who may read the active community (`canRead`): members and community admins |
-| **Domain rules** | EPR-001, EPR-003, EPR-004 (lucoenergia/conluz#409); SEM-001 (lucoenergia/conluz#408); SEM-002, SEM-003, SEM-004, ENM-006, ENM-007, ENM-008 (lucoenergia/conluz#411); MCS-001, MCS-002 (lucoenergia/conluz#410); ADR-0005 in lucoenergia/conluz |
+| **Domain rules** | EPR-001, EPR-003, EPR-004 (lucoenergia/conluz#409); EPR-005 (lucoenergia/conluz#545, #546); SEM-001 (lucoenergia/conluz#408); SEM-002, SEM-003, SEM-004, ENM-006, ENM-007, ENM-008 (lucoenergia/conluz#411); MCS-001, MCS-002 (lucoenergia/conluz#410); SCS-001 (lucoenergia/conluz#545); MCS-003 (lucoenergia/conluz#546); ADR-0005 in lucoenergia/conluz |
 | **Design reference** | Claude Design round 2 copy deck; round 3 copy deck for the period (#248); the member consumption analysis design, option A, for the evolution charts (#250) and the data table and CSV (#251); its round 3, for the mobile charts and the paired terms (#361) |
-| **Last reviewed against code** | #361 |
+| **Last reviewed against code** | #378 |
 
 Scope: the page shell, its menu entry and its supply selector (#247), the period: its anchor,
 selector, custom range picker, header and query string (#248), the period's card and totals
 (#249), the energy and savings evolution charts (#250), and the data table with its CSV download
 (#251), and a community admin's way in to a supply of the community from its detail page (#252);
-the mobile charts and the terms paired across the charts, the table and the CSV (#361).
+the mobile charts and the terms paired across the charts, the table and the CSV (#361); a single
+day shown hour by hour (#378).
 All of them read the period through `useHistoricalPeriod`
 (`src/pages/historical-analysis/HistoricalPeriodContext.tsx`).
 
@@ -127,17 +128,29 @@ here too, and opens another member's supply from its detail page, one at a time.
 ### UI-HIS-006 — Granularity follows calendar days, and a snapped period is shown
 
 - **Status:** Active
-- **Rule:** Granularity MUST be daily up to 62 calendar days in `APP_TIME_ZONE`, and whole months
-  above, for presets and custom ranges alike. A longer range MUST be snapped to the whole months
-  containing its first and last day. A snapped period MUST be shown to the user: the range picker
-  announces the resulting period and granularity before it is applied, and the header says what was
-  picked and what is shown. Each preset MUST show the period it resolves to and its granularity.
+- **Rule:** Calendar days are counted in `APP_TIME_ZONE`.
+  - A custom range of a single calendar day MUST be hourly, bounded by that day's 00:00 and the
+    next day's 00:00.
+  - A preset MUST never be hourly.
+  - Any other period MUST be daily up to 62 calendar days, and whole months above.
+  - A range longer than 62 days MUST be snapped to the whole months containing its first and last
+    day.
+
+  A snapped period MUST be shown to the user: the range picker announces the resulting period and
+  granularity before it is applied, and the header says what was picked and what is shown. The
+  range picker's rule MUST name all three granularities. The header's granularity chip MUST read
+  "Por horas", "Por días" or "Por meses". Each preset MUST show the period it resolves to and its
+  granularity.
 - **Rationale:** Counting calendar days rather than elapsed time keeps the cut from moving with a
-  daylight-saving change, and lets two full months (62 days) stay daily. Snapping makes the totals
-  and the monthly buckets cover the same period; saying so keeps the widened range from surprising
-  the user.
-- **Implements:** ADR-0005 in lucoenergia/conluz
-- **Source:** #248
+  daylight-saving change, and lets two full months (62 days) stay daily. A single day shown as one
+  daily bar says nothing a member can act on. Hour by hour, it shows when the consumption happened,
+  which a member needs in order to move it to the best hours more precisely than a monthly average
+  allows. A preset always covers at least a whole month, longer than the 31 days the hourly series
+  accepts. Snapping makes the totals and the monthly buckets cover the same period, and saying so
+  keeps the widened range from surprising the user.
+- **Implements:** ADR-0005 in lucoenergia/conluz; EPR-005 (lucoenergia/conluz#545, #546), under
+  which the hourly series accepts at most 31 calendar days.
+- **Source:** #248, #378
 
 ### UI-HIS-007 — A period spans 24 months at most, after snapping
 
@@ -318,14 +331,15 @@ here too, and opens another member's supply from its detail page, one at a time.
 - **Status:** Active
 - **Rule:** The chart axis MUST cover every day of a daily period, or every month of a monthly one,
   built from the period's bounds in the app's time zone. That includes slots the series omits,
-  which are shown as gaps (UI-HIS-015). The day or month at `endDate` MUST NOT get a slot. Buckets
-  MUST be matched to slots by their `date`.
+  which are shown as gaps (UI-HIS-015). The day or month at `endDate` MUST NOT get a slot. On a
+  daily or monthly axis, buckets MUST be matched to slots by their `date`. An hourly axis follows
+  UI-HIS-028 instead.
 - **Rationale:** The supply monthly series leaves out a month with nothing stored. An axis built
   from the buckets would close that month up, with no gap and no mark to show it is missing.
 - **Implements:** EPR-001 (lucoenergia/conluz#409), under which a period is half-open. MCS-001
   (lucoenergia/conluz#410), under which the membership daily series emits every local day of the
   period.
-- **Source:** #250
+- **Source:** #250, #378
 
 ### UI-HIS-017 — The energy chart shows consumption as one stacked bar and unused assigned energy beside it
 
@@ -347,19 +361,23 @@ here too, and opens another member's supply from its detail page, one at a time.
 ### UI-HIS-018 — Bucket labels are calendar dates read from the bucket's date
 
 - **Status:** Active
-- **Rule:** Bucket labels MUST be calendar dates read from the bucket's `date` string (`yyyy/MM/dd`),
-  formatted in `APP_TIME_ZONE`, on the axis, in the tooltips, on the rows and in the row detail. A
-  `date` MUST never be parsed as an instant, and the device's clock and zone MUST never be read.
-  From `sm` up, each chart MUST keep the width its slots need and scroll sideways inside its card
-  when the card is narrower, and the axis MUST label only every Nth slot, never rotated, so that no
-  two labels overlap. Below `sm`, every row MUST carry its own label (UI-HIS-025).
+- **Rule:**
+  - A daily or monthly bucket's labels MUST be calendar dates read from the bucket's `date` string
+    (`yyyy/MM/dd`), formatted in `APP_TIME_ZONE`, on the axis, in the tooltips, on the rows and in
+    the row detail. A `date` MUST never be parsed as an instant.
+  - An hourly slot's labels follow UI-HIS-028.
+  - The device's clock and zone MUST never be read.
+  - From `sm` up, each chart MUST keep the width its slots need and scroll sideways inside its card
+    when the card is narrower. The axis MUST label only every Nth slot, never rotated, so that no
+    two labels overlap.
+  - Below `sm`, every row MUST carry its own label (UI-HIS-025).
 - **Rationale:** A bucket's `date` is a day in the community's calendar. Read as a midnight in the
   device's zone, it lands on the previous day east of Madrid (Kiritimati), and the label and the
   slot it is matched to move with it. A label on every one of 62 days does not fit along an axis
   narrower than the slots need. Below `sm` the charts are rows, so every slot's label fits, and the
   page scrolls only vertically.
 - **Implements:** n/a
-- **Source:** #250, #361
+- **Source:** #250, #361, #378
 
 ### UI-HIS-019 — The series is requested for the selected scope, granularity and bounds
 
@@ -367,18 +385,20 @@ here too, and opens another member's supply from its detail page, one at a time.
 - **Rule:** The evolution series MUST be asked by the period's explicit `startDate` and `endDate`,
   as follows:
 
-  | Scope | Daily | Monthly |
-  | --- | --- | --- |
-  | "Todos mis puntos" | the membership daily series | the membership monthly series |
-  | A single supply | the supply's daily series | the supply's monthly series |
+  | Scope | Hourly | Daily | Monthly |
+  | --- | --- | --- | --- |
+  | "Todos mis puntos" | the membership hourly series | the membership daily series | the membership monthly series |
+  | A single supply | the supply's hourly series | the supply's daily series | the supply's monthly series |
 
   Only the series for the selected scope and granularity MAY run, and none while the period is
   unknown. While it is pending, a placeholder MUST stand in the charts' place. A failed request
   MUST show an error with "Reintentar".
 - **Rationale:** Asking by the period's own bounds keeps the buckets on the period that the card
   and the totals cover. One query at a time keeps a scope from fetching another scope's series.
-- **Implements:** EPR-001 (lucoenergia/conluz#409), under which the bounds are half-open.
-- **Source:** #250
+- **Implements:** EPR-001 (lucoenergia/conluz#409), under which the bounds are half-open. SCS-001
+  (lucoenergia/conluz#545) and MCS-003 (lucoenergia/conluz#546), the supply and membership hourly
+  series.
+- **Source:** #250, #378
 
 ### UI-HIS-020 — The savings legend states the estimated price from estimatedPrice, and the charts draw in the energy colour tokens
 
@@ -497,6 +517,39 @@ here too, and opens another member's supply from its detail page, one at a time.
 - **Implements:** n/a
 - **Source:** #361, the member consumption analysis design ("El término de la home va primero y
   manda; el técnico le acompaña en gris, nunca solo ni en su lugar.")
+
+### UI-HIS-028 — The hourly axis covers every whole local hour of the day, keyed by its instant
+
+- **Status:** Active
+- **Rule:**
+  - **Axis.** The hourly axis MUST have one slot per whole hour that starts inside the period, from
+    `startDate` up to `endDate`, which is excluded, counted on the instant line. The day therefore
+    has 23, 24 or 25 slots.
+  - **Keys and matching.** Each slot MUST be keyed by its starting instant. Buckets MUST be matched
+    to slots by their `startsAt` instant, never by their `date` and `time`.
+  - **Labels.** Every label MUST be the hour that the clock in `APP_TIME_ZONE` shows at that
+    instant, never the device's:
+    - "14 h" on the axis and below `sm`;
+    - "De 14:00 a 15:00" in the tooltip and the row detail;
+    - "14:00–15:00" in the data table;
+    - in the CSV's `fecha`, the hour's local start with its offset, "2026-09-01T14:00+02:00".
+  - **Hour names.** An hour MUST be named by the clock, ending at the next hour's name.
+  - **The repeated hour.** On the day the clocks go back, both hours the clock shows as 02:00 MUST
+    add "(hora repetida por el cambio de hora)" in the tooltip, the row detail and the table.
+- **Rationale:**
+  - On the day the clocks go back, two hours share a `date` and a `time`. Only their instants tell
+    them apart, so keying by anything else would merge them.
+  - Stepping on the instant line mirrors how the backend emits the hours. A slot and its bucket
+    therefore meet whatever the day's length, and an hour the series omits stays on the axis as a
+    gap.
+  - Naming an hour by the clock reads as members say it. The hour before the March change reads
+    "De 01:00 a 02:00" although the clock jumps to 03:00.
+  - Without the note, the two 02:00 hours would read as a duplicate. With an offset in the CSV, a
+    spreadsheet keeps them apart.
+- **Implements:** SCS-001 (lucoenergia/conluz#545) and MCS-003 (lucoenergia/conluz#546), under
+  which each series emits every whole hour that starts inside the period, each with a unique
+  `startsAt`.
+- **Source:** #378
 
 ## States
 
