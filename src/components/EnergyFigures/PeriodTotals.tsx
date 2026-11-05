@@ -36,7 +36,7 @@ export const PeriodTotals: FC<{ metrics: PeriodEnergyMetrics; isPlantSupply: boo
       value: formatKilowattHours(energy.gridImportKWh),
       mark: ENERGY_COLORS.grid,
       figureColor: ENERGY_COLORS.grid,
-      note: "Comprada a tu comercializadora",
+      note: "Lo que te vendrá en la factura",
     },
     {
       label: "Se fue a la red",

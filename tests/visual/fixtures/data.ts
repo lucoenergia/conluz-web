@@ -6,6 +6,7 @@ import type {
   GetShellyConfigResponse,
   MembershipDailyConsumptionBucketResponse,
   MembershipEnergyMetricsResponse,
+  SupplyConsumptionBucketResponse,
   SupplyEnergyMetricsResponse,
   MembershipHourlyProfileResponse,
   MembershipMonthlyConsumptionBucketResponse,
@@ -1387,6 +1388,130 @@ export function memberDailySeries(firstDay: string, days: number): MembershipDai
 
 /** August 2026, the reference month: what "Último mes publicado" shows by day. */
 export const MEMBER_DAILY_SERIES: MembershipDailyConsumptionBucketResponse[] = memberDailySeries("2026/08/01", 31);
+
+// ---------------------------------------------------------------------------
+// Historical analysis (#361): the period figures the page shows beside its
+// series. Each is summed from the buckets it stands next to, so the totals,
+// the chart and the table agree, the way the backend derives them.
+// ---------------------------------------------------------------------------
+
+type EnergyBucket = Pick<MembershipMonthlyConsumptionBucketResponse, "selfConsumptionKWh" | "gridImportKWh" | "surplusKWh" | "assignedProductionKWh" | "savingsEur">;
+
+const round3 = (value: number) => Math.round(value * 1000) / 1000;
+const round2 = (value: number) => Math.round(value * 100) / 100;
+const round4 = (value: number) => Math.round(value * 10000) / 10000;
+
+/** A membership's energy metrics over `period`, summed from its buckets; ratios as the backend defines them. */
+function membershipMetricsFrom(
+  buckets: EnergyBucket[],
+  period: MembershipEnergyMetricsResponse["period"],
+  coverage: MembershipEnergyMetricsResponse["coverage"],
+): MembershipEnergyMetricsResponse {
+  const sum = (pick: (bucket: EnergyBucket) => number) => buckets.reduce((total, bucket) => total + pick(bucket), 0);
+  const selfConsumptionKWh = round3(sum((bucket) => bucket.selfConsumptionKWh));
+  const gridImportKWh = round3(sum((bucket) => bucket.gridImportKWh));
+  const surplusKWh = round3(sum((bucket) => bucket.surplusKWh));
+  const assignedProductionKWh = round3(sum((bucket) => bucket.assignedProductionKWh));
+  const totalConsumptionKWh = round3(selfConsumptionKWh + gridImportKWh);
+  return {
+    period,
+    coverage,
+    energy: { assignedProductionKWh, selfConsumptionKWh, surplusKWh, totalConsumptionKWh, gridImportKWh },
+    savings: { amountEur: round2(sum((bucket) => bucket.savingsEur ?? 0)), tariffSource: "ESTIMATE", estimatedPrice: ESTIMATED_PRICE },
+    selfConsumptionRatio: round4(selfConsumptionKWh / assignedProductionKWh),
+    selfSufficiencyRatio: round4(selfConsumptionKWh / totalConsumptionKWh),
+    selfConsumptionRatioStatus: "AVAILABLE",
+    selfConsumptionRatioBasis: { selfConsumptionKWh, assignedProductionKWh, excludedPlantSupplyCount: 0 },
+  };
+}
+
+/**
+ * "Últimos 12 meses" ending August 2026, over the series with a gap and a
+ * partial month: September 2025 to August 2026 in Europe/Madrid. Two supplies
+ * over 8760 hours each; December stored nothing (2 x 744 h) and February only
+ * one supply (672 h), so coverage is short by both.
+ */
+export const MEMBER_ENERGY_METRICS_LAST_12: MembershipEnergyMetricsResponse = membershipMetricsFrom(
+  MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE,
+  { startDate: "2025-08-31T22:00:00Z", endDate: "2026-08-31T22:00:00Z" },
+  { hoursWithData: 17520 - 1488 - 672, expectedHours: 17520, supplyCount: 2, suppliesWithData: 2 },
+);
+
+/** March to August 2026: what a custom range from 15 March to 20 August snaps to, by month (UI-HIS-006). */
+export const MEMBER_MONTHLY_SERIES_SNAPPED: MembershipMonthlyConsumptionBucketResponse[] = MEMBER_MONTHLY_SERIES.filter(
+  (month) => month.date >= "2026/03/01",
+);
+
+/** The snapped period's figures, complete: two supplies over 4415 hours each (March loses one to the clock change). */
+export const MEMBER_ENERGY_METRICS_SNAPPED: MembershipEnergyMetricsResponse = membershipMetricsFrom(
+  MEMBER_MONTHLY_SERIES_SNAPPED,
+  { startDate: "2026-02-28T23:00:00Z", endDate: "2026-08-31T22:00:00Z" },
+  { hoursWithData: 8830, expectedHours: 8830, supplyCount: 2, suppliesWithData: 2 },
+);
+
+/** A plant's own supply the member owns: the selector tags it "Punto de planta". */
+export const FIXED_PLANT_OWN_SUPPLY: SupplyResponse = {
+  ...FIXED_SUPPLY,
+  id: "abababab-cdcd-efef-0101-232323232323",
+  code: "ES0021000000000000PL",
+  name: "Cubierta del polideportivo",
+  addressRef: null,
+  plant: { id: FIXED_PLANT_ID, name: FIXED_PLANT.name },
+};
+
+/**
+ * A single supply's days from `firstDay` on, as GET /supplies/{id}/consumption/daily
+ * answers them. A plant's own supply stores its surplus as 0, so all of its
+ * assigned energy is self-consumption. Dates step in UTC, like memberDailySeries.
+ */
+export function plantSupplyDailySeries(firstDay: string, days: number, cups: string): SupplyConsumptionBucketResponse[] {
+  const [year, month, day] = firstDay.split("/").map(Number);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return Array.from({ length: days }, (_, index) => {
+    const date = new Date(Date.UTC(year, month - 1, day + index));
+    const selfConsumptionKWh = round3(2 + (index % 5) * 0.6);
+    return {
+      cups,
+      date: `${date.getUTCFullYear()}/${pad(date.getUTCMonth() + 1)}/${pad(date.getUTCDate())}`,
+      time: "00:00",
+      selfConsumptionKWh,
+      gridImportKWh: round3(1.5 + (index % 4) * 0.25),
+      surplusKWh: 0,
+      assignedProductionKWh: selfConsumptionKWh,
+      savingsEur: round2(selfConsumptionKWh * 0.15),
+      tariffSource: "ESTIMATE",
+      obtainMethod: "Real",
+    };
+  });
+}
+
+/** August 2026 of the plant's own supply, by day. */
+export const PLANT_SUPPLY_DAILY_SERIES: SupplyConsumptionBucketResponse[] = plantSupplyDailySeries("2026/08/01", 31, FIXED_PLANT_OWN_SUPPLY.code);
+
+/**
+ * August 2026 of the plant's own supply, for the anchor and for the period
+ * alike: NOT_APPLICABLE, so no ratio and a basis of zeros, as the contract
+ * defines it for a plant's own supply.
+ */
+export const PLANT_SUPPLY_ENERGY_METRICS: SupplyEnergyMetricsResponse = (() => {
+  const { energy, savings, selfSufficiencyRatio } = membershipMetricsFrom(PLANT_SUPPLY_DAILY_SERIES, REFERENCE_AUGUST_2026, {
+    hoursWithData: 744,
+    expectedHours: 744,
+    supplyCount: 1,
+    suppliesWithData: 1,
+  });
+  return {
+    supply: { id: FIXED_PLANT_OWN_SUPPLY.id, code: FIXED_PLANT_OWN_SUPPLY.code, name: FIXED_PLANT_OWN_SUPPLY.name },
+    period: REFERENCE_AUGUST_2026,
+    coverage: { hoursWithData: 744, expectedHours: 744 },
+    energy,
+    savings,
+    selfConsumptionRatio: null,
+    selfSufficiencyRatio,
+    selfConsumptionRatioStatus: "NOT_APPLICABLE",
+    selfConsumptionRatioBasis: { selfConsumptionKWh: 0, assignedProductionKWh: 0, excludedPlantSupplyCount: 0 },
+  };
+})();
 
 /**
  * August's average day: consumption every hour, peaking in the evening;

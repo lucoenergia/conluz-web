@@ -1161,19 +1161,16 @@ test.describe("#252: the supply detail page's latest published month", () => {
 });
 
 /**
- * #250. The evolution charts at phone width, over the longest daily period:
- * 62 days. Each chart keeps a width its slots need and scrolls sideways
- * inside the card; the card and the page never do; and the x-axis labels that
- * are drawn do not overlap, which the axis thins them for. Measured, not
- * captured: the risks are a box overflowing and two labels colliding, and
- * jsdom lays out neither.
+ * #250, #361. The evolution charts over the longest daily period: 62 days.
+ * Below sm they are rows, one per day: neither the page nor a chart scrolls
+ * sideways, and no row's content is wider than the row. From sm up, at the
+ * narrowest width, each chart keeps the width its slots need and scrolls
+ * inside the card, and the x-axis labels that are drawn do not overlap, which
+ * the axis thins them for. Measured, not captured: the risks are a box
+ * overflowing and two labels colliding, and jsdom lays out neither.
  */
-test.describe("#250: the historical analysis evolution charts", () => {
-  test("UI-HIS-018 at 390px 62 daily slots scroll inside the card, the page never scrolls sideways, and no axis labels overlap", async ({
-    page,
-  }, testInfo) => {
-    test.skip(testInfo.project.name !== "mobile", "The budget is a 390px viewport.");
-
+test.describe("#250, #361: the historical analysis evolution charts", () => {
+  async function openSixtyTwoDays(page: Page) {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
     await mockAllApiRoutes(page, FIXED_MEMBER_USER);
@@ -1189,7 +1186,78 @@ test.describe("#250: the historical analysis evolution charts", () => {
     const card = page.getByRole("region", { name: "Tu energía día a día" });
     await expect(card).toBeVisible();
     await expect(card.getByText("Del 1 de julio al 31 de agosto de 2026: 62 de 62 días con datos.")).toBeVisible();
-    await expect(card.getByText("Desliza el gráfico para ver todo el periodo.")).toBeVisible();
+    return card;
+  }
+
+  test("UI-HIS-025 at 390px 62 daily slots are 62 rows per chart, nothing scrolls sideways, and no row overflows", async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "The budget is a 390px viewport.");
+
+    const card = await openSixtyTwoDays(page);
+    const energyRows = card.getByRole("list", { name: "Tu energía por día" }).getByRole("button");
+    const savingsRows = card.getByRole("list", { name: "Tu ahorro estimado por día" }).getByRole("listitem");
+    await expect(energyRows).toHaveCount(62);
+    await expect(savingsRows).toHaveCount(62);
+    await expect(card.locator("svg.apexcharts-svg")).toHaveCount(0);
+    await stabilizePage(page);
+
+    const pageWidths = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth,
+    }));
+    expect(pageWidths.document, "the page scrolls sideways").toBeLessThanOrEqual(pageWidths.viewport);
+    const cardBox = await card.boundingBox();
+    expect(cardBox!.x, "the card starts off-screen").toBeGreaterThanOrEqual(0);
+    expect(cardBox!.x + cardBox!.width, "the card is wider than the viewport").toBeLessThanOrEqual(390);
+
+    const scrollers = await card.evaluate((region) =>
+      [region, ...region.querySelectorAll("*")]
+        .filter((node) => node.scrollWidth > node.clientWidth && ["auto", "scroll"].includes(getComputedStyle(node).overflowX))
+        .map((node) => node.outerHTML.slice(0, 80)),
+    );
+    expect(scrollers, "something in the card scrolls sideways").toEqual([]);
+
+    for (const [name, rows] of [
+      ["energy", energyRows],
+      ["savings", savingsRows],
+    ] as const) {
+      const boxes = await rows.evaluateAll((items) =>
+        items.map((item) => {
+          const box = item.getBoundingClientRect();
+          const children = [...item.querySelectorAll("*")].map((child) => child.getBoundingClientRect());
+          // A label or a figure wider than its own box spills over its neighbour without leaving the row.
+          const spilling = [...item.querySelectorAll("*")]
+            .filter((child) => child.clientWidth > 0 && child.scrollWidth > child.clientWidth + 1)
+            .map((child) => `"${child.textContent}" (${child.scrollWidth}px in ${child.clientWidth}px)`);
+          return {
+            spilling,
+            name: item.getAttribute("aria-label"),
+            left: box.left,
+            right: box.right,
+            scroll: item.scrollWidth,
+            client: item.clientWidth,
+            widest: Math.max(...children.map((child) => child.right)),
+          };
+        }),
+      );
+      for (const box of boxes) {
+        expect(box.left, `${name} row "${box.name}" starts outside the card`).toBeGreaterThanOrEqual(cardBox!.x);
+        expect(box.right, `${name} row "${box.name}" ends outside the card`).toBeLessThanOrEqual(cardBox!.x + cardBox!.width);
+        expect(box.scroll, `${name} row "${box.name}"'s content is wider than the row (${box.scroll}px)`).toBeLessThanOrEqual(box.client);
+        expect(box.widest, `${name} row "${box.name}" draws past its right edge`).toBeLessThanOrEqual(box.right + 0.5);
+        expect(box.spilling, `${name} row "${box.name}" has content wider than its box`).toEqual([]);
+      }
+    }
+  });
+
+  test("UI-HIS-018 at 600px 62 daily slots scroll inside the card, the page never scrolls sideways, and no axis labels overlap", async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop", "The budget is the narrowest width the charts are drawn at: sm, 600px.");
+    await page.setViewportSize({ width: 600, height: 900 });
+
+    const card = await openSixtyTwoDays(page);
     // Structural: ApexCharts' SVG has no role or name of its own.
     await expect(card.locator("svg.apexcharts-svg")).toHaveCount(2);
     await stabilizePage(page);
@@ -1201,7 +1269,7 @@ test.describe("#250: the historical analysis evolution charts", () => {
     expect(pageWidths.document, "the page scrolls sideways").toBeLessThanOrEqual(pageWidths.viewport);
     const cardBox = await card.boundingBox();
     expect(cardBox!.x, "the card starts off-screen").toBeGreaterThanOrEqual(0);
-    expect(cardBox!.x + cardBox!.width, "the card is wider than the viewport").toBeLessThanOrEqual(390);
+    expect(cardBox!.x + cardBox!.width, "the card is wider than the viewport").toBeLessThanOrEqual(600);
 
     // Structural: each chart's scroll container is its canvas's nearest scrolling
     // ancestor, and its x-axis labels are ApexCharts' text elements.

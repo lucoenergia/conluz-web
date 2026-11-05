@@ -6,6 +6,8 @@ import type { SwatchStyle } from "../../../components/EnergyFigures/energyColors
 export interface LegendItem {
   label: string;
   swatch: SwatchStyle;
+  /** A second term after the label, in muted type: "De la comunidad · autoconsumo". */
+  companion?: string;
 }
 
 /**
@@ -19,6 +21,12 @@ export const SeriesLegend: FC<{ items: LegendItem[] }> = ({ items }) => (
         <Box aria-hidden sx={{ width: 12, height: 12, borderRadius: radii.small, flexShrink: 0, boxSizing: "border-box", ...item.swatch }} />
         <Typography variant="body2" sx={{ color: colors.text.body }}>
           {item.label}
+          {item.companion && (
+            <Box component="span" sx={{ color: colors.text.secondary }}>
+              {" "}
+              · {item.companion}
+            </Box>
+          )}
         </Typography>
       </Box>
     ))}

@@ -19,12 +19,13 @@ import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import TableRowsRoundedIcon from "@mui/icons-material/TableRowsRounded";
 import type { SupplyResponse } from "../../api/models";
 import { colors } from "../../theme/tokens";
-import { formatEuros, formatEurosPerKilowattHour, formatKilowattHours } from "../../utils/formatEnergyFigures";
+import { formatEuroAmount, formatEurosPerKilowattHour, formatKilowattHourAmount } from "../../utils/formatEnergyFigures";
 import { triggerBrowserDownload } from "../../utils/triggerBrowserDownload";
 import { HomeCard } from "../home/HomeCard";
 import { GRID_IMPORT_SERIES, SAVINGS_SERIES, SELF_CONSUMPTION_SERIES, SURPLUS_SERIES, toConsumptionSeriesView, type SlotView } from "./consumptionSeries";
 import { useHistoricalPeriod } from "./HistoricalPeriodContext";
 import type { Granularity, HistoricalPeriod } from "./historicalPeriod";
+import { PairedTerm } from "./PairedTerm";
 import { CSV_MIME_TYPE, periodCsv, periodCsvFileName } from "./periodCsv";
 import { PAGE_SIZE, showingText, totalsStateText } from "./periodDataTable";
 import { slotStateText } from "./slotStateText";
@@ -50,11 +51,20 @@ interface Row {
   state: string;
 }
 
-/** The four value columns, in the order the charts' legends name them. */
-const VALUE_HEADERS = [SELF_CONSUMPTION_SERIES, GRID_IMPORT_SERIES, SURPLUS_SERIES, SAVINGS_SERIES];
+/**
+ * The four value columns, in the order the charts' legends name them, each
+ * with its unit: the header states it once, and the cells hold bare figures
+ * (UI-HIS-021).
+ */
+const VALUE_COLUMNS = [
+  { term: SELF_CONSUMPTION_SERIES, unit: "kWh" },
+  { term: GRID_IMPORT_SERIES, unit: "kWh" },
+  { term: SURPLUS_SERIES, unit: "kWh" },
+  { term: SAVINGS_SERIES, unit: "€" },
+] as const;
 
-const kilowattHoursCell = (value: number | null) => (value === null ? GAP_CELL : formatKilowattHours(value));
-const eurosCell = (value: number | null) => (value === null ? GAP_CELL : formatEuros(value));
+const kilowattHoursCell = (value: number | null) => (value === null ? GAP_CELL : formatKilowattHourAmount(value));
+const eurosCell = (value: number | null) => (value === null ? GAP_CELL : formatEuroAmount(value));
 
 function slotRow(slot: SlotView, granularity: Granularity): Row {
   return {
@@ -77,9 +87,9 @@ function totalsRow(metrics: PeriodEnergyMetrics, slots: SlotView[], granularity:
     key: "total",
     label: TOTAL_LABEL,
     values: [
-      formatKilowattHours(energy.selfConsumptionKWh),
-      formatKilowattHours(energy.gridImportKWh),
-      formatKilowattHours(energy.surplusKWh),
+      kilowattHoursCell(energy.selfConsumptionKWh),
+      kilowattHoursCell(energy.gridImportKWh),
+      kilowattHoursCell(energy.surplusKWh),
       eurosCell(savings.amountEur),
     ],
     state: totalsStateText(slots, granularity),
@@ -92,11 +102,11 @@ const numericCell = { whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }
 
 const DataRow: FC<{ row: Row; total?: boolean }> = ({ row, total = false }) => (
   <TableRow sx={total ? { "& th, & td": { fontWeight: 600, color: colors.text.primary, borderBottom: "none" } } : undefined}>
-    <TableCell component="th" scope="row" sx={{ color: colors.text.primary }}>
+    <TableCell component="th" scope="row" sx={{ color: colors.text.primary, whiteSpace: "nowrap" }}>
       {row.label}
     </TableCell>
     {row.values.map((value, index) => (
-      <TableCell key={VALUE_HEADERS[index]} align="right" sx={numericCell}>
+      <TableCell key={VALUE_COLUMNS[index].term} align="right" sx={numericCell}>
         {value}
       </TableCell>
     ))}
@@ -124,10 +134,11 @@ const DesktopTable: FC<{ caption: string; granularity: Granularity; rows: Row[];
       <TableHead>
         <TableRow>
           <TableCell scope="col">{DATE_HEADER[granularity]}</TableCell>
-          {VALUE_HEADERS.map((header) => (
-            <TableCell key={header} scope="col" align="right">
-              {header}
-              {header === SAVINGS_SERIES && price && (
+          {VALUE_COLUMNS.map(({ term, unit }) => (
+            // Each line on one line: the unit stays with its term, and the term and its technical companion stay whole.
+            <TableCell key={term} scope="col" align="right" sx={{ whiteSpace: "nowrap" }}>
+              <PairedTerm term={term} unit={unit} stacked />
+              {term === SAVINGS_SERIES && price && (
                 <>
                   {" "}
                   <Typography component="span" variant="caption" sx={{ display: "block", color: colors.text.body, whiteSpace: "nowrap" }}>
@@ -175,9 +186,9 @@ const RowCard: FC<{ row: Row; total?: boolean }> = ({ row, total = false }) => (
     </Box>
     <Box component="dl" sx={{ m: 0, display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", columnGap: 2, rowGap: 0.25 }}>
       {row.values.map((value, index) => (
-        <Box key={VALUE_HEADERS[index]} sx={{ display: "contents" }}>
+        <Box key={VALUE_COLUMNS[index].term} sx={{ display: "contents" }}>
           <Typography component="dt" variant="body2" sx={{ color: colors.text.subtle, minWidth: 0 }}>
-            {VALUE_HEADERS[index]}
+            <PairedTerm term={VALUE_COLUMNS[index].term} unit={VALUE_COLUMNS[index].unit} />
           </Typography>
           <Typography component="dd" variant="body2" sx={{ m: 0, textAlign: "right", color: colors.text.primary, ...numericCell, fontWeight: total ? 600 : 400 }}>
             {value}

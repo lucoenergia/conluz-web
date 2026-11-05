@@ -8,6 +8,7 @@ import {
   SELF_CONSUMPTION_SERIES,
   SURPLUS_SERIES,
   axisOf,
+  scaleEnd,
   toConsumptionSeriesView,
   type SlotView,
 } from "./consumptionSeries";
@@ -283,5 +284,80 @@ describe("toConsumptionSeriesView (#250)", () => {
       expect(complete.coverageText).toBe("Del 1 al 5 de julio de 2026: 5 de 5 días con datos; 1 con datos parciales.");
       expect(complete.gapsNotice).toBeNull();
     });
+  });
+});
+
+describe("the rows below sm (#361)", () => {
+  /** 1 July to 31 August 2026, by days: 62 rows. */
+  const JULY_AUGUST = period("2026-07-01T00:00:00+02:00", "2026-09-01T00:00:00+02:00", "daily");
+  /** November 2025 to February 2026, by months: crosses a year. */
+  const ACROSS_A_YEAR = period("2025-11-01T00:00:00+01:00", "2026-03-01T00:00:00+01:00", "monthly");
+
+  it("UI-HIS-018 every row carries its own label, read from the bucket's date, set apart on a month's first day", () => {
+    const view = toConsumptionSeriesView(JULY_AUGUST, { kind: "supplyDaily", buckets: [] });
+
+    expect(view.slots).toHaveLength(62);
+    expect(view.slots.map((slot) => slot.rowLabel).slice(29, 33)).toEqual(["30 jul", "31 jul", "1 ago", "2 ago"]);
+    expect(view.slots.every((slot) => slot.rowLabel !== "")).toBe(true);
+    expect(view.slots.filter((slot) => slot.startsMonthOrYear).map((slot) => slot.key)).toEqual(["2026/07/01", "2026/08/01"]);
+  });
+
+  it("UI-HIS-018 a monthly row names its month and year, set apart in January", () => {
+    const view = toConsumptionSeriesView(ACROSS_A_YEAR, { kind: "membershipMonthly", buckets: [] });
+
+    expect(view.slots.map((slot) => slot.rowLabel)).toEqual(["nov 25", "dic 25", "ene 26", "feb 26"]);
+    expect(view.slots.filter((slot) => slot.startsMonthOrYear).map((slot) => slot.key)).toEqual(["2026/01/01"]);
+    expect(view.slots.some((slot) => slot.endsWeek)).toBe(false);
+  });
+
+  it("UI-HIS-025 a separator follows every seventh daily row", () => {
+    const view = toConsumptionSeriesView(JULY_AUGUST, { kind: "supplyDaily", buckets: [] });
+
+    expect(view.slots.flatMap((slot, index) => (slot.endsWeek ? [index + 1] : []))).toEqual([7, 14, 21, 28, 35, 42, 49, 56]);
+  });
+
+  it("UI-HIS-025 a row's consumption is its community energy plus its grid energy, and a gap has none", () => {
+    const view = toConsumptionSeriesView(FIVE_JULY_DAYS, {
+      kind: "supplyDaily",
+      buckets: [
+        supplyBucket("2026/07/01", { selfConsumptionKWh: 2.125, gridImportKWh: 7.75, surplusKWh: 1.5 }),
+        supplyGapDay("2026/07/02"),
+        supplyMeasuredZeroDay("2026/07/03"),
+      ],
+    });
+
+    expect(view.slots.map((slot) => slot.consumptionKWh)).toEqual([9.875, null, 0, null, null]);
+  });
+
+  it("UI-HIS-025 each chart's scale ends on a round figure at or above its longest bar, both energy bars included", () => {
+    const view = toConsumptionSeriesView(FIVE_JULY_DAYS, {
+      kind: "supplyDaily",
+      buckets: [
+        supplyBucket("2026/07/01", { selfConsumptionKWh: 3, gridImportKWh: 4, surplusKWh: 1, savingsEur: 0.45 }),
+        supplyBucket("2026/07/02", { selfConsumptionKWh: 0.5, gridImportKWh: 0.5, surplusKWh: 8.2, savingsEur: 1.3 }),
+      ],
+    });
+
+    expect(view.rowScale).toEqual({ energyKWh: 10, savingsEur: 2 });
+  });
+
+  it("UI-HIS-025 a period with nothing to draw still has a scale", () => {
+    const view = toConsumptionSeriesView(FIVE_JULY_DAYS, { kind: "supplyDaily", buckets: [] });
+
+    expect(view.rowScale).toEqual({ energyKWh: 1, savingsEur: 1 });
+  });
+
+  it.each([
+    [0.3, 0.5],
+    [1, 1],
+    [1.01, 2],
+    [2.2, 2.5],
+    [3, 5],
+    [7.5, 10],
+    [12, 20],
+    [240, 250],
+    [0.0004, 0.0005],
+  ])("scaleEnd(%s) is %s", (value, end) => {
+    expect(scaleEnd(value)).toBeCloseTo(end, 10);
   });
 });

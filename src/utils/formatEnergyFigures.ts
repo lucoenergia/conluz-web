@@ -22,6 +22,14 @@ export function formatEuros(value: number): string {
 }
 
 /**
+ * A euro amount without its sign, written as formatEuros writes it, for a
+ * column whose header names the unit once: "12,34".
+ */
+export function formatEuroAmount(value: number): string {
+  return new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+}
+
+/**
  * A price per kWh, without rounding it away: the backend returns it exactly as
  * configured, and a label stating the price used must state that price.
  * "0,15 €/kWh", "0,1234 €/kWh".

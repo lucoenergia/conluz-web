@@ -3,9 +3,11 @@ import {
   formatAverageKilowattHours,
   formatCalendarDay,
   formatCalendarMonth,
+  formatEuroAmount,
   formatEuros,
   formatEurosPerKilowattHour,
   formatHourOfDay,
+  formatKilowattHourAmount,
   formatKilowattHours,
   formatMonth,
   formatShortDay,
@@ -40,6 +42,20 @@ describe("formatKilowattHours", () => {
 describe("formatEuros", () => {
   it("formats to the cent with a decimal comma", () => {
     expect(normalise(formatEuros(12.3))).toBe("12,30 €");
+  });
+});
+
+describe("figures without their unit", () => {
+  it.each([0, 3.44, 12.567, 12.5, 268, 1234.5, -0.4])("formatKilowattHourAmount(%s) is formatKilowattHours without the unit", (value) => {
+    expect(`${formatKilowattHourAmount(value)} kWh`).toBe(formatKilowattHours(value));
+  });
+
+  it.each([0, 12.3, 0.005, 1234.5, 98765.432, -1.2])("formatEuroAmount(%s) is formatEuros without the sign", (value) => {
+    expect(`${normalise(formatEuroAmount(value))} €`).toBe(normalise(formatEuros(value)));
+  });
+
+  it("writes a euro amount to the cent", () => {
+    expect(formatEuroAmount(12.3)).toBe("12,30");
   });
 });
 

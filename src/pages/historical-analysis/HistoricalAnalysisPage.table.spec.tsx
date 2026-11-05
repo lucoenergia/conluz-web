@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { formatEuros } from "../../utils/formatEnergyFigures";
 import { query } from "../../test/queryState";
 import { apiError } from "../../test/apiError";
 import type {
@@ -76,8 +75,6 @@ import {
 } from "./historicalAnalysis.testData";
 
 const TITLE = "Tus datos";
-/** Euros as the app writes them, with the non-breaking space Intl puts before the sign. */
-const eur = (value: number) => formatEuros(value);
 const LOADING_LABEL = "Cargando la tabla de tus datos…";
 const UNAVAILABLE = "La tabla estará disponible cuando se carguen tus datos.";
 /** What the blocks that own the requests say when one fails: the charts (#250) and the period card (#249). */
@@ -223,10 +220,10 @@ describe("UI-HIS-021 one row per chart slot, with the same states and words (#25
     const headers = within(grid).getAllByRole("columnheader");
     expect(headers.map((header) => header.textContent)).toEqual([
       "Día",
-      "De la comunidad",
-      "De la red",
-      "Se fue a la red",
-      "Ahorro estimado con 0,15 €/kWh",
+      "De la comunidad autoconsumo (kWh)",
+      "De la red (kWh)",
+      "Se fue a la red excedentes (kWh)",
+      "Ahorro estimado (€) con 0,15 €/kWh",
       "Datos",
     ]);
     headers.forEach((header) => expect(header).toHaveAttribute("scope", "col"));
@@ -248,10 +245,10 @@ describe("UI-HIS-021 one row per chart slot, with the same states and words (#25
     renderPage();
 
     expect(bodyRows().slice(0, 4)).toEqual([
-      ["1 de septiembre de 2026", "2,5 kWh", "7,75 kWh", "1,75 kWh", eur(0.38), "Completo"],
+      ["1 de septiembre de 2026", "2,5", "7,75", "1,75", "0,38", "Completo"],
       ["2 de septiembre de 2026", "—", "—", "—", "—", "Sin datos"],
-      ["3 de septiembre de 2026", "0 kWh", "0 kWh", "0 kWh", eur(0), "Cero medido"],
-      ["4 de septiembre de 2026", "2,5 kWh", "7,75 kWh", "1,75 kWh", eur(0.38), "Parcial: 1 de 2 puntos con datos"],
+      ["3 de septiembre de 2026", "0", "0", "0", "0,00", "Cero medido"],
+      ["4 de septiembre de 2026", "2,5", "7,75", "1,75", "0,38", "Parcial: 1 de 2 puntos con datos"],
     ]);
   });
 
@@ -284,6 +281,29 @@ describe("UI-HIS-021 one row per chart slot, with the same states and words (#25
     expect(bodyRows()).toHaveLength(7);
   });
 
+  it("UI-HIS-021 each value header names its unit once, and no cell, the totals included, repeats it", () => {
+    renderPage();
+
+    const headers = within(table()).getAllByRole("columnheader").slice(1, 5);
+    expect(headers.map((header) => /\((kWh|€)\)/.exec(header.textContent ?? "")?.[1])).toEqual(["kWh", "kWh", "kWh", "€"]);
+    const cells = [...within(table()).getAllByRole("cell")].map((cell) => cell.textContent ?? "");
+    expect(cells.length).toBeGreaterThan(7 * 5);
+    for (const cell of cells) expect(cell).not.toMatch(/kWh|€/);
+  });
+
+  it("UI-HIS-027 the headers pair each technical term with its home term, muted on its own line", () => {
+    renderPage();
+
+    for (const [home, technical] of [
+      ["De la comunidad", "autoconsumo"],
+      ["Se fue a la red", "excedentes"],
+    ]) {
+      const header = within(table()).getByRole("columnheader", { name: new RegExp(`^${home}`) });
+      expect(within(header).getByText(technical)).not.toBe(header);
+      expect(header).toHaveTextContent(`${home} ${technical} (kWh)`);
+    }
+  });
+
   it("UI-HIS-021 the estimated price is the savings header's second line, and is left out without one", () => {
     const { unmount } = renderPage();
     const savings = within(table()).getByRole("columnheader", { name: /^Ahorro estimado/ });
@@ -293,7 +313,7 @@ describe("UI-HIS-021 one row per chart slot, with the same states and words (#25
 
     membershipFigures = derivedMembershipFigures({ ...PERIOD_FIGURES, savings: { ...PERIOD_FIGURES.savings, estimatedPrice: null } });
     renderPage();
-    expect(within(table()).getByRole("columnheader", { name: /^Ahorro estimado/ })).toHaveTextContent(/^Ahorro estimado$/);
+    expect(within(table()).getByRole("columnheader", { name: /^Ahorro estimado/ })).toHaveTextContent(/^Ahorro estimado \(€\)$/);
     expect(region()).not.toHaveTextContent("€/kWh");
   });
 });
@@ -305,10 +325,10 @@ describe("UI-HIS-022 the totals row is the energy-metrics totals, never a sum of
     renderPage();
 
     const cells = within(totalsRow()).getAllByRole("cell").map((cell) => cell.textContent);
-    expect(cells).toEqual(["10 kWh", "37,5 kWh", "15 kWh", eur(11.41), "30 de 30 días completos"]);
+    expect(cells).toEqual(["10", "37,5", "15", "11,41", "30 de 30 días completos"]);
     // What the 30 rows add up to: 9,99 kWh and 11,40 €.
-    expect(totalsRow()).not.toHaveTextContent("9,99 kWh");
-    expect(totalsRow()).not.toHaveTextContent(eur(11.4));
+    expect(totalsRow()).not.toHaveTextContent("9,99");
+    expect(totalsRow()).not.toHaveTextContent("11,40");
   });
 
   it("UI-HIS-022 with gaps, the totals say how many days they add up", () => {
@@ -477,12 +497,15 @@ describe("UI-HIS-021 below sm, one card per row (#251)", () => {
     expect(within(gap).getAllByRole("definition").map((value) => value.textContent)).toEqual(["—", "—", "—", "—"]);
     const second = cards()[1];
     expect(within(second).getAllByRole("term").map((term) => term.textContent)).toEqual([
-      "De la comunidad",
-      "De la red",
-      "Se fue a la red",
-      "Ahorro estimado",
+      "De la comunidad · autoconsumo (kWh)",
+      "De la red (kWh)",
+      "Se fue a la red · excedentes (kWh)",
+      "Ahorro estimado (€)",
     ]);
-    expect(within(second).getAllByRole("definition").map((value) => value.textContent)).toEqual(["0,33 kWh", "1,25 kWh", "0,5 kWh", eur(0.38)]);
+    expect(within(second).getAllByRole("definition").map((value) => value.textContent)).toEqual(["0,33", "1,25", "0,5", "0,38"]);
+    for (const card of cards()) {
+      for (const value of within(card).getAllByRole("definition")) expect(value.textContent).not.toMatch(/kWh|€/);
+    }
     const total = cards().at(-1)!;
     expect(total).toHaveAccessibleName("Total del periodo");
     expect(total).toHaveTextContent("Suma 61 de 62 días con datos");

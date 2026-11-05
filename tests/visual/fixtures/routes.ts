@@ -14,6 +14,9 @@ import type {
   PlatformAdminResponse,
   PlatformCapabilitiesResponse,
   SharingAgreementResponse,
+  SupplyConsumptionBucketResponse,
+  SupplyEnergyMetricsResponse,
+  SupplyResponse,
 } from "../../../src/api/models";
 import {
   COMMUNITY_ADMIN_CAPABILITIES,
@@ -200,6 +203,64 @@ export async function mockMemberHome(
       const body = byPath[resource] ?? (url.searchParams.has("startDate") ? previousMetrics : metrics);
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
     },
+  );
+}
+
+/**
+ * The membership reads of the historical analysis page (#361), for "Todos mis
+ * puntos": `anchor` answers the latest-published-month request, `period` the
+ * request by the selected period's explicit bounds, and the series answer the
+ * granularity the period resolves to.
+ *
+ * Delegates to mockMemberHome, which already tells the two metrics requests
+ * apart by their query string and keeps its row scoping. Call it after
+ * mockAllApiRoutes, so it wins over the member home's defaults.
+ */
+export async function mockHistoricalMembership(
+  page: Page,
+  currentUser: object,
+  {
+    anchor,
+    period,
+    daily,
+    monthly,
+  }: {
+    anchor: MembershipEnergyMetricsResponse;
+    period: MembershipEnergyMetricsResponse;
+    daily?: MembershipDailyConsumptionBucketResponse[];
+    monthly?: MembershipMonthlyConsumptionBucketResponse[];
+  },
+) {
+  await mockMemberHome(page, currentUser, { metrics: anchor, previousMetrics: period, daily, monthly });
+}
+
+/**
+ * One of the caller's own supplies on the historical analysis page (#361):
+ * the caller's listing, holding FIXED_SUPPLY and `supply`, and that supply's
+ * energy metrics (the anchor and the period alike) and daily series.
+ *
+ * Dedicated routes, because suppliesHandler answers any id but
+ * FIXED_SUPPLY_ID with the paged list. Call it after mockAllApiRoutes, so
+ * these win.
+ */
+export async function mockOwnSupplyHistory(
+  page: Page,
+  currentUser: { id: string },
+  supply: SupplyResponse,
+  { metrics, daily }: { metrics: SupplyEnergyMetricsResponse; daily: SupplyConsumptionBucketResponse[] },
+) {
+  const json = (body: unknown) => ({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
+  await page.route(
+    (url) => url.pathname.endsWith(`/api/v1/users/${currentUser.id}/supplies`),
+    (route) => route.fulfill(json([FIXED_SUPPLY, supply])),
+  );
+  await page.route(
+    (url) => url.pathname.endsWith(`/api/v1/supplies/${supply.id}/energy-metrics`),
+    (route) => route.fulfill(json(metrics)),
+  );
+  await page.route(
+    (url) => url.pathname.endsWith(`/api/v1/supplies/${supply.id}/consumption/daily`),
+    (route) => route.fulfill(json(daily)),
   );
 }
 

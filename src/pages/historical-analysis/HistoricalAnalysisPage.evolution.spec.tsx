@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ApexOptions } from "apexcharts";
@@ -183,8 +183,35 @@ function enabledSeriesCalls() {
 
 const card = (title = DAILY_TITLE) => screen.getByRole("region", { name: title });
 
+/**
+ * jsdom answers no media query, which reads as a phone, where the charts are
+ * rows (UI-HIS-025, in HistoricalAnalysisPage.evolutionRows.spec.tsx). These
+ * tests are about the charts, so every (min-width) query answers as a wide screen.
+ */
+function wideScreen() {
+  vi.stubGlobal(
+    "matchMedia",
+    (mediaQuery: string) =>
+      ({
+        matches: mediaQuery.includes("min-width"),
+        media: mediaQuery,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+      }) as MediaQueryList,
+  );
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 beforeEach(() => {
   vi.clearAllMocks();
+  wideScreen();
   mockLoggedUser = member();
   seriesState = "ready";
   membershipDaily = SEPTEMBER_DAYS.map((date) => membershipDay(date));
@@ -235,7 +262,7 @@ describe("UI-HIS-015 gaps, measured zeros and partial days are told apart in wor
     const complete = tooltipText("energy", "2026/09/01");
     expect(complete).toContain("1 de septiembre de 2026");
     expect(complete).toContain("Datos completos.");
-    expect(complete).toContain("De la comunidad5,5 kWh");
+    expect(complete).toContain("De la comunidad · autoconsumo5,5 kWh");
 
     const gap = tooltipText("energy", "2026/09/02");
     expect(gap).toContain(GAP_DAY);
@@ -246,7 +273,7 @@ describe("UI-HIS-015 gaps, measured zeros and partial days are told apart in wor
 
     const zero = tooltipText("energy", "2026/09/03");
     expect(zero).toContain("Datos completos.");
-    expect(zero).toContain("De la comunidad0,0 kWh (medido)");
+    expect(zero).toContain("De la comunidad · autoconsumo0,0 kWh (medido)");
     expect(tooltipText("savings", "2026/09/03")).toContain(MEASURED_ZERO_EUR_TEXT);
     expect(MEASURED_ZERO_EUR_TEXT).toMatch(/^0,00\s€ \(medido\)$/);
   });
@@ -316,12 +343,13 @@ describe("UI-HIS-017 the energy chart is option A (#250)", () => {
   it("UI-HIS-017 groups the legend into the consumption bar and the unused assigned energy, and explains the difference", () => {
     renderPage();
 
-    expect(within(card()).getByRole("group", { name: "Tu consumo" })).toHaveTextContent("Tu consumo:De la comunidadDe la red");
-    expect(within(card()).getByRole("group", { name: "Asignada que no usaste" })).toHaveTextContent("Asignada que no usaste:Se fue a la red");
-    expect(card()).toHaveTextContent(
-      "La barra apilada es tu consumo. La barra de al lado es energía asignada que no usaste: no forma parte de tu consumo.",
+    expect(within(card()).getByRole("group", { name: "Tu consumo" })).toHaveTextContent("Tu consumo:De la comunidad · autoconsumoDe la red");
+    expect(within(card()).getByRole("group", { name: "Asignada que no usaste" })).toHaveTextContent(
+      "Asignada que no usaste:Se fue a la red · excedentes",
     );
-    expect(card()).toHaveTextContent("Desliza el gráfico para ver todo el periodo.");
+    expect(card()).toHaveTextContent(
+      "La barra apilada es tu consumo. La barra morada, a su lado, es energía asignada que no usaste: no forma parte de tu consumo.",
+    );
 
     const { options, series } = chartProps("energy");
     expect(options.chart!.stacked).toBe(true);
@@ -330,6 +358,38 @@ describe("UI-HIS-017 the energy chart is option A (#250)", () => {
       ["De la red", "consumption"],
       ["Se fue a la red", "assignedUnused"],
     ]);
+  });
+});
+
+/** Every technical term in `text` follows its home term: removing the pairs leaves none. */
+function expectTermsOnlyPaired(text: string) {
+  expect(text.replace(/De la comunidad · autoconsumo/g, "").replace(/Se fue a la red · excedentes/g, "")).not.toMatch(/autoconsumo|excedentes/);
+}
+
+describe("UI-HIS-027 a technical term accompanies its home term (#361)", () => {
+  it("UI-HIS-027 the legend pairs both terms, each in an element of its own after its home term, and names neither alone", () => {
+    renderPage();
+
+    // Its own element, so it can be muted; the colour itself is pictured by the visual tests.
+    for (const [home, technical] of [
+      ["De la comunidad", "autoconsumo"],
+      ["Se fue a la red", "excedentes"],
+    ]) {
+      const companion = within(card()).getByText(`· ${technical}`);
+      expect(companion.parentElement).toHaveTextContent(`${home} · ${technical}`);
+    }
+    expectTermsOnlyPaired(card().textContent ?? "");
+  });
+
+  it("UI-HIS-027 the tooltips pair both terms on every slot that has figures", () => {
+    renderPage();
+
+    for (const kind of ["energy", "savings"] as const) {
+      const text = tooltipText(kind, "2026/09/01");
+      expect(text).toContain("De la comunidad · autoconsumo");
+      expect(text).toContain("Se fue a la red · excedentes");
+      expectTermsOnlyPaired(text);
+    }
   });
 });
 
