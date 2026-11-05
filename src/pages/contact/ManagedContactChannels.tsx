@@ -12,6 +12,7 @@ import { ContactChannelEditor, type ContactChannelEditorStatus } from "../../com
 import { ContactChannelList, contactChannelEditId, contactChannelHeadingId } from "../../components/ContactChannelList";
 import { ContactChannelReorderList, type ContactChannelReorderStatus } from "../../components/ContactChannelReorderList";
 import { EmptyState } from "../../components/EmptyState";
+import { useBackDismiss } from "../../components/ResponsiveOverlay";
 import { DeleteContactChannelConfirmationModal } from "../../components/Modals/DeleteContactChannelConfirmationModal";
 import { SectionHeading } from "../../components/SectionHeading";
 import type { CommunityRowActions } from "../../hooks/actions/useCommunityActions";
@@ -198,6 +199,11 @@ export const ManagedContactChannels: FC<ManagedContactChannelsProps> = ({
   };
 
   const editing = sheet?.mode === "edit" ? sheet : null;
+  const deleteConfirmationOpen = !!editing && confirmingDelete && status !== "saving";
+  // The confirmation sits over the sheet but is not on the shared overlay yet
+  // (#369), so it joins the back stack itself: back closes it first, and the
+  // sheet stays open (#368).
+  useBackDismiss(deleteConfirmationOpen, () => setConfirmingDelete(false));
   const editor = sheet && (
     <ContactChannelEditor
       key={sheet.key}
@@ -221,7 +227,7 @@ export const ManagedContactChannels: FC<ManagedContactChannelsProps> = ({
 
   const deleteConfirmation = editing && (
     <DeleteContactChannelConfirmationModal
-      isOpen={confirmingDelete && status !== "saving"}
+      isOpen={deleteConfirmationOpen}
       label={editing.snapshot[editing.index].label}
       otherCount={editing.snapshot.length - 1}
       onCancel={() => setConfirmingDelete(false)}

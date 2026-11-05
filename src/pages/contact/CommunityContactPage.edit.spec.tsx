@@ -540,3 +540,63 @@ describe("refused saves", () => {
     expect(putContact).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("UI-OVL-004 back on the contact editor", () => {
+  it("UI-OVL-004 back closes an untouched editor and leaves the page as it was", async () => {
+    const { user } = renderPage();
+
+    await user.click(editButton("Oficina"));
+    expect(sheet()).toBeInTheDocument();
+    window.history.back();
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(listedLabels()).toEqual(["Tesorería", "Oficina", "Local de la asociación"]);
+    expect(putContact).not.toHaveBeenCalled();
+  });
+
+  it("UI-OVL-004 back with changes asks first and keeps the input", async () => {
+    const { user } = renderPage();
+
+    await user.click(editButton("Oficina"));
+    await user.type(field("Horario (opcional)"), " y jueves");
+    window.history.back();
+
+    expect(
+      await within(sheet()).findByText("Tienes cambios sin guardar en este canal. Si cierras, se perderán."),
+    ).toBeInTheDocument();
+    expect(field("Horario (opcional)")).toHaveValue("Lunes a viernes, de 10:00 a 13:00 y jueves");
+    expect(putContact).not.toHaveBeenCalled();
+  });
+
+  it("UI-OVL-004 back with the delete confirmation open closes the confirmation only and deletes nothing", async () => {
+    const { user } = renderPage();
+
+    await user.click(editButton("Oficina"));
+    await user.click(within(sheet()).getByRole("button", { name: "Eliminar canal" }));
+    const question = screen.getByRole("heading", { name: "¿Eliminar el canal «Oficina»?" });
+    window.history.back();
+
+    await waitFor(() => expect(question).not.toBeInTheDocument());
+    expect(screen.getByRole("dialog", { name: "Editar canal" })).toBeInTheDocument();
+    expect(field("Nombre del canal")).toHaveValue("Oficina");
+    expect(putContact).not.toHaveBeenCalled();
+  });
+});
+
+describe("UI-OVL-005 leaving the page with the contact editor open", () => {
+  const leaving = () => {
+    const event = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(event);
+    return event.defaultPrevented;
+  };
+
+  it("UI-OVL-005 prompts only once the channel has changes", async () => {
+    const { user } = renderPage();
+
+    await user.click(editButton("Oficina"));
+    expect(leaving()).toBe(false);
+
+    await user.type(field("Horario (opcional)"), " y jueves");
+    expect(leaving()).toBe(true);
+  });
+});
