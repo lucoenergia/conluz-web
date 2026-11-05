@@ -223,8 +223,8 @@ describe("the Datadis switch", () => {
   });
 
   it("UI-INT-014 a GET 404 shows the create form at once: the read is not retried", async () => {
-    // The app's own query client, whose default retries a failed read three
-    // times with backoff; the harness's turns retries off, which would hide it.
+    // The app's own query client, whose retry policy (UI-DATA-002) is in play;
+    // the harness's turns retries off, which would hide a retry.
     const router = serve(() => {
       throw apiError(404, { code: "DATADIS_CONFIG_NOT_FOUND" });
     });
