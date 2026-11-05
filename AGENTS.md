@@ -135,9 +135,14 @@ sheet below, one close path, back and the leave-page prompt handled once. Rules:
 - **Leaving the page as an overlay closes** (a create that opens the new record, a delete from a
   detail page) navigates with `useOverlayNavigate`, never a plain `navigate`: it cannot be undone
   by the back that gives up the overlay's history entry.
-- **A layer stacked over an overlay that is not on it yet** joins the back stack with
-  `useBackDismiss`, so back closes the top layer first.
-- **Read-only while in flight is the consumer's job**: set `readOnly` on the fields while `inFlight`.
+- **`useBackDismiss` is transitional.** It is only for a layer stacked over an overlay that is not a
+  `ResponsiveOverlay` yet, so back closes the top layer first. Every use carries a
+  `// temporary: #<issue>` comment naming the issue that migrates the layer.
+- **Read-only while in flight is the consumer's job.** While `inFlight` is true, consumers MUST set
+  their inputs `readOnly` (or disable their controls); the overlay locks closing, not its content.
+- **Open an overlay only from a user interaction** (a click, a tap, a key press). Chrome's history
+  intervention lets back skip entries added without user activation, so an overlay opened on load or
+  after a redirect would not be closed by back.
 
 ### Styling Contract
 
