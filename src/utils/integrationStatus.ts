@@ -67,11 +67,3 @@ export const incompleteText = (labels: string[]) =>
 export function isNotFound(error: unknown): boolean {
   return (error as { response?: { status?: number } } | null | undefined)?.response?.status === 404;
 }
-
-/**
- * A 404 on an integration's configuration read is "not configured yet", the
- * normal state of a new plant or community, so it is answered at once rather
- * than retried like a failure. Anything else keeps the app's default of three
- * attempts.
- */
-export const retryUnlessNotFound = (failureCount: number, error: unknown) => !isNotFound(error) && failureCount < 3;

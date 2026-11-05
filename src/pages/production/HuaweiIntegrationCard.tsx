@@ -14,7 +14,7 @@ import { useIntegrationToggle } from "../../hooks/useIntegrationToggle";
 import { storedPasswordFrom } from "../../utils/integrationCredentials";
 import { colors, radii, shadows } from "../../theme/tokens";
 import { HuaweiConfigDialog } from "./HuaweiConfigDialog";
-import { DISABLED_TEXT, incompleteText, isNotFound, retryUnlessNotFound } from "../../utils/integrationStatus";
+import { DISABLED_TEXT, incompleteText, isNotFound } from "../../utils/integrationStatus";
 import {
   HUAWEI_ACCENT,
   LOAD_FAILED_TEXT,
@@ -51,9 +51,7 @@ export const HuaweiIntegrationCard: FC<HuaweiIntegrationCardProps> = ({ plantId,
   const errorDispatch = useErrorDispatch();
   const [dialog, setDialog] = useState<"create" | "edit" | null>(null);
 
-  const { data: stored, error, isLoading, refetch } = useGetHuaweiConfig(plantId, {
-    query: { retry: retryUnlessNotFound },
-  });
+  const { data: stored, error, isLoading, refetch } = useGetHuaweiConfig(plantId);
   const notConfigured = !stored && isNotFound(error);
   const passwordSet = storedPasswordFrom(
     stored ? { passwordSet: stored.passwordSet === true } : undefined,

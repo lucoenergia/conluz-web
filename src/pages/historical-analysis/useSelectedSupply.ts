@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router";
 import type { SupplyResponse } from "../../api/models";
-import { isDenial, outcomeFromResource, useActiveCommunityCapabilities } from "../../hooks/permissions";
+import { outcomeFromResource, useActiveCommunityCapabilities } from "../../hooks/permissions";
 import { SUPPLY_ID_PARAM } from "../../utils/routes";
 import { useSupplyInActiveCommunity } from "../supply-points/useSupplyInActiveCommunity";
 
@@ -15,9 +15,6 @@ export interface SelectedSupply {
   viewed: SupplyResponse | null;
   select: (supplyId: string | null) => void;
 }
-
-/** Asking again cannot turn a refusal or a missing supply into one the caller may open. */
-const retryUnlessDenied = (failureCount: number, error: unknown) => !isDenial(error) && failureCount < 3;
 
 /**
  * The supply held in ?supplyId= (UI-HIS-002), so another page can link here
@@ -49,7 +46,7 @@ export function useSelectedSupply(supplies: SupplyResponse[] | undefined): Selec
   // Asked only for an id that is not the caller's own.
   const canManage = useActiveCommunityCapabilities("canManage", { enabled: needsLookup });
   const mayLookUp = needsLookup && canManage.state === "allowed";
-  const lookup = useSupplyInActiveCommunity(mayLookUp ? supplyId : "", { retry: retryUnlessDenied });
+  const lookup = useSupplyInActiveCommunity(mayLookUp ? supplyId : "");
 
   const found = mayLookUp ? lookup.supply : undefined;
   const viewed =
