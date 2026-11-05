@@ -184,7 +184,14 @@ export function useBackDismiss(open: boolean, onBack: () => boolean | void): voi
   }, [open]);
 }
 
-/** Resolves once every back this module issued has landed. For tests that start from a quiet history. */
-export function overlayHistorySettled(): Promise<void> {
-  return new Promise((resolve) => whenSettled(resolve));
+/**
+ * Resolves once every back this module issued has landed, releases deferred
+ * by an unmount included. For tests that start from a quiet history: jsdom
+ * drops a pending back when anything pushes an entry, and its `popstate` would
+ * then never come.
+ */
+export async function overlayHistorySettled(): Promise<void> {
+  // Let the releases queued by an unmount that just happened issue their backs.
+  await new Promise<void>((resolve) => queueMicrotask(resolve));
+  await new Promise<void>((resolve) => whenSettled(resolve));
 }
