@@ -63,7 +63,9 @@ export interface SlotView {
   axisLabel: string;
   /** "15 de julio de 2026", "Febrero de 2026", "De 14:00 a 15:00": the tooltip's header. */
   name: string;
-  /** Below sm, the row's label, on every slot: "1 ago", "sept 25". */
+  /** The data table's row label: the tooltip's name, or for an hour "14:00–15:00". */
+  tableLabel: string;
+  /** Below sm, the row's label, on every slot: "1 ago", "sept 25", "14 h". */
   rowLabel: string;
   /** The 1st of a month on a daily axis, or January on a monthly one: the row label is set apart. */
   startsMonthOrYear: boolean;
@@ -144,8 +146,8 @@ export const MEASURED_ZERO_EUR_TEXT = `${formatEuros(0)} (medido)`;
 
 /** Each slot at least this wide, in px: a day's pair of bars stays readable. */
 const SLOT_WIDTH = { hourly: 20, daily: 20, monthly: 48 } as const;
-/** The room one axis label needs, its gap to the next included, in px: "15 sept", "ene 26". */
-const LABEL_WIDTH = 46;
+/** The room one axis label needs, its gap to the next included, in px: "15 sept", "ene 26", "23 h". */
+const LABEL_WIDTH = { hourly: 34, daily: 46, monthly: 46 } as const;
 
 /** A slot's noun, and the words that agree with it: "hora" is feminine. */
 const UNIT = {
@@ -318,11 +320,14 @@ const clockText = (hour: number) => `${pad(hour)}:00`;
 export const hourRangeText = (first: SlotHour, last: SlotHour = first) =>
   `de ${clockText(first.clockHour)} a ${clockText((last.clockHour + 1) % 24)}`;
 
+const withRepeatedNote = (hour: SlotHour, text: string) => (hour.repeated ? `${text} ${REPEATED_HOUR_NOTE}` : text);
+
 /** The hour's name in the tooltip: "De 14:00 a 15:00", with the note on a repeated hour. */
-function hourName(hour: SlotHour): string {
-  const name = capitalise(hourRangeText(hour));
-  return hour.repeated ? `${name} ${REPEATED_HOUR_NOTE}` : name;
-}
+const hourName = (hour: SlotHour) => withRepeatedNote(hour, capitalise(hourRangeText(hour)));
+
+/** The hour's row in the data table: "14:00–15:00", with the note on a repeated hour. */
+const hourTableLabel = (hour: SlotHour) =>
+  withRepeatedNote(hour, `${clockText(hour.clockHour)}–${clockText((hour.clockHour + 1) % 24)}`);
 
 function axisLabelOf({ day, hour }: AxisSlot, index: number, granularity: Granularity, step: number): string {
   if (index % step !== 0) return "";
@@ -353,6 +358,7 @@ function slotOf(slot: AxisSlot, index: number, reading: BucketReading | undefine
     hour,
     axisLabel: axisLabelOf(slot, index, granularity, step),
     name: nameOf(slot, granularity),
+    tableLabel: hour ? hourTableLabel(hour) : nameOf(slot, granularity),
     rowLabel: rowLabelOf(slot, granularity),
     startsMonthOrYear: granularity === "daily" ? day.day === 1 : granularity === "monthly" && day.month === 1,
     endsWeek: granularity === "daily" && (index + 1) % 7 === 0,
@@ -537,7 +543,7 @@ function coverageTextOf(slots: SlotView[], period: HistoricalPeriod): string {
 export function toConsumptionSeriesView(period: HistoricalPeriod, series: ConsumptionSeries): ConsumptionSeriesView {
   const { granularity } = period;
   const readings = readingsOf(series);
-  const step = Math.max(1, Math.ceil(LABEL_WIDTH / SLOT_WIDTH[granularity]));
+  const step = Math.max(1, Math.ceil(LABEL_WIDTH[granularity] / SLOT_WIDTH[granularity]));
   const slots = axisSlotsOf(period).map((slot, index) => slotOf(slot, index, readings.get(slot.key), granularity, step));
   const isMembership = series.kind === "membershipHourly" || series.kind === "membershipDaily" || series.kind === "membershipMonthly";
 

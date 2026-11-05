@@ -68,7 +68,7 @@ const eurosCell = (value: number | null) => (value === null ? GAP_CELL : formatE
 function slotRow(slot: SlotView, granularity: Granularity): Row {
   return {
     key: slot.key,
-    label: slot.name,
+    label: slot.tableLabel,
     values: [
       kilowattHoursCell(slot.selfConsumptionKWh),
       kilowattHoursCell(slot.gridImportKWh),

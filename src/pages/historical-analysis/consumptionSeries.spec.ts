@@ -443,6 +443,34 @@ describe("toConsumptionSeriesView, hourly (#378)", () => {
     });
   });
 
+  describe("UI-HIS-018 the hourly labels", () => {
+    it("UI-HIS-018 the axis labels every other hour, \"0 h\" to \"22 h\", and the table names each hour as a range", () => {
+      const view = toConsumptionSeriesView(SEPTEMBER_1, { kind: "supplyHourly", buckets: [] });
+
+      expect(view.slots.map((slot) => slot.axisLabel)).toEqual(
+        Array.from({ length: 24 }, (_, hour) => (hour % 2 === 0 ? `${hour} h` : "")),
+      );
+      expect(view.slots[14].tableLabel).toBe("14:00–15:00");
+      expect(view.slots[23].tableLabel).toBe("23:00–00:00");
+      expect(view.minChartWidth).toBe(24 * 20);
+    });
+
+    it("UI-HIS-028 both October 02:00 rows of the table say the hour is repeated", () => {
+      const view = toConsumptionSeriesView(OCTOBER_25, { kind: "supplyHourly", buckets: [] });
+
+      expect(view.slots.slice(2, 4).map((slot) => slot.tableLabel)).toEqual([
+        `02:00–03:00 ${REPEATED_HOUR_NOTE}`,
+        `02:00–03:00 ${REPEATED_HOUR_NOTE}`,
+      ]);
+    });
+
+    it("UI-HIS-021 a day's table label is its tooltip name", () => {
+      const view = toConsumptionSeriesView(FIVE_JULY_DAYS, { kind: "supplyDaily", buckets: [] });
+
+      expect(view.slots.map((slot) => slot.tableLabel)).toEqual(view.slots.map((slot) => slot.name));
+    });
+  });
+
   describe("UI-HIS-015 AC4 -- the hourly states, by series", () => {
     it("UI-HIS-015 a supply hour with obtainMethod null is a gap with no values, though it reports 0.00 €; zeros with obtainMethod set are a measured zero", () => {
       const [first, second, third] = hoursOf(SEPTEMBER_1.startDate, SEPTEMBER_1.endDate);

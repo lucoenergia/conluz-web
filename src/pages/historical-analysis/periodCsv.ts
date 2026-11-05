@@ -48,11 +48,19 @@ export function csvField(value: string): string {
 /** A gap's figure is empty, never 0; a measured zero is 0. */
 const figure = (value: number | null) => (value === null ? "" : csvDecimal(value));
 
-/** The slot's calendar date: "2026-07-15" for a day, "2026-07" for a month. */
+/**
+ * The slot's calendar date: "2026-07-15" for a day, "2026-07" for a month. An
+ * hour's local start with its offset, "2026-09-01T14:00+02:00", so the two
+ * October 02:00 hours stay apart (#378).
+ */
 function csvDate(slot: SlotView, granularity: Granularity): string {
+  if (slot.hour) return withoutSeconds(slot.hour.startsAt);
   const day = formatDayParam(slot.day);
   return granularity === "daily" ? day : day.slice(0, 7);
 }
+
+/** "2026-09-01T14:00:00+02:00" as "2026-09-01T14:00+02:00": an hour starts on the minute. */
+const withoutSeconds = (iso: string) => iso.slice(0, 16) + iso.slice(19);
 
 /**
  * The period's data as a CSV for a spreadsheet in Spanish (#251): one line per
@@ -93,12 +101,13 @@ export function asciiSlug(text: string): string {
 /**
  * "conluz-consumo-{punto}-{desde}-{hasta}.csv": `todos` for "Todos mis puntos",
  * otherwise the supply's label as a slug (its CUPS when the label leaves
- * nothing); the first and the last calendar day shown, the last included.
+ * nothing); the first and the last calendar day shown, the last included: the
+ * same day twice for an hourly period.
  */
 export function periodCsvFileName(selected: SupplyResponse | null, slots: SlotView[], granularity: Granularity): string {
   const scope = selected === null ? "todos" : asciiSlug(supplyDisplayLabel(selected)) || asciiSlug(selected.code);
   const first = slots[0].day;
   const last = slots[slots.length - 1].day;
-  const lastDay = granularity === "daily" ? last : lastDayOf(last);
+  const lastDay = granularity === "monthly" ? lastDayOf(last) : last;
   return `conluz-consumo-${scope}-${formatDayParam(first)}-${formatDayParam(lastDay)}.csv`;
 }

@@ -53,6 +53,12 @@ describe("UI-HIS-018 the evolution charts' labels and axis are Madrid's, whereve
       ["2026-10-25T03:00:00+01:00", "3 h", "De 03:00 a 04:00", "gap"],
     ]);
     expect(view.slots.map((slot) => slot.day)).toEqual(Array(25).fill({ year: 2026, month: 10, day: 25 }));
+    expect(view.slots.map((slot) => slot.axisLabel).slice(0, 6)).toEqual(["0 h", "", "2 h", "", "3 h", ""]);
+    expect(view.slots.map((slot) => slot.tableLabel).slice(2, 5)).toEqual([
+      "02:00–03:00 (hora repetida por el cambio de hora)",
+      "02:00–03:00 (hora repetida por el cambio de hora)",
+      "03:00–04:00",
+    ]);
     expect([view.slots[24].key, view.slots[24].name, view.slots[24].state.kind]).toEqual(["2026-10-25T23:00:00+01:00", "De 23:00 a 00:00", "complete"]);
   });
 });
