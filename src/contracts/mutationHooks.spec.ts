@@ -607,6 +607,21 @@ describe("where a generated mutation may be imported", () => {
     expect(drifted, "A listed test helper imports something other than what is recorded for it").toEqual([]);
   });
 
+  // The scan above, and the lint rule, match tag modules by path; an import
+  // through the generated barrel would pass both (#337).
+  it("never goes through the generated API barrel", () => {
+    const barrelImporters = sourceFiles("src").filter((path) =>
+      [...readFileSync(path, "utf8").matchAll(/(?:from\s*|import\(\s*)["']([^"']+)["']/g)].some(([, specifier]) =>
+        /^\.{1,2}\/(?:.*\/)?api(?:\/index)?$/.test(specifier),
+      ),
+    );
+
+    expect(
+      barrelImporters,
+      "Import generated code from its tag module (src/api/<tag>/<tag>), never from the API barrel.",
+    ).toEqual([]);
+  });
+
   it("keeps no entry for a test helper that is gone", () => {
     const stale = Object.keys(TEST_HELPER_MUTATION_IMPORTS).filter((path) => !existsSync(path));
 

@@ -266,6 +266,18 @@ const MUTATION_HOOKS = GENERATED_MUTATION_HOOKS.modules.map(({ module, hooks }) 
     `capability it gates on is already decided in src/contracts/mutationHooks.spec.ts.`,
 }));
 
+// The generated barrel re-exports every tag module, so an import through it
+// slips past every per-module pattern above (#337). src/api/models is not it:
+// that one only re-exports types. The ban is re-stated in
+// every block that sets no-restricted-imports, because a later block's options
+// replace an earlier one's for the files they share.
+// A regex rather than a group: the gitignore-style `**/api` also matches every
+// path under api/, src/api/models included.
+const API_BARREL = {
+  regex: "(^|/)api(/index)?$",
+  message: "Import generated code from its tag module (src/api/<tag>/<tag>), never from the API barrel.",
+};
+
 export default tseslint.config([
   // .design-sync/ holds the claude.ai/design sync inputs (previews import from a
   // virtual "conluz-web" package); .ds-sync/ and ds-bundle/ are its tooling and output.
@@ -308,6 +320,12 @@ export default tseslint.config([
     rules: { "no-restricted-syntax": ["error", ...STYLING_SELECTORS, ...NOTICE_SELECTORS] },
   },
   {
+    // The API barrel, for every file outside the generated client, specs included.
+    files: ["**/*.{ts,tsx}"],
+    ignores: ["src/api/**"],
+    rules: { "no-restricted-imports": ["error", { patterns: [API_BARREL] }] },
+  },
+  {
     // Community-scope guard rail. Specs are exempt: they mock these modules by
     // path, which is how the wrappers themselves get tested.
     files: ["src/**/*.{ts,tsx}"],
@@ -315,7 +333,7 @@ export default tseslint.config([
     rules: {
       "no-restricted-imports": [
         "error",
-        { patterns: [...COMMUNITY_IMPLICIT_HOOKS, ...PERMISSION_HOOKS, ...MUTATION_HOOKS] },
+        { patterns: [...COMMUNITY_IMPLICIT_HOOKS, ...PERMISSION_HOOKS, ...MUTATION_HOOKS, API_BARREL] },
       ],
     },
   },
@@ -331,7 +349,7 @@ export default tseslint.config([
     // the hole would open the first time one of these files grew a write.
     files: COMMUNITY_SCOPE_WRAPPERS,
     rules: {
-      "no-restricted-imports": ["error", { patterns: [...PERMISSION_HOOKS, ...MUTATION_HOOKS] }],
+      "no-restricted-imports": ["error", { patterns: [...PERMISSION_HOOKS, ...MUTATION_HOOKS, API_BARREL] }],
     },
   },
   {
@@ -339,7 +357,7 @@ export default tseslint.config([
     // never write, so it keeps the mutation restriction.
     files: ["src/hooks/permissions/**/*.{ts,tsx}"],
     rules: {
-      "no-restricted-imports": ["error", { patterns: [...COMMUNITY_IMPLICIT_HOOKS, ...MUTATION_HOOKS] }],
+      "no-restricted-imports": ["error", { patterns: [...COMMUNITY_IMPLICIT_HOOKS, ...MUTATION_HOOKS, API_BARREL] }],
     },
   },
   {
@@ -352,7 +370,7 @@ export default tseslint.config([
     files: ["src/hooks/actions/**/*.{ts,tsx}"],
     ignores: ["src/hooks/actions/**/*.spec.{ts,tsx}"],
     rules: {
-      "no-restricted-imports": ["error", { patterns: [...COMMUNITY_IMPLICIT_HOOKS, ...PERMISSION_HOOKS] }],
+      "no-restricted-imports": ["error", { patterns: [...COMMUNITY_IMPLICIT_HOOKS, ...PERMISSION_HOOKS, API_BARREL] }],
     },
   },
 ]);

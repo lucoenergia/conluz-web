@@ -25,7 +25,11 @@ export interface PlantInActiveCommunity {
  */
 export function usePlantInActiveCommunity(plantId: string): PlantInActiveCommunity {
   const activeCommunityId = useActiveCommunity();
-  const { data: plant, isLoading, error, refetch } = useGetPlantById(plantId);
+  // Callers pass "" when there is no plant to ask about. The generated hook
+  // only disables itself for null or undefined (#337), so "" is gated here.
+  const { data: plant, isLoading, error, refetch } = useGetPlantById(plantId, {
+    query: { enabled: plantId !== "" },
+  });
 
   const isForeign = isPlantOutsideActiveCommunity(plant, activeCommunityId);
   const isNotFound =
