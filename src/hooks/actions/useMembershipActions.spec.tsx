@@ -13,6 +13,7 @@ import {
   useClearMembershipInvestment,
   useUpdateMemberRecord,
   useUpdateMembershipRole,
+  getGetMembershipPaybackQueryKey,
   getGetMembershipsQueryKey,
 } from "../../api/memberships/memberships";
 import { getGetAllCommunitiesQueryKey } from "../../api/communities/communities";
@@ -317,6 +318,65 @@ describe("useMembershipActions", () => {
       // The flag belongs to that one mutation, not to the bundle.
       expect(result.current.actions.changeRole?.isPending).toBeUndefined();
     });
+  });
+
+  describe("recording a member's investment (#358)", () => {
+    const investor = () => membershipWith({ canManageInvestment: true });
+
+    it("sets the amount for the row's member and refreshes that member's payback, not the roster", async () => {
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({})).forMembership(investor()),
+      );
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      const outcome = await result.current.actions.setInvestment?.run({ investmentEur: 1500.5 });
+
+      expect(outcome).toEqual({ ok: true, value: undefined });
+      expect(mutateAsync).toHaveBeenCalledWith({
+        communityId: COMMUNITY_ID,
+        userId: USER_ID,
+        data: { investmentEur: 1500.5 },
+      });
+      expect(invalidateQueries).toHaveBeenCalledWith({
+        queryKey: getGetMembershipPaybackQueryKey(COMMUNITY_ID, USER_ID),
+      });
+      expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey(COMMUNITY_ID) });
+    });
+
+    it("clears the amount for the row's member and refreshes that member's payback", async () => {
+      const { result, queryClient } = renderHookWithProviders(() =>
+        useMembershipActions(communityWith({})).forMembership(investor()),
+      );
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      const outcome = await result.current.actions.clearInvestment?.run();
+
+      expect(outcome).toEqual({ ok: true, value: undefined });
+      expect(mutateAsync).toHaveBeenCalledWith({ communityId: COMMUNITY_ID, userId: USER_ID });
+      expect(invalidateQueries).toHaveBeenCalledWith({
+        queryKey: getGetMembershipPaybackQueryKey(COMMUNITY_ID, USER_ID),
+      });
+    });
+
+    it.each(["setInvestment", "clearInvestment"] as const)(
+      "hands a refused %s its error and leaves the cache alone",
+      async (name) => {
+        const refusal = new Error("refused");
+        mutateAsync.mockRejectedValue(refusal);
+        const { result, queryClient } = renderHookWithProviders(() =>
+          useMembershipActions(communityWith({})).forMembership(investor()),
+        );
+        const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+        const outcome =
+          name === "setInvestment"
+            ? await result.current.actions.setInvestment?.run({ investmentEur: 10 })
+            : await result.current.actions.clearInvestment?.run();
+
+        expect(outcome).toEqual({ error: refusal });
+        expect(invalidateQueries).not.toHaveBeenCalled();
+      },
+    );
   });
 
   describe("registering and inviting members (#275)", () => {

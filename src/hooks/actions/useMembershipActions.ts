@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  getGetMembershipPaybackQueryKey,
   getGetMembershipsQueryKey,
   useDeleteMembership,
   useDisableMembership,
@@ -58,8 +59,8 @@ export interface MembershipRowActions {
   actions: {
     changeRole: MaybeAction<[UpdateMembershipRoleBody], MembershipWriteResult<MembershipResponse>>;
     remove: MaybeAction<[], MembershipWriteResult>;
-    setInvestment: MaybeAction<[SetMembershipInvestmentBody], boolean>;
-    clearInvestment: MaybeAction<[], boolean>;
+    setInvestment: MaybeAction<[SetMembershipInvestmentBody], MembershipWriteResult>;
+    clearInvestment: MaybeAction<[], MembershipWriteResult>;
     editRecord: MaybeAction<[UpdateMemberRecordBody], EditMemberRecordResult>;
     enable: MaybeAction<[], boolean>;
     disable: MaybeAction<[], boolean>;
@@ -200,6 +201,9 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
   const invalidateRoster = () =>
     queryClient.invalidateQueries({ queryKey: getGetMembershipsQueryKey(communityId) });
 
+  const invalidatePayback = (userId: string) => () =>
+    queryClient.invalidateQueries({ queryKey: getGetMembershipPaybackQueryKey(communityId, userId) });
+
   /**
    * A write whose refusal the screen words itself. `afterSuccess` is the
    * invalidation the write calls for; a refusal in `staleRowCodes` refetches
@@ -306,15 +310,21 @@ export function useMembershipActions(community: CommunityResponse | undefined): 
               ),
             deleteMutation.isPending,
           ),
+          // The roster does not carry the amount (#358): only the membership's
+          // payback reads it, so that is what an investment write refreshes.
           setInvestment: grant(
             investment,
             (data: SetMembershipInvestmentBody) =>
-              run(() => setInvestmentMutation.mutateAsync({ communityId, userId, data })),
+              write(
+                () => setInvestmentMutation.mutateAsync({ communityId, userId, data }),
+                invalidatePayback(userId),
+              ),
             setInvestmentMutation.isPending,
           ),
           clearInvestment: grant(
             investment,
-            () => run(() => clearInvestmentMutation.mutateAsync({ communityId, userId })),
+            () =>
+              write(() => clearInvestmentMutation.mutateAsync({ communityId, userId }), invalidatePayback(userId)),
             clearInvestmentMutation.isPending,
           ),
           editRecord: grant(
