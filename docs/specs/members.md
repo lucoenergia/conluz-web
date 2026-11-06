@@ -690,8 +690,8 @@ introduced; the rest of the members page is not covered yet.
 - **Status:** Active
 - **Rule:**
   - The editor MUST refuse, before sending anything and with the reason as visible text under the
-    field, an empty amount, one that is not a number, one that is not greater than zero, and one
-    with more than two decimals.
+    field, an empty amount, one that is not a number, one that is not greater than zero, one with
+    more than two decimals, and one above the maximum the API contract declares for the amount.
   - It MUST accept a decimal comma and a decimal dot (`1500,50` and `1500.5` are both sent as
     1500.5).
   - It MUST refuse, with its own reason, an amount that carries a thousands separator: one with both
@@ -700,7 +700,8 @@ introduced; the rest of the members page is not covered yet.
 - **Rationale:** The amount is entered in Spanish format, where the comma is the decimal separator.
   "1.500" is 1500 to a Spanish reader and 1.5 to a parser, so an amount that reads two ways is
   refused rather than guessed. A reason given only by colour or a disabled button tells the admin
-  nothing.
+  nothing. An amount above the maximum would only come back as a refusal the editor words
+  generically (UI-MBR-044), so it is refused where the admin can fix it.
 - **Implements:** MEM-038
 - **Source:** #358
 
