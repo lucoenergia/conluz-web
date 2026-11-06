@@ -46,3 +46,12 @@ export async function pressBack() {
 
 /** Whether the current history entry is one an open overlay pushed. */
 export const hasOverlayEntry = () => !!window.history.state && "__overlay" in window.history.state;
+
+/** The elements between `content` and `dialog` whose declared styles let them scroll. */
+export function scrollingAncestors(content: HTMLElement, dialog: HTMLElement): HTMLElement[] {
+  const found: HTMLElement[] = [];
+  for (let element = content.parentElement; element && element !== dialog; element = element.parentElement) {
+    if (/overflow(-y)?:auto/.test(declaredStyles(element))) found.push(element);
+  }
+  return found;
+}
