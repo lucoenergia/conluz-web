@@ -41,9 +41,7 @@ export { LoadErrorAlert } from "../../src/components/LoadErrorAlert/LoadErrorAle
 export { MenuLinkItem } from "../../src/components/Menu/MenuLinkItem";
 export { MenuTemplate } from "../../src/components/Menu/MenuTemplate";
 export { SideMenu } from "../../src/components/Menu/SideMenu";
-export { AlertModal } from "../../src/components/Modals/AlertModal";
 export { AppModal } from "../../src/components/Modals/AppModal";
-export { BasicModal } from "../../src/components/Modals/BasicModal";
 export { ConfirmationModal } from "../../src/components/Modals/ConfirmationModal";
 export { CoefficientDialogErrorPanel, CoefficientTargetSummary } from "../../src/components/Modals/coefficientLifecycleDialogHelpers";
 export { DisableSuccessModal } from "../../src/components/Modals/DisableSuccessModal";

@@ -9,7 +9,6 @@
  * an error.
  */
 import { AppModal } from "./AppModal";
-import { BasicModal } from "./BasicModal";
 import { ConfirmationModal } from "./ConfirmationModal";
 
 const close = () => {};
@@ -19,16 +18,6 @@ const close = () => {};
 export const titled = <AppModal isOpen onClose={close} title="Importar" />;
 export const labelledByHeading = <AppModal isOpen onClose={close} labelledBy="heading-id" />;
 export const labelled = <AppModal isOpen onClose={close} label="Importar" />;
-export const basicLabelledBy = (
-  <BasicModal isOpen onClose={close} labelledBy="heading-id">
-    x
-  </BasicModal>
-);
-export const basicLabelled = (
-  <BasicModal isOpen onClose={close} label="Aviso">
-    x
-  </BasicModal>
-);
 export const confirmation = (
   <ConfirmationModal isOpen title="¿Eliminar?" confirmLabel="Eliminar" onCancel={close} onConfirm={close}>
     x
@@ -39,13 +28,6 @@ export const confirmation = (
 
 // @ts-expect-error -- an AppModal with no title, labelledBy or label is unnamed.
 export const unnamedAppModal = <AppModal isOpen onClose={close} />;
-
-export const unnamedBasicModal = (
-  // @ts-expect-error -- a BasicModal with neither labelledBy nor label is unnamed.
-  <BasicModal isOpen onClose={close}>
-    x
-  </BasicModal>
-);
 
 // @ts-expect-error -- two names at once: which one is announced would be a guess.
 export const twoNames = <AppModal isOpen onClose={close} title="Importar" labelledBy="heading-id" />;

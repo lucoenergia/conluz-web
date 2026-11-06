@@ -320,7 +320,6 @@ const OVERLAY_PRIMITIVE_ALLOWLIST = [
   "src/pages/historical-analysis/SupplySelector.tsx", // permanent: a picker, not a flow
   "src/pages/historical-analysis/PeriodSelector.tsx", // permanent: a picker, not a flow
   "src/pages/historical-analysis/CustomRangePicker.tsx", // permanent: a picker, not a flow
-  "src/components/Modals/BasicModal.tsx", // temporary: #369
   "src/pages/members/RegisterMemberDialog.tsx", // temporary: #370
   "src/pages/members/MemberRecordDialog.tsx", // temporary: #370
   "src/pages/members/SendInvitationsDialog.tsx", // temporary: #370
