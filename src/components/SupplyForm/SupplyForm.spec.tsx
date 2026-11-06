@@ -64,4 +64,19 @@ describe("Supply Form", () => {
     expect(screen.getByDisplayValue("AS35NB354223")).toBeVisible();
     expect(screen.getByText("Guardar cambios")).toBeVisible();
   });
+
+  it("keeps the submit disabled while the members are loading", () => {
+    renderWithProviders(<SupplyForm handleSubmit={mockHandleSubmit} owner={{ mode: "choose", status: "loading", options: [] }} />);
+
+    expect(screen.getByRole("combobox", { name: /^Propietario/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Crear punto de suministro" })).toBeDisabled();
+  });
+
+  it("shows a given owner read-only, with no picker", () => {
+    renderWithProviders(<SupplyForm handleSubmit={mockHandleSubmit} owner={{ mode: "show", fullName: "Ana García" }} />);
+
+    expect(screen.getByRole("textbox", { name: "Propietario" })).toHaveValue("Ana García");
+    expect(screen.getByRole("textbox", { name: "Propietario" })).toHaveAttribute("readonly");
+    expect(screen.queryByRole("combobox", { name: /^Propietario/ })).not.toBeInTheDocument();
+  });
 });
