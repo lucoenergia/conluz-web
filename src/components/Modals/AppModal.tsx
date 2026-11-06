@@ -1,4 +1,4 @@
-import type { FC, ReactNode, RefObject, SyntheticEvent } from "react";
+import type { FC, FormEvent, ReactNode, RefObject, SyntheticEvent } from "react";
 import { Box } from "@mui/material";
 import { ResponsiveOverlay, type ResponsiveOverlayName, type ResponsiveOverlaySize } from "../ResponsiveOverlay";
 
@@ -39,6 +39,8 @@ export type AppModalProps = AppModalName & {
   iconSize?: number;
   /** Centres the icon and the content in the body, for an outcome with no title. */
   centered?: boolean;
+  /** Makes the dialog a form: a submit button in `actions`, or Enter in a field, submits it. */
+  onSubmit?: (event: FormEvent<HTMLElement>) => void;
   actions?: ReactNode;
   children?: ReactNode;
 };
@@ -66,6 +68,7 @@ export const AppModal: FC<AppModalProps> = ({
   iconBg,
   iconSize,
   centered = false,
+  onSubmit,
   actions,
   children,
 }) => {
@@ -105,6 +108,7 @@ export const AppModal: FC<AppModalProps> = ({
       onClose={() => onClose()}
       eyebrow={scopeHeader}
       icon={centered ? undefined : circle}
+      onSubmit={onSubmit}
       actions={actions}
     >
       {centered ? (
