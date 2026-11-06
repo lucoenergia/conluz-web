@@ -31,7 +31,9 @@ export interface SelectedSupply {
  * its figures to the caller (UI-HIS-001, #252). Everything else -- a member
  * following an admin's link, another community's supply, a disabled one, a
  * missing one, or a lookup that failed -- falls back to "Todos mis puntos" and
- * is removed from the address, without an error.
+ * is removed from the address, without an error. For a caller who owns no
+ * supplies there is no "Todos mis puntos": a failed lookup keeps the id, so
+ * the page can offer a retry (#385).
  *
  * Whether the supply belongs to the active community is not checked here: the
  * lookup goes through useSupplyInActiveCommunity, which withholds a supply of
@@ -62,9 +64,12 @@ export function useSelectedSupply(supplies: SupplyResponse[] | undefined): Selec
       : null;
 
   const isUnresolved = (needsLookup && canManage.state === "pending") || (mayLookUp && lookup.isLoading);
-  const isUnselectable = needsLookup && !isUnresolved && viewed === null;
   // useSupplyInActiveCommunity reports no error for a 404 or another community's supply.
   const lookupFailed = mayLookUp && !lookup.isLoading && lookup.error != null;
+  // A caller who owns none has no "Todos mis puntos" to fall back to: the
+  // page reports the failure with a retry, which needs the id (#385).
+  const keepsFailedId = lookupFailed && supplies?.length === 0;
+  const isUnselectable = needsLookup && !isUnresolved && viewed === null && !keepsFailedId;
 
   useEffect(() => {
     if (!isUnselectable) return;

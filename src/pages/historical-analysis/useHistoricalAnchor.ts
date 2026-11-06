@@ -30,14 +30,18 @@ const LATEST_SUPPLY_MONTH = { period: GetSupplyEnergyMetricsPeriod.LATEST_PUBLIS
  * scope runs. The anchor is never derived from the device clock, nor taken to
  * be "the previous month".
  *
+ * "Todos mis puntos" exists only for a caller who owns supplies here
+ * (`allMine`): for one who owns none, the membership is never asked, and the
+ * anchor stays loading until a supply is selected (#385).
+ *
  * Null bounds mean nothing is published yet for the scope.
  */
-export function useHistoricalAnchor(selected: SupplyResponse | null): HistoricalAnchor {
+export function useHistoricalAnchor(selected: SupplyResponse | null, { allMine }: { allMine: boolean }): HistoricalAnchor {
   const communityId = useActiveCommunity();
   const userId = useLoggedUser()?.id;
 
   const membership = useGetMembershipEnergyMetrics(communityId ?? "", userId ?? "", LATEST_MEMBERSHIP_MONTH, {
-    query: { enabled: selected === null && !!communityId && !!userId },
+    query: { enabled: selected === null && allMine && !!communityId && !!userId },
   });
   const supply = useGetSupplyEnergyMetrics(selected?.id ?? "", LATEST_SUPPLY_MONTH, {
     query: { enabled: selected !== null },
