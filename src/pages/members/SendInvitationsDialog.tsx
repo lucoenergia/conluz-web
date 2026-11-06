@@ -1,5 +1,5 @@
 import { useState, type FC } from "react";
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
+import { Alert, Box, Button, Typography } from "@mui/material";
 import {
   SendInvitationResultResponseOutcome,
   type SendInvitationResultResponse,
@@ -11,8 +11,9 @@ import { communityLabel } from "../../hooks/useActiveCommunityName";
 import { invitationResultReason, selectedInvitationsRefusalMessage } from "../../errors/membershipErrors";
 import { pluralize } from "../../utils/pluralize";
 import { Notice } from "../../components/Notice";
-import { inFlightDialogProps } from "../../utils/inFlightDialog";
 import { ActionStatus } from "../../components/ActionStatus";
+import { AppModal } from "../../components/Modals/AppModal";
+import { ModalCancelButton } from "../../components/Modals/ModalCancelButton";
 
 /** Someone selected to receive an email: a first invitation, or a resend when already invited. */
 export interface InvitationRecipient {
@@ -59,7 +60,8 @@ const RecipientGroup: FC<{ title: string; recipients: InvitationRecipient[] }> =
  * Sends a first invitation to each selected member never invited, and resends
  * it to each one already invited (#328). It names everyone who will receive an
  * email before sending, and afterwards says, per person, who was not sent one
- * and why: the backend decides each person and answers for each.
+ * and why: the backend decides each person and answers for each. The result
+ * replaces the confirmation in the same overlay (#370).
  */
 export const SendInvitationsDialog: FC<SendInvitationsDialogProps> = ({
   communityName,
@@ -100,64 +102,64 @@ export const SendInvitationsDialog: FC<SendInvitationsDialogProps> = ({
   const refusedCount = `No se ha podido enviar a ${refused.length} ${pluralize(refused.length, "persona", "personas")}`;
 
   return (
-    <Dialog open {...inFlightDialogProps(isPending, onClose)} maxWidth="sm" fullWidth>
-      <Box sx={{ px: 3, pt: 2.5 }}>
-        <CommunityScopeHeader name={communityName} />
-      </Box>
-      <DialogTitle sx={{ pt: 0 }}>Enviar invitación en {community}</DialogTitle>
-      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {error && <Alert severity="error">{error}</Alert>}
-        {results ? (
-          <>
-            <Notice severity={refused.length > 0 ? "info" : "success"}>
-              <Box component="span" sx={{ display: "block" }}>
-                {sentText}
+    <AppModal
+      isOpen
+      onClose={onClose}
+      dismissible={!isPending}
+      title={`Enviar invitación en ${community}`}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
+      actions={
+        <>
+          <ModalCancelButton disabled={isPending}>{results ? "Cerrar" : "Cancelar"}</ModalCancelButton>
+          {!results && (
+            <Button variant="contained" onClick={send} disabled={isPending}>
+              {isPending ? "Enviando..." : `Enviar invitación (${count})`}
+            </Button>
+          )}
+        </>
+      }
+    >
+      {error && <Alert severity="error">{error}</Alert>}
+      {results ? (
+        <>
+          <Notice severity={refused.length > 0 ? "info" : "success"}>
+            <Box component="span" sx={{ display: "block" }}>
+              {sentText}
+            </Box>
+            <Box component="span" sx={{ display: "block" }}>
+              {resentText}
+            </Box>
+          </Notice>
+          {refused.length > 0 && (
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {refusedCount}:
+              </Typography>
+              <Box component="ul" aria-label="Personas a las que no se ha enviado" sx={{ m: 0, pl: 2.5 }}>
+                {refused.map((result) => (
+                  <Typography key={result.user.id} component="li" variant="body2">
+                    <strong>{nameOf(result.user.id)}</strong>: {invitationResultReason(result)}
+                  </Typography>
+                ))}
               </Box>
-              <Box component="span" sx={{ display: "block" }}>
-                {resentText}
-              </Box>
+            </Box>
+          )}
+        </>
+      ) : (
+        <>
+          <Typography variant="body2">
+            {count === 1 ? "Recibirá un email esta persona:" : `Recibirán un email estas ${count} personas:`}
+          </Typography>
+          {firstInvitations.length > 0 && <RecipientGroup title="Primera invitación" recipients={firstInvitations} />}
+          {resends.length > 0 && <RecipientGroup title="Reenvío" recipients={resends} />}
+          {resends.length > 0 && (
+            <Notice severity="info">
+              A quien le reenvíes la invitación le llegará un enlace nuevo, y el anterior dejará de funcionar.
             </Notice>
-            {refused.length > 0 && (
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {refusedCount}:
-                </Typography>
-                <Box component="ul" aria-label="Personas a las que no se ha enviado" sx={{ m: 0, pl: 2.5 }}>
-                  {refused.map((result) => (
-                    <Typography key={result.user.id} component="li" variant="body2">
-                      <strong>{nameOf(result.user.id)}</strong>: {invitationResultReason(result)}
-                    </Typography>
-                  ))}
-                </Box>
-              </Box>
-            )}
-          </>
-        ) : (
-          <>
-            <Typography variant="body2">
-              {count === 1 ? "Recibirá un email esta persona:" : `Recibirán un email estas ${count} personas:`}
-            </Typography>
-            {firstInvitations.length > 0 && <RecipientGroup title="Primera invitación" recipients={firstInvitations} />}
-            {resends.length > 0 && <RecipientGroup title="Reenvío" recipients={resends} />}
-            {resends.length > 0 && (
-              <Notice severity="info">
-                A quien le reenvíes la invitación le llegará un enlace nuevo, y el anterior dejará de funcionar.
-              </Notice>
-            )}
-          </>
-        )}
-      </DialogContent>
-      <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose} disabled={isPending}>
-          {results ? "Cerrar" : "Cancelar"}
-        </Button>
-        {!results && (
-          <Button variant="contained" onClick={send} disabled={isPending}>
-            {isPending ? "Enviando..." : `Enviar invitación (${count})`}
-          </Button>
-        )}
-      </DialogActions>
+          )}
+        </>
+      )}
       <ActionStatus message={results ? [sentText, resentText, refused.length > 0 ? `${refusedCount}.` : ""].filter(Boolean).join(" ") : ""} />
-    </Dialog>
+    </AppModal>
   );
 };

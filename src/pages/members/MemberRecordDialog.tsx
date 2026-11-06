@@ -1,14 +1,5 @@
 import { useState, type FC, type FormEvent } from "react";
-import {
-  Alert,
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-} from "@mui/material";
+import { Alert, Button, TextField } from "@mui/material";
 import type { MembershipResponse, UpdateMemberRecordBody } from "../../api/models";
 import type { Action, EditMemberRecordResult } from "../../hooks/actions";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
@@ -25,7 +16,8 @@ import {
 } from "./memberRecordForm";
 import { MemberRecordFields } from "./MemberRecordFields";
 import { Notice } from "../../components/Notice";
-import { inFlightDialogProps } from "../../utils/inFlightDialog";
+import { AppModal } from "../../components/Modals/AppModal";
+import { ModalCancelButton } from "../../components/Modals/ModalCancelButton";
 
 interface MemberRecordDialogProps {
   membership: MembershipResponse;
@@ -50,16 +42,18 @@ export const MemberRecordDialog: FC<MemberRecordDialogProps> = ({
   onClose,
 }) => {
   const community = communityLabel(communityName);
-  const [values, setValues] = useState<MemberRecordValues>(() => recordValuesOf(membership));
+  const [seeded] = useState<MemberRecordValues>(() => recordValuesOf(membership));
+  const [values, setValues] = useState<MemberRecordValues>(seeded);
   const [errors, setErrors] = useState<MemberRecordErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const dirty = (Object.keys(seeded) as (keyof MemberRecordValues)[]).some((field) => values[field] !== seeded[field]);
 
   const change = (field: MemberRecordField, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
   };
 
-  const handleSubmit = async (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent<HTMLElement>) => {
     event.preventDefault();
     const invalid = validateRecord(values);
     setErrors(invalid);
@@ -80,39 +74,38 @@ export const MemberRecordDialog: FC<MemberRecordDialogProps> = ({
   };
 
   return (
-    <Dialog open {...inFlightDialogProps(editRecord.isPending, onClose)} maxWidth="sm" fullWidth>
-      <Box component="form" onSubmit={handleSubmit} noValidate>
-        <Box sx={{ px: 3, pt: 2.5 }}>
-          <CommunityScopeHeader name={communityName} />
-        </Box>
-        <DialogTitle sx={{ pt: 0 }}>Editar ficha en {community}</DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
-          {formError && <Alert severity="error">{formError}</Alert>}
-          {hasPendingInvitation(membership) && (
-            <Notice severity="info">
-              Este miembro tiene una invitación pendiente. Si cambias el email de contacto, el próximo
-              reenvío irá a la nueva dirección.
-            </Notice>
-          )}
-          <TextField
-            label="DNI/NIE"
-            value={membership.personalId}
-            helperText="Identifica su cuenta, así que no se cambia desde aquí."
-            slotProps={{ input: { readOnly: true } }}
-            fullWidth
-            sx={{ mt: 1 }}
-          />
-          <MemberRecordFields values={values} errors={errors} onChange={change} />
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={onClose} disabled={editRecord.isPending}>
-            Cancelar
-          </Button>
+    <AppModal
+      isOpen
+      onClose={onClose}
+      dismissible={!editRecord.isPending}
+      dirty={dirty}
+      title={`Editar ficha en ${community}`}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
+      onSubmit={handleSubmit}
+      actions={
+        <>
+          <ModalCancelButton disabled={editRecord.isPending} />
           <Button type="submit" variant="contained" disabled={editRecord.isPending}>
             {editRecord.isPending ? "Guardando..." : "Guardar"}
           </Button>
-        </DialogActions>
-      </Box>
-    </Dialog>
+        </>
+      }
+    >
+      {formError && <Alert severity="error">{formError}</Alert>}
+      {hasPendingInvitation(membership) && (
+        <Notice severity="info">
+          Este miembro tiene una invitación pendiente. Si cambias el email de contacto, el próximo
+          reenvío irá a la nueva dirección.
+        </Notice>
+      )}
+      <TextField
+        label="DNI/NIE"
+        value={membership.personalId}
+        helperText="Identifica su cuenta, así que no se cambia desde aquí."
+        slotProps={{ input: { readOnly: true } }}
+        fullWidth
+      />
+      <MemberRecordFields values={values} errors={errors} onChange={change} readOnly={editRecord.isPending} />
+    </AppModal>
   );
 };
