@@ -109,7 +109,8 @@ export const SupplyDetailPage: FC = () => {
       <SupplyDeletionDialog
         supply={isDeleteOpen ? supplyPoint : undefined}
         onClose={() => setIsDeleteOpen(false)}
-        onGone={() => navigate("/supply-points")}
+        // Replacing this page: one back must not land on a supply that is gone.
+        onGone={() => navigate("/supply-points", { replace: true })}
       />
 
       {/* Coefficient history: contract information about the supply. */}

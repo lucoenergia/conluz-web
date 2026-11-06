@@ -156,6 +156,19 @@ export function claimCurrentEntryForNavigation(): boolean {
   return true;
 }
 
+/**
+ * For a navigation that replaces the page the layers were opened over: takes
+ * every layer out of the registry, as `claimCurrentEntryForNavigation`, and,
+ * when the current entry is a layer's, goes back over every layer entry in one
+ * step, so the replace lands on the page's own entry.
+ */
+export function giveBackEntriesForReplace(): void {
+  const marker = currentMarker();
+  if (!marker || !claimCurrentEntryForNavigation()) return;
+  pendingBacks += 1;
+  window.history.go(-marker.depth);
+}
+
 /** Runs a navigation once no back of this module is in flight, so the back cannot undo it. */
 export function afterPendingBacks(task: () => void): void {
   whenSettled(task);

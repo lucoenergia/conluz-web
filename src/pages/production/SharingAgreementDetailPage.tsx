@@ -108,7 +108,8 @@ export const SharingAgreementDetailPage: FC = () => {
   const handleDeleteConfirm = async () => {
     if (!remove) return;
     const success = await remove.run();
-    if (success) navigate(`/production/${plantId}/sharing-agreements`);
+    // Replacing this page: one back must not land on an agreement that is gone.
+    if (success) navigate(`/production/${plantId}/sharing-agreements`, { replace: true });
   };
 
   /**
