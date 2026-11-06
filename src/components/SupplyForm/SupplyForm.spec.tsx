@@ -2,8 +2,6 @@ import "@testing-library/jest-dom";
 import { screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { query } from "../../test/queryState";
-import { useGetAllUsers, type getAllUsers } from "../../api/users/users";
 
 // Crear los mocks
 const mockNavigate = vi.fn();
@@ -12,16 +10,6 @@ const mockHandleSubmit = vi.fn();
 vi.mock(import("react-router"), async (importOriginal) => ({
   ...(await importOriginal()),
   useNavigate: () => mockNavigate,
-}));
-
-// The form loads the user list for its owner picker; answer with a settled,
-// empty page so no test reaches the network.
-// Spread, not replaced: the real LoggedUserProvider in the harness imports
-// useGetCurrentUser from this module (#203). No token is seeded here, so that
-// query stays disabled and reaches no network.
-vi.mock(import("../../api/users/users"), async (importOriginal) => ({
-  ...(await importOriginal()),
-  useGetAllUsers: vi.fn(),
 }));
 
 // Imports después de los mocks
@@ -35,9 +23,6 @@ describe("Supply Form", () => {
     // Configurar mocks
     mockNavigate.mockClear();
     mockHandleSubmit.mockClear();
-    vi.mocked(useGetAllUsers).mockReturnValue(
-      query.success<typeof getAllUsers>({ items: [], size: 0, totalElements: 0, totalPages: 0, number: 0 }),
-    );
   });
 
   const setup = () => {
@@ -57,7 +42,7 @@ describe("Supply Form", () => {
       cups: "ES002100823463",
       address: "Calle Escuadra 3",
       addressRef: "AS35NB354223",
-      personalId: "",
+      personalId: undefined,
     });
   });
 
@@ -78,5 +63,20 @@ describe("Supply Form", () => {
     expect(screen.getByDisplayValue("Calle Escuadra 3")).toBeVisible();
     expect(screen.getByDisplayValue("AS35NB354223")).toBeVisible();
     expect(screen.getByText("Guardar cambios")).toBeVisible();
+  });
+
+  it("keeps the submit disabled while the members are loading", () => {
+    renderWithProviders(<SupplyForm handleSubmit={mockHandleSubmit} owner={{ mode: "choose", status: "loading", options: [] }} />);
+
+    expect(screen.getByRole("combobox", { name: /^Propietario/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Crear punto de suministro" })).toBeDisabled();
+  });
+
+  it("shows a given owner read-only, with no picker", () => {
+    renderWithProviders(<SupplyForm handleSubmit={mockHandleSubmit} owner={{ mode: "show", fullName: "Ana García" }} />);
+
+    expect(screen.getByRole("textbox", { name: "Propietario" })).toHaveValue("Ana García");
+    expect(screen.getByRole("textbox", { name: "Propietario" })).toHaveAttribute("readonly");
+    expect(screen.queryByRole("combobox", { name: /^Propietario/ })).not.toBeInTheDocument();
   });
 });

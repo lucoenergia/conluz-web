@@ -8,7 +8,7 @@
 | **Roles** | Any member of the active community reads them. Deleting: a caller to whom the supply reports `canDelete`. Creating and importing, and seeing each supply's owner in the list: a caller to whom the active community reports `canManage`. Editing: a caller to whom the supply reports `canEdit`. The supply's figures and "Ver análisis completo": a caller to whom the supply reports `canRead` |
 | **Domain rules** | `lucoenergia/conluz`: SUP-001, SUP-002, SUP-004, SUP-005, SUP-006, SUP-007, MEM-026, EPR-003, SEM-001 (lucoenergia/conluz#408) |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `FilterChipsBar` (the list; its shared rules are `record-lists.md`); the detail page's latest published month reuses `src/components/EnergyFigures/` (`PeriodHeader`, `PeriodUsageCard`, `PeriodTotals`), as the historical analysis page does |
-| **Last reviewed against code** | #252 |
+| **Last reviewed against code** | #388 |
 
 ## Purpose
 
@@ -18,8 +18,8 @@ deleted first (UI-MBR-015), so this is the step that makes that possible.
 
 Let a community admin import a community's supplies from a CSV file with the same dialog as the
 member import, the step that follows it during onboarding, and correct a supply refused for its
-CUPS or its owner on the input concerned. Show a supply without a name by something that
-recognises it.
+CUPS or its owner on the input concerned. Offer as owner only someone the backend accepts: a member
+of the active community. Show a supply without a name by something that recognises it.
 
 List a community's supplies, or one member's, with only what the supply itself says: how it is
 named, its CUPS, its owner for whoever manages the community, whether a plant produces onto it, and
@@ -29,7 +29,7 @@ Make the supply detail page the supply's record: what it is, its coefficients, a
 saved in its latest published month, with the same figures the historical analysis page shows for
 it, and a way into that page for whoever may read them.
 
-This document covers only the rules #290, #302, #324, #339, #348 and #252 introduced.
+This document covers only the rules #290, #302, #324, #339, #348, #252 and #388 introduced.
 
 ## Rules
 
@@ -98,16 +98,19 @@ This document covers only the rules #290, #302, #324, #339, #348 and #252 introd
 
 - **Status:** Active
 - **Rule:**
-  - The supply detail's "Propietario" and the deletion confirmation's owner (UI-SUP-002) MUST be
-    the full name of the supply's `ownerRecord`: the owner's member record in the supply's
-    community. The supply's `user` carries the owner's id only.
+  - The supply detail's "Propietario", the edit form's read-only "Propietario" and the deletion
+    confirmation's owner (UI-SUP-002) MUST be the full name of the supply's `ownerRecord`: the
+    owner's member record in the supply's community. The supply's `user` carries the owner's id
+    only.
   - When `ownerRecord` is null — the supply has no owner, or its owner has no membership in its
-    community — the detail MUST show no owner ("-") and the confirmation MUST name none.
+    community — the detail and the edit form MUST show no owner ("-") and the confirmation MUST
+    name none.
 - **Rationale:** One person may own supplies in several communities, each with its own record of
   them; the supply's community is the one whose record applies. Without a record there is nothing
-  the community may show, and falling back to the account would disclose it.
+  the community may show, and falling back to the account would disclose it. The edit form used to
+  resolve the owner against the user listing instead (#388).
 - **Implements:** MEM-026
-- **Source:** #302, lucoenergia/conluz#448
+- **Source:** #302, lucoenergia/conluz#448; #388 (extended to the edit form)
 
 ### UI-SUP-006 — A consumption period that has not started yet is shown as empty
 
@@ -274,6 +277,44 @@ This document covers only the rules #290, #302, #324, #339, #348 and #252 introd
 - **Implements:** n/a
 - **Source:** #252
 
+### UI-SUP-016 — The create form's owners are the active community's memberships
+
+- **Status:** Active
+- **Rule:**
+  - The create form's owner options MUST be exactly the memberships of the active community, in
+    any state, each labelled with the membership's `fullName` and `personalId`.
+  - Options MUST be ordered by the member record's full name (Spanish collation, case- and
+    accent-insensitive), ties by membership id.
+  - Changing the active community MUST replace the options and clear the selection.
+  - Without a chosen owner, the form MUST send nothing; it MUST NOT fall back to the caller.
+- **Rationale:** The backend accepts as owner only a member of the supply's community, whatever the
+  membership's state (SUP-002); offering anyone else is an action guaranteed to fail. The member
+  record is how this community names the person, which can differ from the account. Two members
+  may share a label, so an option is identified by its membership, not by its text. The roster
+  comes in no defined order, so the form orders it the way a Spanish reader looks a name up.
+- **Implements:** SUP-002
+- **Source:** #388
+
+### UI-SUP-017 — No owner to offer is said on the owner input, and blocks the create form
+
+- **Status:** Active
+- **Rule:** When the active community has no memberships, or they fail to load, the owner input
+  MUST say so in visible text and the create form MUST NOT be submittable.
+- **Rationale:** A blocking reason is visible text, not an empty dropdown.
+- **Implements:** SUP-002
+- **Source:** #388
+
+### UI-SUP-018 — The supply forms do not read the platform-wide user listing
+
+- **Status:** Active
+- **Rule:** The supply forms MUST NOT read the platform-wide user listing (`getAllUsers`). The edit
+  form shows the owner from `ownerRecord` (UI-SUP-005) and reads no owner listing at all.
+- **Rationale:** Data minimisation: the create form needs one community's members at most, and the
+  edit form needs none. The user listing spans every community the caller administers, and carries
+  the personal ID of everyone in them.
+- **Implements:** n/a
+- **Source:** #388
+
 ## States
 
 The supply list follows the states of `record-lists.md`. What is particular to it:
@@ -294,6 +335,15 @@ The supply detail page's latest published month (UI-SUP-014):
 | Nothing published | "Todavía no hay datos publicados de este punto." | As in Loading |
 | Error | "No se pudieron cargar los datos de energía de este punto." | "Reintentar", and as in Loading |
 | Not readable | The section's title only; nothing is asked | None |
+
+The create form's owner input (UI-SUP-016, UI-SUP-017):
+
+| State | Rendered | Actions available |
+| --- | --- | --- |
+| Loading | The input with a progress indicator | None: "Crear punto de suministro" is disabled |
+| Members | The active community's memberships as options | Choose an owner; "Crear punto de suministro" |
+| No members | "Esta comunidad todavía no tiene miembros. Añádelos antes de crear un punto de suministro." | None: "Crear punto de suministro" is disabled |
+| Error | "No se pudieron cargar los miembros de esta comunidad. Inténtalo más tarde." | None: "Crear punto de suministro" is disabled |
 
 The import dialog, as the member import's (`members.md`):
 

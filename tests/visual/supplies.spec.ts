@@ -18,6 +18,7 @@ import {
   injectAuthToken,
   mainRegion,
   mockAllApiRoutes,
+  mockCommunityManagementRoutes,
   mockSupplyPartitionCoefficientRoutes,
   seedActiveCommunity,
   stabilizePage,
@@ -217,6 +218,9 @@ test.describe("Visual baselines", () => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    // The owner options are the community's memberships (#388); without this
+    // the broad communities route would answer them with a list of communities.
+    await mockCommunityManagementRoutes(page);
 
     await page.goto("/supply-points/new");
     await expect(page.getByRole("main")).toBeVisible();
