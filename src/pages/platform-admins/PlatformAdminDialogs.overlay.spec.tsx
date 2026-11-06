@@ -393,6 +393,21 @@ describe("UI-PAD-010 while the code shows, any close but Hecho asks first", () =
       expect(screen.queryByText(flow.grouped)).not.toBeInTheDocument();
     });
 
+    it("UI-PAD-010 leaving the page prompts while the code shows, and not once Hecho has closed it", async () => {
+      const u = userEvent.setup();
+      const leaving = () => {
+        const event = new Event("beforeunload", { cancelable: true });
+        window.dispatchEvent(event);
+        return event.defaultPrevented;
+      };
+      const { dialog } = await showCode(u, flow);
+      expect(leaving()).toBe(true);
+
+      await u.click(within(dialog).getByRole("button", { name: "Hecho" }));
+      await waitFor(() => expect(screen.queryByRole("dialog", { hidden: true })).not.toBeInTheDocument());
+      expect(leaving()).toBe(false);
+    });
+
     it("UI-PAD-010 after back is answered with Volver al código, a second back asks again", async () => {
       const u = userEvent.setup();
       const { dialog } = await showCode(u, flow);
