@@ -672,9 +672,16 @@ introduced; the rest of the members page is not covered yet.
   - When the backend refuses a save or a removal, the editor MUST stay open with the amount as typed
     and say what was refused, and nothing MUST be announced as saved. A write the backend accepts
     closes the editor and is announced.
+  - A refusal MUST be worded by the error catalogue (UI-ERR-001). A refusal whose code has no
+    catalogue entry, or that has no code, MUST be worded by the editor's generic retry message, and
+    the server's message MUST NOT be shown.
+  - When the row does not grant reading the payback, the editor MUST say why, MUST NOT request the
+    amount, and MUST offer no save.
 - **Rationale:** The roster does not carry the amount, so the payback is the only place to read it.
   A save made over an amount nobody has seen would replace it blindly. "No investment" and zero are
-  different states, so there is nothing to remove when none is recorded.
+  different states, so there is nothing to remove when none is recorded. The amount's own limits
+  are checked before sending (UI-MBR-045), so a refusal the catalogue does not word is not one the
+  admin can fix from the field, and the server's English text would only add noise.
 - **Implements:** n/a
 - **Source:** #358
 
@@ -745,13 +752,14 @@ The investment editor (UI-MBR-044):
 
 | State | Rendered | Actions available |
 | --- | --- | --- |
+| Payback not readable | Why the amount cannot be changed here | Cancelar |
 | Loading | The field, disabled, saying the amount is loading | Cancelar |
 | Read failed | The failure, with a retry | Reintentar, Cancelar |
 | No amount recorded | The empty field | Guardar, Cancelar |
 | Amount recorded | The field filled with the amount | Quitar inversión, Guardar, Cancelar |
 | Invalid amount | The reason under the field (UI-MBR-045) | As before |
 | Saving or removing | The same, nothing editable | None; the editor cannot be closed |
-| Refused | The refusal, with the amount as typed | As before |
+| Refused | The refusal in the catalogue's words or the generic retry message, with the amount as typed | As before |
 
 The import dialog:
 
