@@ -78,8 +78,8 @@ export const CredentialsFields: FC<CredentialsFieldsProps> = ({
         fullWidth
         variant="outlined"
         size="small"
+        slotProps={{ htmlInput: { readOnly } }}
         InputProps={{
-          readOnly,
           startAdornment: (
             <InputAdornment position="start">
               <PersonOutlineIcon sx={{ fontSize: 20, color: colors.text.muted }} />
@@ -101,8 +101,8 @@ export const CredentialsFields: FC<CredentialsFieldsProps> = ({
         fullWidth
         variant="outlined"
         size="small"
+        slotProps={{ htmlInput: { readOnly } }}
         InputProps={{
-          readOnly,
           startAdornment: (
             <InputAdornment position="start">
               <LockOutlineIcon sx={{ fontSize: 20, color: colors.text.muted }} />
@@ -139,8 +139,8 @@ export const CredentialsFields: FC<CredentialsFieldsProps> = ({
         fullWidth
         variant="outlined"
         size="small"
+        slotProps={{ htmlInput: { readOnly } }}
         InputProps={{
-          readOnly,
           startAdornment: (
             <InputAdornment position="start">
               <LinkIcon sx={{ fontSize: 20, color: colors.text.muted }} />
