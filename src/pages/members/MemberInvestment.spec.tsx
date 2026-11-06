@@ -12,7 +12,7 @@ import {
   buildMembershipCapabilities,
   buildMembershipPayback,
 } from "../../test/fixtures";
-import type { MembershipPaybackResponse, SetMembershipInvestmentBody } from "../../api/models";
+import type { MembershipPaybackResponse, MembershipResponse, SetMembershipInvestmentBody } from "../../api/models";
 import { getGetMembershipPaybackQueryKey } from "../../api/memberships/memberships";
 import { CommunityRole } from "../../hooks/permissions";
 import { MembersPage } from "./MembersPage";
@@ -92,8 +92,12 @@ const LUIS = buildMembership({
   capabilities: buildMembershipCapabilities({ canEditRecord: true, canManageInvestment: false, canReadPayback: true }),
 });
 
-const restError = (status: number) => ({
-  response: { status, data: { status, message: "refused", errors: [{ message: "Importe rechazado.", code: null }] } },
+/** The server's own text, which the editor must never show. */
+const SERVER_TEXT = "investmentEur must be less than or equal to 9999999999.99";
+const RETRY_LATER = "Inténtalo de nuevo en unos minutos.";
+
+const restError = (status: number, code: string | null = null) => ({
+  response: { status, data: { status, message: "refused", errors: [{ message: SERVER_TEXT, code }] } },
 });
 
 /** The payback each member's next read serves, so a write can change it as the backend would. */
@@ -105,13 +109,13 @@ type Writes = {
   payback?: (userId: string) => unknown;
 };
 
-function serve(paybacks: Paybacks, writes: Writes = {}): RequestRouter {
+function serve(paybacks: Paybacks, writes: Writes = {}, roster: MembershipResponse[] = [ANA, PEPE, LUIS]): RequestRouter {
   const userOf = (config: RequestConfig) => (config.url ?? "").split("/").at(-2) ?? "";
   const router = routeRequests([
     { method: "GET", url: "/api/v1/users/current", respond: () => CALLER },
     { method: "GET", url: "/api/v1/communities", respond: () => [COMMUNITY] },
     { method: "GET", url: COMMUNITY_URL, respond: () => COMMUNITY },
-    { method: "GET", url: ROSTER_URL, respond: () => [ANA, PEPE, LUIS] },
+    { method: "GET", url: ROSTER_URL, respond: () => roster },
     {
       method: "GET",
       url: /\/memberships\/[^/]+\/payback$/,
@@ -391,7 +395,8 @@ describe("recording a member's investment (#358)", () => {
 
         const alert = await within(dialog).findByRole("alert");
         expect(alert).toHaveTextContent("No se ha guardado la inversión.");
-        expect(alert).toHaveTextContent("Importe rechazado.");
+        expect(alert).toHaveTextContent(RETRY_LATER);
+        expect(alert).not.toHaveTextContent(SERVER_TEXT);
         expect(amountField(dialog)).toHaveValue("1200");
         expect(screen.getByRole("dialog", { name: "Inversión de Ana García" })).toBeInTheDocument();
         expect(announced("Inversión guardada.")).not.toBeInTheDocument();
@@ -422,10 +427,61 @@ describe("recording a member's investment (#358)", () => {
         );
         const alert = await within(dialog).findByRole("alert");
         expect(alert).toHaveTextContent("No se ha quitado la inversión.");
+        expect(alert).toHaveTextContent(RETRY_LATER);
+        expect(alert).not.toHaveTextContent(SERVER_TEXT);
         expect(amountField(dialog)).toHaveValue("1500,5");
         expect(announced("Inversión quitada.")).not.toBeInTheDocument();
       },
     );
+
+    it.each([
+      [400, "CODE_UNKNOWN_TO_THIS_CLIENT", RETRY_LATER],
+      [404, "MEMBERSHIP_NOT_FOUND", "Ya no forma parte de esta comunidad."],
+    ])(
+      "UI-MBR-044 words a refused save with code %i %s from the catalogue, never with the server's text",
+      async (status, code, wording) => {
+        const u = userEvent.setup();
+        serve(
+          { "u-ana": recorded(1000) },
+          {
+            put: () => {
+              throw restError(status, code);
+            },
+          },
+        );
+        await renderPage();
+
+        const dialog = await openLoadedEditor(u, "Ana García");
+        await typeAmount(u, dialog, "1200");
+        await u.click(within(dialog).getByRole("button", { name: "Guardar" }));
+
+        const alert = await within(dialog).findByRole("alert");
+        expect(alert).toHaveTextContent(`No se ha guardado la inversión. ${wording}`);
+        expect(alert).not.toHaveTextContent(SERVER_TEXT);
+      },
+    );
+
+    it("UI-MBR-044 explains, sends no payback read and offers no save when the amount cannot be read", async () => {
+      const u = userEvent.setup();
+      const unreadable = buildMembership({
+        ...ANA,
+        capabilities: buildMembershipCapabilities({ canManageInvestment: true, canReadPayback: false }),
+      });
+      const router = serve({ "u-ana": recorded(1000) }, {}, [unreadable, PEPE, LUIS]);
+      await renderPage();
+
+      const dialog = await openEditor(u, "Ana García");
+
+      expect(
+        within(dialog).getByText(
+          "No puedes consultar la inversión registrada de este miembro, así que no se puede cambiar desde aquí.",
+        ),
+      ).toBeVisible();
+      expect(within(dialog).queryByRole("textbox", { name: "Importe en euros" })).not.toBeInTheDocument();
+      expect(within(dialog).queryByRole("button", { name: "Guardar" })).not.toBeInTheDocument();
+      expect(within(dialog).queryByRole("button", { name: "Quitar inversión" })).not.toBeInTheDocument();
+      expect(requestsTo(router, "GET", paybackUrl("u-ana"))).toHaveLength(0);
+    });
   });
 
   describe("UI-MBR-045 the amount is checked before it is sent", () => {

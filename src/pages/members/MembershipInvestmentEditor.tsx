@@ -6,7 +6,7 @@ import type { MembershipResponse, SetMembershipInvestmentBody } from "../../api/
 import { ResponsiveOverlay } from "../../components/ResponsiveOverlay";
 import { LoadErrorAlert } from "../../components/LoadErrorAlert";
 import { Notice } from "../../components/Notice";
-import { getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
+import { getFirstCataloguedErrorMessage } from "../../errors/apiErrorCatalogue";
 import type { Action, MembershipWriteResult } from "../../hooks/actions";
 import { outcomeFromResource } from "../../hooks/permissions";
 import { formatEuros } from "../../utils/formatEnergyFigures";
@@ -93,7 +93,7 @@ export const MembershipInvestmentEditor: FC<MembershipInvestmentEditorProps> = (
     } else {
       setWriteError({
         headline: "No se ha guardado la inversión.",
-        detail: getFirstApiErrorMessage(result.error, RETRY_LATER),
+        detail: getFirstCataloguedErrorMessage(result.error, RETRY_LATER),
       });
     }
   };
@@ -107,7 +107,7 @@ export const MembershipInvestmentEditor: FC<MembershipInvestmentEditorProps> = (
       setConfirmingRemove(false);
       setWriteError({
         headline: "No se ha quitado la inversión.",
-        detail: getFirstApiErrorMessage(result.error, RETRY_LATER),
+        detail: getFirstCataloguedErrorMessage(result.error, RETRY_LATER),
       });
     }
   };

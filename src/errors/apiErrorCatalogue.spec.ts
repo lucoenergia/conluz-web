@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { RestErrorDetailCode } from "../api/models";
 import {
   getFirstApiErrorMessage,
+  getFirstCataloguedErrorMessage,
   getGroupedApiErrorDetails,
   getIndexedApiErrorDetails,
   translateErrorDetail,
@@ -80,6 +81,25 @@ describe("getFirstApiErrorMessage", () => {
   it("returns the fallback when errors array is empty", () => {
     const error = { response: { data: { errors: [] } } };
     expect(getFirstApiErrorMessage(error, "fallback")).toBe("fallback");
+  });
+});
+
+describe("getFirstCataloguedErrorMessage (#358)", () => {
+  it("words a catalogued code as the catalogue does", () => {
+    expect(getFirstCataloguedErrorMessage(apiError(404, { code: "MEMBERSHIP_NOT_FOUND", message: "gone" }), "fallback")).toBe(
+      "Ya no forma parte de esta comunidad.",
+    );
+  });
+
+  it("gives the fallback, never the server's message, for a code it does not know or no code", () => {
+    const unknownCode = "CODE_UNKNOWN_TO_THIS_CLIENT" as RestErrorDetailCode;
+    expect(getFirstCataloguedErrorMessage(apiError(400, { code: unknownCode, message: "server message" }), "fallback")).toBe("fallback");
+    const codeless = { response: { data: { errors: [{ message: "server message", code: null }] } } };
+    expect(getFirstCataloguedErrorMessage(codeless, "fallback")).toBe("fallback");
+  });
+
+  it("gives the fallback when there is no detail", () => {
+    expect(getFirstCataloguedErrorMessage(new Error("network error"), "fallback")).toBe("fallback");
   });
 });
 
