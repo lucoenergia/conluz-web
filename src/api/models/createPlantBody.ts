@@ -24,5 +24,6 @@ export interface CreatePlantBody {
   regulatoryCode?: string;
   /** @minLength 1 */
   supplyCode: string;
+  /** @exclusiveMinimum 0 */
   totalPower: number;
 }

@@ -7,7 +7,10 @@
  */
 
 export interface ReplacePartitionCoefficientEntry {
-  /** Partition coefficient value */
+  /**
+     * Partition coefficient value
+     * @minimum 0
+     */
   coefficient: number;
   /** The supply's internal id. */
   supplyId: string;
