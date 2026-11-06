@@ -4,13 +4,19 @@ import { useState, type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
 import type { CreateSupplyBody } from "../../api/models";
 import { useNavigate } from "react-router";
-import { SupplyForm, type SupplyFormField, type SupplyFormValues } from "../../components/SupplyForm/SupplyForm";
+import {
+  SupplyForm,
+  type SupplyFormField,
+  type SupplyFormValues,
+  type SupplyOwnerField,
+} from "../../components/SupplyForm/SupplyForm";
 import { supplyRefusalOf } from "./supplyForm";
-import { useLoggedUser } from "../../context/logged-user.context";
 import { useActiveCommunity } from "../../context/community.context";
 import { useErrorDispatch } from "../../context/error.context";
 import { useCommunityActions } from "../../hooks/actions";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
+import { useActiveCommunityCapabilities } from "../../hooks/permissions";
+import { useGetMemberships } from "../../api/memberships/memberships";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
@@ -19,22 +25,40 @@ import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 export const CreateSupplyPage: FC = () => {
   const navigate = useNavigate();
   const communityName = useActiveCommunityName();
-  const loggedUser = useLoggedUser();
   const activeCommunityId = useActiveCommunity();
   const errorDispatch = useErrorDispatch();
   const activeCommunity = useActiveCommunityResource();
   const { createSupply } = useCommunityActions().forCommunity(activeCommunity).actions;
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<SupplyFormField, string>>>({});
 
+  // The owner must be a member of the supply's community, in any state
+  // (SUP-002), so the options are exactly its memberships (UI-SUP-016).
+  const canListMembers = useActiveCommunityCapabilities("canManageMemberships");
+  const memberships = useGetMemberships(activeCommunityId ?? "", {
+    query: { enabled: !!activeCommunityId && canListMembers.state === "allowed" },
+  });
+  const owner: SupplyOwnerField = {
+    mode: "choose",
+    options: memberships.data ?? [],
+    status:
+      canListMembers.state === "pending" || (canListMembers.state === "allowed" && memberships.isLoading)
+        ? "loading"
+        : canListMembers.state !== "allowed" || memberships.isError
+          ? "error"
+          : "ready",
+  };
+
   const handleSubmit = async ({ name, cups, address, addressRef, personalId }: SupplyFormValues) => {
     // The route guard has already established the caller may create here, so
     // this only covers the render before the community itself has arrived.
     if (!activeCommunityId || !createSupply) return;
+    // The owner input is required; without a chosen member there is nobody to send.
+    if (!personalId) return;
     const newSupply: CreateSupplyBody = {
       name,
       code: cups ?? "",
       address: address ?? "",
-      personalId: personalId || loggedUser?.personalId || "",
+      personalId,
       // Optional since the backend accepts a supply without one; sending the
       // empty string instead would store a blank reference as if it were data.
       addressRef: addressRef || undefined,
@@ -127,7 +151,7 @@ export const CreateSupplyPage: FC = () => {
             handleSubmit={handleSubmit}
             fieldErrors={fieldErrors}
             onFieldEdit={(field) => setFieldErrors((errors) => ({ ...errors, [field]: undefined }))}
-            showUserSelector={true}
+            owner={owner}
             disabled={!createSupply}
           />
         </Paper>

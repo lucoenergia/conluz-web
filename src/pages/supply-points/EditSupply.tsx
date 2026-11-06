@@ -129,9 +129,7 @@ export const EditSupplyPage: FC = () => {
               handleSubmit={handleSubmit}
               fieldErrors={fieldErrors}
               onFieldEdit={(field) => setFieldErrors((errors) => ({ ...errors, [field]: undefined }))}
-              showUserSelector={true}
-              selectedUserId={supplyPoint?.user?.id}
-              disableUserSelector={true}
+              owner={{ mode: "show", fullName: supplyPoint?.ownerRecord?.fullName ?? null }}
               disabled={!edit}
             />
           )}

@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { query } from "../../test/queryState";
 import { buildSupply, buildSupplyCapabilities } from "../../test/fixtures";
 import { apiError } from "../../test/apiError";
 import type { RestErrorDetailCode, SupplyCapabilitiesResponse } from "../../api/models";
@@ -27,12 +26,6 @@ vi.mock(import("../../context/error.context"), async (importOriginal) => ({
 
 vi.mock(import("./useSupplyInActiveCommunity"), () => ({ useSupplyInActiveCommunity: vi.fn() }));
 
-// The owner picker loads the user list; answer with a settled, empty page.
-vi.mock(import("../../api/users/users"), async (importOriginal) => ({
-  ...(await importOriginal()),
-  useGetAllUsers: vi.fn(),
-}));
-
 // Reads stubbed, mutations left real: the gate under test is the one inside
 // useSupplyActions, and stubbing that would restate it rather than run it.
 vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
@@ -40,7 +33,6 @@ vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
   useUpdateSupply: vi.fn(),
 }));
 
-import { getAllUsers, useGetAllUsers } from "../../api/users/users";
 import { useUpdateSupply } from "../../api/supplies/supplies";
 import { mutation } from "../../test/queryState";
 import { useSupplyInActiveCommunity } from "./useSupplyInActiveCommunity";
@@ -75,9 +67,6 @@ beforeEach(() => {
   vi.clearAllMocks();
   mutateAsync.mockResolvedValue(buildSupply());
   vi.mocked(useUpdateSupply).mockReturnValue(mutation.idle({ mutateAsync }));
-  vi.mocked(useGetAllUsers).mockReturnValue(
-    query.success<typeof getAllUsers>({ items: [], size: 10000, totalElements: 0, totalPages: 1, number: 0 }),
-  );
 });
 
 describe("EditSupplyPage", () => {

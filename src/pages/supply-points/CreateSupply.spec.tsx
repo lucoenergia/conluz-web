@@ -5,7 +5,13 @@ import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
 import { apiError } from "../../test/apiError";
-import { buildCommunity, buildCommunityCapabilities, buildCurrentUser, buildSupply, buildUser } from "../../test/fixtures";
+import {
+  buildCommunity,
+  buildCommunityCapabilities,
+  buildCurrentUser,
+  buildMembership,
+  buildSupply,
+} from "../../test/fixtures";
 import type { RestErrorDetailCode } from "../../api/models";
 
 const COMMUNITY_ID = "c1";
@@ -35,11 +41,15 @@ vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
   ...(await importOriginal()),
   useCreateSupply: vi.fn(),
 }));
-// The owner picker loads the user list. useGetSuppliesByUserId is read by the
-// harness's real CommunityProvider; the community is seeded, so it stays unanswered.
+// The owner picker lists the active community's memberships.
+vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetMemberships: vi.fn(),
+}));
+// useGetSuppliesByUserId is read by the harness's real CommunityProvider; the
+// community is seeded, so it stays unanswered.
 vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useGetAllUsers: vi.fn(),
   useGetSuppliesByUserId: vi.fn(),
 }));
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
@@ -54,10 +64,16 @@ import {
   type getCommunityById,
 } from "../../api/communities/communities";
 import { useCreateSupply } from "../../api/supplies/supplies";
-import { useGetAllUsers, useGetSuppliesByUserId, type getAllUsers } from "../../api/users/users";
+import { useGetMemberships, type getMemberships } from "../../api/memberships/memberships";
+import { useGetSuppliesByUserId } from "../../api/users/users";
 import { CreateSupplyPage } from "./CreateSupply";
 
-const OWNER = buildUser({ id: "u-ana", fullName: "Ana García", personalId: "12345678Z" });
+const OWNER = buildMembership({
+  id: "m-ana",
+  communityId: COMMUNITY_ID,
+  fullName: "Ana García",
+  personalId: "12345678Z",
+});
 
 let mutateAsync: Mock;
 
@@ -71,16 +87,14 @@ beforeEach(() => {
       buildCommunity({
         id: COMMUNITY_ID,
         name: "Sol Común",
-        capabilities: buildCommunityCapabilities({ canManage: true }),
+        capabilities: buildCommunityCapabilities({ canManage: true, canManageMemberships: true }),
       }),
     ),
   );
   vi.mocked(useGetAllCommunities).mockReturnValue(
     query.success<typeof getAllCommunities>([buildCommunity({ id: COMMUNITY_ID, name: "Sol Común" })]),
   );
-  vi.mocked(useGetAllUsers).mockReturnValue(
-    query.success<typeof getAllUsers>({ items: [OWNER], size: 10000, totalElements: 1, totalPages: 1, number: 0 }),
-  );
+  vi.mocked(useGetMemberships).mockReturnValue(query.success<typeof getMemberships>([OWNER]));
 });
 
 const render = () =>

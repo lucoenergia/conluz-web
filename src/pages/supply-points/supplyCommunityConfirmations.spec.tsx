@@ -11,7 +11,7 @@ import {
   type getCommunityById,
 } from "../../api/communities/communities";
 import { useCreateSupply } from "../../api/supplies/supplies";
-import { useGetAllUsers, useGetSuppliesByUserId, type getAllUsers } from "../../api/users/users";
+import { useGetSuppliesByUserId } from "../../api/users/users";
 import { DisableConfirmationModal } from "../../components/Modals/DisableConfirmationModal";
 import { EnableConfirmationModal } from "../../components/Modals/EnableConfirmationModal";
 import { CreateSupplyPage } from "./CreateSupply";
@@ -40,7 +40,6 @@ vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
 // choice is never what the page sees; its read is left unanswered.
 vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useGetAllUsers: vi.fn(),
   useGetSuppliesByUserId: vi.fn(),
 }));
 
@@ -67,7 +66,6 @@ beforeEach(() => {
     ]),
   );
   vi.mocked(useCreateSupply).mockReturnValue(mutation.idle());
-  vi.mocked(useGetAllUsers).mockReturnValue(query.success<typeof getAllUsers>({ items: [] }));
 });
 
 describe("supply point confirmations name the community (AC9)", () => {
