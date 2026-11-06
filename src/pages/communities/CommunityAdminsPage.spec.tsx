@@ -353,8 +353,8 @@ describe("inviting an admin", () => {
     await within(form).findByRole("button", { name: "Enviando..." });
 
     fireEvent.keyDown(form, { key: "Escape" });
-    // The backdrop has no role or name: MUI's Dialog container takes the click.
-    await u.click(document.querySelector(".MuiDialog-container")!);
+    // Structural: the backdrop has no role or name; it is MUI's own element.
+    await u.click(document.querySelector(".MuiBackdrop-root")!);
     const cancel = within(form).getByRole("button", { name: "Cancelar" });
     expect(cancel).toBeDisabled();
     // A disabled button takes no pointer events, so userEvent refuses it.
