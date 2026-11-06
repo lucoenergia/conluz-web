@@ -351,3 +351,21 @@ describe("UI-OVL-007 only the body scrolls", () => {
     await waitFor(() => expect(declaredStyles(pinned!)).toContain("top:0"));
   });
 });
+
+describe("an app modal hosting a form", () => {
+  it("submits once from the footer's submit button, and once on Enter in a field", async () => {
+    const onSubmit = vi.fn((event: { preventDefault: () => void }) => event.preventDefault());
+    const user = await render(
+      <AppModal isOpen onClose={vi.fn()} title="Registrar" onSubmit={onSubmit} actions={<button type="submit">Guardar</button>}>
+        <input aria-label="Nombre" />
+      </AppModal>,
+    );
+    const dialog = screen.getByRole("dialog", { name: "Registrar" });
+
+    await user.click(within(dialog).getByRole("button", { name: "Guardar" }));
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+
+    await user.type(within(dialog).getByRole("textbox", { name: "Nombre" }), "Ana{Enter}");
+    expect(onSubmit).toHaveBeenCalledTimes(2);
+  });
+});

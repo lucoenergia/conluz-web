@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -243,6 +243,8 @@ async function fillInviteForm(u: ReturnType<typeof userEvent.setup>, dialog: HTM
 }
 
 const codeDialog = () => screen.findByRole("dialog", { name: "Código de confirmación" });
+/** What closing the code by any means but "Hecho" asks first (UI-PAD-010). */
+const CODE_QUESTION = "Este código no se volverá a mostrar. ¿Lo has copiado?";
 
 const originalWidth = window.innerWidth;
 const setViewportWidth = (width: number) =>
@@ -412,7 +414,7 @@ describe("resending an invitation", () => {
     },
   );
 
-  it("UI-PAD-010 keeps the code on screen on a backdrop click or Escape, and closes only with Hecho", async () => {
+  it("UI-PAD-010 while the resend's code shows, Escape and a backdrop click ask first, and Hecho closes directly", async () => {
     const u = userEvent.setup();
     servePage({ current: [PAULA, LUIS] }, { resend: () => ({ platformAdmin: LUIS, confirmationCode: NEW_CODE }) });
     renderPage();
@@ -420,13 +422,16 @@ describe("resending an invitation", () => {
     await confirmFromMenu(u, "Luis Lapsado", "Reenviar", "Reenviar invitación");
     const dialog = await codeDialog();
 
-    await u.keyboard("{Escape}");
-    // Structural: the backdrop has neither a role nor a name. MUI closes a
-    // dialog on a click on its container, outside the paper.
-    const container = document.querySelector(".MuiDialog-container") as HTMLElement;
-    await u.click(container);
+    // On the dialog itself: jsdom leaves focus on the body once the confirm button unmounts.
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(CODE_QUESTION);
+    expect(within(dialog).queryByRole("button", { name: "Hecho" })).not.toBeInTheDocument();
+    await u.click(within(dialog).getByRole("button", { name: "Volver al código" }));
 
-    expect(screen.getByRole("dialog", { name: "Código de confirmación" })).toBeInTheDocument();
+    // Structural: the backdrop has no role or name; it is MUI's own element.
+    await u.click(document.querySelector(".MuiBackdrop-root") as HTMLElement);
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(CODE_QUESTION);
+    await u.click(within(dialog).getByRole("button", { name: "Volver al código" }));
     expect(within(dialog).getByText("B4N8-R2TW")).toBeInTheDocument();
 
     await u.click(within(dialog).getByRole("button", { name: "Hecho" }));
@@ -655,7 +660,7 @@ describe("inviting a platform admin", () => {
     },
   );
 
-  it("UI-PAD-010 keeps the invitation's code on screen on Escape or a backdrop click, and closes only with Hecho", async () => {
+  it("UI-PAD-010 while the invitation's code shows, Escape and a backdrop click ask first, and Cerrar sin copiar closes", async () => {
     const u = userEvent.setup();
     servePage({ current: [PAULA] }, { caller: INVITER, invite: () => ({ platformAdmin: NEW_INVITATION, confirmationCode: CODE }) });
     renderPage();
@@ -664,14 +669,18 @@ describe("inviting a platform admin", () => {
     await u.click(within(form).getByRole("button", { name: "Invitar" }));
     const dialog = await codeDialog();
 
-    await u.keyboard("{Escape}");
-    // Structural: the backdrop has neither a role nor a name. MUI closes a
-    // dialog on a click on its container, outside the paper.
-    await u.click(document.querySelector(".MuiDialog-container") as HTMLElement);
-
+    // On the dialog itself: jsdom leaves focus on the body once the submit button unmounts.
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(CODE_QUESTION);
+    await u.click(within(dialog).getByRole("button", { name: "Volver al código" }));
     expect(within(dialog).getByText("K7Q2-M9XZ")).toBeInTheDocument();
-    await u.click(within(dialog).getByRole("button", { name: "Hecho" }));
+
+    // Structural: the backdrop has no role or name; it is MUI's own element.
+    await u.click(document.querySelector(".MuiBackdrop-root") as HTMLElement);
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(CODE_QUESTION);
+    await u.click(within(dialog).getByRole("button", { name: "Cerrar sin copiar" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(screen.queryByText("K7Q2-M9XZ")).not.toBeInTheDocument();
   });
 
   it("UI-PAD-009 closes the form itself on Escape, as before any code exists, and sends nothing", async () => {

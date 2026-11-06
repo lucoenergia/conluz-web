@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { useEffect, useState, type FC } from "react";
+import { useEffect, useRef, useState, type FC } from "react";
 import { act, cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes, useLocation } from "react-router";
@@ -302,6 +302,63 @@ describe("UI-OVL-003 a close attempt with changes asks first", () => {
     await user.click(within(overlay()).getByRole("button", { name: "Seguir editando" }));
 
     expect(hour).toHaveFocus();
+  });
+});
+
+describe("UI-OVL-003 a flow may word the discard question and say where staying puts focus", () => {
+  /** Always dirty, with its own wording, and focus sent back to a button in the body. */
+  const Worded: FC<{ onClose: () => void }> = ({ onClose }) => {
+    const [open, setOpen] = useState(false);
+    const target = useRef<HTMLButtonElement>(null);
+    return (
+      <>
+        <button type="button" onClick={() => setOpen(true)}>
+          Abrir
+        </button>
+        <ResponsiveOverlay
+          open={open}
+          size="form"
+          title="Código"
+          dirty
+          discardMessage="Este código no se volverá a mostrar."
+          discardConfirmLabel="Cerrar sin copiar"
+          discardCancelLabel="Volver al código"
+          discardReturnFocus={target}
+          onClose={() => {
+            onClose();
+            setOpen(false);
+          }}
+          actions={null}
+        >
+          <input aria-label="Otro campo" />
+          <button type="button" ref={target}>
+            Copiar
+          </button>
+        </ResponsiveOverlay>
+      </>
+    );
+  };
+
+  it("UI-OVL-003 asks with the flow's wording; staying focuses the target, the confirm label closes", async () => {
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+    renderWithProviders(<Worded onClose={onClose} />);
+    await user.click(screen.getByRole("button", { name: "Abrir" }));
+    await act(() => overlayHistorySettled());
+    // The body's last focused control is not the target.
+    await user.click(within(overlay("Código")).getByRole("textbox", { name: "Otro campo" }));
+
+    await user.keyboard("{Escape}");
+    expect(within(overlay("Código")).getByRole("alert")).toHaveTextContent("Este código no se volverá a mostrar.");
+    expect(within(overlay("Código")).queryByRole("button", { name: "Descartar cambios" })).not.toBeInTheDocument();
+    await user.click(within(overlay("Código")).getByRole("button", { name: "Volver al código" }));
+    expect(within(overlay("Código")).getByRole("button", { name: "Copiar" })).toHaveFocus();
+    expect(onClose).not.toHaveBeenCalled();
+
+    await user.keyboard("{Escape}");
+    await user.click(within(overlay("Código")).getByRole("button", { name: "Cerrar sin copiar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
 

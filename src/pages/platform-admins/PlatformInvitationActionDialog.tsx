@@ -1,9 +1,11 @@
-import { useState, type FC } from "react";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
+import { useRef, useState, type FC } from "react";
+import { Button, Typography } from "@mui/material";
 import type { MaybeAction, PlatformAdminWriteResult, PlatformInvitationSentResult } from "../../hooks/actions";
 import { ConfirmationCodePanel } from "./ConfirmationCodePanel";
+import { CONFIRMATION_CODE_CLOSE_QUESTION, CONFIRMATION_CODE_TITLE } from "./confirmationCodeQuestion";
 import { Notice } from "../../components/Notice";
-import { inFlightDialogProps } from "../../utils/inFlightDialog";
+import { AppModal } from "../../components/Modals/AppModal";
+import { ConfirmationActions } from "../../components/Modals/ConfirmationActions";
 
 export type PlatformInvitationWriteKind = "resend" | "revoke";
 
@@ -50,8 +52,10 @@ interface PlatformInvitationActionDialogProps {
  * revoking its link (#288). Both email the person or stop a link from working,
  * so neither is sent on a single click of the menu item.
  *
- * A resend that succeeds shows its new confirmation code in place, kept in
- * this dialog's state and discarded with it.
+ * A resend that succeeds shows its new confirmation code in place, in the same
+ * overlay at the same size, kept in this dialog's state and discarded with it.
+ * While the code shows, "Hecho" closes it and any other close attempt asks
+ * first (UI-PAD-010).
  */
 export const PlatformInvitationActionDialog: FC<PlatformInvitationActionDialogProps> = ({
   kind,
@@ -64,6 +68,7 @@ export const PlatformInvitationActionDialog: FC<PlatformInvitationActionDialogPr
   const [code, setCode] = useState<string | null>(null);
   const copy = COPY[kind];
   const inFlight = action?.isPending ?? false;
+  const copyButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleConfirm = async () => {
     if (!action) return;
@@ -79,37 +84,47 @@ export const PlatformInvitationActionDialog: FC<PlatformInvitationActionDialogPr
 
   if (code !== null) {
     return (
-      // No onClose while the code shows: neither a backdrop click nor Escape
-      // closes it, only "Hecho".
-      <Dialog open maxWidth="xs" fullWidth>
-        <ConfirmationCodePanel code={code} fullName={fullName} onDone={onClose} />
-      </Dialog>
+      <AppModal
+        isOpen
+        onClose={onClose}
+        size="compact"
+        title={CONFIRMATION_CODE_TITLE}
+        dirty
+        {...CONFIRMATION_CODE_CLOSE_QUESTION}
+        discardReturnFocus={copyButtonRef}
+        actions={
+          <Button variant="contained" onClick={onClose}>
+            Hecho
+          </Button>
+        }
+      >
+        <ConfirmationCodePanel code={code} fullName={fullName} copyButtonRef={copyButtonRef} />
+      </AppModal>
     );
   }
 
   return (
-    <Dialog open {...inFlightDialogProps(inFlight, onClose)} maxWidth="xs" fullWidth>
-      <DialogTitle>{copy.title}</DialogTitle>
-      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Typography variant="body2">
-          {copy.question}
-          <strong>{fullName}</strong>?
-        </Typography>
-        <Notice severity="info">{copy.consequence}</Notice>
-      </DialogContent>
-      <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose} disabled={inFlight}>
-          Cancelar
-        </Button>
-        <Button
-          variant="contained"
-          color={kind === "revoke" ? "error" : "primary"}
-          onClick={handleConfirm}
-          disabled={!action || action.isPending}
-        >
-          {action?.isPending ? copy.pending : copy.confirm}
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <AppModal
+      isOpen
+      onClose={onClose}
+      size="compact"
+      dismissible={!inFlight}
+      title={copy.title}
+      actions={
+        <ConfirmationActions
+          onConfirm={handleConfirm}
+          confirmLabel={inFlight ? copy.pending : copy.confirm}
+          confirmColor={kind === "revoke" ? "error" : "primary"}
+          confirmDisabled={!action || action.isPending}
+          inFlight={inFlight}
+        />
+      }
+    >
+      <Typography variant="body2">
+        {copy.question}
+        <strong>{fullName}</strong>?
+      </Typography>
+      <Notice severity="info">{copy.consequence}</Notice>
+    </AppModal>
   );
 };

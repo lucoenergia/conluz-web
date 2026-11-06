@@ -4,10 +4,6 @@ import {
   Avatar,
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   ListItemIcon,
   ListItemText,
   MenuItem,
@@ -45,7 +41,7 @@ import { invitationActionsFor, membershipStatusOf, statusToggleFor } from "../me
 import { MembershipStatusChip } from "../members/MembershipStatusChip";
 import { InviteAdminDialog } from "./InviteAdminDialog";
 import { Notice } from "../../components/Notice";
-import { inFlightDialogProps } from "../../utils/inFlightDialog";
+import { ConfirmationModal } from "../../components/Modals/ConfirmationModal";
 
 type AdminInvitationWrite = "resend" | "revoke";
 
@@ -104,6 +100,7 @@ export const CommunityAdminsPage: FC = () => {
     forCommunityAdmin(communityData, admin ?? undefined).actions;
   const selectedActions = rowActionsOf(selectedAdmin);
   const selectedStatusToggle = statusToggleFor(selectedAdmin, selectedActions);
+  const statusPending = selectedStatusToggle?.action.isPending ?? false;
   const selectedInvitationActions = invitationActionsFor(selectedAdmin, selectedActions);
   const selectedInvitationAction = invitationDialog ? selectedInvitationActions[invitationDialog] : undefined;
 
@@ -357,44 +354,28 @@ export const CommunityAdminsPage: FC = () => {
       )}
 
       {/* Suspend / reactivate confirmation, gated like the item that opens it. */}
-      <Dialog
-        open={statusDialogOpen && !!selectedStatusToggle}
-        {...inFlightDialogProps(selectedStatusToggle?.action.isPending ?? false, () => setStatusDialogOpen(false))}
-        maxWidth="xs"
-        fullWidth
+      <ConfirmationModal
+        isOpen={statusDialogOpen && !!selectedStatusToggle}
+        onCancel={() => setStatusDialogOpen(false)}
+        onConfirm={handleStatusConfirm}
+        confirmLabel={selectedStatusToggle?.isSuspending ? "Suspender" : "Reactivar"}
+        confirmColor={selectedStatusToggle?.isSuspending ? "error" : "primary"}
+        confirmDisabled={statusPending}
+        // Nothing closes it while its request runs (UI-OVL-002).
+        inFlight={statusPending}
+        title={`${selectedStatusToggle?.isSuspending ? "Suspender administrador en" : "Reactivar administrador en"} ${community}`}
+        scopeHeader={<CommunityScopeHeader name={communityName} />}
       >
-        <Box sx={{ px: 3, pt: 2.5 }}>
-          <CommunityScopeHeader name={communityName} />
-        </Box>
-        <DialogTitle sx={{ pt: 0 }}>
-          {selectedStatusToggle?.isSuspending ? "Suspender administrador en" : "Reactivar administrador en"}{" "}
-          {community}
-        </DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <Typography variant="body2">
-            {selectedStatusToggle?.isSuspending ? "¿Suspender a " : "¿Reactivar a "}
-            <strong>{selectedAdmin?.fullName ?? "este administrador"}</strong> como administrador de {community}?
-          </Typography>
-          <Notice severity="info">
-            {selectedStatusToggle?.isSuspending
-              ? `Mientras esté suspendido, no podrá acceder a ${community}. Su cuenta y su acceso a otras comunidades no cambian.`
-              : `Volverá a tener acceso a ${community} como administrador.`}
-          </Notice>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setStatusDialogOpen(false)} disabled={selectedStatusToggle?.action.isPending}>
-            Cancelar
-          </Button>
-          <Button
-            variant="contained"
-            color={selectedStatusToggle?.isSuspending ? "error" : "primary"}
-            onClick={handleStatusConfirm}
-            disabled={selectedStatusToggle?.action.isPending}
-          >
-            {selectedStatusToggle?.isSuspending ? "Suspender" : "Reactivar"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Typography variant="body2">
+          {selectedStatusToggle?.isSuspending ? "¿Suspender a " : "¿Reactivar a "}
+          <strong>{selectedAdmin?.fullName ?? "este administrador"}</strong> como administrador de {community}?
+        </Typography>
+        <Notice severity="info">
+          {selectedStatusToggle?.isSuspending
+            ? `Mientras esté suspendido, no podrá acceder a ${community}. Su cuenta y su acceso a otras comunidades no cambian.`
+            : `Volverá a tener acceso a ${community} como administrador.`}
+        </Notice>
+      </ConfirmationModal>
     </Box>
   );
 };

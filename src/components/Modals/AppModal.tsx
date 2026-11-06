@@ -1,4 +1,4 @@
-import type { FC, ReactNode, SyntheticEvent } from "react";
+import type { FC, FormEvent, ReactNode, RefObject, SyntheticEvent } from "react";
 import { Box } from "@mui/material";
 import { ResponsiveOverlay, type ResponsiveOverlayName, type ResponsiveOverlaySize } from "../ResponsiveOverlay";
 
@@ -27,6 +27,11 @@ export type AppModalProps = AppModalName & {
   size?: ResponsiveOverlaySize;
   /** Unsaved changes: a close attempt asks first (UI-OVL-003). */
   dirty?: boolean;
+  /** The question asked before discarding changes, its two buttons, and where staying puts focus. */
+  discardMessage?: string;
+  discardConfirmLabel?: string;
+  discardCancelLabel?: string;
+  discardReturnFocus?: RefObject<HTMLElement | null>;
   /** Rendered above the title, e.g. the community a confirmed write lands in. */
   scopeHeader?: ReactNode;
   icon?: ReactNode;
@@ -34,6 +39,8 @@ export type AppModalProps = AppModalName & {
   iconSize?: number;
   /** Centres the icon and the content in the body, for an outcome with no title. */
   centered?: boolean;
+  /** Makes the dialog a form: a submit button in `actions`, or Enter in a field, submits it. */
+  onSubmit?: (event: FormEvent<HTMLElement>) => void;
   actions?: ReactNode;
   children?: ReactNode;
 };
@@ -52,11 +59,16 @@ export const AppModal: FC<AppModalProps> = ({
   dismissible = true,
   size = "form",
   dirty = false,
+  discardMessage,
+  discardConfirmLabel,
+  discardCancelLabel,
+  discardReturnFocus,
   scopeHeader,
   icon,
   iconBg,
   iconSize,
   centered = false,
+  onSubmit,
   actions,
   children,
 }) => {
@@ -88,10 +100,15 @@ export const AppModal: FC<AppModalProps> = ({
       open={isOpen}
       size={size}
       dirty={dirty}
+      discardMessage={discardMessage}
+      discardConfirmLabel={discardConfirmLabel}
+      discardCancelLabel={discardCancelLabel}
+      discardReturnFocus={discardReturnFocus}
       inFlight={!dismissible}
       onClose={() => onClose()}
       eyebrow={scopeHeader}
       icon={centered ? undefined : circle}
+      onSubmit={onSubmit}
       actions={actions}
     >
       {centered ? (

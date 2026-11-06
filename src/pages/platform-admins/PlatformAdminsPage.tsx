@@ -4,10 +4,6 @@ import {
   Box,
   Button,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   ListItemIcon,
   ListItemText,
   MenuItem,
@@ -45,7 +41,7 @@ import { hasAnyOffer, invitationText, isPendingInvitation, membershipStateOf, pl
 import { PlatformInvitationActionDialog, type PlatformInvitationWriteKind } from "./PlatformInvitationActionDialog";
 import { InvitePlatformAdminDialog } from "./InvitePlatformAdminDialog";
 import { Notice } from "../../components/Notice";
-import { inFlightDialogProps } from "../../utils/inFlightDialog";
+import { ConfirmationModal } from "../../components/Modals/ConfirmationModal";
 
 const EMPTY_MESSAGE = "No hay administradores de plataforma";
 const NOT_REVOCABLE_EXPLANATION = "La plataforma necesita al menos un administrador de plataforma habilitado.";
@@ -136,6 +132,7 @@ export const PlatformAdminsPage: FC = () => {
   const offerOf = (admin: PlatformAdminResponse) => platformAdminRowOffer(admin, forPlatformAdmin(admin).actions);
   const selectedOffer = selectedAdmin ? offerOf(selectedAdmin) : {};
   const selectedRevoke = selectedOffer.revokeRole;
+  const revokePending = selectedRevoke?.isPending ?? false;
   const selectedInvitationAction =
     invitationDialog?.kind === "resend"
       ? selectedOffer.resend
@@ -383,35 +380,23 @@ export const PlatformAdminsPage: FC = () => {
 
       {/* Gated like the item that opens it: a refetch that makes the row no
           longer revocable, or takes it away, closes the dialog. */}
-      <Dialog
-        open={revokeDialogOpen && !!selectedRevoke && !!selectedAdmin?.revocable}
-        {...inFlightDialogProps(selectedRevoke?.isPending ?? false, () => setRevokeDialogOpen(false))}
-        maxWidth="xs"
-        fullWidth
+      <ConfirmationModal
+        isOpen={revokeDialogOpen && !!selectedRevoke && !!selectedAdmin?.revocable}
+        onCancel={() => setRevokeDialogOpen(false)}
+        onConfirm={handleRevokeConfirm}
+        confirmLabel="Revocar rol"
+        confirmDisabled={revokePending}
+        // Nothing closes it while its request runs (UI-OVL-002).
+        inFlight={revokePending}
+        title="Revocar rol de administrador de plataforma"
       >
-        <DialogTitle>Revocar rol de administrador de plataforma</DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <Typography variant="body2">
-            ¿Revocar el rol de administrador de plataforma a <strong>{selectedAdmin?.fullName}</strong>?
-          </Typography>
-          <Notice severity="info">
-            Dejará de administrar la plataforma. Su cuenta y las comunidades de las que es miembro no cambian.
-          </Notice>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setRevokeDialogOpen(false)} disabled={selectedRevoke?.isPending}>
-            Cancelar
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleRevokeConfirm}
-            disabled={selectedRevoke?.isPending}
-          >
-            Revocar rol
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Typography variant="body2">
+          ¿Revocar el rol de administrador de plataforma a <strong>{selectedAdmin?.fullName}</strong>?
+        </Typography>
+        <Notice severity="info">
+          Dejará de administrar la plataforma. Su cuenta y las comunidades de las que es miembro no cambian.
+        </Notice>
+      </ConfirmationModal>
 
       {/* Mounted on open, so each opening starts empty; kept while it shows a
           code, which only "Hecho" closes. */}

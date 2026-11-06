@@ -1,5 +1,5 @@
 import { useState, type FC, type FormEvent } from "react";
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
+import { Alert, Button, TextField } from "@mui/material";
 import type { CommunityAdminResponse, InviteCommunityAdminBody } from "../../api/models";
 import type { Action, MembershipWriteResult } from "../../hooks/actions";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
@@ -15,7 +15,8 @@ import {
 } from "../members/memberRecordForm";
 import { MemberRecordFields } from "../members/MemberRecordFields";
 import { Notice } from "../../components/Notice";
-import { inFlightDialogProps } from "../../utils/inFlightDialog";
+import { AppModal } from "../../components/Modals/AppModal";
+import { ModalCancelButton } from "../../components/Modals/ModalCancelButton";
 
 const ADMIN_FIELDS = ["fullName", "contactEmail", "phoneNumber"] as const;
 const ADMIN_REQUIRED = ["fullName", "contactEmail"] as const;
@@ -41,13 +42,16 @@ export const InviteAdminDialog: FC<InviteAdminDialogProps> = ({ communityName, i
   const [values, setValues] = useState<AdminInvitationValues>(EMPTY_ADMIN_INVITATION);
   const [errors, setErrors] = useState<MemberRecordErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const dirty = (Object.keys(EMPTY_ADMIN_INVITATION) as (keyof AdminInvitationValues)[]).some(
+    (field) => values[field] !== EMPTY_ADMIN_INVITATION[field],
+  );
 
   const change = (field: MemberRecordField, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
   };
 
-  const handleSubmit = async (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent<HTMLElement>) => {
     event.preventDefault();
     const invalid = validateAdminInvitation(values);
     setErrors(invalid);
@@ -68,45 +72,46 @@ export const InviteAdminDialog: FC<InviteAdminDialogProps> = ({ communityName, i
   };
 
   return (
-    <Dialog open {...inFlightDialogProps(inviteAdmin.isPending, onClose)} maxWidth="sm" fullWidth>
-      <Box component="form" onSubmit={handleSubmit} noValidate>
-        <Box sx={{ px: 3, pt: 2.5 }}>
-          <CommunityScopeHeader name={communityName} />
-        </Box>
-        <DialogTitle sx={{ pt: 0 }}>Invitar administrador a {community}</DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
-          {formError && <Alert severity="error">{formError}</Alert>}
-          <Notice severity="info">
-            Le llegará un email a su dirección de contacto con un enlace para aceptar. Quedará pendiente hasta que
-            acepte la invitación.
-          </Notice>
-          <TextField
-            label="DNI/NIE/NIF"
-            required
-            value={values.personalId}
-            onChange={(event) => change("personalId", event.target.value)}
-            error={!!errors.personalId}
-            helperText={errors.personalId ?? ""}
-            fullWidth
-            sx={{ mt: 1 }}
-          />
-          <MemberRecordFields
-            values={values}
-            errors={errors}
-            onChange={change}
-            fields={ADMIN_FIELDS}
-            required={ADMIN_REQUIRED}
-          />
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={onClose} disabled={inviteAdmin.isPending}>
-            Cancelar
-          </Button>
+    <AppModal
+      isOpen
+      onClose={onClose}
+      dismissible={!inviteAdmin.isPending}
+      dirty={dirty}
+      title={`Invitar administrador a ${community}`}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
+      onSubmit={handleSubmit}
+      actions={
+        <>
+          <ModalCancelButton disabled={inviteAdmin.isPending} />
           <Button type="submit" variant="contained" disabled={inviteAdmin.isPending}>
             {inviteAdmin.isPending ? "Enviando..." : "Invitar"}
           </Button>
-        </DialogActions>
-      </Box>
-    </Dialog>
+        </>
+      }
+    >
+      {formError && <Alert severity="error">{formError}</Alert>}
+      <Notice severity="info">
+        Le llegará un email a su dirección de contacto con un enlace para aceptar. Quedará pendiente hasta que
+        acepte la invitación.
+      </Notice>
+      <TextField
+        label="DNI/NIE/NIF"
+        required
+        value={values.personalId}
+        onChange={(event) => change("personalId", event.target.value)}
+        error={!!errors.personalId}
+        helperText={errors.personalId ?? ""}
+        fullWidth
+        slotProps={{ htmlInput: { readOnly: inviteAdmin.isPending } }}
+      />
+      <MemberRecordFields
+        values={values}
+        errors={errors}
+        onChange={change}
+        fields={ADMIN_FIELDS}
+        required={ADMIN_REQUIRED}
+        readOnly={inviteAdmin.isPending}
+      />
+    </AppModal>
   );
 };

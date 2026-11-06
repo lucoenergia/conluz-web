@@ -1,10 +1,10 @@
 import type { FC } from "react";
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import type { Action, MembershipWriteResult } from "../../hooks/actions";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel } from "../../hooks/useActiveCommunityName";
 import { Notice } from "../../components/Notice";
-import { inFlightDialogProps } from "../../utils/inFlightDialog";
+import { ConfirmationModal } from "../../components/Modals/ConfirmationModal";
 
 export type InvitationWriteKind = "invite" | "resend" | "revoke";
 
@@ -77,33 +77,22 @@ export const InvitationActionDialog: FC<InvitationActionDialogProps> = ({
   };
 
   return (
-    <Dialog open {...inFlightDialogProps(action.isPending, onClose)} maxWidth="xs" fullWidth>
-      <Box sx={{ px: 3, pt: 2.5 }}>
-        <CommunityScopeHeader name={communityName} />
-      </Box>
-      <DialogTitle sx={{ pt: 0 }}>
-        {copy.title} {community}
-      </DialogTitle>
-      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Typography variant="body2">
-          {copy.question}
-          <strong>{memberName}</strong>?
-        </Typography>
-        <Notice severity="info">{copy.consequence(community)}</Notice>
-      </DialogContent>
-      <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose} disabled={action.isPending}>
-          Cancelar
-        </Button>
-        <Button
-          variant="contained"
-          color={kind === "revoke" ? "error" : "primary"}
-          onClick={handleConfirm}
-          disabled={action.isPending}
-        >
-          {action.isPending ? copy.pending : copy.confirm}
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <ConfirmationModal
+      isOpen
+      onCancel={onClose}
+      onConfirm={handleConfirm}
+      confirmLabel={action.isPending ? copy.pending : copy.confirm}
+      confirmColor={kind === "revoke" ? "error" : "primary"}
+      confirmDisabled={action.isPending}
+      inFlight={action.isPending}
+      title={`${copy.title} ${community}`}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
+    >
+      <Typography variant="body2">
+        {copy.question}
+        <strong>{memberName}</strong>?
+      </Typography>
+      <Notice severity="info">{copy.consequence(community)}</Notice>
+    </ConfirmationModal>
   );
 };

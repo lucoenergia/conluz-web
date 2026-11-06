@@ -1,4 +1,14 @@
-import { useCallback, useId, useMemo, useRef, useState, type FC, type FormEvent, type ReactNode } from "react";
+import {
+  useCallback,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type FC,
+  type FormEvent,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { Box, Button, Dialog, IconButton, SwipeableDrawer, Typography, useMediaQuery, useTheme } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useUnsavedChangesGuard } from "../../hooks/useUnsavedChangesGuard";
@@ -69,6 +79,15 @@ export type ResponsiveOverlayProps = ResponsiveOverlayName & {
   onClose: () => void;
   /** The question shown in the footer before discarding changes. */
   discardMessage?: string;
+  /** The discard question's button that closes the overlay. "Descartar cambios" by default. */
+  discardConfirmLabel?: string;
+  /** The discard question's button that keeps the overlay open. "Seguir editando" by default. */
+  discardCancelLabel?: string;
+  /**
+   * Where focus goes when the discard question is answered by staying. By
+   * default, the control in the body that last had focus.
+   */
+  discardReturnFocus?: RefObject<HTMLElement | null>;
   /**
    * A question of the flow's own, asked in the footer while set. Every close
    * attempt, back included, withdraws it instead of closing the overlay.
@@ -117,6 +136,9 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
   inFlight = false,
   onClose,
   discardMessage = DEFAULT_DISCARD_MESSAGE,
+  discardConfirmLabel = "Descartar cambios",
+  discardCancelLabel = "Seguir editando",
+  discardReturnFocus,
   question,
   onSubmit,
   children,
@@ -160,7 +182,7 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
 
   const keepEditing = () => {
     setConfirmingDiscard(false);
-    lastFocused.current?.focus();
+    (discardReturnFocus?.current ?? lastFocused.current)?.focus();
   };
 
   const context = useMemo<ResponsiveOverlayContextValue>(
@@ -187,10 +209,10 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
   ) : confirmingDiscard ? (
     <FooterQuestion message={<Typography variant="body2">{discardMessage}</Typography>}>
       <Button variant="outlined" size="large" onClick={onClose} sx={footerButtonSx}>
-        Descartar cambios
+        {discardConfirmLabel}
       </Button>
       <Button variant="contained" size="large" onClick={keepEditing} autoFocus sx={footerButtonSx}>
-        Seguir editando
+        {discardCancelLabel}
       </Button>
     </FooterQuestion>
   ) : (

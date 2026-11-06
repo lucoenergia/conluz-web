@@ -134,7 +134,8 @@ describe("registering a member", () => {
     });
     const done = await screen.findByRole("dialog", { name: `Miembro registrado en ${COMMUNITY_NAME}` });
     expect(within(done).getByText(/todavía no le hemos enviado nada/)).toBeInTheDocument();
-    await u.click(within(done).getByRole("button", { name: "Cerrar" }));
+    // By text: the overlay's close icon is named "Cerrar" too, and carries no text.
+    await u.click(within(done).getByText("Cerrar"));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
 
     expect(await within(screen.getByRole("table")).findByText("Nuria Nueva")).toBeInTheDocument();

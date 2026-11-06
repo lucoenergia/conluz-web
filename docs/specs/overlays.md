@@ -4,11 +4,11 @@
 | --- | --- |
 | **Prefix** | `UI-OVL` |
 | **Status** | Active |
-| **Routes** | Every route whose page opens a create, edit, action or confirmation flow; on the overlay today: the contact channel editor (#368), every flow on `AppModal` or `ConfirmationModal` (#369), and the investment editor on `/members` (#358) |
+| **Routes** | Every route whose page opens a create, edit, action or confirmation flow; on the overlay today: the contact channel editor (#368), every flow on `AppModal` or `ConfirmationModal` (#369), the investment editor on `/members` (#358), and the member, community admin and platform admin dialogs (#370) |
 | **Roles** | Whoever may start the flow; the overlay adds no rule of its own |
 | **Domain rules** | `lucoenergia/conluz`: none |
 | **Design reference** | Design system: `ContactChannelEditor` (dialogs), the reference the overlay was taken from |
-| **Last reviewed against code** | #369 |
+| **Last reviewed against code** | #370 |
 
 <!-- Domain rules are cited by ID; the prefix registry in lucoenergia/conluz → docs/specs/README.md maps each prefix to its file. -->
 
@@ -135,7 +135,7 @@ changes, and back closes it rather than the page.
 | Exception | Reason | Expires when | Source |
 | --- | --- | --- | --- |
 | The side menu, `CoefficientHistoryDrawer`, and the historical-analysis supply, period and range pickers keep MUI's primitives | The navigation drawer, a read-only side panel and pickers are not create, edit, action or confirmation flows | Never; listed as permanent in the allowlist | #368 |
-| The flows not migrated yet keep MUI's primitives | The migration is split per flow | The issue named next to each allowlist entry closes (#370, #371) | #368 |
+| The flows not migrated yet keep MUI's primitives | The migration is split per flow | The issue named next to each allowlist entry closes (#371) | #368 |
 | The supply disable and enable success dialogs open when the request resolves, not from a user interaction | Opened after the request resolves, not from a user interaction; Chrome's history intervention may let back skip their entry; pending manual verification on a phone | The phone check passes, or they are replaced by an announcement in a separate issue | #369 |
 | The supply, plant and community create and edit pages keep their routes | They become overlays in their own issues | #372, #373 and #374 close | #368 |
 | A reload while an overlay is open leaves one inert history step, costing one extra back press | The history step that lets back close the overlay cannot be removed by a page that has reloaded | Never; browsers offer no way to remove a history entry | #368 |

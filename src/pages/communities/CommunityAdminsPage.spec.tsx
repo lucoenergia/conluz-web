@@ -353,8 +353,8 @@ describe("inviting an admin", () => {
     await within(form).findByRole("button", { name: "Enviando..." });
 
     fireEvent.keyDown(form, { key: "Escape" });
-    // The backdrop has no role or name: MUI's Dialog container takes the click.
-    await u.click(document.querySelector(".MuiDialog-container")!);
+    // Structural: the backdrop has no role or name; it is MUI's own element.
+    await u.click(document.querySelector(".MuiBackdrop-root")!);
     const cancel = within(form).getByRole("button", { name: "Cancelar" });
     expect(cancel).toBeDisabled();
     // A disabled button takes no pointer events, so userEvent refuses it.
@@ -388,7 +388,10 @@ describe("inviting an admin", () => {
     expect(await within(form).findByRole("alert")).toBeInTheDocument();
     expect(within(form).getByRole("button", { name: "Cancelar" })).toBeEnabled();
     expect(within(form).getByRole("textbox", { name: /^Nombre completo/ })).toHaveValue("Nora Nueva");
+    // Released: Escape is no longer ignored. The form holds what was typed, so
+    // it asks before discarding it (UI-OVL-003, #370).
     fireEvent.keyDown(form, { key: "Escape" });
+    await u.click(await within(form).findByRole("button", { name: "Descartar cambios" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 
@@ -550,7 +553,8 @@ describe("the row actions", () => {
     renderPage();
     await screen.findByText("Rosa Activa");
     await confirmFromMenu(u, "Rosa Activa", "Suspender");
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    // `hidden`: the closed overlay stays in the page, aria-hidden, until its exit transition ends.
+    await waitFor(() => expect(screen.queryByRole("dialog", { hidden: true })).not.toBeInTheDocument());
 
     expect(await within(rowOf("Rosa Activa")).findByText("Suspendido")).toBeInTheDocument();
     expect(writeLines(router)).toEqual([`POST ${disableUrl("u-rosa")}`]);
@@ -567,7 +571,8 @@ describe("the row actions", () => {
     renderPage();
     await screen.findByText("Sergio Suspendido");
     await confirmFromMenu(u, "Sergio Suspendido", "Reactivar");
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    // `hidden`: the closed overlay stays in the page, aria-hidden, until its exit transition ends.
+    await waitFor(() => expect(screen.queryByRole("dialog", { hidden: true })).not.toBeInTheDocument());
 
     expect(await within(rowOf("Sergio Suspendido")).findByText("Activo")).toBeInTheDocument();
     expect(writeLines(router)).toEqual([`POST ${enableUrl("u-sergio")}`]);

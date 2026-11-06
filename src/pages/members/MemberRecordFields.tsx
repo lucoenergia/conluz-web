@@ -16,6 +16,8 @@ interface MemberRecordFieldsProps<F extends RecordField> {
   required?: readonly F[];
   /** A label of this form's own for a field, where the record's would be wrong (#310). */
   labels?: Partial<Record<F, string>>;
+  /** While the form's write is in flight (UI-OVL-002). */
+  readOnly?: boolean;
 }
 
 /**
@@ -31,6 +33,7 @@ export function MemberRecordFields<F extends RecordField>({
   fields,
   required,
   labels,
+  readOnly = false,
 }: MemberRecordFieldsProps<F>) {
   const shownFields: readonly RecordField[] = fields ?? ALL_FIELDS;
   const requiredFields: readonly RecordField[] = required ?? ["fullName"];
@@ -43,6 +46,7 @@ export function MemberRecordFields<F extends RecordField>({
     helperText: errors[field] ?? "",
     required: requiredFields.includes(field),
     fullWidth: true,
+    slotProps: { htmlInput: { readOnly } },
   });
   const shown = (field: RecordField) => shownFields.includes(field);
   const ownLabels: Partial<Record<RecordField, string>> = labels ?? {};
@@ -53,8 +57,8 @@ export function MemberRecordFields<F extends RecordField>({
       {shown("memberNumber") && (
         <TextField
           label="Número de socio"
-          slotProps={{ htmlInput: { inputMode: "numeric" } }}
           {...fieldProps("memberNumber")}
+          slotProps={{ htmlInput: { inputMode: "numeric", readOnly } }}
         />
       )}
       {shown("contactEmail") && <TextField label={ownLabels.contactEmail ?? "Email de contacto"} type="email" {...fieldProps("contactEmail")} />}

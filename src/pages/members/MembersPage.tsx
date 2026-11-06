@@ -12,10 +12,6 @@ import {
   FormControl,
   InputLabel,
   FormHelperText,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   ListItemIcon,
   ListItemText,
   Divider,
@@ -88,7 +84,9 @@ import { MembersFilters } from "./MembersFilters";
 import { ListPagination } from "../../components/ListPagination";
 import { useListPage } from "../../components/ListPagination/useListPage";
 import { Notice } from "../../components/Notice";
-import { inFlightDialogProps } from "../../utils/inFlightDialog";
+import { AppModal } from "../../components/Modals/AppModal";
+import { ConfirmationModal } from "../../components/Modals/ConfirmationModal";
+import { ConfirmationActions } from "../../components/Modals/ConfirmationActions";
 import { useRowSelection } from "../../hooks/useRowSelection";
 import { pluralize } from "../../utils/pluralize";
 
@@ -345,6 +343,10 @@ export const MembersPage: FC = () => {
     ? memberships.find((m) => m.user?.id === removeConfirmUserId)
     : null;
   const removeTargetRemove = forMembership(removeTarget ?? undefined).actions.remove;
+  // Each confirmation holds its request: nothing closes it while it runs (UI-OVL-002).
+  const statusPending = selectedStatusToggle?.action.isPending ?? false;
+  const rolePending = selectedActions.changeRole?.isPending ?? false;
+  const removePending = removeTargetRemove?.isPending ?? false;
 
   return (
     <Box
@@ -814,140 +816,104 @@ export const MembersPage: FC = () => {
       )}
 
       {/* Suspend / reactivate confirmation, gated like the item that opens it. */}
-      <Dialog
-        open={statusDialogOpen && !!selectedStatusToggle}
-        {...inFlightDialogProps(selectedStatusToggle?.action.isPending ?? false, () => setStatusDialogOpen(false))}
-        maxWidth="xs"
-        fullWidth
+      <ConfirmationModal
+        isOpen={statusDialogOpen && !!selectedStatusToggle}
+        onCancel={() => setStatusDialogOpen(false)}
+        onConfirm={handleStatusConfirm}
+        confirmLabel={selectedStatusToggle?.isSuspending ? "Suspender" : "Reactivar"}
+        confirmColor={selectedStatusToggle?.isSuspending ? "error" : "primary"}
+        confirmDisabled={statusPending}
+        inFlight={statusPending}
+        title={`${selectedStatusToggle?.isSuspending ? "Suspender miembro en" : "Reactivar miembro en"} ${community}`}
+        scopeHeader={<CommunityScopeHeader name={communityName} />}
       >
-        <Box sx={{ px: 3, pt: 2.5 }}>
-          <CommunityScopeHeader name={communityName} />
-        </Box>
-        <DialogTitle sx={{ pt: 0 }}>
-          {selectedStatusToggle?.isSuspending ? "Suspender miembro en" : "Reactivar miembro en"} {community}
-        </DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <Typography variant="body2">
-            {selectedStatusToggle?.isSuspending ? "¿Suspender a " : "¿Reactivar a "}
-            <strong>{selectedMembership?.fullName ?? "este miembro"}</strong> en {community}?
-          </Typography>
-          <Notice severity="info">
-            {selectedStatusToggle?.isSuspending
-              ? `Mientras esté suspendido, no podrá acceder a ${community}. Su cuenta y su acceso a otras comunidades no cambian.`
-              : `Volverá a tener acceso a ${community}.`}
-          </Notice>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setStatusDialogOpen(false)} disabled={selectedStatusToggle?.action.isPending}>
-            Cancelar
-          </Button>
-          <Button
-            variant="contained"
-            color={selectedStatusToggle?.isSuspending ? "error" : "primary"}
-            onClick={handleStatusConfirm}
-            disabled={selectedStatusToggle?.action.isPending}
-          >
-            {selectedStatusToggle?.isSuspending ? "Suspender" : "Reactivar"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Typography variant="body2">
+          {selectedStatusToggle?.isSuspending ? "¿Suspender a " : "¿Reactivar a "}
+          <strong>{selectedMembership?.fullName ?? "este miembro"}</strong> en {community}?
+        </Typography>
+        <Notice severity="info">
+          {selectedStatusToggle?.isSuspending
+            ? `Mientras esté suspendido, no podrá acceder a ${community}. Su cuenta y su acceso a otras comunidades no cambian.`
+            : `Volverá a tener acceso a ${community}.`}
+        </Notice>
+      </ConfirmationModal>
 
       {/* Change role dialog */}
       {/* Mounted inside the same gate as the item that opens it: a confirmation
           dialog for an action the caller was never given has no way to be
           reached, and no way to be left open across a switch that revokes it. */}
-      <Dialog
-        open={roleDialogOpen && !!selectedActions.changeRole}
-        {...inFlightDialogProps(selectedActions.changeRole?.isPending ?? false, () => setRoleDialogOpen(false))}
-        maxWidth="sm"
-        fullWidth
-      >
-        <Box sx={{ px: 3, pt: 2.5 }}>
-          <CommunityScopeHeader name={communityName} />
-        </Box>
-        <DialogTitle sx={{ pt: 0 }}>Cambiar rol en {community}</DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
-          <Typography variant="body2">
-            Cambiando el rol de <strong>{selectedMembership?.fullName}</strong>.
-          </Typography>
-          <FormControl fullWidth size="small">
-            <InputLabel>Nuevo rol</InputLabel>
-            <Select
-              value={pendingRole}
-              label="Nuevo rol"
-              onChange={(e) => setPendingRole(e.target.value)}
-            >
-              <MenuItem
-                value={MembershipResponseRole.COMMUNITY_MEMBER}
-                disabled={isLastActiveAdmin(selectedMembership)}
-              >
-                {ROLE_LABELS[MembershipResponseRole.COMMUNITY_MEMBER]}
-              </MenuItem>
-              <MenuItem value={MembershipResponseRole.COMMUNITY_ADMIN}>
-                {ROLE_LABELS[MembershipResponseRole.COMMUNITY_ADMIN]}
-              </MenuItem>
-            </Select>
-            {isLastActiveAdmin(selectedMembership) && (
-              <FormHelperText>{LAST_ACTIVE_ADMIN_EXPLANATION}</FormHelperText>
-            )}
-          </FormControl>
-          <Notice severity="info">
-            {pendingRole === MembershipResponseRole.COMMUNITY_ADMIN
-              ? "Un administrador puede gestionar los miembros y la configuración de la comunidad."
-              : "Un miembro tiene acceso básico a la comunidad y perderá los permisos de administración."}
-          </Notice>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setRoleDialogOpen(false)} disabled={selectedActions.changeRole?.isPending}>
-            Cancelar
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleRoleDialogConfirm}
-            disabled={
+      <AppModal
+        isOpen={roleDialogOpen && !!selectedActions.changeRole}
+        onClose={() => setRoleDialogOpen(false)}
+        size="compact"
+        dismissible={!rolePending}
+        dirty={pendingRole !== selectedMembership?.role}
+        title={`Cambiar rol en ${community}`}
+        scopeHeader={<CommunityScopeHeader name={communityName} />}
+        actions={
+          <ConfirmationActions
+            onConfirm={handleRoleDialogConfirm}
+            confirmLabel={rolePending ? "Guardando..." : "Confirmar"}
+            confirmColor="primary"
+            confirmDisabled={
               pendingRole === selectedMembership?.role ||
               // A refetch can make the row the last active admin while Miembro is picked.
               (pendingRole === MembershipResponseRole.COMMUNITY_MEMBER && isLastActiveAdmin(selectedMembership)) ||
-              selectedActions.changeRole?.isPending
+              rolePending
             }
+            inFlight={rolePending}
+          />
+        }
+      >
+        <Typography variant="body2">
+          Cambiando el rol de <strong>{selectedMembership?.fullName}</strong>.
+        </Typography>
+        <FormControl fullWidth size="small">
+          <InputLabel>Nuevo rol</InputLabel>
+          <Select
+            value={pendingRole}
+            label="Nuevo rol"
+            readOnly={rolePending}
+            onChange={(e) => setPendingRole(e.target.value)}
           >
-            {selectedActions.changeRole?.isPending ? "Guardando..." : "Confirmar"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <MenuItem
+              value={MembershipResponseRole.COMMUNITY_MEMBER}
+              disabled={isLastActiveAdmin(selectedMembership)}
+            >
+              {ROLE_LABELS[MembershipResponseRole.COMMUNITY_MEMBER]}
+            </MenuItem>
+            <MenuItem value={MembershipResponseRole.COMMUNITY_ADMIN}>
+              {ROLE_LABELS[MembershipResponseRole.COMMUNITY_ADMIN]}
+            </MenuItem>
+          </Select>
+          {isLastActiveAdmin(selectedMembership) && (
+            <FormHelperText>{LAST_ACTIVE_ADMIN_EXPLANATION}</FormHelperText>
+          )}
+        </FormControl>
+        <Notice severity="info">
+          {pendingRole === MembershipResponseRole.COMMUNITY_ADMIN
+            ? "Un administrador puede gestionar los miembros y la configuración de la comunidad."
+            : "Un miembro tiene acceso básico a la comunidad y perderá los permisos de administración."}
+        </Notice>
+      </AppModal>
 
       {/* Remove confirmation dialog, gated like the item that opens it. */}
-      <Dialog
-        open={!!removeConfirmUserId && !!removeTargetRemove && !isLastActiveAdmin(removeTarget)}
-        {...inFlightDialogProps(removeTargetRemove?.isPending ?? false, () => setRemoveConfirmUserId(null))}
-        maxWidth="xs"
-        fullWidth
+      <ConfirmationModal
+        isOpen={!!removeConfirmUserId && !!removeTargetRemove && !isLastActiveAdmin(removeTarget)}
+        onCancel={() => setRemoveConfirmUserId(null)}
+        onConfirm={() => removeConfirmUserId && handleRemoveMember(removeConfirmUserId)}
+        confirmLabel={removePending ? "Eliminando..." : "Eliminar"}
+        confirmDisabled={removePending}
+        inFlight={removePending}
+        title={`Eliminar miembro de ${community}`}
+        scopeHeader={<CommunityScopeHeader name={communityName} />}
       >
-        <Box sx={{ px: 3, pt: 2.5 }}>
-          <CommunityScopeHeader name={communityName} />
-        </Box>
-        <DialogTitle sx={{ pt: 0 }}>Eliminar miembro de {community}</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">
-            ¿Eliminar a{" "}
-            <strong>{removeTarget?.fullName ?? "este miembro"}</strong> de {community}?
-            Esta acción no se puede deshacer.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setRemoveConfirmUserId(null)} disabled={removeTargetRemove?.isPending}>
-            Cancelar
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => removeConfirmUserId && handleRemoveMember(removeConfirmUserId)}
-            disabled={removeTargetRemove?.isPending}
-          >
-            {removeTargetRemove?.isPending ? "Eliminando..." : "Eliminar"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Typography variant="body2">
+          ¿Eliminar a{" "}
+          <strong>{removeTarget?.fullName ?? "este miembro"}</strong> de {community}?
+          Esta acción no se puede deshacer.
+        </Typography>
+      </ConfirmationModal>
     </Box>
   );
 };
