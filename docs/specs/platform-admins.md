@@ -8,7 +8,7 @@
 | **Roles** | A caller whose platform capabilities carry `canListPlatformAdmins` |
 | **Domain rules** | lucoenergia/conluz ADR-0004 (platform-admin invitations, #452) |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #370 |
+| **Last reviewed against code** | #371 |
 
 ## Purpose
 
@@ -161,6 +161,7 @@ invitation. The acceptance itself is the invitation-acceptance screen (`UI-INV`)
     written to storage or cookies, put in the URL, logged, held in the query or mutation cache, or
     shown anywhere else.
   - The code MUST replace the form or the confirmation in the same overlay, at that flow's size.
+    When the code appears, focus moves to it.
   - While it shows the code, "Hecho" MUST close the dialog directly. Every other close attempt
     (Escape, the backdrop, a swipe, the close icon, back) MUST first ask, in the footer, "Este
     código no se volverá a mostrar. ¿Lo has copiado?": "Volver al código" MUST keep the code and
@@ -171,10 +172,12 @@ invitation. The acceptance itself is the invitation-acceptance screen (`UI-INV`)
   person cannot accept without it. A code closed by accident cannot be shown again, and getting a
   new one spends one of the day's resends. Back is how a phone dismisses a sheet, so it must not
   lose the code silently; asking, rather than refusing to close, still lets the caller leave on
-  purpose.
+  purpose. Focus on the code reads it out as it appears, where the button that sent the
+  request no longer is (UI-OVL-009).
 - **Implements:** lucoenergia/conluz ADR-0004 §4
 - **Source:** #288 (the closing rule: maintainer decision); changed in #370 (every close but
-  "Hecho" asks first, on the shared overlay: maintainer decision)
+  "Hecho" asks first, on the shared overlay: maintainer decision); changed in #371 (focus moves to
+  the code, UI-OVL-009)
 
 ### UI-PAD-011 — A pending invitation shows its state and its link's
 
