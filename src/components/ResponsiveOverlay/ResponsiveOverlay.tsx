@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useId,
   useMemo,
   useRef,
@@ -15,6 +16,7 @@ import { useUnsavedChangesGuard } from "../../hooks/useUnsavedChangesGuard";
 import { colors, radii } from "../../theme/tokens";
 import { ResponsiveOverlayContext, type ResponsiveOverlayContextValue } from "./overlayContext";
 import { useBackDismiss } from "./overlayHistory";
+import { OVERLAY_FOCUS_SELECTOR } from "./focusTarget";
 
 /** The dialog's width from `md` up: a form, or a confirmation or short action. The sheet is always full width. */
 export type ResponsiveOverlaySize = "form" | "compact";
@@ -93,6 +95,12 @@ export type ResponsiveOverlayProps = ResponsiveOverlayName & {
    * attempt, back included, withdraws it instead of closing the overlay.
    */
   question?: ResponsiveOverlayQuestion;
+  /**
+   * Names what the body shows, such as a flow's step. When it changes while
+   * the overlay is open, focus moves to the new content's
+   * `OVERLAY_FOCUS_TARGET`, or to the title when it marks none (UI-OVL-009).
+   */
+  contentKey?: string;
   /** Makes the overlay a form, so a submit button in `actions` submits it. */
   onSubmit?: (event: FormEvent<HTMLElement>) => void;
   /** The scrolling body. */
@@ -140,6 +148,7 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
   discardCancelLabel = "Seguir editando",
   discardReturnFocus,
   question,
+  contentKey,
   onSubmit,
   children,
   actions,
@@ -151,6 +160,9 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
   const [wasOpen, setWasOpen] = useState(open);
   const lastFocused = useRef<HTMLElement | null>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const shown = useRef({ open, contentKey });
 
   // A closed overlay forgets the question, so it never reopens asking.
   if (wasOpen !== open) {
@@ -159,6 +171,23 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
   }
 
   useUnsavedChangesGuard(open && dirty);
+
+  // The content the focused control belonged to is gone: without this, focus
+  // falls outside the overlay and the new content is not announced. Only a
+  // change while it stays open counts: opening keeps MUI's initial focus, and
+  // an overlay closing moves nothing (UI-OVL-009).
+  useEffect(() => {
+    const before = shown.current;
+    shown.current = { open, contentKey };
+    if (!open || !before.open || before.contentKey === contentKey) return;
+    const body = bodyRef.current;
+    const target =
+      body?.querySelector<HTMLElement>(OVERLAY_FOCUS_SELECTOR) ??
+      titleRef.current ??
+      // No title: the focus trap's own root, still inside the overlay.
+      body?.closest<HTMLElement>('[tabindex="-1"]');
+    target?.focus();
+  }, [open, contentKey]);
 
   const requestClose = useCallback(() => {
     if (inFlight) return;
@@ -228,7 +257,15 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
       onSubmit={onSubmit}
       // Typing again withdraws the question, as an answer to it.
       onChange={() => setConfirmingDiscard(false)}
-      sx={{ display: "flex", flexDirection: "column", minHeight: 0, flex: 1 }}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: 0,
+        flex: 1,
+        // Focused by UI-OVL-009 only, and not controls: a ring would mark
+        // nothing the user can act on. A marked control keeps its own.
+        [`& ${OVERLAY_FOCUS_SELECTOR}[tabindex='-1']:focus`]: { outline: "none" },
+      }}
     >
       {!isDesktop && (
         <Box aria-hidden sx={{ width: 36, height: 4, borderRadius: radii.small, bgcolor: colors.border.inactive, mx: "auto", mt: 1 }} />
@@ -251,7 +288,15 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
               {icon}
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 {title !== undefined && (
-                  <Typography id={titleId} variant="h6" component="h2">
+                  <Typography
+                    id={titleId}
+                    ref={titleRef}
+                    tabIndex={-1}
+                    variant="h6"
+                    component="h2"
+                    // Focused by UI-OVL-009 only, as the fallback target.
+                    sx={{ "&:focus": { outline: "none" } }}
+                  >
                     {title}
                   </Typography>
                 )}
@@ -272,6 +317,7 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
       </Box>
 
       <Box
+        ref={bodyRef}
         onFocus={(event) => {
           if (event.target instanceof HTMLElement) lastFocused.current = event.target;
         }}

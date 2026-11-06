@@ -320,8 +320,6 @@ const OVERLAY_PRIMITIVE_ALLOWLIST = [
   "src/pages/historical-analysis/SupplySelector.tsx", // permanent: a picker, not a flow
   "src/pages/historical-analysis/PeriodSelector.tsx", // permanent: a picker, not a flow
   "src/pages/historical-analysis/CustomRangePicker.tsx", // permanent: a picker, not a flow
-  "src/components/CsvImportDialog/CsvImportDialog.tsx", // temporary: #371
-  "src/pages/production/HuaweiConfigDialog.tsx", // temporary: #371
 ];
 
 export default tseslint.config([

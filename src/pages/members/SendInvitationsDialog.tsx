@@ -13,6 +13,7 @@ import { pluralize } from "../../utils/pluralize";
 import { Notice } from "../../components/Notice";
 import { ActionStatus } from "../../components/ActionStatus";
 import { AppModal } from "../../components/Modals/AppModal";
+import { OVERLAY_FOCUS_TARGET } from "../../components/ResponsiveOverlay";
 import { ModalCancelButton } from "../../components/Modals/ModalCancelButton";
 
 /** Someone selected to receive an email: a first invitation, or a resend when already invited. */
@@ -107,6 +108,7 @@ export const SendInvitationsDialog: FC<SendInvitationsDialogProps> = ({
       onClose={onClose}
       dismissible={!isPending}
       title={`Enviar invitación en ${community}`}
+      contentKey={results ? "result" : "confirm"}
       scopeHeader={<CommunityScopeHeader name={communityName} />}
       actions={
         <>
@@ -122,7 +124,7 @@ export const SendInvitationsDialog: FC<SendInvitationsDialogProps> = ({
       {error && <Alert severity="error">{error}</Alert>}
       {results ? (
         <>
-          <Notice severity={refused.length > 0 ? "info" : "success"}>
+          <Notice severity={refused.length > 0 ? "info" : "success"} {...OVERLAY_FOCUS_TARGET} tabIndex={-1}>
             <Box component="span" sx={{ display: "block" }}>
               {sentText}
             </Box>

@@ -4,11 +4,11 @@
 | --- | --- |
 | **Prefix** | `UI-OVL` |
 | **Status** | Active |
-| **Routes** | Every route whose page opens a create, edit, action or confirmation flow; on the overlay today: the contact channel editor (#368), every flow on `AppModal` or `ConfirmationModal` (#369), the investment editor on `/members` (#358), and the member, community admin and platform admin dialogs (#370) |
+| **Routes** | Every route whose page opens a create, edit, action or confirmation flow; on the overlay today: the contact channel editor (#368), every flow on `AppModal` or `ConfirmationModal` (#369), the investment editor on `/members` (#358), the member, community admin and platform admin dialogs (#370), and the CSV import on `/members` and `/supply-points` and the Huawei configuration on `/production/:plantId` (#371) |
 | **Roles** | Whoever may start the flow; the overlay adds no rule of its own |
 | **Domain rules** | `lucoenergia/conluz`: none |
 | **Design reference** | Design system: `ContactChannelEditor` (dialogs), the reference the overlay was taken from |
-| **Last reviewed against code** | #370 |
+| **Last reviewed against code** | #371 |
 
 <!-- Domain rules are cited by ID; the prefix registry in lucoenergia/conluz → docs/specs/README.md maps each prefix to its file. -->
 
@@ -120,6 +120,17 @@ changes, and back closes it rather than the page.
 - **Implements:** n/a
 - **Source:** #368
 
+### UI-OVL-009 — Focus follows replaced content
+
+- **Status:** Active
+- **Rule:** When an overlay replaces its content (a new step, a result, a confirmation code), focus
+  MUST move to the new content's main message or first control; it MUST NOT be left outside the
+  overlay. Initial focus on open is not affected.
+- **Rationale:** The control that had focus goes with the content it belonged to. Without this,
+  keyboard and screen-reader users lose their place, and the new content is not announced.
+- **Implements:** n/a
+- **Source:** #371
+
 ## States
 
 | State | Rendered | Actions available |
@@ -129,13 +140,13 @@ changes, and back closes it rather than the page.
 | Write in flight | The same, read-only, with no close icon (UI-OVL-002) | None that closes it |
 | Asking the flow's own question | The footer replaced by the question, such as deleting a contact channel (UI-CTU-009) | Its two answers; any close attempt, back included, withdraws it (UI-OVL-004). Whether typing withdraws it is the flow's choice; the unsaved-changes question is always withdrawn by typing (UI-OVL-003) |
 | Stacked | Each overlay above the previous one | Back closes the top one only (UI-OVL-004) |
+| Content replaced | The new step, result or code, with focus on its main message or first control (UI-OVL-009) | The new content's controls |
 
 ## Accepted exceptions
 
 | Exception | Reason | Expires when | Source |
 | --- | --- | --- | --- |
 | The side menu, `CoefficientHistoryDrawer`, and the historical-analysis supply, period and range pickers keep MUI's primitives | The navigation drawer, a read-only side panel and pickers are not create, edit, action or confirmation flows | Never; listed as permanent in the allowlist | #368 |
-| The flows not migrated yet keep MUI's primitives | The migration is split per flow | The issue named next to each allowlist entry closes (#371) | #368 |
 | The supply disable and enable success dialogs open when the request resolves, not from a user interaction | Opened after the request resolves, not from a user interaction; Chrome's history intervention may let back skip their entry; pending manual verification on a phone | The phone check passes, or they are replaced by an announcement in a separate issue | #369 |
 | The supply, plant and community create and edit pages keep their routes | They become overlays in their own issues | #372, #373 and #374 close | #368 |
 | A reload while an overlay is open leaves one inert history step, costing one extra back press | The history step that lets back close the overlay cannot be removed by a page that has reloaded | Never; browsers offer no way to remove a history entry | #368 |

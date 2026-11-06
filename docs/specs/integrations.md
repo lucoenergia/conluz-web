@@ -8,7 +8,7 @@
 | **Roles** | `/integrations`: a caller who may manage the active community (`canManage`). Plant detail's integrations section: a caller who may manage that plant (the plant's `canManage`) |
 | **Domain rules** | `lucoenergia/conluz`: DCF-001, DCF-002, DCF-003 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #256 |
+| **Last reviewed against code** | #371 |
 
 ## Purpose
 
@@ -267,7 +267,7 @@ The plant's Huawei integration, on plant detail.
 | Configured, enabled | Username, base URL, whether a password is stored; the switch on | Switch, Editar |
 | Configured, disabled | As above, the switch off, and text saying the integration is disabled | Switch, Editar |
 | Enable refused (`HUAWEI_CONFIG_INCOMPLETE`) | The switch off and a message naming the missing fields | Completar configuración, Editar |
-| Form (create or edit) | A dialog that fills the screen on a phone, with no `enabled` control | Guardar, Cancelar |
+| Form (create or edit) | In the shared overlay (UI-OVL-001), with no `enabled` control | Guardar (or Enter in a field), Cancelar |
 
 ## Accepted exceptions
 
