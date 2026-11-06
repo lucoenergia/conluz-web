@@ -8,10 +8,11 @@
 | **Roles** | A caller with the plant's `canListSharingAgreements`. Authoring and lifecycle actions: the capabilities each agreement and coefficient carries |
 | **Domain rules** | n/a |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `ListPagination` (the list; its shared rules are `record-lists.md`) |
-| **Last reviewed against code** | #350 |
+| **Last reviewed against code** | #369 |
 
 Scope: the rules introduced in #277 for sharing-agreement states migrated from visual tests to
-Vitest, and the rules #350 introduced for the list's rows and for how a status is shown. Not
+Vitest, the rules #350 introduced for the list's rows and for how a status is shown, and the
+coefficient history's layout (#369). Not
 exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
 list shares, the agreement list among them, are in [`record-lists.md`](record-lists.md).
 
@@ -227,6 +228,18 @@ is in force today.
   reserved for failures.
 - **Implements:** n/a
 - **Source:** #350
+
+### UI-AGR-017 — The coefficient history is a side drawer from md up, a bottom sheet below
+
+- **Status:** Active
+- **Rule:** The coefficient history MUST open as a side drawer from the `md` breakpoint up, and as a
+  bottom sheet below it.
+- **Rationale:** One threshold for the whole app, the shared overlay's (UI-OVL-001). The history
+  switched at a narrower width of its own, so between that width and `md` it was a side drawer over
+  a page whose dialogs were already bottom sheets. On a phone the sheet puts the timeline under the
+  thumb; from `md` up the side panel keeps the agreement's table in view beside it.
+- **Implements:** n/a
+- **Source:** #369
 
 ## States
 
