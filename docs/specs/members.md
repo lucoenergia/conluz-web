@@ -8,7 +8,7 @@
 | **Roles** | A caller whose active community carries `canManageMemberships`; registration, the import, invitations and the send to selected members need their own capabilities (UI-MBR-008, UI-MBR-018, UI-MBR-012, UI-MBR-037) |
 | **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-007, MEM-008, MEM-009, MEM-010, MEM-011, MEM-012, MEM-013, MEM-025, MEM-026, MEM-027, MEM-028, MEM-029, MEM-030, MEM-033, MEM-034, MEM-037, ACC-003, ACC-008, ACC-010 |
 | **Design reference** | The members page search and filters, screens A–D, mobile and desktop: https://claude.ai/artifact/RwsRYG1EqfMcnBmbysot93 (#331) |
-| **Last reviewed against code** | #328 |
+| **Last reviewed against code** | #370 |
 
 ## Purpose
 
@@ -665,7 +665,7 @@ The record dialog:
 | Pending invitation | The same, with a notice about the next resend | Guardar, Cancelar |
 | Field errors | The errors on their fields | Guardar, Cancelar |
 | Refused | An error for the whole form, or on the email field | Guardar, Cancelar |
-| Saving | The save button disabled | Cancelar |
+| Saving | The save button disabled, the fields read-only | None; the dialog cannot be closed (UI-OVL-002) |
 
 The registration dialog:
 

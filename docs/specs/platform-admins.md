@@ -8,7 +8,7 @@
 | **Roles** | A caller whose platform capabilities carry `canListPlatformAdmins` |
 | **Domain rules** | lucoenergia/conluz ADR-0004 (platform-admin invitations, #452) |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #331 |
+| **Last reviewed against code** | #370 |
 
 ## Purpose
 
@@ -160,13 +160,21 @@ invitation. The acceptance itself is the invitation-acceptance screen (`UI-INV`)
   - The code MUST be kept only in that dialog's state, and discarded when it closes. It MUST NOT be
     written to storage or cookies, put in the URL, logged, held in the query or mutation cache, or
     shown anywhere else.
-  - While it shows the code, the dialog MUST NOT close on a backdrop click or Escape; only "Hecho"
-    closes it. It MUST stay open if the refetch that follows takes the row away.
+  - The code MUST replace the form or the confirmation in the same overlay, at that flow's size.
+  - While it shows the code, "Hecho" MUST close the dialog directly. Every other close attempt
+    (Escape, the backdrop, a swipe, the close icon, back) MUST first ask, in the footer, "Este
+    código no se volverá a mostrar. ¿Lo has copiado?": "Volver al código" MUST keep the code and
+    put focus on its copy button, and "Cerrar sin copiar" MUST close the dialog. Leaving the page
+    MUST prompt, as for unsaved changes (UI-OVL-005). The dialog MUST stay open if the refetch that
+    follows takes the row away.
 - **Rationale:** The backend returns the code only in the response that generated it, and the
   person cannot accept without it. A code closed by accident cannot be shown again, and getting a
-  new one spends one of the day's resends.
+  new one spends one of the day's resends. Back is how a phone dismisses a sheet, so it must not
+  lose the code silently; asking, rather than refusing to close, still lets the caller leave on
+  purpose.
 - **Implements:** lucoenergia/conluz ADR-0004 §4
-- **Source:** #288 (the closing rule: maintainer decision)
+- **Source:** #288 (the closing rule: maintainer decision); changed in #370 (every close but
+  "Hecho" asks first, on the shared overlay: maintainer decision)
 
 ### UI-PAD-011 — A pending invitation shows its state and its link's
 
@@ -244,7 +252,7 @@ invitation. The acceptance itself is the invitation-acceptance screen (`UI-INV`)
 | Empty | "No hay administradores de plataforma", only with neither holders nor pending invitations | None |
 | Error | An error message | None |
 | Listed | One row per platform admin, then one per pending invitation | "Invitar administrador de plataforma" when allowed; "Revocar rol" on the holders' rows that allow it; "Reenviar" and "Revocar enlace" on pending rows |
-| Code shown | The code dialog, over the list | "Copiar", "Hecho" |
+| Code shown | The code, in the overlay that sent it (UI-PAD-010) | "Copiar", "Hecho"; any other close asks first, answered by "Volver al código" or "Cerrar sin copiar" |
 
 ## Accepted exceptions
 

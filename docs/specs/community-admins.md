@@ -8,7 +8,7 @@
 | **Roles** | A caller to whom the community named in the URL reports `canManageAdmins`: the platform admin |
 | **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-010, MEM-011, MEM-013, MEM-020, MEM-021, MEM-022, MEM-023, MEM-025, ACC-010 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #331 |
+| **Last reviewed against code** | #370 |
 
 ## Purpose
 
@@ -141,7 +141,7 @@ The invitation dialog:
 | Form | The empty form, with a notice that an invitation is emailed | Invitar, Cancelar |
 | Field errors | The errors on their fields | Invitar, Cancelar |
 | Refused | An error for the whole form, or on the personal ID, with the values as typed | Invitar, Cancelar |
-| Sending | The invite button disabled | Cancelar |
+| Sending | The invite button disabled, the fields read-only | None; the dialog cannot be closed (UI-OVL-002) |
 
 ## Accepted exceptions
 
