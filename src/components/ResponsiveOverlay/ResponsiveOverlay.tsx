@@ -16,6 +16,33 @@ const DEFAULT_DISCARD_MESSAGE = "Tienes cambios sin guardar. Si cierras, se perd
 type Slot = ReactNode | ((overlay: ResponsiveOverlayContextValue) => ReactNode);
 
 /**
+ * A question the flow asks in the footer, such as "delete this?", placed and
+ * answered like the unsaved-changes question.
+ */
+export interface ResponsiveOverlayQuestion {
+  /** What is asked, read out as an alert. */
+  message: ReactNode;
+  cancelLabel: string;
+  confirmLabel: string;
+  confirmColor?: "primary" | "error";
+  onConfirm: () => void;
+  /** Withdraws the question: its cancel button, and every close attempt while it is asked. */
+  onCancel: () => void;
+}
+
+const footerButtonSx = { minHeight: 44, flex: { xs: 1, md: "none" } } as const;
+
+/** The footer while a question is asked: the question, then its two answers. */
+const FooterQuestion: FC<{ message: ReactNode; children: ReactNode }> = ({ message, children }) => (
+  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, width: "100%" }}>
+    <Box role="alert" sx={{ color: colors.text.body }}>
+      {message}
+    </Box>
+    <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>{children}</Box>
+  </Box>
+);
+
+/**
  * How the overlay is named: by the `title` it shows; when the content renders
  * its own heading, by that heading's id; or, with no visible title, by a
  * `label`. An overlay with none of them does not compile.
@@ -42,6 +69,11 @@ export type ResponsiveOverlayProps = ResponsiveOverlayName & {
   onClose: () => void;
   /** The question shown in the footer before discarding changes. */
   discardMessage?: string;
+  /**
+   * A question of the flow's own, asked in the footer while set. Every close
+   * attempt, back included, withdraws it instead of closing the overlay.
+   */
+  question?: ResponsiveOverlayQuestion;
   /** Makes the overlay a form, so a submit button in `actions` submits it. */
   onSubmit?: (event: FormEvent<HTMLElement>) => void;
   /** The scrolling body. */
@@ -58,7 +90,8 @@ export type ResponsiveOverlayProps = ResponsiveOverlayName & {
  *
  * Every way of closing it -- the close icon, Escape, the backdrop, a swipe, a
  * consumer's Cancelar through `requestClose`, and browser or system back --
- * goes through one path: ignored while `inFlight`; with `dirty`, the footer
+ * goes through one path: ignored while `inFlight`; while the flow's own
+ * `question` is asked, it withdraws that question; with `dirty`, the footer
  * asks first, and typing again withdraws the question; otherwise `onClose`.
  * While open and dirty, leaving the page prompts.
  *
@@ -84,6 +117,7 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
   inFlight = false,
   onClose,
   discardMessage = DEFAULT_DISCARD_MESSAGE,
+  question,
   onSubmit,
   children,
   actions,
@@ -106,12 +140,17 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
 
   const requestClose = useCallback(() => {
     if (inFlight) return;
-    if (dirty) setConfirmingDiscard(true);
+    if (question) question.onCancel();
+    else if (dirty) setConfirmingDiscard(true);
     else onClose();
-  }, [inFlight, dirty, onClose]);
+  }, [inFlight, question, dirty, onClose]);
 
   useBackDismiss(open, () => {
     if (inFlight) return true;
+    if (question) {
+      question.onCancel();
+      return true;
+    }
     if (dirty) {
       setConfirmingDiscard(true);
       return true;
@@ -130,26 +169,30 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
   );
   const render = (slot: Slot) => (typeof slot === "function" ? slot(context) : slot);
 
-  const footer = confirmingDiscard ? (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, width: "100%" }}>
-      <Typography role="alert" variant="body2" sx={{ color: colors.text.body }}>
-        {discardMessage}
-      </Typography>
-      <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-        <Button variant="outlined" size="large" onClick={onClose} sx={{ minHeight: 44, flex: { xs: 1, md: "none" } }}>
-          Descartar cambios
-        </Button>
-        <Button
-          variant="contained"
-          size="large"
-          onClick={keepEditing}
-          autoFocus
-          sx={{ minHeight: 44, flex: { xs: 1, md: "none" } }}
-        >
-          Seguir editando
-        </Button>
-      </Box>
-    </Box>
+  const footer = question ? (
+    <FooterQuestion message={question.message}>
+      <Button variant="outlined" size="large" onClick={question.onCancel} autoFocus sx={footerButtonSx}>
+        {question.cancelLabel}
+      </Button>
+      <Button
+        variant="contained"
+        size="large"
+        color={question.confirmColor ?? "primary"}
+        onClick={question.onConfirm}
+        sx={footerButtonSx}
+      >
+        {question.confirmLabel}
+      </Button>
+    </FooterQuestion>
+  ) : confirmingDiscard ? (
+    <FooterQuestion message={<Typography variant="body2">{discardMessage}</Typography>}>
+      <Button variant="outlined" size="large" onClick={onClose} sx={footerButtonSx}>
+        Descartar cambios
+      </Button>
+      <Button variant="contained" size="large" onClick={keepEditing} autoFocus sx={footerButtonSx}>
+        Seguir editando
+      </Button>
+    </FooterQuestion>
   ) : (
     actions !== undefined && render(actions)
   );

@@ -12,8 +12,6 @@ import { ContactChannelEditor, type ContactChannelEditorStatus } from "../../com
 import { ContactChannelList, contactChannelEditId, contactChannelHeadingId } from "../../components/ContactChannelList";
 import { ContactChannelReorderList, type ContactChannelReorderStatus } from "../../components/ContactChannelReorderList";
 import { EmptyState } from "../../components/EmptyState";
-import { useBackDismiss } from "../../components/ResponsiveOverlay";
-import { DeleteContactChannelConfirmationModal } from "../../components/Modals/DeleteContactChannelConfirmationModal";
 import { SectionHeading } from "../../components/SectionHeading";
 import type { CommunityRowActions } from "../../hooks/actions/useCommunityActions";
 import { sxStyles } from "../../theme/sx";
@@ -71,7 +69,6 @@ export const ManagedContactChannels: FC<ManagedContactChannelsProps> = ({
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [status, setStatus] = useState<ContactChannelEditorStatus>("idle");
   const [fieldErrors, setFieldErrors] = useState<ContactChannelErrors>();
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [ordering, setOrdering] = useState<ContactChannelResponse[] | null>(null);
   const [orderStatus, setOrderStatus] = useState<ContactChannelReorderStatus>("idle");
   const [saving, setSaving] = useState(false);
@@ -108,13 +105,11 @@ export const ManagedContactChannels: FC<ManagedContactChannelsProps> = ({
     opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setStatus("idle");
     setFieldErrors(undefined);
-    setConfirmingDelete(false);
     setSheet({ ...next, snapshot: toContactChannelDrafts(channels), key: nextKey.current++ });
   };
 
   const closeSheet = () => {
     setSheet(null);
-    setConfirmingDelete(false);
     setFocus({ kind: "element", element: opener.current });
   };
 
@@ -123,7 +118,6 @@ export const ManagedContactChannels: FC<ManagedContactChannelsProps> = ({
   const leaveAfterLostRights = () => {
     setSheet(null);
     setOrdering(null);
-    setConfirmingDelete(false);
     void queryClient.invalidateQueries({ queryKey: getGetCommunityByIdQueryKey(communityId) });
   };
 
@@ -146,8 +140,7 @@ export const ManagedContactChannels: FC<ManagedContactChannelsProps> = ({
     if ("ok" in result) {
       const stored = result.value.channels;
       setSheet(null);
-      setConfirmingDelete(false);
-      setStatus("idle");
+        setStatus("idle");
       if (kind === "delete") {
         setHighlightIndex(undefined);
         if (stored.length === 0) {
@@ -166,7 +159,6 @@ export const ManagedContactChannels: FC<ManagedContactChannelsProps> = ({
       return;
     }
 
-    setConfirmingDelete(false);
     const refusal = contactSaveRefusal(result.error, list, kind === "delete" ? undefined : editedIndex);
     if (refusal.kind === "fields") {
       setStatus("idle");
@@ -199,11 +191,6 @@ export const ManagedContactChannels: FC<ManagedContactChannelsProps> = ({
   };
 
   const editing = sheet?.mode === "edit" ? sheet : null;
-  const deleteConfirmationOpen = !!editing && confirmingDelete && status !== "saving";
-  // The confirmation sits over the sheet but is not on the shared overlay yet
-  // (#369), so it joins the back stack itself: back closes it first, and the
-  // sheet stays open (#368).
-  useBackDismiss(deleteConfirmationOpen, () => setConfirmingDelete(false)); // temporary: #369
   const editor = sheet && (
     <ContactChannelEditor
       key={sheet.key}
@@ -219,25 +206,18 @@ export const ManagedContactChannels: FC<ManagedContactChannelsProps> = ({
           sheet.mode,
         )
       }
-      onDelete={editing ? () => setConfirmingDelete(true) : undefined}
+      onDelete={
+        editing
+          ? () =>
+              void saveSheet(
+                editing.snapshot.filter((_, index) => index !== editing.index),
+                "delete",
+              )
+          : undefined
+      }
+      otherChannelCount={editing ? editing.snapshot.length - 1 : undefined}
       onClose={closeSheet}
       onLostRightsClose={leaveAfterLostRights}
-    />
-  );
-
-  const deleteConfirmation = editing && (
-    <DeleteContactChannelConfirmationModal
-      isOpen={deleteConfirmationOpen}
-      label={editing.snapshot[editing.index].label}
-      otherCount={editing.snapshot.length - 1}
-      onCancel={() => setConfirmingDelete(false)}
-      onConfirm={() => {
-        setConfirmingDelete(false);
-        void saveSheet(
-          editing.snapshot.filter((_, index) => index !== editing.index),
-          "delete",
-        );
-      }}
     />
   );
 
@@ -259,8 +239,8 @@ export const ManagedContactChannels: FC<ManagedContactChannelsProps> = ({
 
   const canAdd = channels.length < CONTACT_CHANNEL_LIMITS.maxChannels;
 
-  // The status region, the editor and its confirmation keep their place in the
-  // tree when the last channel goes, so none of them is remounted mid-flow.
+  // The status region and the editor keep their place in the tree when the
+  // last channel goes, so neither is remounted mid-flow.
   return (
     <>
       {notices}
@@ -340,7 +320,6 @@ export const ManagedContactChannels: FC<ManagedContactChannelsProps> = ({
     </Paper>
       )}
       {editor}
-      {deleteConfirmation}
     </>
   );
 };

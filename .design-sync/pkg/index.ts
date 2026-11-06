@@ -55,7 +55,6 @@ export { DeactivateOrReopenCoefficientConfirmationModal } from "../../src/compon
 export { DeleteConfirmationModal } from "../../src/components/Modals/DeleteConfirmationModal";
 export { DeleteSharingAgreementConfirmationModal } from "../../src/components/Modals/DeleteSharingAgreementConfirmationModal";
 export { DeleteSupplyConfirmationModal } from "../../src/components/Modals/DeleteSupplyConfirmationModal";
-export { DeleteContactChannelConfirmationModal } from "../../src/components/Modals/DeleteContactChannelConfirmationModal";
 export { DisableConfirmationModal } from "../../src/components/Modals/DisableConfirmationModal";
 export { EnableConfirmationModal } from "../../src/components/Modals/EnableConfirmationModal";
 export { PublishSharingAgreementConfirmationModal } from "../../src/components/Modals/PublishSharingAgreementConfirmationModal";

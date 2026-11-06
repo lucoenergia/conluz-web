@@ -98,7 +98,6 @@
     "DeleteConfirmationModal": "../groups/dialogs.md",
     "DeleteSharingAgreementConfirmationModal": "../groups/dialogs.md",
     "DeleteSupplyConfirmationModal": "../groups/dialogs.md",
-    "DeleteContactChannelConfirmationModal": "../groups/dialogs.md",
     "DisableConfirmationModal": "../groups/dialogs.md",
     "EnableConfirmationModal": "../groups/dialogs.md",
     "PublishSharingAgreementConfirmationModal": "../groups/dialogs.md",
@@ -137,10 +136,6 @@
     "DeleteSupplyConfirmationModal": {
       "cardMode": "single",
       "viewport": "720x520"
-    },
-    "DeleteContactChannelConfirmationModal": {
-      "cardMode": "single",
-      "viewport": "720x420"
     },
     "ContactChannelEditor": {
       "cardMode": "single",

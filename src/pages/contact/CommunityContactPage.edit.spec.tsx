@@ -317,20 +317,21 @@ describe("adding a channel", () => {
 });
 
 describe("deleting a channel", () => {
-  it("AC7 asks first and sends nothing until confirmed", async () => {
+  it("AC7 asks first, in the editor's footer, and sends nothing until confirmed", async () => {
     const { user } = renderPage();
 
     await user.click(editButton("Oficina"));
     await user.click(within(sheet()).getByRole("button", { name: "Eliminar canal" }));
 
-    expect(screen.getByRole("heading", { name: "¿Eliminar el canal «Oficina»?" })).toBeInTheDocument();
-    expect(screen.getByText("Los miembros dejarán de verlo en Contacto. Los otros 2 canales no cambian.")).toBeInTheDocument();
+    const question = within(sheet()).getByRole("alert");
+    expect(question).toHaveTextContent("¿Eliminar el canal «Oficina»?");
+    expect(question).toHaveTextContent("Los miembros dejarán de verlo en Contacto. Los otros 2 canales no cambian.");
     expect(putContact).not.toHaveBeenCalled();
 
-    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+    await user.click(within(sheet()).getByRole("button", { name: "Cancelar" }));
     expect(putContact).not.toHaveBeenCalled();
-    // The confirmation's sheet slides out before it leaves the page.
-    await waitFor(() => expect(sheet()).toBeInTheDocument());
+    expect(within(sheet()).queryByRole("alert")).not.toBeInTheDocument();
+    expect(sheet()).toBeInTheDocument();
   });
 
   it("AC7 on confirming, sends the list without the channel and focuses the next channel's Editar", async () => {
@@ -569,12 +570,12 @@ describe("UI-OVL-004 back on the contact editor", () => {
     expect(putContact).not.toHaveBeenCalled();
   });
 
-  it("UI-OVL-004 back with the delete confirmation open closes the confirmation only and deletes nothing", async () => {
+  it("UI-OVL-004 back with the delete question asked withdraws the question only and deletes nothing", async () => {
     const { user } = renderPage();
 
     await user.click(editButton("Oficina"));
     await user.click(within(sheet()).getByRole("button", { name: "Eliminar canal" }));
-    const question = screen.getByRole("heading", { name: "¿Eliminar el canal «Oficina»?" });
+    const question = within(sheet()).getByRole("alert");
     window.history.back();
 
     await waitFor(() => expect(question).not.toBeInTheDocument());

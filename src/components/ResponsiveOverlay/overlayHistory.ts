@@ -166,10 +166,8 @@ export function afterPendingBacks(task: () => void): void {
  * Returning `true` keeps the layer open and guarded; anything else means the
  * caller closed it.
  *
- * `ResponsiveOverlay` uses it for itself. Exported only as a transitional
- * hook, for a stacked layer that is not a `ResponsiveOverlay` yet, so back
- * still closes the top layer first. Every use outside this folder carries a
- * `// temporary: #<issue>` comment naming the issue that migrates the layer.
+ * Used by `ResponsiveOverlay` alone, and not exported from this folder: a
+ * layer that needs back handling is a `ResponsiveOverlay` (#369).
  */
 export function useBackDismiss(open: boolean, onBack: () => boolean | void): void {
   const owner = useRef({});
