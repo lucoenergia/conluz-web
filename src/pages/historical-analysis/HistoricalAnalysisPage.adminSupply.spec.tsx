@@ -29,12 +29,14 @@ vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
   useGetSupplyEnergyMetrics: vi.fn(),
   useGetSupplyDailyConsumption: vi.fn(),
   useGetSupplyMonthlyConsumption: vi.fn(),
+  useGetSupplyHourlyConsumption: vi.fn(),
 }));
 vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetMembershipEnergyMetrics: vi.fn(),
   useGetMembershipDailyConsumption: vi.fn(),
   useGetMembershipMonthlyConsumption: vi.fn(),
+  useGetMembershipHourlyConsumption: vi.fn(),
 }));
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -61,12 +63,14 @@ import {
   useGetSupply,
   useGetSupplyDailyConsumption,
   useGetSupplyEnergyMetrics,
+  useGetSupplyHourlyConsumption,
   useGetSupplyMonthlyConsumption,
 } from "../../api/supplies/supplies";
 import {
   getMembershipEnergyMetrics,
   useGetMembershipDailyConsumption,
   useGetMembershipEnergyMetrics,
+  useGetMembershipHourlyConsumption,
   useGetMembershipMonthlyConsumption,
 } from "../../api/memberships/memberships";
 import { getCommunityById, useGetCommunityById } from "../../api/communities/communities";
@@ -144,6 +148,7 @@ function serve() {
       : query.disabled(),
   );
   vi.mocked(useGetSupplyMonthlyConsumption).mockReturnValue(query.disabled());
+  vi.mocked(useGetSupplyHourlyConsumption).mockReturnValue(query.disabled());
   vi.mocked(useGetMembershipEnergyMetrics).mockImplementation((_c, _u, params, options) => {
     if (!isEnabled(options)) return query.disabled();
     return query.success<typeof getMembershipEnergyMetrics>(
@@ -152,6 +157,7 @@ function serve() {
   });
   vi.mocked(useGetMembershipDailyConsumption).mockReturnValue(query.loading());
   vi.mocked(useGetMembershipMonthlyConsumption).mockReturnValue(query.disabled());
+  vi.mocked(useGetMembershipHourlyConsumption).mockReturnValue(query.disabled());
 }
 
 const found = (supply: SupplyResponse) => query.success<typeof getSupply>(supply);
@@ -162,14 +168,16 @@ function CurrentLocation() {
 }
 const currentSearch = () => screen.getByTestId("location").textContent;
 
+// A new element each time, so a rerender reaches the page's hooks.
+const page = () => (
+  <>
+    <HistoricalAnalysisPage />
+    <CurrentLocation />
+  </>
+);
+
 function renderPage(search = `?supplyId=${MEMBERS.id}`) {
-  return renderWithProviders(
-    <>
-      <HistoricalAnalysisPage />
-      <CurrentLocation />
-    </>,
-    { route: `/historical-analysis${search}`, activeCommunityId: COMMUNITY_ID },
-  );
+  return renderWithProviders(page(), { route: `/historical-analysis${search}`, activeCommunityId: COMMUNITY_ID });
 }
 
 /** Opens the selector (a bottom sheet in jsdom, which answers no media query). */
@@ -325,5 +333,171 @@ describe("UI-HIS-002 an id the caller cannot select falls back to Todos mis punt
 
     expect(vi.mocked(useGetCommunityById).mock.calls.filter(([, options]) => isEnabled(options))).toHaveLength(0);
     expect(currentSearch()).toBe(`?supplyId=${HOME.id}`);
+  });
+});
+
+const EMPTY = "No tienes puntos de suministro en esta comunidad";
+
+/** Every call of the membership's "Todos mis puntos" hooks -- anchor, figures and series -- that was enabled. */
+const enabledMembershipCalls = () =>
+  [useGetMembershipEnergyMetrics, useGetMembershipHourlyConsumption, useGetMembershipDailyConsumption, useGetMembershipMonthlyConsumption]
+    .flatMap((hook) => vi.mocked(hook).mock.calls as unknown[][])
+    .filter((call) => isEnabled(call[call.length - 1]));
+
+describe("a community admin who owns no supplies here opens a supply of the community (#385)", () => {
+  beforeEach(() => {
+    vi.mocked(useGetSuppliesByUserId).mockImplementation((_userId, options) =>
+      isEnabled(options) ? query.success<typeof getSuppliesByUserId>([]) : query.disabled(),
+    );
+  });
+
+  it("UI-HIS-001 AC1 shows that supply's period, card, totals, charts, table and CSV", async () => {
+    const names: string[] = [];
+    Object.assign(URL, { createObjectURL: () => "blob:conluz-test", revokeObjectURL: () => {} });
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+      names.push(this.download);
+    });
+    renderPage();
+
+    expect(screen.queryByText(EMPTY)).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Datos de septiembre de 2026" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "De la energía que te tocó" })).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Totales del periodo" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Tu energía día a día" })).toBeInTheDocument();
+    const table = screen.getByRole("region", { name: "Tus datos" });
+    await userEvent.click(within(table).getByRole("button", { name: "Descargar CSV" }));
+    expect(names).toEqual(["conluz-consumo-casa-de-lucia-2026-09-01-2026-09-30.csv"]);
+    expect(currentSearch()).toBe(`?supplyId=${MEMBERS.id}`);
+    Object.assign(URL, { createObjectURL: undefined, revokeObjectURL: undefined });
+  });
+
+  it("UI-HIS-001 AC1 the sheet lists only that supply, under Punto que estás consultando, with no Todos mis puntos and no footer", async () => {
+    renderPage();
+
+    expect(screen.getByRole("button", { name: SELECTOR })).toHaveTextContent(MEMBERS_LABEL);
+    expect(screen.queryByText(FOOTER)).not.toBeInTheDocument();
+    const sheet = await openSheet();
+    expect(within(sheet).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual([VIEWED_GROUP]);
+    expect(optionLabels(sheet)).toEqual([MEMBERS_LABEL]);
+    expect(within(sheet).getByRole("radio", { name: MEMBERS_LABEL })).toBeChecked();
+    expect(within(sheet).queryByRole("radio", { name: ALL })).not.toBeInTheDocument();
+  });
+
+  describe("from sm up", () => {
+    beforeEach(() => {
+      // jsdom has no layout: answer every (min-width) query as a wide screen would.
+      vi.stubGlobal(
+        "matchMedia",
+        (mediaQuery: string) =>
+          ({
+            matches: mediaQuery.includes("min-width"),
+            media: mediaQuery,
+            onchange: null,
+            addListener: () => {},
+            removeListener: () => {},
+            addEventListener: () => {},
+            removeEventListener: () => {},
+            dispatchEvent: () => false,
+          }) as MediaQueryList,
+      );
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("UI-HIS-001 AC1 the dropdown lists only that supply, under Punto que estás consultando, with no Todos mis puntos and no footer", async () => {
+      renderPage();
+
+      expect(screen.queryByText(FOOTER)).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole("combobox", { name: "Punto de suministro" }));
+      const listbox = screen.getByRole("listbox");
+      // MUI's Select gives every child the option role, its subheaders too.
+      expect(within(listbox).getAllByRole("option").map((option) => option.textContent)).toEqual([VIEWED_GROUP, MEMBERS_LABEL]);
+      expect(within(listbox).getByRole("option", { name: MEMBERS_LABEL })).toHaveAttribute("aria-selected", "true");
+    });
+  });
+
+  it.each([
+    ["the community's canManage", () => (canManage = "pending")],
+    ["the supply's lookup", () => (lookup = () => query.loading())],
+  ])("UI-HIS-003 AC2 while %s is pending, shows a placeholder, never the neutral state, and leaves the address alone", (_case, pend) => {
+    pend();
+    const { container } = renderPage();
+
+    expect(container.querySelector(".MuiSkeleton-root")).not.toBeNull();
+    expect(screen.queryByText(EMPTY)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: SELECTOR })).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(currentSearch()).toBe(`?supplyId=${MEMBERS.id}`);
+  });
+
+  it.each([
+    ["a supply of another community", () => found(OTHER_COMMUNITY)],
+    ["a disabled supply", () => found(DISABLED)],
+    ["a supply that does not open its figures to the admin", () => found(UNREADABLE)],
+    ["a supply that does not exist (404)", () => query.error(apiError(404))],
+  ])("UI-HIS-003 AC3 with %s, shows the neutral state and removes the id", (_case, answer) => {
+    lookup = answer as () => Lookup;
+    const { container } = renderPage();
+
+    expect(screen.getByRole("note")).toHaveTextContent(EMPTY);
+    expect(screen.queryByRole("button", { name: SELECTOR })).not.toBeInTheDocument();
+    expect(container.querySelector(".MuiSkeleton-root")).toBeNull();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(currentSearch()).toBe("");
+  });
+
+  it("UI-HIS-003 AC3 removes the id only once the lookup has answered", () => {
+    lookup = () => query.loading();
+    const { rerender } = renderPage();
+    expect(currentSearch()).toBe(`?supplyId=${MEMBERS.id}`);
+
+    lookup = () => query.error(apiError(404));
+    rerender(page());
+
+    expect(screen.getByRole("note")).toHaveTextContent(EMPTY);
+    expect(currentSearch()).toBe("");
+  });
+
+  it("UI-HIS-003 a lookup that failed is an error with a retry, not the neutral state, and keeps the id", async () => {
+    const failed = query.error(apiError(500));
+    lookup = () => failed as unknown as Lookup;
+    renderPage();
+
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("No se pudo cargar el punto de suministro");
+    expect(screen.queryByText(EMPTY)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: SELECTOR })).not.toBeInTheDocument();
+    expect(currentSearch()).toBe(`?supplyId=${MEMBERS.id}`);
+
+    await userEvent.click(within(alert).getByRole("button", { name: "Reintentar" }));
+    expect(failed.refetch).toHaveBeenCalledTimes(1);
+    expect(currentSearch()).toBe(`?supplyId=${MEMBERS.id}`);
+  });
+
+  it("UI-HIS-001 AC4 asks no membership anchor, figures or series, neither while the supply resolves nor once it is shown", () => {
+    canManage = "pending";
+    const { rerender } = renderPage();
+    canManage = true;
+    lookup = () => query.loading();
+    rerender(page());
+    lookup = (supplyId) => (supplyId === MEMBERS.id ? found(MEMBERS) : query.error(apiError(404)));
+    rerender(page());
+
+    expect(screen.getByRole("heading", { name: "Datos de septiembre de 2026" })).toBeInTheDocument();
+    expect(enabledSupplyIds(useGetSupplyEnergyMetrics)).toEqual(new Set([MEMBERS.id]));
+    expect(enabledMembershipCalls()).toHaveLength(0);
+  });
+
+  it("UI-HIS-003 AC5 a member following the same link sees the neutral state, and the supply is never looked up", () => {
+    mockLoggedUser = plainMember();
+    canManage = false;
+    renderPage();
+
+    expect(screen.getByRole("note")).toHaveTextContent(EMPTY);
+    expect(screen.queryByRole("button", { name: SELECTOR })).not.toBeInTheDocument();
+    expect(enabledSupplyIds(useGetSupply).size).toBe(0);
+    expect(currentSearch()).toBe("");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

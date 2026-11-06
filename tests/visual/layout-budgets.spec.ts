@@ -63,6 +63,7 @@ import {
   openPlantDetail,
   PAGED_PLANTS,
   PAGED_SUPPLIES,
+  plantSupplyDailySeries,
   PUBLISHED_AGREEMENT,
   seedActiveCommunity,
   stabilizePage,
@@ -721,6 +722,76 @@ test.describe("#247: the historical analysis supply selector", () => {
     const optionBox = await longOption.boundingBox();
     expect(optionBox!.x + optionBox!.width, "the long option is cut off").toBeLessThanOrEqual(sheetBox!.x + sheetBox!.width);
     await expect(sheet.getByText("Punto de planta")).toBeInViewport();
+  });
+});
+
+/**
+ * #385. A community admin who owns no supplies here, opening a member's supply
+ * from its detail page: at phone width the selector's bottom sheet holds the
+ * viewed supply alone -- no "Todos mis puntos", no footer -- and the page never
+ * scrolls sideways.
+ */
+test.describe("#385: the historical analysis selector for a community admin who owns no supplies", () => {
+  const VIEWED: SupplyResponse = { ...FIXED_SUPPLY, capabilities: COMMUNITY_ADMIN_SUPPLY_CAPABILITIES };
+
+  test("UI-HIS-001 AC7 at 390px the sheet holds the viewed supply alone, and the page never scrolls sideways", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "The bottom sheet is the selector below sm; the budget is a 390px viewport.");
+
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    // Registered after mockAllApiRoutes so they win: the admin owns nothing
+    // here, and the member's supply, its energy metrics (the anchor and the
+    // period alike) and its daily series.
+    const json = (body: unknown) => ({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
+    await page.route(
+      (url) => url.pathname.endsWith(`/api/v1/users/${FIXED_COMMUNITY_ADMIN_USER.id}/supplies`),
+      (route) => route.fulfill(json([])),
+    );
+    await page.route(
+      (url) => url.pathname.endsWith(`/api/v1/supplies/${VIEWED.id}`),
+      (route) => route.fulfill(json(VIEWED)),
+    );
+    await page.route(
+      (url) => url.pathname.endsWith(`/api/v1/supplies/${VIEWED.id}/energy-metrics`),
+      (route) => route.fulfill(json(SUPPLY_ENERGY_METRICS)),
+    );
+    await page.route(
+      (url) => url.pathname.endsWith(`/api/v1/supplies/${VIEWED.id}/consumption/daily`),
+      (route) => route.fulfill(json(plantSupplyDailySeries("2026/08/01", 31, VIEWED.code))),
+    );
+    await page.goto(`/historical-analysis?supplyId=${VIEWED.id}`);
+
+    const trigger = page.getByRole("button", { name: /^Punto de suministro/ });
+    await expect(trigger).toBeVisible();
+    await expect(page.getByRole("region", { name: "De la energía que te tocó" })).toBeVisible();
+    await expect(page.getByText("Solo aparecen tus puntos activos en esta comunidad.")).toHaveCount(0);
+    await stabilizePage(page);
+
+    const pageWidths = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth,
+    }));
+    expect(pageWidths.document, "the page scrolls sideways").toBeLessThanOrEqual(pageWidths.viewport);
+    const triggerBox = await trigger.boundingBox();
+    expect(triggerBox!.x + triggerBox!.width, "the trigger reaches past the viewport").toBeLessThanOrEqual(390);
+
+    await trigger.click();
+    const sheet = page.getByRole("dialog", { name: "Punto de suministro" });
+    await expect(sheet).toBeVisible();
+    await stabilizePage(page);
+
+    const sheetBox = await sheet.boundingBox();
+    expect(sheetBox!.x, "the sheet starts off-screen").toBeGreaterThanOrEqual(0);
+    expect(sheetBox!.x + sheetBox!.width, "the sheet is wider than the viewport").toBeLessThanOrEqual(390);
+    expect(sheetBox!.y + sheetBox!.height, "the sheet reaches below the viewport").toBeLessThanOrEqual(844);
+    const sheetScroll = await sheet.evaluate((element) => ({ scroll: element.scrollWidth, client: element.clientWidth }));
+    expect(sheetScroll.scroll, "the sheet scrolls sideways").toBeLessThanOrEqual(sheetScroll.client);
+
+    await expect(sheet.getByRole("heading", { level: 3 })).toHaveText(["Punto que estás consultando"]);
+    await expect(sheet.getByRole("radio")).toHaveCount(1);
+    await expect(sheet.getByRole("radio", { name: new RegExp(`^${VIEWED.name}`) })).toBeChecked();
+    await expect(sheet.getByRole("radio", { name: "Todos mis puntos" })).toHaveCount(0);
   });
 });
 
