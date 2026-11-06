@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
+import { createContext, type ReactNode, useContext, useLayoutEffect, useRef, useState } from "react";
 import { AXIOS_INSTANCE } from "../http/custom-instance";
 type Dispatch = (Auth: {token: string, remember: boolean } | null) => void;
 
@@ -9,6 +9,11 @@ const AuthDispatchContext = createContext<Dispatch | null>(null);
 
 const AuthProvider = ({ children, initialState = null }: AuthProviderProps) => {
   const [token, setToken] = useState(initialState);
+  // What the interceptor attaches (#389). It changes in `updateToken` itself, so
+  // a request sent in the commit that makes the new token visible -- the
+  // current-user query, which runs in a child's effect, before any effect of
+  // this provider -- already carries it.
+  const tokenRef = useRef(initialState);
 
   const updateToken: Dispatch = (token: null | { token: string, remember: boolean }) => {
     if (token && token.remember) {
@@ -19,17 +24,19 @@ const AuthProvider = ({ children, initialState = null }: AuthProviderProps) => {
       window.localStorage.removeItem("token");
       window.sessionStorage.removeItem('token');
     }
-    setToken(token ? token.token : token);
+    tokenRef.current = token ? token.token : null;
+    setToken(tokenRef.current);
   };
 
-  useEffect(() => {
+  // Registered once, and in a layout effect, so it is in place before any
+  // child's passive effect sends the first request with a stored token (#389).
+  // Re-registering it on every token change left a window, between ejecting
+  // the old interceptor and adding the new one, in which a request went out
+  // with no token at all.
+  useLayoutEffect(() => {
     const interceptorId = AXIOS_INSTANCE.interceptors.request.use((config) => {
-      if (config.headers && token) {
-        Object.entries({
-          Authorization: `Bearer ${token}`,
-        }).forEach(([key, value]) => {
-          config.headers.set(key, value);
-        });
+      if (config.headers && tokenRef.current) {
+        config.headers.set("Authorization", `Bearer ${tokenRef.current}`);
       }
       return config;
     });
@@ -37,7 +44,7 @@ const AuthProvider = ({ children, initialState = null }: AuthProviderProps) => {
     return () => {
       AXIOS_INSTANCE.interceptors.request.eject(interceptorId);
     };
-  }, [token]);
+  }, []);
 
   return (
     <AuthContext.Provider value={token}>
