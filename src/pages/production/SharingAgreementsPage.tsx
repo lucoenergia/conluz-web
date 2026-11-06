@@ -1,7 +1,8 @@
 import { useMemo, useState, type FC, type MouseEvent } from "react";
 import { Box, Button, Chip, Paper } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { useNavigate, useParams } from "react-router";
+import { useParams } from "react-router";
+import { useOverlayNavigate } from "../../components/ResponsiveOverlay";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import AddIcon from "@mui/icons-material/Add";
@@ -43,7 +44,8 @@ const STATUS_FILTERS: SharingAgreementStatusFilter[] = [
 
 export const SharingAgreementsPage: FC = () => {
   const { plantId = "" } = useParams();
-  const navigate = useNavigate();
+  // Each navigation here leaves the page as an overlay closes (UI-OVL-004).
+  const navigate = useOverlayNavigate();
   const { agreements, plant, counts, isLoading, isNotFound, error, refetch } = useSharingAgreementsData(plantId);
   // Creating is authorised by the plant, the rest by the agreement itself.
   const { createSharingAgreement } = usePlantActions().forPlant(plant).actions;

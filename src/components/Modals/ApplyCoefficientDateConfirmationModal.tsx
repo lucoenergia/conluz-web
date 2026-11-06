@@ -6,11 +6,12 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs, { type Dayjs } from "dayjs";
 import "dayjs/locale/es";
 import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined";
-import { ConfirmationModal } from "./ConfirmationModal";
+import { AppModal } from "./AppModal";
+import { ConfirmationActions } from "./ConfirmationActions";
 import { alphas, colors, fontSizes, radii } from "../../theme/tokens";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import { getCoefficientCupsLabel } from "../../pages/production/sharingAgreementCoefficientState";
-import { getCoefficientDateDisabledReason } from "../../pages/production/coefficientDateValidation";
+import { dateChanged, getCoefficientDateDisabledReason } from "../../pages/production/coefficientDateValidation";
 import { CoefficientDialogErrorPanel, CoefficientTargetSummary } from "./coefficientLifecycleDialogHelpers";
 import { CommunityScopeHeader } from "../CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
@@ -22,7 +23,7 @@ interface ApplyCoefficientDateConfirmationModalProps {
   hiddenCount?: number;
   isPending: boolean;
   errorMessages: string[] | null;
-  onCancel: (event: SyntheticEvent) => void;
+  onCancel: (event?: SyntheticEvent) => void;
   onConfirm: (date: Dayjs) => void;
 }
 
@@ -47,6 +48,8 @@ export const ApplyCoefficientDateConfirmationModal: FC<ApplyCoefficientDateConfi
   const communityName = useActiveCommunityName();
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [dateValidationError, setDateValidationError] = useState<string | null>(null);
+  // The field always opens empty.
+  const initialDate = null;
 
   // Fresh date field every time the dialog opens — never carries over a
   // previous coefficient's selection.
@@ -65,19 +68,26 @@ export const ApplyCoefficientDateConfirmationModal: FC<ApplyCoefficientDateConfi
   };
 
   return (
-    <ConfirmationModal
+    <AppModal
       isOpen={isOpen}
-      onCancel={onCancel}
-      inFlight={isPending}
-      confirmLabel="Registrar fecha"
-      confirmColor="primary"
-      confirmDisabled={confirmDisabledReason !== null}
-      confirmPending={isPending}
-      onConfirm={handleConfirm}
+      onClose={onCancel}
+      size="compact"
+      dirty={dateChanged(selectedDate, initialDate)}
+      dismissible={!isPending}
       title={`Registrar fecha de aplicación en ${communityLabel(communityName)}`}
       scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<EventAvailableOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
       iconBg={alphas.info.light}
+      actions={
+        <ConfirmationActions
+          onConfirm={handleConfirm}
+          confirmLabel="Registrar fecha"
+          confirmColor="primary"
+          confirmDisabled={confirmDisabledReason !== null}
+          confirmPending={isPending}
+          inFlight={isPending}
+        />
+      }
     >
       {coefficients && coefficients.length > 1 ? (
         <CoefficientTargetSummary coefficients={coefficients} hiddenCount={hiddenCount} />
@@ -103,6 +113,7 @@ export const ApplyCoefficientDateConfirmationModal: FC<ApplyCoefficientDateConfi
           onChange={setSelectedDate}
           maxDate={dayjs()}
           onError={(reason) => setDateValidationError(reason)}
+          readOnly={isPending}
           slotProps={{
             textField: {
               size: "small",
@@ -116,6 +127,6 @@ export const ApplyCoefficientDateConfirmationModal: FC<ApplyCoefficientDateConfi
         {confirmDisabledReason ?? ""}
       </Typography>
       <CoefficientDialogErrorPanel errorMessages={errorMessages} />
-    </ConfirmationModal>
+    </AppModal>
   );
 };

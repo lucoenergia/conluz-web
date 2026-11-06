@@ -15,7 +15,14 @@ const BLANK = { type: "PHONE" as const, label: "", value: "", schedule: "", note
 const handlers = { onSave: noop, onDelete: noop, onClose: noop, onLostRightsClose: noop };
 
 export const EditChannel = () => (
-  <ContactChannelEditor open mode="edit" initialChannel={OFFICE} communityName="Comunidad Energética Sol de la Sierra" {...handlers} />
+  <ContactChannelEditor
+    open
+    mode="edit"
+    initialChannel={OFFICE}
+    otherChannelCount={2}
+    communityName="Comunidad Energética Sol de la Sierra"
+    {...handlers}
+  />
 );
 
 export const NewChannel = () => (

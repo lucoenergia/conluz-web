@@ -6,11 +6,12 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs, { type Dayjs } from "dayjs";
 import "dayjs/locale/es";
 import EventBusyOutlinedIcon from "@mui/icons-material/EventBusyOutlined";
-import { ConfirmationModal } from "./ConfirmationModal";
+import { AppModal } from "./AppModal";
+import { ConfirmationActions } from "./ConfirmationActions";
 import { alphas, colors, fontSizes, radii } from "../../theme/tokens";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import { getCoefficientCupsLabel } from "../../pages/production/sharingAgreementCoefficientState";
-import { getCoefficientDateDisabledReason } from "../../pages/production/coefficientDateValidation";
+import { dateChanged, getCoefficientDateDisabledReason } from "../../pages/production/coefficientDateValidation";
 import { CoefficientDialogErrorPanel, CoefficientTargetSummary } from "./coefficientLifecycleDialogHelpers";
 import { CommunityScopeHeader } from "../CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
@@ -22,7 +23,7 @@ interface CloseCoefficientConfirmationModalProps {
   hiddenCount?: number;
   isPending: boolean;
   errorMessages: string[] | null;
-  onCancel: (event: SyntheticEvent) => void;
+  onCancel: (event?: SyntheticEvent) => void;
   onConfirm: (date: Dayjs) => void;
 }
 
@@ -39,6 +40,8 @@ export const CloseCoefficientConfirmationModal: FC<CloseCoefficientConfirmationM
   const isBatch = (coefficients?.length ?? 0) > 1;
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [dateValidationError, setDateValidationError] = useState<string | null>(null);
+  // The field always opens empty.
+  const initialDate = null;
 
   useEffect(() => {
     if (isOpen) {
@@ -55,18 +58,25 @@ export const CloseCoefficientConfirmationModal: FC<CloseCoefficientConfirmationM
   };
 
   return (
-    <ConfirmationModal
+    <AppModal
       isOpen={isOpen}
-      onCancel={onCancel}
-      inFlight={isPending}
-      confirmLabel="Cerrar (baja)"
-      confirmColor="primary"
-      confirmDisabled={confirmDisabledReason !== null}
-      onConfirm={handleConfirm}
+      onClose={onCancel}
+      size="compact"
+      dirty={dateChanged(selectedDate, initialDate)}
+      dismissible={!isPending}
       title={`Cerrar coeficiente en ${communityLabel(communityName)}`}
       scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<EventBusyOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
       iconBg={alphas.info.light}
+      actions={
+        <ConfirmationActions
+          onConfirm={handleConfirm}
+          confirmLabel="Cerrar (baja)"
+          confirmColor="primary"
+          confirmDisabled={confirmDisabledReason !== null}
+          inFlight={isPending}
+        />
+      }
     >
       {isBatch ? (
         <CoefficientTargetSummary coefficients={coefficients!} hiddenCount={hiddenCount} />
@@ -97,6 +107,7 @@ export const CloseCoefficientConfirmationModal: FC<CloseCoefficientConfirmationM
           onChange={setSelectedDate}
           maxDate={dayjs()}
           onError={(reason) => setDateValidationError(reason)}
+          readOnly={isPending}
           slotProps={{
             textField: {
               size: "small",
@@ -110,6 +121,6 @@ export const CloseCoefficientConfirmationModal: FC<CloseCoefficientConfirmationM
         {confirmDisabledReason ?? ""}
       </Typography>
       <CoefficientDialogErrorPanel errorMessages={errorMessages} />
-    </ConfirmationModal>
+    </AppModal>
   );
 };

@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { declaredStyles, hasOverlayEntry, pressBack, stubViewport } from "../../test/overlay";
 import { overlayHistorySettled } from "./overlayHistory";
 import { ResponsiveOverlay, type ResponsiveOverlaySize } from "./ResponsiveOverlay";
 import { useOverlayNavigate } from "./useOverlayNavigate";
@@ -94,47 +95,6 @@ const Consumer: FC<{
     </>
   );
 };
-
-/** jsdom has no layout: answer each (min-width) query as a viewport `width` px wide would. */
-function stubViewport(width: number) {
-  vi.stubGlobal(
-    "matchMedia",
-    (query: string) =>
-      ({
-        matches: Number(/min-width:\s*([\d.]+)px/.exec(query)?.[1] ?? Infinity) <= width,
-        media: query,
-        onchange: null,
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-      }) as MediaQueryList,
-  );
-}
-
-/**
- * The declarations emotion wrote for an element's own classes. MUI's styles sit
- * in a CSS layer, which jsdom's getComputedStyle does not read.
- */
-function declaredStyles(element: Element): string {
-  const css = [...document.querySelectorAll("style")].map((style) => style.textContent ?? "").join("\n");
-  return [...element.classList]
-    .filter((name) => name.startsWith("css-"))
-    .flatMap((name) => [...css.matchAll(new RegExp(`\\.${name}\\{([^}]*)\\}`, "g"))].map((match) => match[1]))
-    .join(";");
-}
-
-/** Presses back and resolves once the overlay has handled the `popstate`. */
-async function pressBack() {
-  const landed = new Promise<void>((resolve) => window.addEventListener("popstate", () => resolve(), { once: true }));
-  await act(async () => {
-    window.history.back();
-    await landed;
-  });
-}
-
-const hasOverlayEntry = () => !!window.history.state && "__overlay" in window.history.state;
 
 const overlay = (name = "Editar ficha") => screen.getByRole("dialog", { name });
 const nameField = () => within(overlay()).getByRole("textbox", { name: "Nombre" });

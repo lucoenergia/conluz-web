@@ -29,6 +29,8 @@ import {
   expect,
   communityCapabilitiesFor,
   COMMUNITY_ADMIN_SUPPLY_CAPABILITIES,
+  DRAFT_AGREEMENT,
+  FIXED_COEFFICIENTS_EMPTY,
   FIXED_COEFFICIENTS_MIXED,
   FIXED_COMMUNITY_ADMINS,
   FIXED_COMMUNITY_ADMIN_USER,
@@ -1487,5 +1489,64 @@ test.describe("#378: the historical analysis evolution charts, hour by hour", ()
         expect(overlap, `${name}: "${previous.text}" overlaps "${next.text}" by ${overlap.toFixed(1)}px`).toBeLessThanOrEqual(0);
       }
     }
+  });
+});
+
+test.describe("#369: the add-supply picker on the shared overlay", () => {
+  test("UI-OVL-007 at 390x844 the picker scrolls as one body, and its search stays visible after the list is scrolled", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "The bottom sheet at 390x844 is the subject.");
+
+    // More supplies than fit in the sheet, so the body has something to scroll.
+    const manySupplies: SupplyResponse[] = Array.from({ length: 30 }, (_, index) => ({
+      ...FIXED_SUPPLY,
+      id: `supply-picker-${index + 1}`,
+      name: `Vivienda ${index + 1}`,
+      code: `ES00314069123456${String(index + 1).padStart(2, "0")}JN0F`,
+    }));
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, DRAFT_AGREEMENT.id, DRAFT_AGREEMENT, FIXED_COEFFICIENTS_EMPTY, 200);
+    // Registered last, so it wins for the community's listing the picker reads.
+    await page.route(
+      (url) => url.pathname === `/api/v1/communities/${FIXED_COMMUNITY_ID}/supplies`,
+      (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ ...PAGED_SUPPLIES, items: manySupplies, totalElements: manySupplies.length }),
+        }),
+    );
+
+    await navigateToSharingAgreementDetail(page, DRAFT_AGREEMENT.name);
+    await page.getByRole("button", { name: "Editar a mano" }).click();
+    await page.getByRole("button", { name: "Añadir suministro" }).click();
+    const dialog = page.getByRole("dialog", { name: "Añadir suministros" });
+    // The long list, not the shared fixture: a budget over the wrong rows proves nothing.
+    await expect(dialog.getByText("Vivienda 30")).toBeAttached();
+
+    // Every element inside the sheet that actually scrolls; the overlay body must be the only one.
+    const scrollers = await dialog.evaluate((paper) =>
+      [...paper.querySelectorAll<HTMLElement>("*")]
+        .filter((element) => {
+          const { overflowY } = getComputedStyle(element);
+          return (overflowY === "auto" || overflowY === "scroll") && element.scrollHeight > element.clientHeight;
+        })
+        .map((element) => element.className),
+    );
+    expect(scrollers, `scrolling elements: ${scrollers.join(" | ")}`).toHaveLength(1);
+
+    await dialog.getByText("Vivienda 30").scrollIntoViewIfNeeded();
+    await stabilizePage(page);
+    const search = dialog.getByPlaceholder("Buscar por nombre o CUPS");
+    await expect(search).toBeInViewport();
+    // Visible means on top, not merely in the viewport: the list must not cover it.
+    const onTop = await search.evaluate((input) => {
+      const box = input.getBoundingClientRect();
+      const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+      return hit === input || input.contains(hit);
+    });
+    expect(onTop, "the search field is covered after scrolling the list").toBe(true);
   });
 });

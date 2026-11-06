@@ -66,9 +66,7 @@
     "ContactChannelReorderList": "../groups/forms.md",
     "GraphBar": "../groups/charts.md",
     "LoadingGraphCard": "../groups/charts.md",
-    "AlertModal": "../groups/dialogs.md",
     "AppModal": "../groups/dialogs.md",
-    "BasicModal": "../groups/dialogs.md",
     "ConfirmationModal": "../groups/dialogs.md",
     "DisableSuccessModal": "../groups/dialogs.md",
     "EnableSuccessModal": "../groups/dialogs.md",
@@ -98,7 +96,6 @@
     "DeleteConfirmationModal": "../groups/dialogs.md",
     "DeleteSharingAgreementConfirmationModal": "../groups/dialogs.md",
     "DeleteSupplyConfirmationModal": "../groups/dialogs.md",
-    "DeleteContactChannelConfirmationModal": "../groups/dialogs.md",
     "DisableConfirmationModal": "../groups/dialogs.md",
     "EnableConfirmationModal": "../groups/dialogs.md",
     "PublishSharingAgreementConfirmationModal": "../groups/dialogs.md",
@@ -109,14 +106,6 @@
     "RowActionsMenu": {
       "cardMode": "single",
       "viewport": "480x320"
-    },
-    "AlertModal": {
-      "cardMode": "single",
-      "viewport": "720x320"
-    },
-    "BasicModal": {
-      "cardMode": "single",
-      "viewport": "720x320"
     },
     "AppModal": {
       "cardMode": "single",
@@ -137,10 +126,6 @@
     "DeleteSupplyConfirmationModal": {
       "cardMode": "single",
       "viewport": "720x520"
-    },
-    "DeleteContactChannelConfirmationModal": {
-      "cardMode": "single",
-      "viewport": "720x420"
     },
     "ContactChannelEditor": {
       "cardMode": "single",

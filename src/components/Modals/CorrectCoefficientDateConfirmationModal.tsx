@@ -6,11 +6,12 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs, { type Dayjs } from "dayjs";
 import "dayjs/locale/es";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import { ConfirmationModal } from "./ConfirmationModal";
+import { AppModal } from "./AppModal";
+import { ConfirmationActions } from "./ConfirmationActions";
 import { alphas, colors, fontSizes, radii } from "../../theme/tokens";
 import type { SharingAgreementPartitionCoefficientResponse } from "../../api/models";
 import { getCoefficientCupsLabel } from "../../pages/production/sharingAgreementCoefficientState";
-import { getCoefficientDateDisabledReason } from "../../pages/production/coefficientDateValidation";
+import { dateChanged, getCoefficientDateDisabledReason } from "../../pages/production/coefficientDateValidation";
 import { formatCalendarDate } from "../../utils/formatCalendarDate";
 import { CoefficientDialogErrorPanel, CoefficientTargetSummary } from "./coefficientLifecycleDialogHelpers";
 import { CommunityScopeHeader } from "../CommunityScopeHeader";
@@ -23,7 +24,7 @@ interface CorrectCoefficientDateConfirmationModalProps {
   hiddenCount?: number;
   isPending: boolean;
   errorMessages: string[] | null;
-  onCancel: (event: SyntheticEvent) => void;
+  onCancel: (event?: SyntheticEvent) => void;
   onConfirm: (date: Dayjs) => void;
 }
 
@@ -39,6 +40,8 @@ export const CorrectCoefficientDateConfirmationModal: FC<CorrectCoefficientDateC
   const communityName = useActiveCommunityName();
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [dateValidationError, setDateValidationError] = useState<string | null>(null);
+  // The date the field opened with, prefilled or empty: changes are measured against it.
+  const [initialDate, setInitialDate] = useState<Dayjs | null>(null);
 
   const isBatch = (coefficients?.length ?? 0) > 1;
 
@@ -58,7 +61,9 @@ export const CorrectCoefficientDateConfirmationModal: FC<CorrectCoefficientDateC
   // empty — a single row is never prefilled with its own current date.
   useEffect(() => {
     if (isOpen) {
-      setSelectedDate(isBatch && distinctDates.length === 1 ? dayjs(coefficients![0].validFrom) : null);
+      const prefilled = isBatch && distinctDates.length === 1 ? dayjs(coefficients![0].validFrom) : null;
+      setSelectedDate(prefilled);
+      setInitialDate(prefilled);
       setDateValidationError(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- distinctDates/coefficients recompute every render; only isOpen should retrigger the reset
@@ -72,17 +77,24 @@ export const CorrectCoefficientDateConfirmationModal: FC<CorrectCoefficientDateC
   };
 
   return (
-    <ConfirmationModal
+    <AppModal
       isOpen={isOpen}
-      onCancel={onCancel}
-      inFlight={isPending}
-      confirmLabel="Confirmar y recalcular"
-      confirmDisabled={confirmDisabledReason !== null}
-      onConfirm={handleConfirm}
+      onClose={onCancel}
+      size="compact"
+      dirty={dateChanged(selectedDate, initialDate)}
+      dismissible={!isPending}
       title={`Corregir fecha de aplicación en ${communityLabel(communityName)}`}
       scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<WarningAmberIcon sx={{ fontSize: 28, color: "error.main" }} />}
       iconBg={alphas.error.light}
+      actions={
+        <ConfirmationActions
+          onConfirm={handleConfirm}
+          confirmLabel="Confirmar y recalcular"
+          confirmDisabled={confirmDisabledReason !== null}
+          inFlight={isPending}
+        />
+      }
     >
       {isBatch ? (
         <CoefficientTargetSummary coefficients={coefficients!} hiddenCount={hiddenCount} />
@@ -118,6 +130,7 @@ export const CorrectCoefficientDateConfirmationModal: FC<CorrectCoefficientDateC
           onChange={setSelectedDate}
           maxDate={dayjs()}
           onError={(reason) => setDateValidationError(reason)}
+          readOnly={isPending}
           slotProps={{
             textField: {
               size: "small",
@@ -131,6 +144,6 @@ export const CorrectCoefficientDateConfirmationModal: FC<CorrectCoefficientDateC
         {confirmDisabledReason ?? ""}
       </Typography>
       <CoefficientDialogErrorPanel errorMessages={errorMessages} />
-    </ConfirmationModal>
+    </AppModal>
   );
 };

@@ -15,12 +15,51 @@ const DEFAULT_DISCARD_MESSAGE = "Tienes cambios sin guardar. Si cierras, se perd
 
 type Slot = ReactNode | ((overlay: ResponsiveOverlayContextValue) => ReactNode);
 
-export interface ResponsiveOverlayProps {
+/**
+ * A question the flow asks in the footer, such as "delete this?", placed and
+ * answered like the unsaved-changes question.
+ */
+export interface ResponsiveOverlayQuestion {
+  /** What is asked, read out as an alert. */
+  message: ReactNode;
+  cancelLabel: string;
+  confirmLabel: string;
+  confirmColor?: "primary" | "error";
+  onConfirm: () => void;
+  /** Withdraws the question: its cancel button, and every close attempt while it is asked. */
+  onCancel: () => void;
+}
+
+const footerButtonSx = { minHeight: 44, flex: { xs: 1, md: "none" } } as const;
+
+/** The footer while a question is asked: the question, then its two answers. */
+const FooterQuestion: FC<{ message: ReactNode; children: ReactNode }> = ({ message, children }) => (
+  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, width: "100%" }}>
+    <Box role="alert" sx={{ color: colors.text.body }}>
+      {message}
+    </Box>
+    <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>{children}</Box>
+  </Box>
+);
+
+/**
+ * How the overlay is named: by the `title` it shows; when the content renders
+ * its own heading, by that heading's id; or, with no visible title, by a
+ * `label`. An overlay with none of them does not compile.
+ */
+export type ResponsiveOverlayName =
+  | { title: ReactNode; labelledBy?: never; label?: never }
+  | { title?: undefined; labelledBy: string; label?: never }
+  | { title?: undefined; labelledBy?: never; label: string };
+
+export type ResponsiveOverlayProps = ResponsiveOverlayName & {
   open: boolean;
-  /** Names the overlay (`aria-labelledby`). */
-  title: ReactNode;
   /** A line under the title, such as the community the record belongs to. */
   subtitle?: ReactNode;
+  /** Above the title, outside the heading: the community a confirmed write lands in. */
+  eyebrow?: ReactNode;
+  /** Before the title, outside the heading. */
+  icon?: ReactNode;
   size: ResponsiveOverlaySize;
   /** Unsaved changes: a close attempt asks first, and leaving the page prompts. */
   dirty?: boolean;
@@ -30,13 +69,18 @@ export interface ResponsiveOverlayProps {
   onClose: () => void;
   /** The question shown in the footer before discarding changes. */
   discardMessage?: string;
+  /**
+   * A question of the flow's own, asked in the footer while set. Every close
+   * attempt, back included, withdraws it instead of closing the overlay.
+   */
+  question?: ResponsiveOverlayQuestion;
   /** Makes the overlay a form, so a submit button in `actions` submits it. */
   onSubmit?: (event: FormEvent<HTMLElement>) => void;
   /** The scrolling body. */
   children: Slot;
-  /** The footer's controls; replaced by the discard question while it is asked. */
-  actions: Slot;
-}
+  /** The footer's controls; replaced by the discard question while it is asked. No footer without them. */
+  actions?: Slot;
+};
 
 /**
  * The one overlay for every create, edit, action and confirmation flow (#368):
@@ -46,7 +90,8 @@ export interface ResponsiveOverlayProps {
  *
  * Every way of closing it -- the close icon, Escape, the backdrop, a swipe, a
  * consumer's Cancelar through `requestClose`, and browser or system back --
- * goes through one path: ignored while `inFlight`; with `dirty`, the footer
+ * goes through one path: ignored while `inFlight`; while the flow's own
+ * `question` is asked, it withdraws that question; with `dirty`, the footer
  * asks first, and typing again withdraws the question; otherwise `onClose`.
  * While open and dirty, leaving the page prompts.
  *
@@ -62,12 +107,17 @@ export interface ResponsiveOverlayProps {
 export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
   open,
   title,
+  labelledBy,
+  label,
   subtitle,
+  eyebrow,
+  icon,
   size,
   dirty = false,
   inFlight = false,
   onClose,
   discardMessage = DEFAULT_DISCARD_MESSAGE,
+  question,
   onSubmit,
   children,
   actions,
@@ -90,12 +140,17 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
 
   const requestClose = useCallback(() => {
     if (inFlight) return;
-    if (dirty) setConfirmingDiscard(true);
+    if (question) question.onCancel();
+    else if (dirty) setConfirmingDiscard(true);
     else onClose();
-  }, [inFlight, dirty, onClose]);
+  }, [inFlight, question, dirty, onClose]);
 
   useBackDismiss(open, () => {
     if (inFlight) return true;
+    if (question) {
+      question.onCancel();
+      return true;
+    }
     if (dirty) {
       setConfirmingDiscard(true);
       return true;
@@ -114,29 +169,35 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
   );
   const render = (slot: Slot) => (typeof slot === "function" ? slot(context) : slot);
 
-  const footer = confirmingDiscard ? (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, width: "100%" }}>
-      <Typography role="alert" variant="body2" sx={{ color: colors.text.body }}>
-        {discardMessage}
-      </Typography>
-      <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-        <Button variant="outlined" size="large" onClick={onClose} sx={{ minHeight: 44, flex: { xs: 1, md: "none" } }}>
-          Descartar cambios
-        </Button>
-        <Button
-          variant="contained"
-          size="large"
-          onClick={keepEditing}
-          autoFocus
-          sx={{ minHeight: 44, flex: { xs: 1, md: "none" } }}
-        >
-          Seguir editando
-        </Button>
-      </Box>
-    </Box>
+  const footer = question ? (
+    <FooterQuestion message={question.message}>
+      <Button variant="outlined" size="large" onClick={question.onCancel} autoFocus sx={footerButtonSx}>
+        {question.cancelLabel}
+      </Button>
+      <Button
+        variant="contained"
+        size="large"
+        color={question.confirmColor ?? "primary"}
+        onClick={question.onConfirm}
+        sx={footerButtonSx}
+      >
+        {question.confirmLabel}
+      </Button>
+    </FooterQuestion>
+  ) : confirmingDiscard ? (
+    <FooterQuestion message={<Typography variant="body2">{discardMessage}</Typography>}>
+      <Button variant="outlined" size="large" onClick={onClose} sx={footerButtonSx}>
+        Descartar cambios
+      </Button>
+      <Button variant="contained" size="large" onClick={keepEditing} autoFocus sx={footerButtonSx}>
+        Seguir editando
+      </Button>
+    </FooterQuestion>
   ) : (
-    render(actions)
+    actions !== undefined && render(actions)
   );
+  const hasHeading = !!(eyebrow || icon || title !== undefined || subtitle);
+  const name = { "aria-labelledby": labelledBy ?? (title !== undefined ? titleId : undefined), "aria-label": label };
 
   const content = (
     <Box
@@ -155,19 +216,30 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
           display: "flex",
           alignItems: "flex-start",
           gap: 1,
-          borderBottom: 1,
+          borderBottom: hasHeading ? 1 : 0,
           borderColor: "divider",
           p: { xs: "4px 8px 12px 16px", md: "16px 16px 16px 24px" },
+          pb: hasHeading ? undefined : 0,
         }}
       >
         <Box sx={{ flex: 1, minWidth: 0, pt: 1 }}>
-          <Typography id={titleId} variant="h6" component="h2">
-            {title}
-          </Typography>
-          {subtitle && (
-            <Typography variant="body2" sx={{ color: colors.text.subtle }}>
-              {subtitle}
-            </Typography>
+          {eyebrow}
+          {(icon || title !== undefined || subtitle) && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              {icon}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                {title !== undefined && (
+                  <Typography id={titleId} variant="h6" component="h2">
+                    {title}
+                  </Typography>
+                )}
+                {subtitle && (
+                  <Typography variant="body2" sx={{ color: colors.text.subtle }}>
+                    {subtitle}
+                  </Typography>
+                )}
+              </Box>
+            </Box>
           )}
         </Box>
         {!inFlight && (
@@ -186,19 +258,21 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
         {render(children)}
       </Box>
 
-      <Box
-        sx={{
-          display: "flex",
-          gap: 1,
-          justifyContent: "flex-end",
-          alignItems: "center",
-          borderTop: 1,
-          borderColor: "divider",
-          p: { xs: "12px 16px 16px", md: "16px 24px" },
-        }}
-      >
-        {footer}
-      </Box>
+      {footer != null && footer !== false && (
+        <Box
+          sx={{
+            display: "flex",
+            gap: 1,
+            justifyContent: "flex-end",
+            alignItems: "center",
+            borderTop: 1,
+            borderColor: "divider",
+            p: { xs: "12px 16px 16px", md: "16px 24px" },
+          }}
+        >
+          {footer}
+        </Box>
+      )}
     </Box>
   );
 
@@ -209,7 +283,7 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
       <Dialog
         open={open}
         onClose={requestClose}
-        aria-labelledby={titleId}
+        {...name}
         slotProps={{
           paper: { sx: { width: DIALOG_WIDTH[size], maxWidth: "calc(100% - 32px)", borderRadius: radii.large, m: 2 } },
         }}
@@ -226,6 +300,9 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
       onClose={requestClose}
       onOpen={() => {}}
       disableSwipeToOpen
+      // SwipeableDrawer keeps a closed sheet mounted, hidden, for swipe-to-open,
+      // which is off: a closed overlay leaves nothing in the page, as the dialog.
+      ModalProps={{ keepMounted: false }}
       // A drawer sits on the drawer layer, under the app bar (Header lifts it
       // above the side menu); this one is a modal sheet, so it goes on top.
       sx={{ zIndex: (theme) => theme.zIndex.modal }}
@@ -233,7 +310,7 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
         paper: {
           role: "dialog",
           "aria-modal": true,
-          "aria-labelledby": titleId,
+          ...name,
           sx: {
             maxHeight: "calc(100% - 24px)",
             borderRadius: `${radii.large} ${radii.large} 0 0`,

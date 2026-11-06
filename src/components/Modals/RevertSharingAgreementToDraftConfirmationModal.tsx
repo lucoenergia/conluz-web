@@ -11,7 +11,7 @@ interface RevertSharingAgreementToDraftConfirmationModalProps {
   isOpen: boolean;
   agreementName: string;
   isReverting?: boolean;
-  onCancel: (event: SyntheticEvent) => void;
+  onCancel: (event?: SyntheticEvent) => void;
   onConfirm: () => void;
 }
 
