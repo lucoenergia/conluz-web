@@ -18,6 +18,7 @@ import { MemberRecordFields } from "./MemberRecordFields";
 import { Notice } from "../../components/Notice";
 import { AppModal } from "../../components/Modals/AppModal";
 import { ModalCancelButton } from "../../components/Modals/ModalCancelButton";
+import { OVERLAY_FOCUS_TARGET } from "../../components/ResponsiveOverlay";
 
 interface RegisterMemberDialogProps {
   communityName: string | undefined;
@@ -97,6 +98,7 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
         onClose={onClose}
         dismissible={!inviting}
         title={`Miembro registrado en ${community}`}
+        contentKey="result"
         scopeHeader={<CommunityScopeHeader name={communityName} />}
         actions={
           <>
@@ -110,7 +112,7 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
         }
       >
         {inviteError && <Alert severity="error">{inviteError}</Alert>}
-        <Typography variant="body2">
+        <Typography variant="body2" {...OVERLAY_FOCUS_TARGET} tabIndex={-1}>
           Has registrado a <strong>{registered.fullName}</strong> en {community}. Aparece como pendiente, y
           todavía no le hemos enviado nada.
         </Typography>
@@ -137,6 +139,7 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
       dismissible={!register.isPending}
       dirty={dirty}
       title={`Registrar miembro en ${community}`}
+      contentKey="form"
       scopeHeader={<CommunityScopeHeader name={communityName} />}
       onSubmit={handleSubmit}
       actions={

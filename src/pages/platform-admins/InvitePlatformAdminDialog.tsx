@@ -91,6 +91,7 @@ export const InvitePlatformAdminDialog: FC<InvitePlatformAdminDialogProps> = ({ 
         isOpen
         onClose={onClose}
         title={CONFIRMATION_CODE_TITLE}
+        contentKey="code"
         dirty
         {...CONFIRMATION_CODE_CLOSE_QUESTION}
         discardReturnFocus={copyButtonRef}
@@ -112,6 +113,7 @@ export const InvitePlatformAdminDialog: FC<InvitePlatformAdminDialogProps> = ({ 
       dismissible={!inFlight}
       dirty={dirty}
       title="Invitar administrador de plataforma"
+      contentKey="form"
       onSubmit={handleSubmit}
       actions={
         <>

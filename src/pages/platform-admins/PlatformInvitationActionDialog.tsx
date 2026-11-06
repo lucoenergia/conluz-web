@@ -89,6 +89,7 @@ export const PlatformInvitationActionDialog: FC<PlatformInvitationActionDialogPr
         onClose={onClose}
         size="compact"
         title={CONFIRMATION_CODE_TITLE}
+        contentKey="code"
         dirty
         {...CONFIRMATION_CODE_CLOSE_QUESTION}
         discardReturnFocus={copyButtonRef}
@@ -110,6 +111,7 @@ export const PlatformInvitationActionDialog: FC<PlatformInvitationActionDialogPr
       size="compact"
       dismissible={!inFlight}
       title={copy.title}
+      contentKey="confirm"
       actions={
         <ConfirmationActions
           onConfirm={handleConfirm}

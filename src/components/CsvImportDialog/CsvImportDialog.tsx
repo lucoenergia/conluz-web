@@ -12,6 +12,7 @@ import { Notice } from "../Notice";
 import { ActionStatus } from "../ActionStatus";
 import { AppModal } from "../Modals/AppModal";
 import { ModalCancelButton } from "../Modals/ModalCancelButton";
+import { OVERLAY_FOCUS_TARGET } from "../ResponsiveOverlay";
 import type { CsvImportColumn } from "./csvImport";
 
 /** What an import answers: how many rows failed, and one result per row, by line. */
@@ -149,10 +150,17 @@ export function CsvImportDialog<R extends CsvImportResult>({
       dismissible={!importing}
       // A file chosen and not imported yet; a result has nothing left to lose.
       dirty={!importing && !result && file !== null}
+      // Each step replaces the last: focus moves to the new one (UI-OVL-009).
+      contentKey={importing ? "progress" : result ? "result" : refusal ? "refused" : "guide"}
       actions={actions}
     >
       {importing ? (
-        <Box role="status" sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, py: 4 }}>
+        <Box
+          role="status"
+          {...OVERLAY_FOCUS_TARGET}
+          tabIndex={-1}
+          sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, py: 4 }}
+        >
           <CircularProgress aria-hidden />
           <Typography variant="body2" sx={{ textAlign: "center" }}>
             {progress}
@@ -160,7 +168,9 @@ export function CsvImportDialog<R extends CsvImportResult>({
         </Box>
       ) : result ? (
         <>
-          <Notice severity={result.failed > 0 ? "warning" : "success"}>{summaryOf(result)}</Notice>
+          <Notice severity={result.failed > 0 ? "warning" : "success"} {...OVERLAY_FOCUS_TARGET} tabIndex={-1}>
+            {summaryOf(result)}
+          </Notice>
 
           {failedRows.length > 0 && (
             <Box>
@@ -189,7 +199,7 @@ export function CsvImportDialog<R extends CsvImportResult>({
       ) : (
         <>
           {refusal && (
-            <Alert severity="error">
+            <Alert severity="error" {...OVERLAY_FOCUS_TARGET} tabIndex={-1}>
               {refusal.message}
               {refusal.nothingImported && ` ${nothingImported}`}
             </Alert>
@@ -235,7 +245,13 @@ export function CsvImportDialog<R extends CsvImportResult>({
             <Button variant="outlined" startIcon={<DownloadIcon />} onClick={onDownloadTemplate}>
               Descargar plantilla
             </Button>
-            <Button variant="outlined" component="label" startIcon={<UploadFileIcon />}>
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={<UploadFileIcon />}
+              // Where "Importar otro archivo" leaves focus; a refusal takes it instead.
+              {...(refusal ? {} : OVERLAY_FOCUS_TARGET)}
+            >
               Seleccionar archivo CSV
               <input type="file" accept=".csv,text/csv" hidden onChange={chooseFile} />
             </Button>

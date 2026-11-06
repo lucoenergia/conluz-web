@@ -5,6 +5,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import { colors, fontSizes, radii } from "../../theme/tokens";
 import { groupedCode } from "../../utils/confirmationCode";
 import { Notice } from "../../components/Notice";
+import { OVERLAY_FOCUS_TARGET } from "../../components/ResponsiveOverlay";
 
 const COPY_FEEDBACK_MS = 2000;
 
@@ -66,8 +67,11 @@ export const ConfirmationCodePanel: FC<ConfirmationCodePanelProps> = ({ code, fu
           borderColor: "divider",
         }}
       >
+        {/* Where focus goes when the code replaces the form, so it is read out (UI-OVL-009). */}
         <Typography
           component="code"
+          {...OVERLAY_FOCUS_TARGET}
+          tabIndex={-1}
           sx={{ fontFamily: "monospace", fontSize: fontSizes["2xl"], fontWeight: 700, letterSpacing: "0.12em" }}
         >
           {groupedCode(code)}
