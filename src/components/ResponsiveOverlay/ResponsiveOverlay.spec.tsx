@@ -8,6 +8,7 @@ import { renderWithProviders } from "../../test/renderWithProviders";
 import { declaredStyles, hasOverlayEntry, pressBack, stubViewport } from "../../test/overlay";
 import { overlayHistorySettled } from "./overlayHistory";
 import { ResponsiveOverlay, type ResponsiveOverlaySize } from "./ResponsiveOverlay";
+import { OVERLAY_FOCUS_TARGET } from "./focusTarget";
 import { useOverlayNavigate } from "./useOverlayNavigate";
 
 /**
@@ -577,5 +578,113 @@ describe("UI-OVL-007 in the sheet, only the body scrolls", () => {
     expect(body).not.toContainElement(within(overlay()).getByRole("heading", { name: "Editar ficha" }));
     expect(body).not.toContainElement(within(overlay()).getByRole("button", { name: "Cancelar" }));
     expect(body).not.toContainElement(within(overlay()).getByRole("button", { name: "Cerrar" }));
+  });
+});
+
+/**
+ * A flow of two steps in one overlay: the form's "Siguiente" unmounts with it,
+ * as a submit button does when its result replaces the form.
+ */
+const Steps: FC<{ marked: boolean }> = ({ marked }) => {
+  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<"form" | "result">("form");
+  const [renders, setRenders] = useState(0);
+
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>
+        Abrir
+      </button>
+      <ResponsiveOverlay
+        open={open}
+        size="form"
+        title="Importar"
+        contentKey={step}
+        onClose={() => setOpen(false)}
+        actions={
+          <button
+            type="button"
+            onClick={() => {
+              // Closing and switching in the same handler, as a flow that resets as it closes.
+              setOpen(false);
+              setStep(step === "form" ? "result" : "form");
+            }}
+          >
+            Cerrar y volver
+          </button>
+        }
+      >
+        {step === "form" ? (
+          // Marked too, so that a focus move on opening would land on it.
+          <button type="button" {...(marked ? OVERLAY_FOCUS_TARGET : {})} onClick={() => setStep("result")}>
+            Siguiente
+          </button>
+        ) : (
+          <>
+            <p {...(marked ? OVERLAY_FOCUS_TARGET : {})} tabIndex={marked ? -1 : undefined}>
+              Se han importado 2 filas.
+            </p>
+            <button type="button" onClick={() => setRenders(renders + 1)}>
+              Repetir ({renders})
+            </button>
+          </>
+        )}
+      </ResponsiveOverlay>
+    </>
+  );
+};
+
+describe("UI-OVL-009 focus follows replaced content", () => {
+  async function openSteps(marked: boolean) {
+    const user = userEvent.setup();
+    renderWithProviders(<Steps marked={marked} />);
+    await user.click(screen.getByRole("button", { name: "Abrir" }));
+    await act(() => overlayHistorySettled());
+    return { user, dialog: overlay("Importar") };
+  }
+
+  it.each([390, 900])("UI-OVL-009 at %i px, a content change focuses the new content's marked target", async (width) => {
+    stubViewport(width);
+    const { user, dialog } = await openSteps(true);
+
+    await user.click(within(dialog).getByRole("button", { name: "Siguiente" }));
+
+    expect(within(dialog).getByText("Se han importado 2 filas.")).toHaveFocus();
+    expect(dialog).toContainElement(document.activeElement as HTMLElement);
+  });
+
+  it("UI-OVL-009 with no marked target, the title takes focus", async () => {
+    const { user, dialog } = await openSteps(false);
+
+    await user.click(within(dialog).getByRole("button", { name: "Siguiente" }));
+
+    expect(within(dialog).getByRole("heading", { name: "Importar" })).toHaveFocus();
+  });
+
+  it("UI-OVL-009 opening leaves focus where the overlay puts it, not on the marked target or the title", async () => {
+    const { dialog } = await openSteps(true);
+
+    expect(within(dialog).getByRole("button", { name: "Siguiente" })).not.toHaveFocus();
+    expect(within(dialog).getByRole("heading", { name: "Importar" })).not.toHaveFocus();
+  });
+
+  it("UI-OVL-009 a content change as the overlay closes moves nothing", async () => {
+    const { user, dialog } = await openSteps(true);
+    const closer = within(dialog).getByRole("button", { name: "Cerrar y volver" });
+
+    await user.click(closer);
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { hidden: true })).not.toBeInTheDocument());
+    expect(screen.queryByText("Se han importado 2 filas.")).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Abrir" }));
+  });
+
+  it("UI-OVL-009 a re-render with the same content leaves focus where it is", async () => {
+    const { user, dialog } = await openSteps(true);
+    await user.click(within(dialog).getByRole("button", { name: "Siguiente" }));
+
+    await user.click(within(dialog).getByRole("button", { name: /^Repetir/ }));
+
+    expect(within(dialog).getByRole("button", { name: "Repetir (1)" })).toHaveFocus();
   });
 });
