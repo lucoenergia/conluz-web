@@ -493,6 +493,7 @@ describe("recording a member's investment (#358)", () => {
       ["", "Indica el importe."],
       ["1.500", "Escribe el importe sin puntos de miles, por ejemplo 1500,50."],
       ["1.500,50", "Escribe el importe sin puntos de miles, por ejemplo 1500,50."],
+      ["10000000000", "El importe no puede superar 9.999.999.999,99 €."],
     ])("UI-MBR-045 refuses %j with a visible reason and sends nothing", async (typed, reason) => {
       const u = userEvent.setup();
       const router = serve({ "u-ana": NONE }, { put: () => undefined });
@@ -510,6 +511,7 @@ describe("recording a member's investment (#358)", () => {
     it.each([
       ["1500,50", 1500.5],
       ["1500.5", 1500.5],
+      ["9999999999,99", 9999999999.99],
     ])("UI-MBR-045 sends %j as the number %d", async (typed, sent) => {
       const u = userEvent.setup();
       const router = serve({ "u-ana": NONE }, { put: () => undefined });
