@@ -283,12 +283,15 @@ This document covers only the rules #290, #302, #324, #339, #348, #252 and #388 
 - **Rule:**
   - The create form's owner options MUST be exactly the memberships of the active community, in
     any state, each labelled with the membership's `fullName` and `personalId`.
+  - Options MUST be ordered by the member record's full name (Spanish collation, case- and
+    accent-insensitive), ties by membership id.
   - Changing the active community MUST replace the options and clear the selection.
   - Without a chosen owner, the form MUST send nothing; it MUST NOT fall back to the caller.
 - **Rationale:** The backend accepts as owner only a member of the supply's community, whatever the
   membership's state (SUP-002); offering anyone else is an action guaranteed to fail. The member
   record is how this community names the person, which can differ from the account. Two members
-  may share a label, so an option is identified by its membership, not by its text.
+  may share a label, so an option is identified by its membership, not by its text. The roster
+  comes in no defined order, so the form orders it the way a Spanish reader looks a name up.
 - **Implements:** SUP-002
 - **Source:** #388
 
