@@ -10,7 +10,7 @@ interface DeleteContactChannelConfirmationModalProps {
   label: string;
   /** How many channels stay after the deletion. At 0, the community is left without contact. */
   otherCount: number;
-  onCancel: (event: SyntheticEvent) => void;
+  onCancel: (event?: SyntheticEvent) => void;
   onConfirm: () => void;
 }
 

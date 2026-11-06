@@ -4,8 +4,8 @@ import type { FC, ReactNode, SyntheticEvent } from "react";
 
 interface ConfirmationModalProps {
   isOpen: boolean;
-  /** Called by "Cancelar", Escape and a backdrop click. */
-  onCancel: (event: SyntheticEvent) => void;
+  /** Called by "Cancelar", the close icon, Escape, the backdrop and back. */
+  onCancel: (event?: SyntheticEvent) => void;
   onConfirm: () => void;
   confirmLabel: string;
   confirmColor?: ConfirmColor;
@@ -45,6 +45,7 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
   <AppModal
     isOpen={isOpen}
     onClose={onCancel}
+    size="compact"
     dismissible={!inFlight}
     title={title}
     scopeHeader={scopeHeader}
@@ -52,7 +53,6 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
     iconBg={iconBg}
     actions={
       <ConfirmationActions
-        onCancel={onCancel}
         onConfirm={onConfirm}
         confirmLabel={confirmLabel}
         confirmColor={confirmColor}

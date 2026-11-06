@@ -2,12 +2,12 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import { alpha } from "@mui/material/styles";
 import { shadows, fontSizes, interactiveTransition } from "../../theme/tokens";
-import type { FC, MouseEvent, SyntheticEvent } from "react";
+import type { FC, MouseEvent } from "react";
+import { useResponsiveOverlay } from "../ResponsiveOverlay";
 
 export type ConfirmColor = "inherit" | "primary" | "secondary" | "success" | "error" | "info" | "warning";
 
 export interface ConfirmationActionsProps {
-  onCancel: (event: SyntheticEvent) => void;
   onConfirm: () => void;
   confirmLabel: string;
   confirmColor?: ConfirmColor;
@@ -18,9 +18,12 @@ export interface ConfirmationActionsProps {
   inFlight?: boolean;
 }
 
-/** A confirmation's footer: "Cancelar" and the confirm button. */
+/**
+ * A confirmation's footer: "Cancelar" and the confirm button. Rendered in the
+ * shared overlay's footer: "Cancelar" goes through its close path, so it asks
+ * first when the dialog has unsaved changes.
+ */
 export const ConfirmationActions: FC<ConfirmationActionsProps> = ({
-  onCancel,
   onConfirm,
   confirmLabel,
   confirmColor = "error",
@@ -28,6 +31,7 @@ export const ConfirmationActions: FC<ConfirmationActionsProps> = ({
   confirmPending = false,
   inFlight = false,
 }) => {
+  const { requestClose } = useResponsiveOverlay();
   const handleConfirm = (event: MouseEvent<HTMLElement>) => {
     event.preventDefault();
     onConfirm();
@@ -37,7 +41,7 @@ export const ConfirmationActions: FC<ConfirmationActionsProps> = ({
     <>
       <Button
         variant="outlined"
-        onClick={onCancel}
+        onClick={requestClose}
         disabled={inFlight}
         sx={{
           minWidth: "64px",

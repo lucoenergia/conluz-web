@@ -329,7 +329,8 @@ describe("deleting a channel", () => {
 
     await user.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(putContact).not.toHaveBeenCalled();
-    expect(sheet()).toBeInTheDocument();
+    // The confirmation's sheet slides out before it leaves the page.
+    await waitFor(() => expect(sheet()).toBeInTheDocument());
   });
 
   it("AC7 on confirming, sends the list without the channel and focuses the next channel's Editar", async () => {

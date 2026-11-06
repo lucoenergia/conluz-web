@@ -4,6 +4,7 @@ import { alpha, useTheme } from "@mui/material/styles";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { AppModal } from "../Modals/AppModal";
+import { ModalCancelButton } from "../Modals/ModalCancelButton";
 import { sxStyles } from "../../theme/sx";
 import { fontSizes, shadows } from "../../theme/tokens";
 import { formatDecimalForInput, parseDecimalInput } from "../../utils/parseDecimalInput";
@@ -72,6 +73,12 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
   const [capacityInput, setCapacityInput] = useState(
     initialValues?.installedPowerKw !== undefined ? formatDecimalForInput(initialValues.installedPowerKw) : "",
   );
+  const [initial] = useState(() => ({
+    name: initialValues?.name ?? "",
+    notes: initialValues?.notes ?? "",
+    capacity: initialValues?.installedPowerKw !== undefined ? formatDecimalForInput(initialValues.installedPowerKw) : "",
+  }));
+  const dirty = name !== initial.name || notes !== initial.notes || capacityInput !== initial.capacity;
   const [nameError, setNameError] = useState<string | undefined>();
   const [capacityError, setCapacityError] = useState<string | undefined>();
   const theme = useTheme();
@@ -122,30 +129,14 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
       isOpen={isOpen}
       onClose={onCancel}
       dismissible={!isSubmitting}
+      dirty={dirty}
       title={`${mode === "create" ? "Nuevo" : "Editar"} acuerdo de reparto en ${communityLabel(communityName)}`}
       scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<HandshakeOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
       iconBg={alpha(theme.palette.primary.main, 0.12)}
       actions={
         <>
-          <Button
-            variant="outlined"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            sx={{
-              minWidth: "64px",
-              padding: "5px 15px",
-              fontSize: fontSizes.lg,
-              borderColor: (theme) => theme.palette.primary.main,
-              color: (theme) => theme.palette.primary.main,
-              "&:hover": {
-                borderColor: (theme) => theme.palette.primary.dark,
-                backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.04),
-              },
-            }}
-          >
-            Cancelar
-          </Button>
+          <ModalCancelButton disabled={isSubmitting} />
           <Button
             variant="contained"
             onClick={handleSubmit}
@@ -165,7 +156,7 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
     >
       {/* In place from the moment the dialog opens, so the explanation is announced when a capacity edit brings it. */}
       <ActionStatus message={capacityChanged ? CAPACITY_CHANGE_NOTICE : ""} />
-      <Box sx={{ maxHeight: "60vh", overflowY: "auto", pt: 1 }}>
+      <Box>
         {mode === "create" && (
           <>
             <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
@@ -196,7 +187,7 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
             fullWidth
             variant="outlined"
             slotProps={{
-              htmlInput: { inputMode: "decimal" },
+              htmlInput: { inputMode: "decimal", readOnly: isSubmitting },
               input: { endAdornment: <InputAdornment position="end">kW</InputAdornment> },
             }}
           />
@@ -215,7 +206,7 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
             required
             fullWidth
             variant="outlined"
-            slotProps={{ htmlInput: { maxLength: 100 } }}
+            slotProps={{ htmlInput: { maxLength: 100, readOnly: isSubmitting } }}
           />
 
           <TextField
@@ -227,7 +218,7 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
             rows={3}
             fullWidth
             variant="outlined"
-            slotProps={{ htmlInput: { maxLength: 500 } }}
+            slotProps={{ htmlInput: { maxLength: 500, readOnly: isSubmitting } }}
           />
         </Box>
       </Box>

@@ -2,7 +2,8 @@ import { useEffect, useState, type FC } from "react";
 import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
 import { Box } from "@mui/material";
-import { useNavigate, useParams } from "react-router";
+import { useParams } from "react-router";
+import { useOverlayNavigate } from "../../components/ResponsiveOverlay";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { SupplyDetailHeader } from "../../components/SupplyDetailHeader";
 import { SupplyCoefficientHistorySection } from "../../components/SupplyCoefficientHistorySection";
@@ -36,7 +37,8 @@ export const SupplyDetailPage: FC = () => {
   const canReadSupply = outcomeFromResource(supplyPoint?.capabilities, "canRead");
   const { remove } = useSupplyActions().forSupply(supplyPoint).actions;
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const navigate = useNavigate();
+  // Each navigation here leaves the page as an overlay closes (UI-OVL-004).
+  const navigate = useOverlayNavigate();
   // A plant opens to any reader of its community -- the same canRead the
   // /production routes require -- and the plant reference carries no
   // capabilities of its own, so the tag links on the community's answer.

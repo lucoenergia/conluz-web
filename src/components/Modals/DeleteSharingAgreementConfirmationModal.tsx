@@ -10,7 +10,7 @@ interface DeleteSharingAgreementConfirmationModalProps {
   isOpen: boolean;
   agreementName: string;
   isDeleting?: boolean;
-  onCancel: (event: SyntheticEvent) => void;
+  onCancel: (event?: SyntheticEvent) => void;
   onConfirm: () => void;
 }
 

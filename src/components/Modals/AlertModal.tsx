@@ -4,7 +4,7 @@ import { Button, Typography, Box } from "@mui/material";
 
 interface AlertModalProps {
   children: ReactNode;
-  onClose: (event: SyntheticEvent) => void;
+  onClose: (event?: SyntheticEvent) => void;
   isOpen: boolean;
 }
 

@@ -14,7 +14,7 @@ interface PublishSharingAgreementConfirmationModalProps {
   fileSumLabel: string;
   coefficientCount: number;
   isPublishing?: boolean;
-  onCancel: (event: SyntheticEvent) => void;
+  onCancel: (event?: SyntheticEvent) => void;
   onConfirm: () => void;
 }
 

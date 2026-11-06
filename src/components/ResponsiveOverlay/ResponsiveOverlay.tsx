@@ -15,12 +15,24 @@ const DEFAULT_DISCARD_MESSAGE = "Tienes cambios sin guardar. Si cierras, se perd
 
 type Slot = ReactNode | ((overlay: ResponsiveOverlayContextValue) => ReactNode);
 
-export interface ResponsiveOverlayProps {
+/**
+ * How the overlay is named: by the `title` it shows; when the content renders
+ * its own heading, by that heading's id; or, with no visible title, by a
+ * `label`. An overlay with none of them does not compile.
+ */
+export type ResponsiveOverlayName =
+  | { title: ReactNode; labelledBy?: never; label?: never }
+  | { title?: undefined; labelledBy: string; label?: never }
+  | { title?: undefined; labelledBy?: never; label: string };
+
+export type ResponsiveOverlayProps = ResponsiveOverlayName & {
   open: boolean;
-  /** Names the overlay (`aria-labelledby`). */
-  title: ReactNode;
   /** A line under the title, such as the community the record belongs to. */
   subtitle?: ReactNode;
+  /** Above the title, outside the heading: the community a confirmed write lands in. */
+  eyebrow?: ReactNode;
+  /** Before the title, outside the heading. */
+  icon?: ReactNode;
   size: ResponsiveOverlaySize;
   /** Unsaved changes: a close attempt asks first, and leaving the page prompts. */
   dirty?: boolean;
@@ -34,9 +46,9 @@ export interface ResponsiveOverlayProps {
   onSubmit?: (event: FormEvent<HTMLElement>) => void;
   /** The scrolling body. */
   children: Slot;
-  /** The footer's controls; replaced by the discard question while it is asked. */
-  actions: Slot;
-}
+  /** The footer's controls; replaced by the discard question while it is asked. No footer without them. */
+  actions?: Slot;
+};
 
 /**
  * The one overlay for every create, edit, action and confirmation flow (#368):
@@ -62,7 +74,11 @@ export interface ResponsiveOverlayProps {
 export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
   open,
   title,
+  labelledBy,
+  label,
   subtitle,
+  eyebrow,
+  icon,
   size,
   dirty = false,
   inFlight = false,
@@ -135,8 +151,10 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
       </Box>
     </Box>
   ) : (
-    render(actions)
+    actions !== undefined && render(actions)
   );
+  const hasHeading = !!(eyebrow || icon || title !== undefined || subtitle);
+  const name = { "aria-labelledby": labelledBy ?? (title !== undefined ? titleId : undefined), "aria-label": label };
 
   const content = (
     <Box
@@ -155,19 +173,30 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
           display: "flex",
           alignItems: "flex-start",
           gap: 1,
-          borderBottom: 1,
+          borderBottom: hasHeading ? 1 : 0,
           borderColor: "divider",
           p: { xs: "4px 8px 12px 16px", md: "16px 16px 16px 24px" },
+          pb: hasHeading ? undefined : 0,
         }}
       >
         <Box sx={{ flex: 1, minWidth: 0, pt: 1 }}>
-          <Typography id={titleId} variant="h6" component="h2">
-            {title}
-          </Typography>
-          {subtitle && (
-            <Typography variant="body2" sx={{ color: colors.text.subtle }}>
-              {subtitle}
-            </Typography>
+          {eyebrow}
+          {(icon || title !== undefined || subtitle) && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              {icon}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                {title !== undefined && (
+                  <Typography id={titleId} variant="h6" component="h2">
+                    {title}
+                  </Typography>
+                )}
+                {subtitle && (
+                  <Typography variant="body2" sx={{ color: colors.text.subtle }}>
+                    {subtitle}
+                  </Typography>
+                )}
+              </Box>
+            </Box>
           )}
         </Box>
         {!inFlight && (
@@ -186,19 +215,21 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
         {render(children)}
       </Box>
 
-      <Box
-        sx={{
-          display: "flex",
-          gap: 1,
-          justifyContent: "flex-end",
-          alignItems: "center",
-          borderTop: 1,
-          borderColor: "divider",
-          p: { xs: "12px 16px 16px", md: "16px 24px" },
-        }}
-      >
-        {footer}
-      </Box>
+      {footer != null && footer !== false && (
+        <Box
+          sx={{
+            display: "flex",
+            gap: 1,
+            justifyContent: "flex-end",
+            alignItems: "center",
+            borderTop: 1,
+            borderColor: "divider",
+            p: { xs: "12px 16px 16px", md: "16px 24px" },
+          }}
+        >
+          {footer}
+        </Box>
+      )}
     </Box>
   );
 
@@ -209,7 +240,7 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
       <Dialog
         open={open}
         onClose={requestClose}
-        aria-labelledby={titleId}
+        {...name}
         slotProps={{
           paper: { sx: { width: DIALOG_WIDTH[size], maxWidth: "calc(100% - 32px)", borderRadius: radii.large, m: 2 } },
         }}
@@ -226,6 +257,9 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
       onClose={requestClose}
       onOpen={() => {}}
       disableSwipeToOpen
+      // SwipeableDrawer keeps a closed sheet mounted, hidden, for swipe-to-open,
+      // which is off: a closed overlay leaves nothing in the page, as the dialog.
+      ModalProps={{ keepMounted: false }}
       // A drawer sits on the drawer layer, under the app bar (Header lifts it
       // above the side menu); this one is a modal sheet, so it goes on top.
       sx={{ zIndex: (theme) => theme.zIndex.modal }}
@@ -233,7 +267,7 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
         paper: {
           role: "dialog",
           "aria-modal": true,
-          "aria-labelledby": titleId,
+          ...name,
           sx: {
             maxHeight: "calc(100% - 24px)",
             borderRadius: `${radii.large} ${radii.large} 0 0`,

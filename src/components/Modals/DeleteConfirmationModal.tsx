@@ -10,7 +10,7 @@ interface DeleteConfirmationModalProps {
   isOpen: boolean;
   /** The plant's name: what a person knows it by, never the provider's station code (UI-PLS-003). */
   name: string;
-  onCancel: (event: SyntheticEvent) => void;
+  onCancel: (event?: SyntheticEvent) => void;
   onDelete: () => void;
 }
 

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FC } from "react";
 import { Box } from "@mui/material";
-import { useNavigate, useParams } from "react-router";
+import { useParams } from "react-router";
+import { useOverlayNavigate } from "../../components/ResponsiveOverlay";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
@@ -31,7 +32,8 @@ import {
 
 export const SharingAgreementDetailPage: FC = () => {
   const { plantId = "", sharingAgreementId = "" } = useParams();
-  const navigate = useNavigate();
+  // Each navigation here leaves the page as an overlay closes (UI-OVL-004).
+  const navigate = useOverlayNavigate();
   const errorDispatch = useErrorDispatch();
   const { agreement, plant, coefficients, coefficientsData, isLoading, isNotFound, error } = useSharingAgreementDetailData(
     plantId,
