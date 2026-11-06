@@ -8,13 +8,14 @@
 | **Roles** | Every caller |
 | **Domain rules** | n/a |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #327 |
+| **Last reviewed against code** | #389 |
 
 ## Purpose
 
 How the app consumes the generated API client. This document was created by #337 and covers only
-the rules #337 and #327 touch, with no backfill. The subject is when a generated hook may send a
-request, and when it sends one again, not what a screen shows with the answer.
+the rules #337, #327 and #389 touch, with no backfill. The subject is when a generated hook may send
+a request, when it sends one again, and what credentials a request carries, not what a screen shows
+with the answer.
 
 ## Rules
 
@@ -44,10 +45,26 @@ request, and when it sends one again, not what a screen shows with the answer.
 - **Implements:** n/a
 - **Source:** #327
 
+### UI-DATA-003 — Every request carries the session's token, the first one included
+
+- **Status:** Active
+- **Rule:**
+  - Once a token is set, by a login, by accepting an invitation, or read from storage when the app
+    starts, every request the API client sends MUST carry it as `Authorization: Bearer <token>`,
+    the first request included, and including a request sent before the app re-renders.
+  - Once the session ends, a request MUST NOT carry the ended session's token.
+- **Rationale:** The first request of a session is the current-user query, whose 401 ends the
+  session. It runs in an effect of a provider nested inside the one that holds the token, and React
+  runs a child's effects before its parent's. While the token reached the request through an
+  interceptor re-registered in the parent's effect on every token change, that request went out
+  with no token, so every login and every reload with a stored session ended at once.
+- **Implements:** n/a
+- **Source:** #389
+
 ## States
 
-Not applicable: these rules govern whether a request is sent, in every state of every screen that
-reads data.
+Not applicable: these rules govern whether a request is sent, and what it carries, in every state
+of every screen that reads data.
 
 ## Accepted exceptions
 

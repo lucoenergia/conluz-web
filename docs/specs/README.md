@@ -49,5 +49,5 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-ERR` | API errors: where and in whose words a refused request's message is shown, across screens | [`api-errors.md`](api-errors.md) |
 | `UI-CTU` | Contact: the in-app contact page, its fallback, the platform admin's read-only view of a community's channels, and the public sign-in help page | [`contact.md`](contact.md) |
 | `UI-LST` | Record lists: the layout switch, links, the actions column, failed reads and pagination shared by every records list | [`record-lists.md`](record-lists.md) |
-| `UI-DATA` | Data fetching: how the app consumes the generated API client | [`data-fetching.md`](data-fetching.md) |
+| `UI-DATA` | Data fetching: how the app consumes the generated API client, and the token its requests carry | [`data-fetching.md`](data-fetching.md) |
 | `UI-OVL` | Overlays: the shared dialog or bottom sheet of every create, edit, action and confirmation flow, its close path and back, and what may bypass it | [`overlays.md`](overlays.md) |
