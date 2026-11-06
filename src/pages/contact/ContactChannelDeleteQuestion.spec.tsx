@@ -124,6 +124,19 @@ describe("UI-CTU-009 deleting a channel asks in the editor's footer", () => {
     expect(putContact).not.toHaveBeenCalled();
   });
 
+  it("UI-CTU-009 typing in a field keeps the question, and focus stays in the field", async () => {
+    const user = await openQuestion();
+    const name = within(editor()).getByRole("textbox", { name: "Nombre del canal" });
+
+    await user.click(name);
+    await user.keyboard(" central");
+
+    expect(within(editor()).getByRole("alert")).toHaveTextContent(QUESTION);
+    expect(name).toHaveFocus();
+    expect(name).toHaveValue("Oficina central");
+    expect(putContact).not.toHaveBeenCalled();
+  });
+
   it("UI-CTU-009 gives focus back to Eliminar canal in the dialog too, where the button sits in the footer", async () => {
     stubViewport(900);
     const user = await openQuestion();
