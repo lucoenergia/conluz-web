@@ -668,7 +668,9 @@ introduced; the rest of the members page is not covered yet.
   - The field MUST be filled once, from that answer: a later answer MUST NOT replace what is being
     typed.
   - Removal MUST be offered only while an amount is recorded, and MUST be confirmed before it is
-    sent.
+    sent. The confirmation MUST be asked in the editor's footer, as the overlay's own question
+    (UI-OVL), naming the amount and the member, not in a second dialog; withdrawing it MUST keep the
+    editor and give focus back to "Quitar inversión".
   - When the backend refuses a save or a removal, the editor MUST stay open with the amount as typed
     and say what was refused, and nothing MUST be announced as saved. A write the backend accepts
     closes the editor and is announced.
@@ -759,6 +761,7 @@ The investment editor (UI-MBR-044):
 | No amount recorded | The empty field | Guardar, Cancelar |
 | Amount recorded | The field filled with the amount | Quitar inversión, Guardar, Cancelar |
 | Invalid amount | The reason under the field (UI-MBR-045) | As before |
+| Asking to remove | The footer replaced by the question, naming the amount and the member | Quitar inversión, Cancelar; any close attempt, back included, withdraws the question |
 | Saving or removing | The same, nothing editable | None; the editor cannot be closed |
 | Refused | The refusal in the catalogue's words or the generic retry message, with the amount as typed | As before |
 
