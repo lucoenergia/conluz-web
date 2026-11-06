@@ -208,6 +208,7 @@ view may present a missing figure as a zero or a normal setup stage as a failure
 | --- | --- | --- |
 | Normal | Every block, from the caller's own membership (UI-HOM-010), each priced as its response says (UI-HOM-001), the comparison with its directions (UI-HOM-003) | The view switch, for a caller with both views (UI-HOM-008) |
 | Nothing resolved yet | The payback sentence without a large figure (UI-HOM-002); neutral notices in place of empty blocks (UI-HOM-007) | — |
+| Community has not shared energy yet | That the community has not started sharing energy, so there is no saving yet; the recorded investment, or, with none, that none is recorded and whom to ask to record it (UI-HOM-014) | With no investment recorded, the link to the community's contact page |
 | No investment recorded | The saving so far, that no investment is recorded, and whom to ask to record it (UI-HOM-014) | The link to the community's contact page |
 | Incomplete month | The comparison said to be affected (UI-HOM-004); no best hours named (UI-HOM-006) | — |
 | Management setup | No plant, or a plant without an agreement, explained without an alert (UI-HOM-009) | — |
