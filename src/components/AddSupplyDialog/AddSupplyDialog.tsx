@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import GroupAddOutlinedIcon from "@mui/icons-material/GroupAddOutlined";
 import { AppModal } from "../Modals/AppModal";
+import { ModalCancelButton } from "../Modals/ModalCancelButton";
 import { SearchBar } from "../SearchBar/SearchBar";
 import { fontSizes, shadows } from "../../theme/tokens";
 import { useDebounce } from "../../utils/useDebounce";
@@ -79,24 +80,14 @@ export const AddSupplyDialog: FC<AddSupplyDialogProps> = ({
     <AppModal
       isOpen={isOpen}
       onClose={handleClose}
+      // The selection starts empty.
+      dirty={selectedIds.size > 0}
       title="Añadir suministros"
       icon={<GroupAddOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
       iconBg={alpha(theme.palette.primary.main, 0.12)}
       actions={
         <>
-          <Button
-            variant="outlined"
-            onClick={handleClose}
-            sx={{
-              minWidth: "64px",
-              padding: "5px 15px",
-              fontSize: fontSizes.lg,
-              borderColor: (t) => t.palette.primary.main,
-              color: (t) => t.palette.primary.main,
-            }}
-          >
-            Cancelar
-          </Button>
+          <ModalCancelButton />
           <Button
             variant="contained"
             onClick={handleConfirm}
@@ -108,11 +99,22 @@ export const AddSupplyDialog: FC<AddSupplyDialogProps> = ({
         </>
       }
     >
-      <Box sx={{ mb: 2 }}>
+      {/* The body scrolls as a whole; the search stays in view above the list. */}
+      <Box
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+          bgcolor: "background.paper",
+          mt: { xs: -2, md: -3 },
+          pt: { xs: 2, md: 3 },
+          pb: 1,
+        }}
+      >
         <SearchBar value={searchText} onChange={setSearchText} placeholder="Buscar por nombre o CUPS" />
       </Box>
 
-      <Box sx={{ maxHeight: "50vh", overflowY: "auto" }}>
+      <Box>
         {isLoading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
             <CircularProgress size={28} />

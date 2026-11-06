@@ -4,11 +4,11 @@
 | --- | --- |
 | **Prefix** | `UI-OVL` |
 | **Status** | Active |
-| **Routes** | Every route whose page opens a create, edit, action or confirmation flow; on the overlay today: `/community/contact` (the contact channel editor) |
+| **Routes** | Every route whose page opens a create, edit, action or confirmation flow; on the overlay today: the contact channel editor (#368) and every flow on `AppModal` or `ConfirmationModal` (#369) |
 | **Roles** | Whoever may start the flow; the overlay adds no rule of its own |
 | **Domain rules** | `lucoenergia/conluz`: none |
 | **Design reference** | Design system: `ContactChannelEditor` (dialogs), the reference the overlay was taken from |
-| **Last reviewed against code** | #368 |
+| **Last reviewed against code** | #369 |
 
 <!-- Domain rules are cited by ID; the prefix registry in lucoenergia/conluz → docs/specs/README.md maps each prefix to its file. -->
 
@@ -64,13 +64,16 @@ changes, and back closes it rather than the page.
 - **Rule:** Browser or system back MUST close the open overlay, subject to UI-OVL-003, instead of
   leaving the page, and the page underneath MUST stay as it was. Closing the overlay by other means
   MUST leave no extra history step. With several overlays stacked, each back press MUST close the
-  top one only.
+  top one only. A flow that leaves the page as it closes MUST leave one back returning to the page
+  the overlay was opened on or, when the flow deleted the record that page shows, to the page before
+  it.
 - **Rationale:** Back is the usual way to dismiss a sheet on a phone, and it used to leave the page
   and discard the input with no question. An overlay that kept its history step after closing would
   make the next back do nothing visible. A flow that leaves the page as it closes lands where it
-  goes, and one back returns to the page the overlay was opened on.
+  goes, and one back returns to the page the overlay was opened on, unless that page shows a record
+  that no longer exists: landing there would be a dead end.
 - **Implements:** n/a
-- **Source:** #368
+- **Source:** #368; changed in #369 (a deletion from the record's own page skips that page on back)
 
 ### UI-OVL-005 — Leaving the page with changes prompts
 
@@ -81,17 +84,19 @@ changes, and back closes it rather than the page.
 - **Implements:** n/a
 - **Source:** #368
 
-### UI-OVL-006 — A modal dialog, named by its title
+### UI-OVL-006 — A modal dialog, named by its title or a label
 
 - **Status:** Active
-- **Rule:** The overlay MUST trap focus, be a modal dialog named by its title, and return focus to
-  the control that opened it on close. Its close icon and the footer's buttons MUST be touch-sized
-  targets.
+- **Rule:** The overlay MUST trap focus, be a modal dialog named by its title or, when it has no
+  visible title, by an accessible label; it MUST return focus to its opener on close, and its close
+  icon and footer buttons MUST be touch-sized targets.
 - **Rationale:** Screen-reader users must know where they are and get back where they were;
   keyboard users must not tab out into a page they cannot see. The sheet is a drawer underneath, so
-  it carries the dialog role and modality itself.
+  it carries the dialog role and modality itself. An outcome that shows no title, such as a success
+  message read as a sentence, is named by a label or by the text that states it, so it is still
+  announced as what it is.
 - **Implements:** n/a
-- **Source:** #368
+- **Source:** #368; changed in #369 (a label names an overlay with no visible title)
 
 ### UI-OVL-007 — In the sheet, only the body scrolls
 
@@ -122,6 +127,7 @@ changes, and back closes it rather than the page.
 | Open, no changes | Header with the title, the scrolling body, the footer with the flow's own controls; focus trapped (UI-OVL-001, UI-OVL-006, UI-OVL-007) | The flow's controls; close directly by any means, back included |
 | Open, with changes | The same; a close attempt, back included, replaces the footer with the unsaved-changes question (UI-OVL-003, UI-OVL-004) | Keep editing, discard |
 | Write in flight | The same, read-only, with no close icon (UI-OVL-002) | None that closes it |
+| Asking the flow's own question | The footer replaced by the question, such as deleting a contact channel (UI-CTU-009) | Its two answers; any close attempt, back included, withdraws it (UI-OVL-004). Whether typing withdraws it is the flow's choice; the unsaved-changes question is always withdrawn by typing (UI-OVL-003) |
 | Stacked | Each overlay above the previous one | Back closes the top one only (UI-OVL-004) |
 
 ## Accepted exceptions
@@ -129,6 +135,8 @@ changes, and back closes it rather than the page.
 | Exception | Reason | Expires when | Source |
 | --- | --- | --- | --- |
 | The side menu, `CoefficientHistoryDrawer`, and the historical-analysis supply, period and range pickers keep MUI's primitives | The navigation drawer, a read-only side panel and pickers are not create, edit, action or confirmation flows | Never; listed as permanent in the allowlist | #368 |
-| The flows not migrated yet keep MUI's primitives | The migration is split per flow | The issue named next to each allowlist entry closes (#369, #370, #371) | #368 |
+| The flows not migrated yet keep MUI's primitives | The migration is split per flow | The issue named next to each allowlist entry closes (#370, #371) | #368 |
+| The supply disable and enable success dialogs open when the request resolves, not from a user interaction | Opened after the request resolves, not from a user interaction; Chrome's history intervention may let back skip their entry; pending manual verification on a phone | The phone check passes, or they are replaced by an announcement in a separate issue | #369 |
 | The supply, plant and community create and edit pages keep their routes | They become overlays in their own issues | #372, #373 and #374 close | #368 |
 | A reload while an overlay is open leaves one inert history step, costing one extra back press | The history step that lets back close the overlay cannot be removed by a page that has reloaded | Never; browsers offer no way to remove a history entry | #368 |
+| After deleting a record from its detail page, back may show the list once more when the detail page was opened from that list | Replacing the deleted page avoids landing on a record that no longer exists; telling where the detail page was opened from is not worth the complexity | Never | #369 |

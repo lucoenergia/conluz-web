@@ -210,7 +210,10 @@ describe("SharingAgreementsPage", () => {
     await user.click(screen.getByRole("button", { name: "Crear borrador" }));
 
     await waitFor(() => expect(mockCreateMutateAsync).toHaveBeenCalled());
-    expect(mockNavigate).toHaveBeenCalledWith("/production/plant-42/sharing-agreements/new-agreement");
+    // The destination only: as the dialog closes, the navigation takes the
+    // overlay's history entry (useOverlayNavigate), with the options that implies.
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    expect(mockNavigate.mock.calls[0][0]).toBe("/production/plant-42/sharing-agreements/new-agreement");
   });
 
   test("does not navigate to a route with a missing id when create succeeds without an id", async () => {

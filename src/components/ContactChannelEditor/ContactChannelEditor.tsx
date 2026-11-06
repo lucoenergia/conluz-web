@@ -43,8 +43,10 @@ export interface ContactChannelEditorProps {
   /** A server refusal of the save, by field. Each new object is placed and focused. */
   fieldErrors?: ContactChannelErrors;
   onSave: (draft: ContactChannelDraft) => void;
-  /** Asks to delete the channel; the page confirms it. Only in edit mode. */
+  /** Deletes the channel, once the editor has asked and been confirmed. Only in edit mode. */
   onDelete?: () => void;
+  /** How many channels stay after a deletion; at 0 the delete question warns the community is left without contact. */
+  otherChannelCount?: number;
   /** Closes without saving: nothing changed, or the changes were discarded. */
   onClose: () => void;
   /** Closes after the caller lost the right to edit, so the page can refresh what they may do. */
@@ -129,10 +131,14 @@ export const ContactChannelEditor: FC<ContactChannelEditorProps> = ({
   fieldErrors,
   onSave,
   onDelete,
+  otherChannelCount = 0,
   onClose,
   onLostRightsClose,
 }) => {
   const [draft, setDraft] = useState(initialChannel);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [refocusDelete, setRefocusDelete] = useState(false);
+  const deleteRef = useRef<HTMLButtonElement | null>(null);
   const [errors, setErrors] = useState<ContactChannelErrors>({});
   const [attempted, setAttempted] = useState(false);
   const fieldRefs = useRef<Partial<Record<TextFieldName, HTMLInputElement | HTMLTextAreaElement | null>>>({});
@@ -165,6 +171,48 @@ export const ContactChannelEditor: FC<ContactChannelEditorProps> = ({
   useEffect(() => {
     if (alert) alertRef.current?.focus();
   }, [status, alert]);
+
+  // A withdrawn delete question gives focus back to "Eliminar canal", once it is back on screen.
+  useEffect(() => {
+    if (!refocusDelete) return;
+    deleteRef.current?.focus();
+    setRefocusDelete(false);
+  }, [refocusDelete]);
+
+  const withdrawDelete = () => {
+    setConfirmingDelete(false);
+    setRefocusDelete(true);
+  };
+
+  // Asked in the footer, like the unsaved-changes question: unsaved changes do
+  // not have to be discarded first (UI-CTU-009).
+  const deleteQuestion =
+    confirmingDelete && onDelete && !readOnly
+      ? {
+          message: (
+            <>
+              <Typography variant="subtitle1" component="p" sx={{ fontWeight: 600 }}>
+                ¿Eliminar el canal «{initialChannel.label}»?
+              </Typography>
+              <Typography variant="body2">
+                {otherChannelCount === 0
+                  ? "Es el único canal. Si lo eliminas, tu comunidad se quedará sin contacto y los miembros no sabrán cómo contactar con quien la gestiona hasta que añadas otro."
+                  : `Los miembros dejarán de verlo en Contacto. ${
+                      otherChannelCount === 1 ? "El otro canal no cambia." : `Los otros ${otherChannelCount} canales no cambian.`
+                    }`}
+              </Typography>
+            </>
+          ),
+          cancelLabel: "Cancelar",
+          confirmLabel: "Eliminar canal",
+          confirmColor: "error" as const,
+          onConfirm: () => {
+            setConfirmingDelete(false);
+            onDelete();
+          },
+          onCancel: withdrawDelete,
+        }
+      : undefined;
 
   const update = (field: ContactChannelField, value: string) => {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -245,7 +293,8 @@ export const ContactChannelEditor: FC<ContactChannelEditorProps> = ({
         variant="text"
         size="large"
         startIcon={<DeleteOutlineIcon />}
-        onClick={onDelete}
+        ref={deleteRef}
+        onClick={() => setConfirmingDelete(true)}
         sx={{ alignSelf: "flex-start", minHeight: 44, mr: variant === "dialog" ? "auto" : 0 }}
       >
         Eliminar canal
@@ -297,6 +346,7 @@ export const ContactChannelEditor: FC<ContactChannelEditorProps> = ({
       inFlight={saving}
       onClose={lostRights ? onLostRightsClose : onClose}
       discardMessage="Tienes cambios sin guardar en este canal. Si cierras, se perderán."
+      question={deleteQuestion}
       onSubmit={save}
       actions={footer}
     >
@@ -356,7 +406,7 @@ export const ContactChannelEditor: FC<ContactChannelEditorProps> = ({
             autoComplete: "off",
           })}
 
-          {variant === "sheet" && !confirmingDiscard && deleteButton(variant)}
+          {variant === "sheet" && !confirmingDiscard && !deleteQuestion && deleteButton(variant)}
         </>
       )}
     </ResponsiveOverlay>

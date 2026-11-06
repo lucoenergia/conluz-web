@@ -1,10 +1,8 @@
 import type { FC } from "react";
-import { Box, Drawer, IconButton, Typography } from "@mui/material";
+import { Box, Drawer, IconButton, Typography, useMediaQuery, useTheme } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { colors, fontSizes, radii } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
-import { MIN_DESKTOP_WIDTH } from "../../utils/constants";
-import useWindowDimensions from "../../utils/useWindowDimensions";
 import { CoefficientHistory } from "../CoefficientHistory";
 // eslint no-restricted-imports allowlist (see eslint.config.js): opened only from
 // an agreement already scoped to the active community.
@@ -47,12 +45,12 @@ export const CoefficientHistoryDrawer: FC<CoefficientHistoryDrawerProps> = ({
   plantId,
   currentSharingAgreementId,
 }) => {
-  const { width } = useWindowDimensions();
+  const theme = useTheme();
   // A bottom sheet on a phone puts the content under the thumb; a side panel
   // on desktop keeps the agreement table visible beside it. One layout, not
-  // two hidden copies, matching how the app's other responsive surfaces
-  // choose at the project's desktop breakpoint.
-  const isNarrow = width < MIN_DESKTOP_WIDTH;
+  // two hidden copies, switching at `md` like the shared overlay (#369,
+  // UI-AGR-017).
+  const isNarrow = !useMediaQuery(theme.breakpoints.up("md"));
 
   const {
     data: periods,

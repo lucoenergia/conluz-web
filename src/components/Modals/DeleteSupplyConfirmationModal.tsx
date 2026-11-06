@@ -15,7 +15,7 @@ interface DeleteSupplyConfirmationModalProps {
   /** The owner's full name; null for a supply with no owner. */
   ownerName?: string | null;
   isDeleting?: boolean;
-  onCancel: (event: SyntheticEvent) => void;
+  onCancel: (event?: SyntheticEvent) => void;
   onConfirm: () => void;
 }
 

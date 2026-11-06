@@ -427,7 +427,10 @@ describe("SharingAgreementDetailPage", () => {
     await user.click(screen.getByRole("button", { name: "Eliminar" }));
 
     await waitFor(() => expect(mockDeleteMutateAsync).toHaveBeenCalledWith({ plantId: "plant-1", sharingAgreementId: "agreement-1" }));
-    expect(mockNavigate).toHaveBeenCalledWith("/production/plant-1/sharing-agreements");
+    // The destination only: as the dialog closes, the navigation takes the
+    // overlay's history entry (useOverlayNavigate), with the options that implies.
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    expect(mockNavigate.mock.calls[0][0]).toBe("/production/plant-1/sharing-agreements");
   });
 
   test("does not navigate away when delete fails", async () => {

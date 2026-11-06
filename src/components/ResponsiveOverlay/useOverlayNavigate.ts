@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useNavigate, type NavigateOptions, type To } from "react-router";
-import { afterPendingBacks, claimCurrentEntryForNavigation } from "./overlayHistory";
+import { afterPendingBacks, claimCurrentEntryForNavigation, giveBackEntriesForReplace } from "./overlayHistory";
 
 /**
  * `navigate` for a flow that leaves the page as an overlay closes: a create
@@ -17,6 +17,12 @@ import { afterPendingBacks, claimCurrentEntryForNavigation } from "./overlayHist
  *   for that back to land, then pushes as usual;
  * - with no overlay involved, it is `navigate`.
  *
+ * With `replace: true` it replaces the page the overlay was opened on, not
+ * just the overlay's entry: the overlay's entry is given back first, then the
+ * page's own entry is replaced. For a page that no longer has anything to
+ * show, such as a record deleted from its detail page, so one back does not
+ * land on it (#369).
+ *
  * Several stacked overlays open at that moment are all closed; the entries
  * below the top one stay behind, inert.
  */
@@ -25,7 +31,10 @@ export function useOverlayNavigate(): (to: To, options?: NavigateOptions) => voi
   return useCallback(
     (to: To, options?: NavigateOptions) =>
       afterPendingBacks(() => {
-        if (claimCurrentEntryForNavigation()) void navigate(to, { ...options, replace: true });
+        if (options?.replace) {
+          giveBackEntriesForReplace();
+          afterPendingBacks(() => void navigate(to, options));
+        } else if (claimCurrentEntryForNavigation()) void navigate(to, { ...options, replace: true });
         else void navigate(to, options);
       }),
     [navigate],

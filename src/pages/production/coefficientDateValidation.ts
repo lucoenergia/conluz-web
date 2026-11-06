@@ -30,3 +30,12 @@ export function getCoefficientDateDisabledReason(
   if (isPending) return pendingReason;
   return null;
 }
+
+/**
+ * Whether a date dialog's field differs from the date it opened with, by
+ * calendar day: closing it then asks before discarding (UI-OVL-003).
+ */
+export function dateChanged(selected: Dayjs | null, initial: Dayjs | null): boolean {
+  if (selected === null || initial === null) return selected !== initial;
+  return !selected.isSame(initial, "day");
+}

@@ -4,6 +4,7 @@ import { alpha, useTheme } from "@mui/material/styles";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { AppModal } from "../Modals/AppModal";
+import { ModalCancelButton } from "../Modals/ModalCancelButton";
 import { colors, fontSizes, shadows } from "../../theme/tokens";
 import type { GroupedApiErrors } from "../../errors/apiErrorCatalogue";
 import type { Action, SharingAgreementFileUploadResult } from "../../hooks/actions";
@@ -76,30 +77,15 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
       isOpen={isOpen}
       onClose={handleClose}
       dismissible={!uploadFile.isPending}
+      // A file chosen and not yet imported; a rejected one has nothing left to keep.
+      dirty={file !== null && !groupedErrors}
       title={`Importar un fichero que ya tengas en ${communityLabel(communityName)}`}
       scopeHeader={<CommunityScopeHeader name={communityName} />}
       icon={<UploadFileOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
       iconBg={alpha(theme.palette.primary.main, 0.12)}
       actions={
         <>
-          <Button
-            variant="outlined"
-            onClick={handleClose}
-            disabled={uploadFile.isPending}
-            sx={{
-              minWidth: "64px",
-              padding: "5px 15px",
-              fontSize: fontSizes.lg,
-              borderColor: (t) => t.palette.primary.main,
-              color: (t) => t.palette.primary.main,
-              "&:hover": {
-                borderColor: (t) => t.palette.primary.dark,
-                backgroundColor: (t) => alpha(t.palette.primary.main, 0.04),
-              },
-            }}
-          >
-            {groupedErrors ? "Cerrar" : "Cancelar"}
-          </Button>
+          <ModalCancelButton disabled={uploadFile.isPending}>{groupedErrors ? "Cerrar" : "Cancelar"}</ModalCancelButton>
           {!groupedErrors && regulatoryCode && (
             <Button
               variant="contained"
@@ -119,7 +105,7 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
         </>
       }
     >
-      <Box sx={{ maxHeight: "60vh", overflowY: "auto", pt: 1 }}>
+      <Box>
         {!regulatoryCode ? (
           <Alert severity="warning">
             Esta planta no tiene código regulatorio (CAU) asignado, por lo que no se puede validar el nombre del
@@ -139,7 +125,13 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
               acuerdo.
             </Notice>
 
-            <Button component="label" variant="outlined" startIcon={<UploadFileOutlinedIcon />} sx={{ mb: 1 }}>
+            <Button
+              component="label"
+              variant="outlined"
+              startIcon={<UploadFileOutlinedIcon />}
+              disabled={uploadFile.isPending}
+              sx={{ mb: 1 }}
+            >
               Seleccionar fichero
               <input type="file" accept=".txt" onChange={handleFileChange} style={{ display: "none" }} />
             </Button>
@@ -147,7 +139,7 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
             {file && (
               <Chip
                 label={file.name}
-                onDelete={() => setFile(null)}
+                onDelete={uploadFile.isPending ? undefined : () => setFile(null)}
                 sx={{ display: "flex", width: "fit-content", mt: 1 }}
               />
             )}

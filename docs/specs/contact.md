@@ -7,8 +7,8 @@
 | **Routes** | `/community/contact`, `/contact`, `/communities/:communityId/edit` (its Contacto section) |
 | **Roles** | Any signed-in caller (`/community/contact`), who edits the channels there when they may manage the active community; a platform admin who may update the community (`/communities/:communityId/edit`); a signed-out visitor (`/contact`) |
 | **Domain rules** | `lucoenergia/conluz`: CTC-001, CTC-004 |
-| **Design reference** | Design system: `ContactChannelList` (data display), `ContactChannelReorderList` (forms), `ContactChannelEditor` and `DeleteContactChannelConfirmationModal` (dialogs) |
-| **Last reviewed against code** | #368 |
+| **Design reference** | Design system: `ContactChannelList` (data display), `ContactChannelReorderList` (forms), `ContactChannelEditor` (dialogs) |
+| **Last reviewed against code** | #369 |
 
 ## Purpose
 
@@ -119,6 +119,29 @@ date from the same page, seeing them as members do, one channel at a time.
 - **Implements:** n/a
 - **Source:** #296
 
+### UI-CTU-009 — Deleting a channel asks in the editor's footer
+
+- **Status:** Active
+- **Rule:**
+  - "Eliminar canal" MUST ask in the editor's footer, in place of its controls, naming the channel
+    and what deleting it does to the other channels, or, for the only channel, that the community is
+    left without contact. Nothing is sent until the deletion is confirmed.
+  - "Cancelar", Escape, the close icon and back MUST withdraw the question, keep the editor and its
+    input, and return focus to "Eliminar canal".
+  - Confirming MUST send the deletion with the editor read-only and showing that it is saving, under
+    the in-flight lock (UI-OVL-002). Unsaved changes MUST NOT have to be discarded first.
+  - Typing in the editor does not withdraw the question; only Cancelar, Escape, the close icon or
+    back do.
+- **Rationale:** A second dialog stacked over the editor was a sheet over a sheet on a phone. Asked in
+  the footer, the question is answered where the admin already is, as the unsaved-changes question is
+  (UI-OVL-003). Back withdraws the question rather than closing the editor because the admin was
+  answering it, not leaving. The deletion discards the edits along with the channel, so asking about
+  them first would be a second question with only one possible answer. Withdrawing the question
+  returns focus to "Eliminar canal", which would take it out of a field being typed in, so the
+  question waits for an answer.
+- **Implements:** n/a
+- **Source:** #369
+
 ## States
 
 | State | Rendered | Actions available |
@@ -137,7 +160,7 @@ date from the same page, seeing them as members do, one channel at a time.
 | Sheet, offline | The offline message at the top, focused, with the input kept | Save again, close |
 | Sheet, lost rights (403 or 404) | The lost-rights message; the input read-only but selectable; no "Guardar" | Close, which refreshes the community and shows the member view |
 | Order mode | Numbered rows with "Subir" and "Bajar"; no add or edit controls; each move announced, focus on the moved channel | Move, save the order, cancel |
-| Delete confirmation | The channel's name and the effect on the others, over the sheet; nothing sent until confirmed | Confirm, cancel; back cancels it and keeps the sheet (UI-OVL-004) |
+| Delete question | The editor, its footer replaced by the channel's name and the effect on the others; nothing sent until confirmed (UI-CTU-009) | Confirm, which saves under the lock; cancel, Escape, the close icon or back, which withdraw it and keep the editor (UI-OVL-004) |
 | Last channel deleted | The configure panel and a neutral notice; focus on "Configurar contacto" | "Configurar contacto" |
 | No channels (platform admin section) | The neutral "not configured" text, no alert colour | None |
 | Channels request failed | An error with a retry | Retry |

@@ -9,7 +9,7 @@ import { radii, alphas, fontSizes } from "../../theme/tokens";
 interface DisableConfirmationModalProps {
   isOpen: boolean;
   code: string;
-  onCancel: (event: SyntheticEvent) => void;
+  onCancel: (event?: SyntheticEvent) => void;
   onDisable: () => void;
 }
 

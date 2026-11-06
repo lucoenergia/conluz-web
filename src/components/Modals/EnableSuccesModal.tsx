@@ -5,7 +5,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { radii, shadows, alphas, fontSizes, interactiveTransition} from "../../theme/tokens";
 
 interface EnableSuccessModalProps {
-  onClose: (event: SyntheticEvent) => void;
+  onClose: (event?: SyntheticEvent) => void;
   isOpen: boolean;
   code: string;
 }
@@ -17,6 +17,7 @@ export const EnableSuccessModal: FC<EnableSuccessModalProps> = ({ onClose, isOpe
       isOpen={isOpen}
       onClose={onClose}
       centered
+      size="compact"
       labelledBy={`${nameId}-lead ${nameId}-code ${nameId}-outcome`}
       icon={<CheckCircleIcon sx={{ fontSize: 40, color: "success.main" }} />}
       iconBg={alphas.success.light}

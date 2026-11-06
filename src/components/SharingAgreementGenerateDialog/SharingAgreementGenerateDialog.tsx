@@ -3,6 +3,7 @@ import { Box, Button, TextField, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import { AppModal } from "../Modals/AppModal";
+import { ModalCancelButton } from "../Modals/ModalCancelButton";
 import { fontSizes, shadows } from "../../theme/tokens";
 import type { Action } from "../../hooks/actions";
 import { triggerBrowserDownload } from "../../utils/triggerBrowserDownload";
@@ -71,29 +72,15 @@ export const SharingAgreementGenerateDialog: FC<SharingAgreementGenerateDialogPr
       isOpen={isOpen}
       onClose={handleClose}
       dismissible={!generateFile.isPending}
+      size="compact"
+      // The year is pre-filled with the current one.
+      dirty={year !== new Date().getFullYear()}
       title="Generar fichero"
       icon={<DescriptionOutlinedIcon sx={{ fontSize: 28, color: "primary.main" }} />}
       iconBg={alpha(theme.palette.primary.main, 0.12)}
       actions={
         <>
-          <Button
-            variant="outlined"
-            onClick={handleClose}
-            disabled={generateFile.isPending}
-            sx={{
-              minWidth: "64px",
-              padding: "5px 15px",
-              fontSize: fontSizes.lg,
-              borderColor: (t) => t.palette.primary.main,
-              color: (t) => t.palette.primary.main,
-              "&:hover": {
-                borderColor: (t) => t.palette.primary.dark,
-                backgroundColor: (t) => alpha(t.palette.primary.main, 0.04),
-              },
-            }}
-          >
-            Cancelar
-          </Button>
+          <ModalCancelButton disabled={generateFile.isPending} />
           <Button
             variant="contained"
             onClick={handleConfirm}
@@ -128,7 +115,7 @@ export const SharingAgreementGenerateDialog: FC<SharingAgreementGenerateDialogPr
           onChange={handleYearChange}
           error={!yearIsValid}
           helperText={yearIsValid ? undefined : `Introduce un año entre ${MIN_YEAR} y ${MAX_YEAR}.`}
-          slotProps={{ htmlInput: { min: MIN_YEAR, max: MAX_YEAR } }}
+          slotProps={{ htmlInput: { min: MIN_YEAR, max: MAX_YEAR, readOnly: generateFile.isPending } }}
           fullWidth
         />
       </Box>

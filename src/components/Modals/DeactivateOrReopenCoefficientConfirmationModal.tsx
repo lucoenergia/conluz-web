@@ -17,7 +17,7 @@ interface DeactivateOrReopenCoefficientConfirmationModalProps {
   hiddenCount?: number;
   isPending: boolean;
   errorMessages: string[] | null;
-  onCancel: (event: SyntheticEvent) => void;
+  onCancel: (event?: SyntheticEvent) => void;
   onConfirm: () => void;
 }
 
