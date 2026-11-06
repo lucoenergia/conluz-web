@@ -59,12 +59,14 @@ const { page, setPage, pageCount, pageRows } = useListPage(communities);
 
 `RecordList`'s `rowActions` receive the `RecordListItem`; map it back to the page's row by id. The page keeps what differs: the menu items, the menu state (`anchorEl` + the selected row's id), and the two mappings. Destructive items (delete) go last, below a `<Divider>`, with `color: "error.main"`.
 
-**For actions that change server state** (role change, status toggle, etc.) the menu item must open a confirmation `<Dialog>` that:
+**For actions that change server state** (role change, status toggle, etc.) the menu item must open a confirmation on the shared overlay (`ConfirmationModal`, or `AppModal size="compact"` with `ConfirmationActions` when it holds an input), never MUI's `Dialog`. The confirmation:
 - Names the affected entity.
-- Shows the new value via a controlled select or clear text.
+- Shows the new value via a controlled select or clear text; with one, it reports `dirty` while the value differs from the current one, so a close attempt asks first.
 - Includes a `<Notice severity="info">` explaining consequences (a note, not an `Alert`, which would be announced as urgent).
 - Disables the confirm button while the mutation is pending or when the new value equals the current value.
-- Cannot be dismissed while the mutation is pending: pass `inFlightDialogProps(isPending, onClose)` to the `<Dialog>` and `disabled={isPending}` to "Cancelar" (`inFlight` on a `ConfirmationModal`).
+- Cannot be dismissed while the mutation is pending: pass `inFlight={isPending}` to `ConfirmationModal` (or `dismissible={!isPending}` to `AppModal` and `inFlight` to its `ConfirmationActions`) as well as `confirmDisabled`, which only disables the button. Its select is `readOnly` meanwhile.
+
+Real usage: the suspend, role-change and removal confirmations in `src/pages/members/MembersPage.tsx` (#370).
 
 **Never** show a `<Select>` or any mutable control directly inside a table row — it bypasses the confirmation step and is visually inconsistent.
 
