@@ -263,8 +263,8 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
         minHeight: 0,
         flex: 1,
         // Focused by UI-OVL-009 only, and not controls: a ring would mark
-        // nothing the user can act on.
-        [`& ${OVERLAY_FOCUS_SELECTOR}[tabindex='-1']:focus, & h2[tabindex='-1']:focus`]: { outline: "none" },
+        // nothing the user can act on. A marked control keeps its own.
+        [`& ${OVERLAY_FOCUS_SELECTOR}[tabindex='-1']:focus`]: { outline: "none" },
       }}
     >
       {!isDesktop && (
@@ -288,7 +288,15 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
               {icon}
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 {title !== undefined && (
-                  <Typography id={titleId} ref={titleRef} tabIndex={-1} variant="h6" component="h2">
+                  <Typography
+                    id={titleId}
+                    ref={titleRef}
+                    tabIndex={-1}
+                    variant="h6"
+                    component="h2"
+                    // Focused by UI-OVL-009 only, as the fallback target.
+                    sx={{ "&:focus": { outline: "none" } }}
+                  >
                     {title}
                   </Typography>
                 )}

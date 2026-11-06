@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { declaredStyles, hasOverlayEntry, pressBack, stubViewport } from "../../test/overlay";
+import { declaredStyles, hasOverlayEntry, matchedStyles, pressBack, stubViewport } from "../../test/overlay";
 import { overlayHistorySettled } from "./overlayHistory";
 import { ResponsiveOverlay, type ResponsiveOverlaySize } from "./ResponsiveOverlay";
 import { OVERLAY_FOCUS_TARGET } from "./focusTarget";
@@ -686,5 +686,28 @@ describe("UI-OVL-009 focus follows replaced content", () => {
     await user.click(within(dialog).getByRole("button", { name: /^Repetir/ }));
 
     expect(within(dialog).getByRole("button", { name: "Repetir (1)" })).toHaveFocus();
+  });
+  it("UI-OVL-009 a control that takes keyboard focus keeps its focus indicator; only a marked non-interactive target and the title drop it", async () => {
+    const { user, dialog } = await openSteps(true);
+    const closeIcon = within(dialog).getByRole("button", { name: "Cerrar" });
+    // Marked, but a native control: no tabindex -1, so it keeps the browser's ring.
+    const next = within(dialog).getByRole("button", { name: "Siguiente" });
+
+    await user.tab();
+    expect(closeIcon).toHaveFocus();
+    // MUI draws its own buttons' indicator from this class, not from the outline.
+    expect(closeIcon).toHaveClass("Mui-focusVisible");
+    expect(matchedStyles(closeIcon)).not.toContain("outline:none");
+    await user.tab();
+    expect(next).toHaveFocus();
+    expect(matchedStyles(next)).not.toMatch(/outline:(none|0)/);
+
+    await user.click(next);
+    const summary = within(dialog).getByText("Se han importado 2 filas.");
+    expect(summary).toHaveFocus();
+    expect(matchedStyles(summary)).toContain("outline:none");
+    const title = within(dialog).getByRole("heading", { name: "Importar" });
+    act(() => title.focus());
+    expect(matchedStyles(title)).toContain("outline:none");
   });
 });
