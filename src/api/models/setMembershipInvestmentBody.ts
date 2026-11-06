@@ -8,8 +8,9 @@
 
 export interface SetMembershipInvestmentBody {
   /**
-     * The member's initial contribution to the community, in euros. Must be greater than zero, with at most two decimals.
-     * @minimum 0
+     * The member's initial contribution to the community, in euros. Must be greater than zero and at most 9999999999.99, with at most two decimals.
+     * @maximum 9999999999.99
+     * @exclusiveMinimum 0
      */
   investmentEur: number;
 }

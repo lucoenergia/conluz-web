@@ -7,7 +7,10 @@
  */
 
 export interface CreateSharingAgreementBody {
-  /** Snapshot of the plant's installed power at authoring time, in kW */
+  /**
+     * Snapshot of the plant's installed power at authoring time, in kW
+     * @exclusiveMinimum 0
+     */
   installedPowerKw: number;
   /**
      * Human-readable label for the agreement
