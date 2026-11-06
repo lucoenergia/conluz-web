@@ -127,7 +127,7 @@ changes, and back closes it rather than the page.
 | Open, no changes | Header with the title, the scrolling body, the footer with the flow's own controls; focus trapped (UI-OVL-001, UI-OVL-006, UI-OVL-007) | The flow's controls; close directly by any means, back included |
 | Open, with changes | The same; a close attempt, back included, replaces the footer with the unsaved-changes question (UI-OVL-003, UI-OVL-004) | Keep editing, discard |
 | Write in flight | The same, read-only, with no close icon (UI-OVL-002) | None that closes it |
-| Asking the flow's own question | The footer replaced by the question, such as deleting a contact channel (UI-CTU-009) | Its two answers; any close attempt, back included, withdraws it (UI-OVL-004) |
+| Asking the flow's own question | The footer replaced by the question, such as deleting a contact channel (UI-CTU-009) | Its two answers; any close attempt, back included, withdraws it (UI-OVL-004). Whether typing withdraws it is the flow's choice; the unsaved-changes question is always withdrawn by typing (UI-OVL-003) |
 | Stacked | Each overlay above the previous one | Back closes the top one only (UI-OVL-004) |
 
 ## Accepted exceptions
@@ -139,3 +139,4 @@ changes, and back closes it rather than the page.
 | The supply disable and enable success dialogs open when the request resolves, not from a user interaction | Opened after the request resolves, not from a user interaction; Chrome's history intervention may let back skip their entry; pending manual verification on a phone | The phone check passes, or they are replaced by an announcement in a separate issue | #369 |
 | The supply, plant and community create and edit pages keep their routes | They become overlays in their own issues | #372, #373 and #374 close | #368 |
 | A reload while an overlay is open leaves one inert history step, costing one extra back press | The history step that lets back close the overlay cannot be removed by a page that has reloaded | Never; browsers offer no way to remove a history entry | #368 |
+| After deleting a record from its detail page, back may show the list once more when the detail page was opened from that list | Replacing the deleted page avoids landing on a record that no longer exists; telling where the detail page was opened from is not worth the complexity | Never | #369 |

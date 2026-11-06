@@ -130,11 +130,15 @@ date from the same page, seeing them as members do, one channel at a time.
     input, and return focus to "Eliminar canal".
   - Confirming MUST send the deletion with the editor read-only and showing that it is saving, under
     the in-flight lock (UI-OVL-002). Unsaved changes MUST NOT have to be discarded first.
+  - Typing in the editor does not withdraw the question; only Cancelar, Escape, the close icon or
+    back do.
 - **Rationale:** A second dialog stacked over the editor was a sheet over a sheet on a phone. Asked in
   the footer, the question is answered where the admin already is, as the unsaved-changes question is
   (UI-OVL-003). Back withdraws the question rather than closing the editor because the admin was
   answering it, not leaving. The deletion discards the edits along with the channel, so asking about
-  them first would be a second question with only one possible answer.
+  them first would be a second question with only one possible answer. Withdrawing the question
+  returns focus to "Eliminar canal", which would take it out of a field being typed in, so the
+  question waits for an answer.
 - **Implements:** n/a
 - **Source:** #369
 
