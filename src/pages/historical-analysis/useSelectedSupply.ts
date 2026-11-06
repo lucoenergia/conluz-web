@@ -13,6 +13,11 @@ export interface SelectedSupply {
    * community admin through ?supplyId= (#252). When set, it is also `selected`.
    */
   viewed: SupplyResponse | null;
+  /** The capability or the lookup of an id that is not one of the caller's own is still pending. */
+  isResolving: boolean;
+  /** That lookup failed: a failure, not a refusal, which says nothing about whether the supply is selectable. */
+  lookupFailed: boolean;
+  retryLookup: () => void;
   select: (supplyId: string | null) => void;
 }
 
@@ -58,6 +63,8 @@ export function useSelectedSupply(supplies: SupplyResponse[] | undefined): Selec
 
   const isUnresolved = (needsLookup && canManage.state === "pending") || (mayLookUp && lookup.isLoading);
   const isUnselectable = needsLookup && !isUnresolved && viewed === null;
+  // useSupplyInActiveCommunity reports no error for a 404 or another community's supply.
+  const lookupFailed = mayLookUp && !lookup.isLoading && lookup.error != null;
 
   useEffect(() => {
     if (!isUnselectable) return;
@@ -80,5 +87,12 @@ export function useSelectedSupply(supplies: SupplyResponse[] | undefined): Selec
       { replace: true },
     );
 
-  return { selected: own ?? viewed, viewed, select };
+  return {
+    selected: own ?? viewed,
+    viewed,
+    isResolving: isUnresolved,
+    lookupFailed,
+    retryLookup: lookup.refetch,
+    select,
+  };
 }
