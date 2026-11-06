@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom";
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { routeRequests, type RequestConfig, type RequestRouter } from "../../test/requestRouter";
 import {
@@ -15,6 +15,8 @@ import {
 import type { MembershipPaybackResponse, MembershipResponse, SetMembershipInvestmentBody } from "../../api/models";
 import { getGetMembershipPaybackQueryKey } from "../../api/memberships/memberships";
 import { CommunityRole } from "../../hooks/permissions";
+import { overlayHistorySettled } from "../../components/ResponsiveOverlay/overlayHistory";
+import { pressBack } from "../../test/overlay";
 import { MembersPage } from "./MembersPage";
 
 /**
@@ -182,11 +184,23 @@ async function typeAmount(u: User, dialog: HTMLElement, value: string) {
   if (value !== "") await u.type(field, value);
 }
 
+const REMOVE_QUESTION = "¿Quitar la inversión de 1500,50 € registrada para Ana García?";
+
+/** Asks to remove the recorded amount: the question replaces the editor's footer. */
+async function askToRemove(u: User, dialog: HTMLElement) {
+  await u.click(within(dialog).getByRole("button", { name: "Quitar inversión" }));
+  return within(dialog).findByRole("alert");
+}
+
 const announced = (message: string) => screen.queryByText(message, { selector: '[role="status"]' });
 
 describe("recording a member's investment (#358)", () => {
   beforeEach(() => {
     mockCustomInstance.mockReset();
+  });
+
+  afterEach(async () => {
+    await act(() => overlayHistorySettled());
   });
 
   describe("UI-MBR-043 the action follows canManageInvestment", () => {
@@ -320,12 +334,13 @@ describe("recording a member's investment (#358)", () => {
       await renderPage();
 
       const dialog = await openLoadedEditor(u, "Ana García");
-      await u.click(within(dialog).getByRole("button", { name: "Quitar inversión" }));
-      const confirmation = await screen.findByRole("dialog", { name: "Quitar inversión" });
-      expect(confirmation).toHaveTextContent("Ana García");
+      const question = await askToRemove(u, dialog);
+      expect(question).toHaveTextContent(REMOVE_QUESTION);
+      expect(screen.getAllByRole("dialog")).toHaveLength(1);
+      expect(within(dialog).getByRole("button", { name: "Cancelar" })).toHaveFocus();
       expect(requestsTo(router, "DELETE", investmentUrl("u-ana"))).toHaveLength(0);
 
-      await u.click(within(confirmation).getByRole("button", { name: "Quitar inversión" }));
+      await u.click(within(dialog).getByRole("button", { name: "Quitar inversión" }));
 
       await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
       expect(requestsTo(router, "DELETE", investmentUrl("u-ana"))).toHaveLength(1);
@@ -335,6 +350,31 @@ describe("recording a member's investment (#358)", () => {
       expect(amountField(reopened)).toHaveValue("");
       expect(within(reopened).queryByRole("button", { name: "Quitar inversión" })).not.toBeInTheDocument();
     });
+
+    it.each([
+      ["Cancelar", (u: User, dialog: HTMLElement) => u.click(within(dialog).getByRole("button", { name: "Cancelar" }))],
+      ["Escape", (u: User) => u.keyboard("{Escape}")],
+      ["back", () => pressBack()],
+    ] as const)(
+      "UI-MBR-044 %s withdraws the removal question, keeps the editor, removes nothing and gives focus back to Quitar inversión",
+      async (_, withdraw) => {
+        const u = userEvent.setup();
+        const router = serve({ "u-ana": recorded(1500.5) }, { remove: () => undefined });
+        await renderPage();
+
+        const dialog = await openLoadedEditor(u, "Ana García");
+        await act(() => overlayHistorySettled());
+        await askToRemove(u, dialog);
+
+        await withdraw(u, dialog);
+
+        await waitFor(() => expect(within(dialog).queryByText(REMOVE_QUESTION)).not.toBeInTheDocument());
+        expect(screen.getByRole("dialog", { name: "Inversión de Ana García" })).toBeInTheDocument();
+        expect(amountField(dialog)).toHaveValue("1500,5");
+        await waitFor(() => expect(within(dialog).getByRole("button", { name: "Quitar inversión" })).toHaveFocus());
+        expect(requestsTo(router, "DELETE", investmentUrl("u-ana"))).toHaveLength(0);
+      },
+    );
 
     it("UI-MBR-044 reads the amount afresh on every opening, never from an earlier answer", async () => {
       const u = userEvent.setup();
@@ -418,15 +458,13 @@ describe("recording a member's investment (#358)", () => {
         await renderPage();
 
         const dialog = await openLoadedEditor(u, "Ana García");
+        await askToRemove(u, dialog);
         await u.click(within(dialog).getByRole("button", { name: "Quitar inversión" }));
-        const confirmation = await screen.findByRole("dialog", { name: "Quitar inversión" });
-        await u.click(within(confirmation).getByRole("button", { name: "Quitar inversión" }));
 
-        await waitFor(() =>
-          expect(screen.queryByRole("dialog", { name: "Quitar inversión" })).not.toBeInTheDocument(),
-        );
+        // The question is withdrawn as the removal is sent, so the one alert left is the refusal.
         const alert = await within(dialog).findByRole("alert");
         expect(alert).toHaveTextContent("No se ha quitado la inversión.");
+        expect(alert).not.toHaveTextContent(REMOVE_QUESTION);
         expect(alert).toHaveTextContent(RETRY_LATER);
         expect(alert).not.toHaveTextContent(SERVER_TEXT);
         expect(amountField(dialog)).toHaveValue("1500,5");
