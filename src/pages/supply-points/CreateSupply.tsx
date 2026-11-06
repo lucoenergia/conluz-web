@@ -1,8 +1,8 @@
 import { radii, alphas, colors } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
-import { useState, type FC } from "react";
+import { useMemo, useState, type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
-import type { CreateSupplyBody } from "../../api/models";
+import type { CreateSupplyBody, MembershipResponse } from "../../api/models";
 import { useNavigate } from "react-router";
 import {
   SupplyForm,
@@ -22,6 +22,15 @@ import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 
+/**
+ * The owner options by the member record's name, as a Spanish reader sorts it
+ * (case and accents aside), ties by membership id: getMemberships has no order
+ * of its own (UI-SUP-016).
+ */
+function byFullName(a: MembershipResponse, b: MembershipResponse): number {
+  return a.fullName.localeCompare(b.fullName, "es", { sensitivity: "base" }) || a.id.localeCompare(b.id);
+}
+
 export const CreateSupplyPage: FC = () => {
   const navigate = useNavigate();
   const communityName = useActiveCommunityName();
@@ -37,9 +46,10 @@ export const CreateSupplyPage: FC = () => {
   const memberships = useGetMemberships(activeCommunityId ?? "", {
     query: { enabled: !!activeCommunityId && canListMembers.state === "allowed" },
   });
+  const ownerOptions = useMemo(() => (memberships.data ?? []).slice().sort(byFullName), [memberships.data]);
   const owner: SupplyOwnerField = {
     mode: "choose",
-    options: memberships.data ?? [],
+    options: ownerOptions,
     status:
       canListMembers.state === "pending" || (canListMembers.state === "allowed" && memberships.isLoading)
         ? "loading"

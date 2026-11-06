@@ -291,9 +291,35 @@ describe("UI-SUP-016 the owner options are the active community's memberships", 
     await u.click(ownerInput());
 
     const options = within(await screen.findByRole("listbox")).getAllByRole("option");
-    expect(options.map((o) => o.textContent)).toEqual(BY_COMMUNITY[COMMUNITY_ID].map(label));
+    // Which members, not in what order: the order has its own test.
+    expect(options.map((o) => o.textContent).sort()).toEqual(BY_COMMUNITY[COMMUNITY_ID].map(label).sort());
     expect(screen.queryByRole("option", { name: /Luis Gil/ })).not.toBeInTheDocument();
     expect(vi.mocked(useGetMemberships).mock.calls.every(([id]) => id === COMMUNITY_ID)).toBe(true);
+  });
+
+  it("UI-SUP-016 orders the options by full name, regardless of the order received", async () => {
+    const at = (id: string, fullName: string, personalId: string) =>
+      buildMembership({ id, communityId: COMMUNITY_ID, fullName, personalId });
+    // Served out of order. "Álvaro" sorts with "alvaro" (accent and case aside),
+    // so the two tie and fall back to the membership id; "Ñuñez" follows "Nuñez".
+    const ZOE = at("m-1", "Zoe Prat", "10000001A");
+    const ALVARO_ACCENT = at("m-3", "Álvaro Gil", "10000003C");
+    const NUNEZ_TILDE = at("m-4", "Ñuñez Roca", "10000004D");
+    const ALVARO_LOWER = at("m-2", "alvaro gil", "10000002B");
+    const NUNEZ = at("m-5", "Nuñez Roca", "10000005E");
+    const BEATRIZ = at("m-6", "beatriz Sol", "10000006F");
+    vi.mocked(useGetMemberships).mockReturnValue(
+      query.success<typeof getMemberships>([ZOE, ALVARO_ACCENT, NUNEZ_TILDE, ALVARO_LOWER, NUNEZ, BEATRIZ]),
+    );
+    const u = userEvent.setup();
+    render();
+
+    await u.click(ownerInput());
+
+    const options = within(await screen.findByRole("listbox")).getAllByRole("option");
+    expect(options.map((o) => o.textContent)).toEqual(
+      [ALVARO_LOWER, ALVARO_ACCENT, BEATRIZ, NUNEZ, NUNEZ_TILDE, ZOE].map(label),
+    );
   });
 
   it("UI-SUP-016 sends the chosen membership's personalId and the active community to createSupply", async () => {
