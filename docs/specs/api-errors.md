@@ -8,7 +8,7 @@
 | **Roles** | Any caller |
 | **Domain rules** | `lucoenergia/conluz`: PLT-002 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #378 |
+| **Last reviewed against code** | #358 |
 
 ## Purpose
 
@@ -20,7 +20,8 @@ Screens that word a code their own way, such as the member invitation actions or
 of UI-MBR-023 and UI-SUP-008, are covered by the exception in UI-ERR-001. UI-SUP-009 applies
 UI-ERR-001 and UI-ERR-002 to the supply forms.
 
-This document covers only the rules #232, #324, #253 and #378 introduced.
+This document covers only the rules #232, #324, #253 and #378 introduced, and #358's exception to
+UI-ERR-003.
 
 ## Rules
 
@@ -48,11 +49,13 @@ This document covers only the rules #232, #324, #253 and #378 introduced.
 
 - **Status:** Active
 - **Rule:** When the UI shows the message of an API error detail whose code has no catalogue entry,
-  it MUST show the server's message.
+  it MUST show the server's message, unless the screen's own rule words such a refusal with a
+  message of its own (UI-MBR-044).
 - **Rationale:** An unmapped code still carries the reason the request was refused, and the server's
-  message is the only text that states it.
+  message is the only text that states it. A screen that checks every input before sending can
+  word what is left itself.
 - **Implements:** n/a
-- **Source:** #232
+- **Source:** #232; changed in #358 (the investment editor's exception)
 
 ### UI-ERR-004 — Every energy metrics period code has a catalogue entry
 

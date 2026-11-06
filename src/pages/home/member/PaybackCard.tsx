@@ -1,5 +1,6 @@
 import type { FC, ReactNode } from "react";
-import { Box, LinearProgress, Typography } from "@mui/material";
+import { Box, LinearProgress, Link, Typography } from "@mui/material";
+import { Link as RouterLink } from "react-router";
 import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import RemoveCircleOutlineRoundedIcon from "@mui/icons-material/RemoveCircleOutlineRounded";
@@ -42,6 +43,18 @@ const QuietPanel: FC<{ children: ReactNode }> = ({ children }) => (
   </Box>
 );
 
+/** No investment recorded: only the community's admins can record it (#358), so the member is told whom to ask. */
+const NoInvestmentRecorded: FC<{ consequence?: string }> = ({ consequence }) => (
+  <QuietPanel>
+    No consta ninguna inversión tuya registrada en esta comunidad{consequence ? `, ${consequence}` : ""}. Si hiciste una
+    aportación, pide a{" "}
+    <Link component={RouterLink} to="/community/contact">
+      quien gestiona tu comunidad
+    </Link>{" "}
+    que la registre.
+  </QuietPanel>
+);
+
 /**
  * How far the member is from recovering what they contributed. Null and zero
  * mean different things here, so every null figure is explained in words and
@@ -59,6 +72,7 @@ export const PaybackCard: FC<{ payback: MembershipPaybackResponse }> = ({ paybac
           Tu comunidad todavía no ha empezado a compartir energía, así que aún no hay ahorro acumulado.
           {investmentEur !== null && <> Tu inversión registrada es de {formatEuros(investmentEur)}.</>}
         </Body>
+        {investmentEur === null && <NoInvestmentRecorded />}
       </HomeCard>
     );
   }
@@ -74,9 +88,7 @@ export const PaybackCard: FC<{ payback: MembershipPaybackResponse }> = ({ paybac
     return (
       <HomeCard title={TITLE} icon={AccountBalanceWalletRoundedIcon}>
         {saved}
-        <QuietPanel>
-          No consta ninguna inversión tuya registrada en esta comunidad, así que no se puede calcular cuánto llevas recuperado.
-        </QuietPanel>
+        <NoInvestmentRecorded consequence="así que no se puede calcular cuánto llevas recuperado" />
         <EstimatedPriceLabel estimatedPrice={estimatedPrice} />
       </HomeCard>
     );

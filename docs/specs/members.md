@@ -5,8 +5,8 @@
 | **Prefix** | `UI-MBR` |
 | **Status** | Active |
 | **Routes** | `/members` |
-| **Roles** | A caller whose active community carries `canManageMemberships`; registration, the import, invitations and the send to selected members need their own capabilities (UI-MBR-008, UI-MBR-018, UI-MBR-012, UI-MBR-037) |
-| **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-007, MEM-008, MEM-009, MEM-010, MEM-011, MEM-012, MEM-013, MEM-025, MEM-026, MEM-027, MEM-028, MEM-029, MEM-030, MEM-033, MEM-034, MEM-037, ACC-003, ACC-008, ACC-010 |
+| **Roles** | A caller whose active community carries `canManageMemberships`; registration, the import, invitations, the send to selected members and the investment need their own capabilities (UI-MBR-008, UI-MBR-018, UI-MBR-012, UI-MBR-037, UI-MBR-043) |
+| **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-007, MEM-008, MEM-009, MEM-010, MEM-011, MEM-012, MEM-013, MEM-025, MEM-026, MEM-027, MEM-028, MEM-029, MEM-030, MEM-033, MEM-034, MEM-037, MEM-038, MEM-039, ACC-003, ACC-008, ACC-010 |
 | **Design reference** | The members page search and filters, screens A–D, mobile and desktop: https://claude.ai/artifact/RwsRYG1EqfMcnBmbysot93 (#331) |
 | **Last reviewed against code** | #370 |
 
@@ -15,9 +15,10 @@
 Let an admin of a community keep its roster: register members, one by one or from a CSV file, and
 invite them to join, one by one or several selected at once, see which members are still pending and where their invitation stands, correct
 the record the community keeps on each member, and suspend or reactivate a member's access to the
-community, and keep it from losing its last active admin; and find a member, or the members in a
-given status or role, by searching and filtering the roster. This document covers only the rules
-#272, #275, #276, #284, #309, #328 and #331 introduced; the rest of the members page is not covered yet.
+community, and keep it from losing its last active admin; find a member, or the members in a
+given status or role, by searching and filtering the roster; and record the investment each member
+contributed. This document covers only the rules #272, #275, #276, #284, #309, #328, #331 and #358
+introduced; the rest of the members page is not covered yet.
 
 ## Rules
 
@@ -643,6 +644,69 @@ given status or role, by searching and filtering the roster. This document cover
 - **Implements:** MEM-037
 - **Source:** #328
 
+### UI-MBR-043 — The investment is offered from canManageInvestment alone
+
+- **Status:** Active
+- **Rule:** The members page MUST offer the "Inversión" item in a row's menu if and only if that
+  membership's `capabilities.canManageInvestment` is true, whatever the membership's state: a
+  pending membership that grants it MUST offer it too.
+- **Rationale:** The backend decides who may record an investment, per membership; an item it would
+  refuse must not be offered. A community records the contribution while onboarding the member,
+  before they accept, so the row's state is no reason to withhold it.
+- **Implements:** MEM-039
+- **Source:** #358
+
+### UI-MBR-044 — The editor reads the amount before it saves one, and offers removal only of an amount
+
+- **Status:** Active
+- **Rule:**
+  - The investment editor MUST read the current amount from `getMembershipPayback`, set it with
+    `setMembershipInvestment` and remove it with `clearMembershipInvestment`.
+  - It MUST read the amount afresh each time it opens, and MUST NOT offer to save until that read
+    has answered: while it loads the field MUST be disabled, and when it fails the editor MUST show
+    the failure with a retry and offer no save.
+  - The field MUST be filled once, from that answer: a later answer MUST NOT replace what is being
+    typed.
+  - Removal MUST be offered only while an amount is recorded, and MUST be confirmed before it is
+    sent. The confirmation MUST be asked in the editor's footer, as the overlay's own question
+    (UI-OVL), naming the amount and the member, not in a second dialog; withdrawing it MUST keep the
+    editor and give focus back to "Quitar inversión".
+  - When the backend refuses a save or a removal, the editor MUST stay open with the amount as typed
+    and say what was refused, and nothing MUST be announced as saved. A write the backend accepts
+    closes the editor and is announced.
+  - A refusal MUST be worded by the error catalogue (UI-ERR-001). A refusal whose code has no
+    catalogue entry, or that has no code, MUST be worded by the editor's generic retry message, and
+    the server's message MUST NOT be shown.
+  - When the row does not grant reading the payback, the editor MUST say why, MUST NOT request the
+    amount, and MUST offer no save.
+- **Rationale:** The roster does not carry the amount, so the payback is the only place to read it.
+  A save made over an amount nobody has seen would replace it blindly. "No investment" and zero are
+  different states, so there is nothing to remove when none is recorded. The amount's own limits
+  are checked before sending (UI-MBR-045), so a refusal the catalogue does not word is not one the
+  admin can fix from the field, and the server's English text would only add noise.
+- **Implements:** n/a
+- **Source:** #358
+
+### UI-MBR-045 — An investment amount is checked before it is sent
+
+- **Status:** Active
+- **Rule:**
+  - The editor MUST refuse, before sending anything and with the reason as visible text under the
+    field, an empty amount, one that is not a number, one that is not greater than zero, one with
+    more than two decimals, and one above the maximum the API contract declares for the amount.
+  - It MUST accept a decimal comma and a decimal dot (`1500,50` and `1500.5` are both sent as
+    1500.5).
+  - It MUST refuse, with its own reason, an amount that carries a thousands separator: one with both
+    a dot and a comma (`1.500,50`), and one whose dot is followed by exactly three final digits
+    (`1.500`).
+- **Rationale:** The amount is entered in Spanish format, where the comma is the decimal separator.
+  "1.500" is 1500 to a Spanish reader and 1.5 to a parser, so an amount that reads two ways is
+  refused rather than guessed. A reason given only by colour or a disabled button tells the admin
+  nothing. An amount above the maximum would only come back as a refusal the editor words
+  generically (UI-MBR-044), so it is refused where the admin can fix it.
+- **Implements:** MEM-038
+- **Source:** #358
+
 ## States
 
 The members list:
@@ -686,6 +750,20 @@ The send to selected members dialog:
 | Sending | The same, the send button showing progress | None; the dialog cannot be closed |
 | Result | How many were sent and resent, and each refused person with the reason | Cerrar |
 | Refused | The confirmation, with the refusal | Enviar invitación (N), Cancelar |
+
+The investment editor (UI-MBR-044):
+
+| State | Rendered | Actions available |
+| --- | --- | --- |
+| Payback not readable | Why the amount cannot be changed here | Cancelar |
+| Loading | The field, disabled, saying the amount is loading | Cancelar |
+| Read failed | The failure, with a retry | Reintentar, Cancelar |
+| No amount recorded | The empty field | Guardar, Cancelar |
+| Amount recorded | The field filled with the amount | Quitar inversión, Guardar, Cancelar |
+| Invalid amount | The reason under the field (UI-MBR-045) | As before |
+| Asking to remove | The footer replaced by the question, naming the amount and the member | Quitar inversión, Cancelar; any close attempt, back included, withdraws the question |
+| Saving or removing | The same, nothing editable | None; the editor cannot be closed |
+| Refused | The refusal in the catalogue's words or the generic retry message, with the amount as typed | As before |
 
 The import dialog:
 

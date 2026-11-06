@@ -3,10 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { query } from "../../test/queryState";
-import { buildSupply, buildSupplyCapabilities } from "../../test/fixtures";
+import { buildMemberRecord, buildSupply, buildSupplyCapabilities } from "../../test/fixtures";
 import { apiError } from "../../test/apiError";
-import type { RestErrorDetailCode, SupplyCapabilitiesResponse } from "../../api/models";
+import type { RestErrorDetailCode, SupplyCapabilitiesResponse, SupplyResponse } from "../../api/models";
 
 const SUPPLY_ID = "supply-1";
 const COMMUNITY_ID = "community-a";
@@ -27,10 +26,14 @@ vi.mock(import("../../context/error.context"), async (importOriginal) => ({
 
 vi.mock(import("./useSupplyInActiveCommunity"), () => ({ useSupplyInActiveCommunity: vi.fn() }));
 
-// The owner picker loads the user list; answer with a settled, empty page.
+// Stubbed so a test can prove the edit form reads no owner listing at all.
 vi.mock(import("../../api/users/users"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetAllUsers: vi.fn(),
+}));
+vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetMemberships: vi.fn(),
 }));
 
 // Reads stubbed, mutations left real: the gate under test is the one inside
@@ -40,15 +43,19 @@ vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
   useUpdateSupply: vi.fn(),
 }));
 
-import { getAllUsers, useGetAllUsers } from "../../api/users/users";
 import { useUpdateSupply } from "../../api/supplies/supplies";
+import { useGetAllUsers } from "../../api/users/users";
+import { useGetMemberships } from "../../api/memberships/memberships";
 import { mutation } from "../../test/queryState";
 import { useSupplyInActiveCommunity } from "./useSupplyInActiveCommunity";
 import { EditSupplyPage } from "./EditSupply";
 
 const mutateAsync = vi.fn();
 
-function setup(capabilities: Partial<SupplyCapabilitiesResponse> = { canEdit: true }) {
+function setup(
+  capabilities: Partial<SupplyCapabilitiesResponse> = { canEdit: true },
+  supply: Partial<SupplyResponse> = {},
+) {
   vi.mocked(useSupplyInActiveCommunity).mockReturnValue({
     supply: buildSupply({
       id: SUPPLY_ID,
@@ -58,6 +65,7 @@ function setup(capabilities: Partial<SupplyCapabilitiesResponse> = { canEdit: tr
       addressRef: "REF",
       community: { id: COMMUNITY_ID, name: "Sol Común" },
       capabilities: buildSupplyCapabilities(capabilities),
+      ...supply,
     }),
     isLoading: false,
     isNotFound: false,
@@ -75,9 +83,6 @@ beforeEach(() => {
   vi.clearAllMocks();
   mutateAsync.mockResolvedValue(buildSupply());
   vi.mocked(useUpdateSupply).mockReturnValue(mutation.idle({ mutateAsync }));
-  vi.mocked(useGetAllUsers).mockReturnValue(
-    query.success<typeof getAllUsers>({ items: [], size: 10000, totalElements: 0, totalPages: 1, number: 0 }),
-  );
 });
 
 describe("EditSupplyPage", () => {
@@ -212,5 +217,34 @@ describe("EditSupplyPage: a refused edit", () => {
     expect(cupsInput()).toBeValid();
     expect(mockNavigate).not.toHaveBeenCalled();
     expectTypedValuesKept();
+  });
+});
+
+describe("EditSupplyPage: the owner", () => {
+  const ownerInput = () => screen.getByRole("textbox", { name: "Propietario" });
+
+  it("UI-SUP-005 shows the owner's record in the supply's community, read-only", () => {
+    setup({ canEdit: true }, { user: { id: "u-ana" }, ownerRecord: buildMemberRecord({ fullName: "Lucía Martínez Soler" }) });
+
+    expect(ownerInput()).toHaveValue("Lucía Martínez Soler");
+    expect(ownerInput()).toHaveAttribute("readonly");
+  });
+
+  it("UI-SUP-005 shows «-» when the supply has no owner record in its community", () => {
+    setup({ canEdit: true }, { user: { id: "u-ana" }, ownerRecord: null });
+
+    expect(ownerInput()).toHaveValue("-");
+    expect(ownerInput()).toHaveAttribute("readonly");
+  });
+
+  it("UI-SUP-018 reads neither the platform-wide user listing nor the community's memberships", async () => {
+    setup({ canEdit: true }, { ownerRecord: buildMemberRecord({ fullName: "Lucía Martínez Soler" }) });
+
+    await userEvent.click(screen.getByRole("button", { name: /Guardar cambios/i }));
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalled());
+    expect(vi.mocked(useGetAllUsers)).not.toHaveBeenCalled();
+    expect(vi.mocked(useGetMemberships)).not.toHaveBeenCalled();
+    expect(mutateAsync.mock.calls[0][0].data).not.toHaveProperty("personalId");
   });
 });

@@ -17,6 +17,7 @@ import {
   Divider,
   Checkbox,
   FormControlLabel,
+  Snackbar,
 } from "@mui/material";
 import PeopleIcon from "@mui/icons-material/People";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
@@ -31,6 +32,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import SendIcon from "@mui/icons-material/Send";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
+import SavingsRoundedIcon from "@mui/icons-material/SavingsRounded";
 import { colors, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList, type RecordListItem } from "../../components/RecordList";
@@ -56,6 +58,8 @@ import {
 } from "../../errors/membershipErrors";
 import { LAST_ACTIVE_ADMIN_EXPLANATION } from "../../errors/membershipErrorMessages";
 import { MemberRecordDialog } from "./MemberRecordDialog";
+import { MembershipInvestmentEditor } from "./MembershipInvestmentEditor";
+import { ActionStatus } from "../../components/ActionStatus";
 import { ImportMembersDialog } from "./ImportMembersDialog";
 import { RegisterMemberDialog } from "./RegisterMemberDialog";
 import { SendInvitationsDialog, type InvitationRecipient } from "./SendInvitationsDialog";
@@ -133,6 +137,10 @@ export const MembersPage: FC = () => {
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [pendingRole, setPendingRole] = useState<string>("");
   const [recordDialogOpen, setRecordDialogOpen] = useState(false);
+  const [investmentEditorOpen, setInvestmentEditorOpen] = useState(false);
+  // What the last write announced: read out by the status region, shown in the snackbar.
+  const [announcement, setAnnouncement] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [invitationDialog, setInvitationDialog] = useState<InvitationWriteKind | null>(null);
   // The search, the filters and the page are this view's alone: never stored,
@@ -175,6 +183,7 @@ export const MembersPage: FC = () => {
     const actions = forMembership(membership).actions;
     return (
       !!actions.editRecord ||
+      !!actions.setInvestment ||
       !!statusToggleFor(membership, actions) ||
       Object.values(invitationActionsFor(membership, actions)).some(Boolean) ||
       !!actions.changeRole ||
@@ -622,6 +631,23 @@ export const MembersPage: FC = () => {
             <ListItemText>Editar ficha</ListItemText>
           </MenuItem>
         )}
+        {/* From the capability alone, whatever the row's state: an investment is
+            recorded while onboarding, before the member accepts (#358). */}
+        {selectedActions.setInvestment && (
+          <MenuItem
+            onClick={() => {
+              handleMenuClose();
+              // Cleared, so the same message after this write is announced again.
+              setAnnouncement("");
+              setInvestmentEditorOpen(true);
+            }}
+          >
+            <ListItemIcon>
+              <SavingsRoundedIcon fontSize="small" sx={{ color: "primary.main" }} />
+            </ListItemIcon>
+            <ListItemText>Inversión</ListItemText>
+          </MenuItem>
+        )}
         {INVITATION_ITEMS.filter(({ key }) => selectedInvitationActions[key]).map(({ kind, label }) => (
           <MenuItem
             key={kind}
@@ -709,6 +735,40 @@ export const MembersPage: FC = () => {
           onClose={() => setRecordDialogOpen(false)}
         />
       )}
+
+      {/* Mounted on open, and only while the row grants both writes, so each
+          opening reads the amount afresh. */}
+      {investmentEditorOpen &&
+        activeCommunityId &&
+        selectedMembership &&
+        selectedActions.setInvestment &&
+        selectedActions.clearInvestment && (
+          <MembershipInvestmentEditor
+            key={selectedMembership.id}
+            membership={selectedMembership}
+            communityId={activeCommunityId}
+            communityName={communityName}
+            setInvestment={selectedActions.setInvestment}
+            clearInvestment={selectedActions.clearInvestment}
+            onClose={() => setInvestmentEditorOpen(false)}
+            onDone={(message) => {
+              setInvestmentEditorOpen(false);
+              setAnnouncement(message);
+              setNotice(message);
+            }}
+          />
+        )}
+      <ActionStatus message={announcement} />
+      <Snackbar
+        open={notice !== null}
+        autoHideDuration={6000}
+        onClose={(_, reason) => reason !== "clickaway" && setNotice(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        message={notice}
+        // Read out through the status region above; announcing it here as well
+        // would say it twice.
+        slotProps={{ content: { "aria-hidden": true, role: undefined, sx: { bgcolor: "secondary.dark" } } }}
+      />
 
       {/* Mounted only while the row grants the write in its current state, so a
           refetch that changes the state closes it rather than leaving it open

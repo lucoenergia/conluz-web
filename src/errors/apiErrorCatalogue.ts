@@ -420,6 +420,17 @@ export function getFirstApiErrorMessage(error: unknown, fallback: string): strin
   return translateErrorDetail(firstDetail, fallback);
 }
 
+/**
+ * The catalogue's wording of the first error detail, or `fallback` when the
+ * detail has no code or the catalogue has no template for it. Unlike
+ * `getFirstApiErrorMessage`, it never shows the server's own `message`, which
+ * is English and written for developers (#358).
+ */
+export function getFirstCataloguedErrorMessage(error: unknown, fallback: string): string {
+  const firstDetail = extractRestError(error)?.errors?.[0];
+  return translateErrorDetail(firstDetail ? { ...firstDetail, message: "" } : undefined, fallback);
+}
+
 export interface GroupedApiErrorLine {
   /** Null when params.line was present but unparseable — rendered last, never dropped. */
   line: number | null;

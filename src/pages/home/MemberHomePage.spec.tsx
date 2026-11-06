@@ -439,6 +439,50 @@ describe("MemberHomePage (#199)", () => {
     expect(text(savingsCard())).toContain("27,00 €");
   });
 
+  it("UI-HOM-014 no investment recorded says whom to ask, and links to the community's contact", () => {
+    answer({ payback: paybackWith({ investmentEur: null, progressRatio: null, remainingEur: null, estimatedRemainingMonths: null }) });
+    openHome();
+
+    expect(text(paybackCard())).toContain(
+      "Si hiciste una aportación, pide a quien gestiona tu comunidad que la registre.",
+    );
+    expect(within(paybackCard()).getByRole("link", { name: "quien gestiona tu comunidad" })).toHaveAttribute(
+      "href",
+      "/community/contact",
+    );
+  });
+
+  it("UI-HOM-014 a recorded investment carries no request to record it", () => {
+    answer({ payback: paybackWith({ savedEur: 650, progressRatio: 1.3, remainingEur: 0, estimatedRemainingMonths: 0 }) });
+    openHome();
+
+    expect(text(paybackCard())).not.toContain("Si hiciste una aportación");
+    expect(within(paybackCard()).queryByRole("link", { name: "quien gestiona tu comunidad" })).not.toBeInTheDocument();
+  });
+
+  it("UI-HOM-014 before the community shares energy, no investment recorded says whom to ask, and links to the community's contact", () => {
+    answer({ payback: buildMembershipPayback({ savedEur: null, investmentEur: null, progressRatio: null }) });
+    openHome();
+
+    expect(text(paybackCard())).toContain("Tu comunidad todavía no ha empezado a compartir energía");
+    expect(text(paybackCard())).toContain(
+      "No consta ninguna inversión tuya registrada en esta comunidad. Si hiciste una aportación, pide a quien gestiona tu comunidad que la registre.",
+    );
+    expect(within(paybackCard()).getByRole("link", { name: "quien gestiona tu comunidad" })).toHaveAttribute(
+      "href",
+      "/community/contact",
+    );
+  });
+
+  it("UI-HOM-014 before the community shares energy, a recorded investment carries no request to record it", () => {
+    answer({ payback: buildMembershipPayback({ savedEur: null, investmentEur: 500, progressRatio: null }) });
+    openHome();
+
+    expect(text(paybackCard())).toContain("Tu inversión registrada es de 500,00 €.");
+    expect(text(paybackCard())).not.toContain("Si hiciste una aportación");
+    expect(within(paybackCard()).queryByRole("link", { name: "quien gestiona tu comunidad" })).not.toBeInTheDocument();
+  });
+
   it("AC7 -- progress above 1 says the investment is recovered and shows the return beyond it", () => {
     answer({
       payback: paybackWith({ savedEur: 650, progressRatio: 1.3, remainingEur: 0, estimatedRemainingMonths: 0 }),
