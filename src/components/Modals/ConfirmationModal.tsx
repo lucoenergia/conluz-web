@@ -1,9 +1,6 @@
-import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
-import { alpha } from "@mui/material/styles";
 import { AppModal } from "./AppModal";
-import { shadows, fontSizes, interactiveTransition} from "../../theme/tokens";
-import type { FC, MouseEvent, ReactNode, SyntheticEvent } from "react";
+import { ConfirmationActions, type ConfirmColor } from "./ConfirmationActions";
+import type { FC, ReactNode, SyntheticEvent } from "react";
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -11,7 +8,7 @@ interface ConfirmationModalProps {
   onCancel: (event: SyntheticEvent) => void;
   onConfirm: () => void;
   confirmLabel: string;
-  confirmColor?: "inherit" | "primary" | "secondary" | "success" | "error" | "info" | "warning";
+  confirmColor?: ConfirmColor;
   confirmDisabled?: boolean;
   /** Swaps the confirm button's label for a spinner. Opt-in and false by default — every other confirmation dialog using this component keeps its unchanged static-label behaviour. */
   confirmPending?: boolean;
@@ -44,67 +41,27 @@ export const ConfirmationModal: FC<ConfirmationModalProps> = ({
   icon,
   iconBg,
   children,
-}) => {
-  const handleConfirm = (event: MouseEvent<HTMLElement>) => {
-    event.preventDefault();
-    onConfirm();
-  };
-
-  return (
-    <AppModal
-      isOpen={isOpen}
-      onClose={onCancel}
-      dismissible={!inFlight}
-      title={title}
-      scopeHeader={scopeHeader}
-      icon={icon}
-      iconBg={iconBg}
-      actions={
-        <>
-          <Button
-            variant="outlined"
-            onClick={onCancel}
-            disabled={inFlight}
-            sx={{
-              minWidth: "64px",
-              padding: "5px 15px",
-              fontSize: fontSizes.lg,
-              transition: interactiveTransition("250ms", "cubic-bezier(0.4, 0, 0.2, 1)"),
-              borderColor: (theme) => theme.palette.primary.main,
-              color: (theme) => theme.palette.primary.main,
-              "&:hover": {
-                borderColor: (theme) => theme.palette.primary.dark,
-                backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.04),
-              },
-            }}
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="contained"
-            color={confirmColor}
-            onClick={handleConfirm}
-            disabled={confirmDisabled}
-            // The spinner replaces the label, which would otherwise leave the
-            // button with no accessible name for the duration of the request.
-            aria-label={confirmPending ? confirmLabel : undefined}
-            sx={{
-              minWidth: "64px",
-              padding: "5px 15px",
-              fontSize: fontSizes.lg,
-              transition: interactiveTransition("250ms", "cubic-bezier(0.4, 0, 0.2, 1)"),
-              boxShadow: shadows.medium,
-              "&:hover": {
-                boxShadow: shadows.strong,
-              },
-            }}
-          >
-            {confirmPending ? <CircularProgress size={20} color="inherit" /> : confirmLabel}
-          </Button>
-        </>
-      }
-    >
-      {children}
-    </AppModal>
-  );
-};
+}) => (
+  <AppModal
+    isOpen={isOpen}
+    onClose={onCancel}
+    dismissible={!inFlight}
+    title={title}
+    scopeHeader={scopeHeader}
+    icon={icon}
+    iconBg={iconBg}
+    actions={
+      <ConfirmationActions
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+        confirmLabel={confirmLabel}
+        confirmColor={confirmColor}
+        confirmDisabled={confirmDisabled}
+        confirmPending={confirmPending}
+        inFlight={inFlight}
+      />
+    }
+  >
+    {children}
+  </AppModal>
+);
