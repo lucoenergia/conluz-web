@@ -29,6 +29,8 @@ export interface CredentialsFieldsProps {
   urlPlaceholder?: string;
   /** Each field's input element, for a screen that must bring the admin to one. */
   inputRefs?: Partial<Record<CredentialsField, Ref<HTMLInputElement>>>;
+  /** The fields take no input, e.g. while the form's write is in flight. */
+  readOnly?: boolean;
 }
 
 const fieldSx = (accent: string) => ({
@@ -53,6 +55,7 @@ export const CredentialsFields: FC<CredentialsFieldsProps> = ({
   accent,
   urlPlaceholder,
   inputRefs = {},
+  readOnly = false,
 }) => {
   const [showPwd, setShowPwd] = useState(false);
 
@@ -76,6 +79,7 @@ export const CredentialsFields: FC<CredentialsFieldsProps> = ({
         variant="outlined"
         size="small"
         InputProps={{
+          readOnly,
           startAdornment: (
             <InputAdornment position="start">
               <PersonOutlineIcon sx={{ fontSize: 20, color: colors.text.muted }} />
@@ -98,6 +102,7 @@ export const CredentialsFields: FC<CredentialsFieldsProps> = ({
         variant="outlined"
         size="small"
         InputProps={{
+          readOnly,
           startAdornment: (
             <InputAdornment position="start">
               <LockOutlineIcon sx={{ fontSize: 20, color: colors.text.muted }} />
@@ -135,6 +140,7 @@ export const CredentialsFields: FC<CredentialsFieldsProps> = ({
         variant="outlined"
         size="small"
         InputProps={{
+          readOnly,
           startAdornment: (
             <InputAdornment position="start">
               <LinkIcon sx={{ fontSize: 20, color: colors.text.muted }} />
