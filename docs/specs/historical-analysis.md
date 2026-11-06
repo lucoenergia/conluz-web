@@ -8,12 +8,13 @@
 | **Roles** | A caller who may read the active community (`canRead`): members and community admins |
 | **Domain rules** | EPR-001, EPR-003, EPR-004 (lucoenergia/conluz#409); EPR-005 (lucoenergia/conluz#545, #546); SEM-001 (lucoenergia/conluz#408); SEM-002, SEM-003, SEM-004, ENM-006, ENM-007, ENM-008 (lucoenergia/conluz#411); MCS-001, MCS-002 (lucoenergia/conluz#410); SCS-001 (lucoenergia/conluz#545); MCS-003 (lucoenergia/conluz#546); ADR-0005 in lucoenergia/conluz |
 | **Design reference** | Claude Design round 2 copy deck; round 3 copy deck for the period (#248); the member consumption analysis design, option A, for the evolution charts (#250) and the data table and CSV (#251); its round 3, for the mobile charts and the paired terms (#361) |
-| **Last reviewed against code** | #378 |
+| **Last reviewed against code** | #385 |
 
 Scope: the page shell, its menu entry and its supply selector (#247), the period: its anchor,
 selector, custom range picker, header and query string (#248), the period's card and totals
 (#249), the energy and savings evolution charts (#250), and the data table with its CSV download
-(#251), and a community admin's way in to a supply of the community from its detail page (#252);
+(#251), and a community admin's way in to a supply of the community from its detail page (#252),
+including an admin who owns no supplies (#385);
 the mobile charts and the terms paired across the charts, the table and the CSV (#361); a single
 day shown hour by hour (#378).
 All of them read the period through `useHistoricalPeriod`
@@ -45,7 +46,11 @@ here too, and opens another member's supply from its detail page, one at a time.
     own, labelled "{nombre} · {CUPS} · {titular}" when the response carries the owner's member
     record and "{nombre} · {CUPS}" when it does not. Choosing any other option MUST remove it from
     the selector.
+  - For a caller who owns no supplies, the selector MUST list only the viewed supply, with no
+    "Todos mis puntos" and no footer, in the dropdown and in the bottom sheet alike.
   - "Todos mis puntos" MUST stay the caller's own supplies, read from the caller's own membership.
+    For a caller who owns no supplies the membership MUST NOT be asked at all: not its latest
+    published month, not its figures, not its series.
 - **Rationale:** Supply management lives on another screen, and this one is about the caller's own
   energy, so the list is never the community's whole. A community admin still sees every figure of
   the supplies they manage, through this one analysis page, opened from the supply's detail page
@@ -54,17 +59,21 @@ here too, and opens another member's supply from its detail page, one at a time.
   what a disabled supply means is decided, and the footer says so. The plant tag reads the
   reference the backend sets for a plant's own supply (lucoenergia/conluz#411), never the supply's
   name. The owner's member record, when the response carries one, says whose supply the admin is
-  reading, with no second request.
+  reading, with no second request. For a caller who owns no supplies, "Todos mis puntos" would
+  always be empty and the footer would describe a list that is not there, so neither is offered,
+  and the membership they would read is never asked.
 - **Implements:** n/a
-- **Source:** #247; changed in #252 (a community admin opens a supply of the community)
+- **Source:** #247; changed in #252 (a community admin opens a supply of the community); changed
+  in #385 (a community admin who owns no supplies)
 
 ### UI-HIS-002 — The selection is held in the address, and does not survive a community switch
 
 - **Status:** Active
 - **Rule:**
   - The selected supply MUST be held in `?supplyId=`.
-  - An id the caller cannot select MUST fall back to "Todos mis puntos" without an error, and the
-    parameter MUST be removed, only after it has been resolved: for one of the caller's own
+  - An id the caller cannot select MUST fall back to "Todos mis puntos" without an error, or, for a
+    caller who owns no supplies, to the neutral state (UI-HIS-003), and the parameter MUST be
+    removed, only after it has been resolved: for one of the caller's own
     supplies, once the listing has succeeded; for any other id, once the active community's
     `canManage` and, where it is granted, the supply's lookup have answered. While any of them is
     pending, or the listing has failed, the parameter MUST be left as it is.
@@ -80,19 +89,31 @@ here too, and opens another member's supply from its detail page, one at a time.
   supply that was refused or does not exist changes nothing and only delays the fallback. A supply
   belongs to one community, so its id cannot follow the caller into another.
 - **Implements:** n/a
-- **Source:** #247; changed in #252 (a community admin's selectable supplies)
+- **Source:** #247; changed in #252 (a community admin's selectable supplies); changed in #385 (the
+  fallback for a caller who owns no supplies)
 
 ### UI-HIS-003 — No own supply here is a neutral state, not a failure
 
 - **Status:** Active
-- **Rule:** With no own enabled supply in the active community, the page MUST show the neutral notice
-  "No tienes puntos de suministro en esta comunidad", with no alert colour and no controls, for a
-  member and a community admin alike. A failed listing MUST NOT show that notice nor the selector, and
-  MUST report the error as the supply list does.
-- **Rationale:** Owning no supply in a community is an ordinary situation, especially for an admin.
-  A failed read says nothing about ownership, so presenting it as "you have none" would be false.
+- **Rule:**
+  - The neutral notice "No tienes puntos de suministro en esta comunidad", with no alert colour and
+    no controls, MUST be shown only when the caller owns no enabled supply in the active community
+    and there is no selectable viewed supply (UI-HIS-001), and never while either is still being
+    resolved: while the listing, the active community's `canManage` or the supply's lookup is
+    pending, a placeholder MUST be shown instead. This holds for a member and a community admin
+    alike.
+  - A failed listing MUST NOT show that notice nor the selector, and MUST report the error as the
+    supply list does.
+  - For a caller who owns no supplies, a lookup of the viewed supply that failed (a server or
+    network error, not a refusal) MUST be shown as an error with "Reintentar", which asks again,
+    never as the neutral notice, and `?supplyId=` MUST be left as it is.
+- **Rationale:** Owning no supply in a community is an ordinary situation, especially for an admin,
+  who can still analyse the supplies they manage. A failed read says nothing about ownership or
+  about the supply, so presenting it as "you have none" would be false; with no "Todos mis puntos"
+  to fall back to, the caller is offered the retry instead.
 - **Implements:** n/a
-- **Source:** #247
+- **Source:** #247; changed in #385 (a community admin who owns no supplies opens a supply of the
+  community)
 
 ### UI-HIS-004 — The community menu leads here right after Inicio
 
@@ -558,6 +579,9 @@ here too, and opens another member's supply from its detail page, one at a time.
 | --- | --- | --- |
 | Loading | The title and a placeholder where the selector goes | None |
 | Empty | The title and the neutral notice (UI-HIS-003) | None |
+| No own supply, another supply being resolved | The title and a placeholder where the selector goes, with `?supplyId=` left as it is (UI-HIS-003) | None |
+| No own supply, viewed supply failed to load | The title and an error with "Reintentar", with `?supplyId=` left as it is (UI-HIS-003) | Retrying |
+| No own supply, viewed supply | The title, the supply selector holding only "Punto que estás consultando", with no "Todos mis puntos" and no footer (UI-HIS-001), and below it what any selected supply shows | Choosing a period |
 | Supplies, another supply being resolved | The title and the supply selector on "Todos mis puntos", with `?supplyId=` left as it is (UI-HIS-002) | Choosing a supply |
 | Supplies, anchor pending | The title, the supply selector and a placeholder where the period selector goes | Choosing a supply |
 | Supplies, nothing published | The title, the supply selector and the neutral "Todavía no hay datos publicados" (UI-HIS-005) | Choosing a supply |

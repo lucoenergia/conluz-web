@@ -27,11 +27,18 @@ import { useSelectedSupply } from "./useSelectedSupply";
  * figures (#249), their evolution charts (#250) and the data table with its
  * CSV download (#251), all in one content region that reads the period
  * through `useHistoricalPeriod`.
+ *
+ * A community admin may also open a supply of the community they manage
+ * (#252), even one who owns none here (#385): the neutral state is only for a
+ * caller with nothing to show once that supply has been resolved.
  */
 export const HistoricalAnalysisPage: FC = () => {
   const { supplies, isLoading, error } = useOwnSupplies();
-  const { selected, viewed, select } = useSelectedSupply(supplies);
-  const anchor = useHistoricalAnchor(selected);
+  const { selected, viewed, isResolving, lookupFailed, retryLookup, select } = useSelectedSupply(supplies);
+  const ownsSupplies = supplies !== undefined && supplies.length > 0;
+  // A caller who owns none here may still be viewing a supply they manage (#385).
+  const noSupplyToShow = supplies?.length === 0 && viewed === null;
+  const anchor = useHistoricalAnchor(selected, { allMine: ownsSupplies });
   const period = useHistoricalPeriodState(anchor, selected);
   const errorDispatch = useErrorDispatch();
 
@@ -46,9 +53,12 @@ export const HistoricalAnalysisPage: FC = () => {
       <Typography variant="h4" component="h1" sx={{ color: colors.text.primary }}>
         Mi consumo y ahorro
       </Typography>
-      {isLoading && <Skeleton variant="rounded" height={56} sx={{ maxWidth: 560 }} />}
-      {supplies?.length === 0 && <NeutralNotice>No tienes puntos de suministro en esta comunidad</NeutralNotice>}
-      {supplies && supplies.length > 0 && (
+      {(isLoading || (noSupplyToShow && isResolving)) && <Skeleton variant="rounded" height={56} sx={{ maxWidth: 560 }} />}
+      {noSupplyToShow && !isResolving && lookupFailed && <LoadErrorAlert message={VIEWED_SUPPLY_ERROR} onRetry={retryLookup} />}
+      {noSupplyToShow && !isResolving && !lookupFailed && (
+        <NeutralNotice>No tienes puntos de suministro en esta comunidad</NeutralNotice>
+      )}
+      {supplies && (ownsSupplies || viewed !== null) && (
         <>
           <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: "flex-start", gap: 2 }}>
             <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
@@ -70,6 +80,7 @@ export const HistoricalAnalysisPage: FC = () => {
   );
 };
 
+const VIEWED_SUPPLY_ERROR = "No se pudo cargar el punto de suministro. Comprueba tu conexión e inténtalo de nuevo.";
 const NO_DATA_TITLE = "Todavía no hay datos publicados";
 const NO_DATA_BODY =
   "La distribuidora publica los datos de cada mes hacia el día 10 del mes siguiente. Los verás aquí en cuanto se publique tu primer mes.";

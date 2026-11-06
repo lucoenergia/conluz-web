@@ -35,6 +35,9 @@ interface SupplySelectorProps {
   onSelect: (supplyId: string | null) => void;
 }
 
+/** The viewed supply alone: the caller owns none here (#385). */
+const isViewedOnly = ({ supplies, viewed }: SupplySelectorProps) => supplies.length === 0 && !!viewed;
+
 /** "{nombre} · {CUPS}", the name falling back to the address as everywhere else (UI-SUP-010). */
 function supplyOptionLabel(supply: SupplyResponse): string {
   const name = supplyDisplayLabel(supply);
@@ -53,7 +56,9 @@ function viewedOptionLabel(supply: SupplyResponse): string {
  *
  * A supply a community admin opened from its detail page sits in a group of
  * its own above the caller's (#252); choosing anything else drops it, since it
- * is offered only while the address holds it.
+ * is offered only while the address holds it. For a caller who owns no
+ * supplies, that group is all there is: no "Todos mis puntos", which would be
+ * empty, and no footer about the caller's own (#385).
  */
 export const SupplySelector: FC<SupplySelectorProps> = (props) => {
   const theme = useTheme();
@@ -61,33 +66,39 @@ export const SupplySelector: FC<SupplySelectorProps> = (props) => {
   return isWide ? <SupplyDropdown {...props} /> : <SupplySheet {...props} />;
 };
 
-const SupplyDropdown: FC<SupplySelectorProps> = ({ supplies, selected, viewed, onSelect }) => (
-  <TextField
-    select
-    label={LABEL}
-    value={selected?.id ?? ALL}
-    onChange={(event) => onSelect(event.target.value === ALL ? null : event.target.value)}
-    helperText={FOOTER}
-    sx={{ maxWidth: 560 }}
-    fullWidth
-  >
-    {viewed && <ListSubheader>{VIEWED_GROUP}</ListSubheader>}
-    {viewed && (
-      <MenuItem value={viewed.id} sx={{ whiteSpace: "normal" }}>
-        <OptionContent supply={viewed} label={viewedOptionLabel(viewed)} />
-      </MenuItem>
-    )}
-    {viewed && <ListSubheader>{OWN_GROUP}</ListSubheader>}
-    <MenuItem value={ALL}>{ALL_LABEL}</MenuItem>
-    {supplies.map((supply) => (
-      <MenuItem key={supply.id} value={supply.id} sx={{ whiteSpace: "normal" }}>
-        <OptionContent supply={supply} />
-      </MenuItem>
-    ))}
-  </TextField>
-);
+const SupplyDropdown: FC<SupplySelectorProps> = (props) => {
+  const { supplies, selected, viewed, onSelect } = props;
+  const viewedOnly = isViewedOnly(props);
+  return (
+    <TextField
+      select
+      label={LABEL}
+      value={selected?.id ?? ALL}
+      onChange={(event) => onSelect(event.target.value === ALL ? null : event.target.value)}
+      helperText={viewedOnly ? undefined : FOOTER}
+      sx={{ maxWidth: 560 }}
+      fullWidth
+    >
+      {viewed && <ListSubheader>{VIEWED_GROUP}</ListSubheader>}
+      {viewed && (
+        <MenuItem value={viewed.id} sx={{ whiteSpace: "normal" }}>
+          <OptionContent supply={viewed} label={viewedOptionLabel(viewed)} />
+        </MenuItem>
+      )}
+      {viewed && !viewedOnly && <ListSubheader>{OWN_GROUP}</ListSubheader>}
+      {!viewedOnly && <MenuItem value={ALL}>{ALL_LABEL}</MenuItem>}
+      {supplies.map((supply) => (
+        <MenuItem key={supply.id} value={supply.id} sx={{ whiteSpace: "normal" }}>
+          <OptionContent supply={supply} />
+        </MenuItem>
+      ))}
+    </TextField>
+  );
+};
 
-const SupplySheet: FC<SupplySelectorProps> = ({ supplies, selected, viewed, onSelect }) => {
+const SupplySheet: FC<SupplySelectorProps> = (props) => {
+  const { supplies, selected, viewed, onSelect } = props;
+  const viewedOnly = isViewedOnly(props);
   const [open, setOpen] = useState(false);
   const labelId = useId();
   const valueId = useId();
@@ -109,7 +120,7 @@ const SupplySheet: FC<SupplySelectorProps> = ({ supplies, selected, viewed, onSe
         color="inherit"
         fullWidth
         aria-labelledby={`${labelId} ${valueId}`}
-        aria-describedby={footerId}
+        aria-describedby={viewedOnly ? undefined : footerId}
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen(true)}
@@ -124,7 +135,7 @@ const SupplySheet: FC<SupplySelectorProps> = ({ supplies, selected, viewed, onSe
           )}
         </Box>
       </Button>
-      <FormHelperText id={footerId}>{FOOTER}</FormHelperText>
+      {!viewedOnly && <FormHelperText id={footerId}>{FOOTER}</FormHelperText>}
       <SwipeableDrawer
         anchor="bottom"
         open={open}
@@ -155,10 +166,10 @@ const SupplySheet: FC<SupplySelectorProps> = ({ supplies, selected, viewed, onSe
                 label={<OptionContent supply={viewed} label={viewedOptionLabel(viewed)} />}
                 sx={{ alignItems: "center", minWidth: 0, mr: 0 }}
               />
-              <GroupHeading>{OWN_GROUP}</GroupHeading>
+              {!viewedOnly && <GroupHeading>{OWN_GROUP}</GroupHeading>}
             </>
           )}
-          <FormControlLabel value={ALL} control={<Radio />} label={ALL_LABEL} />
+          {!viewedOnly && <FormControlLabel value={ALL} control={<Radio />} label={ALL_LABEL} />}
           {supplies.map((supply) => (
             <FormControlLabel
               key={supply.id}
