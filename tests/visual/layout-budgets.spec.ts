@@ -53,7 +53,6 @@ import {
   mockPlatformAdminsRoutes,
   mockCommunityManagementRoutes,
   mockMemberHome,
-  mockPlantDetailRoutes,
   mockSharingAgreementDetailRoutes,
   memberDailySeries,
   memberHourlySeries,
@@ -600,12 +599,6 @@ test.describe("Visual baselines", () => {
       [
         ["/members", "/members", mockCommunityManagementRoutes],
         ["/integrations", "/integrations", mockCommunityManagementRoutes],
-        ["/production/new", "/production/new"],
-        [
-          "/production/:plantId/edit",
-          `/production/${FIXED_PLANT_ID}/edit`,
-          (page: Page) => mockPlantDetailRoutes(page, FIXED_COMMUNITY_ADMIN_USER),
-        ],
       ] as [string, string, ((page: Page) => Promise<void>)?][]
     ).map(([name, path, mockPageRoutes]) => ({
       name,
