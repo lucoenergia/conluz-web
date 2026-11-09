@@ -1,5 +1,5 @@
-import { useRef, useState, type FC } from "react";
-import { Link, useNavigate } from "react-router";
+import { useEffect, useRef, useState, type FC } from "react";
+import { useNavigate } from "react-router";
 import { useTheme, alpha } from "@mui/material/styles";
 import {
   Box,
@@ -32,6 +32,7 @@ import { useGetAllCommunities } from "../../api/communities/communities";
 import type { CommunityResponse } from "../../api/models";
 import { useCommunityActions, usePlatformActions } from "../../hooks/actions";
 import { Can, outcomeFromResource } from "../../hooks/permissions";
+import { CommunityFormDialog, type CommunityFormTarget } from "./CommunityFormDialog";
 
 const MAX_ADMIN_NAMES_SHOWN = 2;
 
@@ -95,6 +96,11 @@ export const CommunitiesPage: FC = () => {
   // on answering from before the change -- and it is that row's capabilities
   // that now decide what its menu offers.
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
+  // The community form open over the list, and the control that opened it: the
+  // create button, or the row's kebab, since the menu item that opened an edit
+  // is gone by the time the form closes.
+  const [communityFormTarget, setCommunityFormTarget] = useState<CommunityFormTarget | null>(null);
+  const overlayOpener = useRef<HTMLElement | null>(null);
 
   // What this caller may do, as the backend answers it. forCommunity is a plain
   // function rather than a hook precisely so it can be asked once per row, and
@@ -139,10 +145,23 @@ export const CommunitiesPage: FC = () => {
   const communityOfItem = (item: RecordListItem) =>
     communities.find((community) => String(community.id ?? "") === item.id);
 
+  const openCommunityForm = (target: CommunityFormTarget, opener: HTMLElement | null) => {
+    overlayOpener.current = opener;
+    setCommunityFormTarget(target);
+  };
+  // After the overlay has unmounted, so the overlay's own focus restoration,
+  // aimed at the vanished menu item, has already run.
+  useEffect(() => {
+    if (communityFormTarget || !overlayOpener.current) return;
+    overlayOpener.current.focus();
+    overlayOpener.current = null;
+  }, [communityFormTarget]);
+
   const handleEditClick = () => {
+    const kebab = anchorEl;
     handleMenuClose();
     if (selectedCommunity?.id) {
-      navigate(`/communities/${selectedCommunity.id}/edit`);
+      openCommunityForm({ kind: "edit", communityId: selectedCommunity.id }, kebab);
     }
   };
 
@@ -194,8 +213,7 @@ export const CommunitiesPage: FC = () => {
           <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
             {createCommunity && (
             <Button
-              component={Link}
-              to="/communities/new"
+              onClick={(event) => openCommunityForm({ kind: "create" }, event.currentTarget)}
               variant="contained"
               startIcon={<AddCircleOutlineIcon />}
               sx={{
@@ -383,6 +401,9 @@ export const CommunitiesPage: FC = () => {
         </Can>
       </RowActionsMenu>
 
+      {communityFormTarget && (
+        <CommunityFormDialog target={communityFormTarget} onClose={() => setCommunityFormTarget(null)} />
+      )}
     </Box>
   );
 };

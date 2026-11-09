@@ -1,5 +1,5 @@
-import type { FC, ReactNode } from "react";
-import { Link, useNavigate } from "react-router";
+import { useEffect, useRef, useState, type FC, type ReactNode } from "react";
+import { Link } from "react-router";
 import {
   Alert,
   Box,
@@ -31,9 +31,9 @@ import { AttentionPanel, type AttentionItem } from "../../components/AttentionPa
 import { usePlatformActions } from "../../hooks/actions";
 import { usePlatformCapabilities } from "../../hooks/permissions";
 import { deriveStatus, usePlatformOverview } from "./usePlatformOverview";
+import { CommunityFormDialog } from "../communities/CommunityFormDialog";
 
 const COMMUNITIES_LIST_ROUTE = "/communities";
-const CREATE_COMMUNITY_ROUTE = "/communities/new";
 const PLATFORM_ADMINS_ROUTE = "/platform-admins";
 const PREVIEW_LIMIT = 5;
 
@@ -47,7 +47,6 @@ interface KpiDef {
 }
 
 export const PlatformPage: FC = () => {
-  const navigate = useNavigate();
   const { kpis, attention, communities, isLoading, error } = usePlatformOverview();
 
   // Creating a community is the platform's own answer; the button that leads to
@@ -56,6 +55,31 @@ export const PlatformPage: FC = () => {
   // button.
   const { createCommunity } = usePlatformActions().actions;
   const mayListPlatformAdmins = usePlatformCapabilities("canListPlatformAdmins").state === "allowed";
+
+  // Creating a community opens over this page (#374); focus goes back to the
+  // button that opened it once the overlay has unmounted.
+  const [creatingCommunity, setCreatingCommunity] = useState(false);
+  const createOpener = useRef<HTMLElement | null>(null);
+  // A save from the empty state replaces it, button included, once the list
+  // comes back with the new community: focus then goes to the overview's own
+  // create action as it mounts.
+  const openedFromEmptyState = useRef(false);
+  const openCreateCommunity = (opener: HTMLElement | null, fromEmptyState = false) => {
+    createOpener.current = opener;
+    openedFromEmptyState.current = fromEmptyState;
+    setCreatingCommunity(true);
+  };
+  const takeFocusFromEmptyState = (button: HTMLButtonElement | null) => {
+    if (!button || !openedFromEmptyState.current) return;
+    openedFromEmptyState.current = false;
+    // Only when the empty state took the focus with it, never from elsewhere.
+    if (document.activeElement === document.body) button.focus();
+  };
+  useEffect(() => {
+    if (creatingCommunity || !createOpener.current) return;
+    createOpener.current.focus();
+    createOpener.current = null;
+  }, [creatingCommunity]);
 
   const kpiCards: KpiDef[] = [
     {
@@ -138,7 +162,13 @@ export const PlatformPage: FC = () => {
             ? {
                 label: "Crear comunidad",
                 startIcon: <AddRoundedIcon />,
-                onClick: () => navigate(CREATE_COMMUNITY_ROUTE),
+                // EmptyState's action passes no event; the button it renders
+                // holds focus once clicked.
+                onClick: () =>
+                  openCreateCommunity(
+                    document.activeElement instanceof HTMLElement ? document.activeElement : null,
+                    true,
+                  ),
               }
             : undefined
         }
@@ -178,8 +208,8 @@ export const PlatformPage: FC = () => {
             {createCommunity && (
               <Button
                 variant="contained"
-                component={Link}
-                to={CREATE_COMMUNITY_ROUTE}
+                ref={takeFocusFromEmptyState}
+                onClick={(event) => openCreateCommunity(event.currentTarget)}
                 startIcon={<AddRoundedIcon />}
               >
                 Crear comunidad
@@ -328,6 +358,8 @@ export const PlatformPage: FC = () => {
       </Box>
 
       {body}
+
+      {creatingCommunity && <CommunityFormDialog target={{ kind: "create" }} onClose={() => setCreatingCommunity(false)} />}
     </Box>
   );
 };

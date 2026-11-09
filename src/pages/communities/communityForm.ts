@@ -25,3 +25,7 @@ export function communityRefusalOf(error: unknown, generic: string): CommunityRe
   const field = firstErrorField(error);
   return isCommunityField(field) ? { field, message } : { form: message };
 }
+
+/** Whether a failed community read was the API saying the community is not there for this caller. */
+export const isNotFoundError = (error: unknown): boolean =>
+  (error as { response?: { status?: number } } | null)?.response?.status === 404;

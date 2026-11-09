@@ -82,6 +82,8 @@ vi.mock(import("react-router"), async (importOriginal) => ({
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetAllCommunities: vi.fn(),
+  // Read by the edit form the row menu opens (#374).
+  useGetCommunityById: vi.fn(),
 }));
 
 vi.mock(import("../../context/error.context"), async (importOriginal) => ({
@@ -96,7 +98,11 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
   useLoggedUser: () => loggedUser.current,
 }));
 
-import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
+import {
+  useGetAllCommunities,
+  useGetCommunityById,
+  type getAllCommunities,
+} from "../../api/communities/communities";
 import { CommunitiesPage } from "./CommunitiesPage";
 
 const menuFor = (name: string) => screen.getByRole("button", { name: `Más acciones para ${name}` });
@@ -120,6 +126,7 @@ function setup(
       ? null
       : buildCurrentUser({ platformCapabilities: buildPlatformCapabilities(platform) });
 
+  vi.mocked(useGetCommunityById).mockReturnValue(query.loading() as ReturnType<typeof useGetCommunityById>);
   vi.mocked(useGetAllCommunities).mockReturnValue(
     options.communitiesLoading
       ? query.loading()
@@ -170,23 +177,21 @@ describe("CommunitiesPage", () => {
     it("offers Nueva Comunidad when the platform permits it", () => {
       setup();
 
-      expect(screen.getByRole("link", { name: /Nueva Comunidad/i })).toHaveAttribute(
-        "href",
-        "/communities/new",
-      );
+      // Creating a community opens over the list (#374), so it is a button.
+      expect(screen.getByRole("button", { name: /Nueva Comunidad/i })).toBeInTheDocument();
     });
 
     it("offers nothing when it does not", () => {
       setup({ platform: { canAdministerPlatform: true, canCreateCommunity: false } });
 
-      expect(screen.queryByRole("link", { name: /Nueva Comunidad/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Nueva Comunidad/i })).not.toBeInTheDocument();
     });
 
     // Not yet known is not "no", and it is not "yes" either.
     it("offers nothing while the current user has not arrived", () => {
       setup({ platform: null });
 
-      expect(screen.queryByRole("link", { name: /Nueva Comunidad/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Nueva Comunidad/i })).not.toBeInTheDocument();
     });
   });
 
@@ -234,14 +239,16 @@ describe("CommunitiesPage", () => {
       expect(noMenuFor("Sol Común")).toBeNull();
     });
 
-    it("navigates to /communities/:id/edit when Editar is chosen from the menu", async () => {
+    it("opens the edit form over the list when Editar is chosen from the menu", async () => {
       const user = userEvent.setup();
       setup();
 
       await user.click(menuFor("Sol Común"));
       await user.click(await screen.findByRole("menuitem", { name: /Editar/ }));
 
-      expect(mockNavigate).toHaveBeenCalledWith("/communities/c1/edit");
+      expect(await screen.findByRole("dialog", { name: "Editar comunidad" })).toBeInTheDocument();
+      expect(vi.mocked(useGetCommunityById)).toHaveBeenCalledWith("c1");
+      expect(mockNavigate).not.toHaveBeenCalled();
     });
   });
 
