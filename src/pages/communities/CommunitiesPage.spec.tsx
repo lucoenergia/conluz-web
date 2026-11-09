@@ -32,8 +32,13 @@ const PLATFORM_VIEW: Partial<CommunityCapabilitiesResponse> = {
   canManageAdmins: true,
 };
 
-/** What a community's own admin holds: its roster, but neither the community record nor its admins. */
-const COMMUNITY_ADMIN_VIEW: Partial<CommunityCapabilitiesResponse> = {
+/**
+ * A row that grants reading the community and managing its roster, but neither
+ * updating it nor managing its admins. Only a platform admin reaches this page
+ * (canAdministerPlatform), so the row-menu tests below are about per-row
+ * capability combinations, not about what another role would see.
+ */
+const READ_AND_ROSTER_ONLY: Partial<CommunityCapabilitiesResponse> = {
   canRead: true,
   canUpdate: false,
   canManageMemberships: true,
@@ -208,20 +213,18 @@ describe("CommunitiesPage", () => {
       expect(screen.getByRole("menuitem", { name: /Gestionar administradores/ })).toBeInTheDocument();
     });
 
-    // The roster is what a community admin administers; neither the community
-    // record nor the community's admins is: both are platform-wide decisions.
-    // Seeing a community's contact is reading it (#374), which a community
-    // admin may; editing it and managing its admins are not theirs.
-    it("UI-ADM-001 offers a community admin neither the community record nor its admins", async () => {
+    // Editing the record and managing its admins follow their own capabilities,
+    // whatever else the row grants; seeing its contact is reading it (#374).
+    it("UI-ADM-001 a row without canUpdate or canManageAdmins offers neither the community record nor its admins", async () => {
       const user = userEvent.setup();
-      setup({ communities: [community({ id: "c1", name: "Sol Común" }, COMMUNITY_ADMIN_VIEW)] });
+      setup({ communities: [community({ id: "c1", name: "Sol Común" }, READ_AND_ROSTER_ONLY)] });
 
       await user.click(menuFor("Sol Común"));
 
       expect(menuItemNames(await screen.findByRole("menu"))).toEqual(["Ver contacto"]);
     });
 
-    it("offers a plain member only the community's contact", async () => {
+    it("a row with only canRead offers only Ver contacto", async () => {
       const user = userEvent.setup();
       setup({ communities: [community({ id: "c1", name: "Sol Común" }, { canRead: true })] });
 
@@ -230,14 +233,14 @@ describe("CommunitiesPage", () => {
       expect(menuItemNames(await screen.findByRole("menu"))).toEqual(["Ver contacto"]);
     });
 
-    it("gives a row the caller may not even read no menu at all", () => {
+    it("a row without canRead gets no menu at all", () => {
       setup({ communities: [community({ id: "c1", name: "Sol Común" }, {})] });
 
       expect(noMenuFor("Sol Común")).toBeNull();
     });
 
     // Every community carries its own answer, so a list may legitimately mix them.
-    it("decides each row from its own community, not from the platform", async () => {
+    it("decides each row from its own capabilities: all granted, only canRead, none", async () => {
       const user = userEvent.setup();
       setup({
         communities: [
