@@ -277,8 +277,8 @@ export async function mockOwnSupplyHistory(
  * canDisable and canManageAdmins are decisions a platform admin holds on every
  * community, while the operational ones -- the roster included
  * (lucoenergia/conluz#446) -- stay out of reach. Without this
- * branch /communities/:communityId/edit refuses them, because the fixture --
- * not the product -- says they may not update it.
+ * branch the communities row menu offers them no Editar, because the fixture
+ * -- not the product -- says they may not update it.
  */
 export function communityCapabilitiesFor(currentUser: object) {
   const role = (currentUser as CurrentUserFixture).memberships?.[FIXED_COMMUNITY_ID];

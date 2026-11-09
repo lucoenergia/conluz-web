@@ -121,7 +121,7 @@ function setup(require: CapabilityRequirement, { route = "/protected" }: { route
         }
       />
       <Route
-        path="/communities/:communityId/edit"
+        path="/communities/:communityId/admins"
         element={
           <CapabilityRoute require={require}>
             <span>protected</span>
@@ -325,7 +325,7 @@ describe("CapabilityRoute — supply scope", () => {
 });
 
 describe("CapabilityRoute — communityById scope", () => {
-  const editRoute = `/communities/${OTHER_COMMUNITY_ID}/edit`;
+  const adminsRoute = `/communities/${OTHER_COMMUNITY_ID}/admins`;
 
   /** Answers per community, the way the real per-id query key does. */
   function answerPerCommunity(capabilities: Record<string, Partial<CommunityCapabilitiesResponse>>) {
@@ -342,46 +342,46 @@ describe("CapabilityRoute — communityById scope", () => {
   }
 
   it("renders children when the named community grants the capability", () => {
-    answerPerCommunity({ [OTHER_COMMUNITY_ID]: { canUpdate: true } });
-    setup({ scope: "communityById", capability: "canUpdate" }, { route: editRoute });
+    answerPerCommunity({ [OTHER_COMMUNITY_ID]: { canManageAdmins: true } });
+    setup({ scope: "communityById", capability: "canManageAdmins" }, { route: adminsRoute });
     expectProtected();
   });
 
   it("redirects when the named community refuses", () => {
-    answerPerCommunity({ [OTHER_COMMUNITY_ID]: { canUpdate: false } });
-    setup({ scope: "communityById", capability: "canUpdate" }, { route: editRoute });
+    answerPerCommunity({ [OTHER_COMMUNITY_ID]: { canManageAdmins: false } });
+    setup({ scope: "communityById", capability: "canManageAdmins" }, { route: adminsRoute });
     expectRedirected();
   });
 
   // The whole point of the scope. A community admin of A may be working in A
-  // while editing B, and canUpdate is a platform-wide decision that being an
-  // admin of anything does not confer -- so answering from the active community
-  // would let them through on somebody else's answer.
+  // while opening B's admins, and canManageAdmins is a platform-wide decision
+  // that being an admin of anything does not confer -- so answering from the
+  // active community would let them through on somebody else's answer.
   it("answers from the community in the URL, not the active one", () => {
     answerPerCommunity({
-      [COMMUNITY_ID]: { canUpdate: true },
-      [OTHER_COMMUNITY_ID]: { canUpdate: false },
+      [COMMUNITY_ID]: { canManageAdmins: true },
+      [OTHER_COMMUNITY_ID]: { canManageAdmins: false },
     });
-    setup({ scope: "communityById", capability: "canUpdate" }, { route: editRoute });
+    setup({ scope: "communityById", capability: "canManageAdmins" }, { route: adminsRoute });
     expectRedirected();
   });
 
   it.each([403, 404])("redirects on %i, which hides the community rather than admitting it", (status) => {
     vi.mocked(useGetCommunityById).mockReturnValue(query.error(httpError(status)));
-    setup({ scope: "communityById", capability: "canUpdate" }, { route: editRoute });
+    setup({ scope: "communityById", capability: "canManageAdmins" }, { route: adminsRoute });
     expectRedirected();
   });
 
   it("offers a retry instead of redirecting when the community fails to load", () => {
     vi.mocked(useGetCommunityById).mockReturnValue(query.error(httpError(500)));
-    setup({ scope: "communityById", capability: "canUpdate" }, { route: editRoute });
+    setup({ scope: "communityById", capability: "canManageAdmins" }, { route: adminsRoute });
     expectNeither();
     expect(screen.getByRole("button", { name: "Reintentar" })).toBeInTheDocument();
   });
 
   it("shows neither the page nor a redirect while the named community is in flight", () => {
     answerPerCommunity({});
-    setup({ scope: "communityById", capability: "canUpdate" }, { route: editRoute });
+    setup({ scope: "communityById", capability: "canManageAdmins" }, { route: adminsRoute });
     expectNeither();
   });
 
@@ -390,7 +390,7 @@ describe("CapabilityRoute — communityById scope", () => {
   // must not fetch a community the requirement never asked about.
   it("fetches no named community when the requirement is not one, even on a community URL", () => {
     setPlatformCapabilities({ canAdministerPlatform: true });
-    setup({ scope: "platform", capability: "canAdministerPlatform" }, { route: editRoute });
+    setup({ scope: "platform", capability: "canAdministerPlatform" }, { route: adminsRoute });
     expect(vi.mocked(useGetCommunityById)).not.toHaveBeenCalledWith(OTHER_COMMUNITY_ID, expect.anything());
   });
 });

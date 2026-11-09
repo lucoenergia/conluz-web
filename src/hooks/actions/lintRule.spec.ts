@@ -147,7 +147,8 @@ describe("the mutation guard rail", () => {
     });
 
     it("stop being exempt once they migrate, for communities, platform and users too", async () => {
-      // Files from the last large block on the list, the community admins page
+      // Files from the last large block on the list (the community form dialog
+      // holds the community create and edit since #374), the community admins page
       // that replaced the admins dialog (#276), and the platform admins page
       // that replaced the users pages (#285). Each is named with the hook
       // that hands its write out, because the message is what tells
@@ -156,13 +157,13 @@ describe("the mutation guard rail", () => {
         [
           "useCreateCommunity",
           "../../api/communities/communities",
-          "src/pages/communities/CreateCommunityPage.tsx",
+          "src/pages/communities/CommunityFormDialog.tsx",
           "usePlatformActions",
         ],
         [
           "useUpdateCommunity",
           "../../api/communities/communities",
-          "src/pages/communities/EditCommunityPage.tsx",
+          "src/pages/communities/CommunityFormDialog.tsx",
           "useCommunityActions",
         ],
         [

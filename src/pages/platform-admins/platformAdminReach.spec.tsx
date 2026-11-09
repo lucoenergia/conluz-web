@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom";
 import type { FC } from "react";
-import { act, screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { useLocation } from "react-router";
 import type { QueryClient } from "@tanstack/react-query";
@@ -168,8 +169,6 @@ beforeAll(async () => {
   await Promise.all([
     import("../platform/PlatformPage"),
     import("../communities/CommunitiesPage"),
-    import("../communities/CreateCommunityPage"),
-    import("../communities/EditCommunityPage"),
     import("../communities/CommunityAdminsPage"),
     import("./PlatformAdminsPage"),
     import("../Profile"),
@@ -191,8 +190,6 @@ describe("a platform admin with no membership", () => {
   it.each<[string, string, string]>([
     ["the platform overview", "/platform", "Administración de plataforma"],
     ["the communities", "/communities", "Gestión de Comunidades"],
-    ["creating a community", "/communities/new", "Crear nueva comunidad"],
-    ["editing a community", `/communities/${COMMUNITY_ID}/edit`, "Editar comunidad"],
     ["a community's admins", `/communities/${COMMUNITY_ID}/admins`, `Administradores de ${COMMUNITY_NAME}`],
     ["the platform admins", "/platform-admins", "Administradores de plataforma"],
     ["their profile", "/profile", "Mi perfil"],
@@ -205,6 +202,38 @@ describe("a platform admin with no membership", () => {
     await settle();
 
     expect(currentPath()).toBe(path);
+    expectNoMemberData(router);
+    expect(router.takeUnmatched()).toEqual([]);
+  });
+
+  // Creating and editing a community, and seeing its contact, open over the
+  // communities list (#374) rather than on routes of their own.
+  it("UI-PAD-008 keeps creating and editing a community and seeing its contact, and they send no request for member data", async () => {
+    const user = userEvent.setup();
+    const router = servePlatformAdmin();
+    renderAppAt("/communities");
+    expect(await screen.findByRole("heading", { level: 1, name: "Gestión de Comunidades" })).toBeInTheDocument();
+
+    await user.click(await screen.findByRole("button", { name: /Nueva Comunidad/ }));
+    expect(await screen.findByRole("dialog", { name: "Crear nueva comunidad" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    await user.click(await screen.findByRole("button", { name: `Más acciones para ${COMMUNITY_NAME}` }));
+    await user.click(await screen.findByRole("menuitem", { name: /Editar/ }));
+    const edit = await screen.findByRole("dialog", { name: "Editar comunidad" });
+    expect(await within(edit).findByRole("textbox", { name: /^Nombre/ })).toHaveValue(COMMUNITY_NAME);
+    await user.click(within(edit).getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: `Más acciones para ${COMMUNITY_NAME}` }));
+    await user.click(await screen.findByRole("menuitem", { name: /Ver contacto/ }));
+    const contact = await screen.findByRole("dialog", { name: "Contacto" });
+    expect(await within(contact).findByText("Esta comunidad aún no ha configurado su contacto.")).toBeInTheDocument();
+    await settle();
+
+    // The open overlay hides the rest of the page, the path probe included.
+    expect(window.location.pathname).toBe("/communities");
     expectNoMemberData(router);
     expect(router.takeUnmatched()).toEqual([]);
   });

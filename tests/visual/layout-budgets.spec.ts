@@ -563,8 +563,7 @@ test.describe("Visual baselines", () => {
 
   /**
    * Every page that lays its sections out with sxStyles.pageContainerFull, each
-   * opened with the persona and mocks of its own capture. /communities/new has
-   * no capture; it is opened as the platform admin who creates communities.
+   * opened with the persona and mocks of its own capture.
    */
   const CONTAINER_PAGES: { name: string; open: (page: Page) => Promise<void> }[] = [
     ...[
@@ -582,8 +581,6 @@ test.describe("Visual baselines", () => {
     ...[
       ["/platform-admins", "/platform-admins"],
       ["/communities", "/communities"],
-      ["/communities/new", "/communities/new"],
-      ["/communities/:communityId/edit", `/communities/${FIXED_COMMUNITY_ID}/edit`],
       ["/communities/:communityId/admins", `/communities/${FIXED_COMMUNITY_ID}/admins`],
     ].map(([name, path]) => ({
       name,
