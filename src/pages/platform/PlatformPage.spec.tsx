@@ -96,7 +96,8 @@ describe("PlatformPage", () => {
     it("offers both quick actions", () => {
       setup();
 
-      expect(screen.getByRole("link", { name: CREATE })).toHaveAttribute("href", "/communities/new");
+      // Creating a community opens over the page (#374), so it is a button.
+      expect(screen.getByRole("button", { name: CREATE })).toBeInTheDocument();
       expect(screen.getByRole("link", { name: PLATFORM_ADMINS })).toHaveAttribute("href", "/platform-admins");
     });
 
@@ -118,7 +119,7 @@ describe("PlatformPage", () => {
     it("UI-PAD-001 offers no link to them", () => {
       setup({ platform: { ...FULL_PLATFORM, canListPlatformAdmins: false } });
 
-      expect(screen.getByRole("link", { name: CREATE })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: CREATE })).toBeInTheDocument();
       expect(screen.queryByRole("link", { name: PLATFORM_ADMINS })).not.toBeInTheDocument();
     });
 
@@ -140,7 +141,7 @@ describe("PlatformPage", () => {
     it("offers no Crear comunidad", () => {
       setup({ platform });
 
-      expect(screen.queryByRole("link", { name: CREATE })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: CREATE })).not.toBeInTheDocument();
       expect(screen.getByRole("link", { name: PLATFORM_ADMINS })).toBeInTheDocument();
     });
 
@@ -165,7 +166,7 @@ describe("PlatformPage", () => {
     it("offers no quick action at all", () => {
       setup({ platform: null });
 
-      expect(screen.queryByRole("link", { name: CREATE })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: CREATE })).not.toBeInTheDocument();
       expect(screen.queryByRole("link", { name: PLATFORM_ADMINS })).not.toBeInTheDocument();
     });
   });

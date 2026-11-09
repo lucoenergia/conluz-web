@@ -96,12 +96,13 @@ test.describe("Visual baselines", () => {
   });
 
   /**
-   * Assertions, not baselines, for the same reason as the one above: the subject
-   * is which capability each route asks for, and no screenshot records that.
+   * An assertion, not a baseline, for the same reason as the one above: the
+   * subject is which capability the route asks for, and no screenshot records
+   * that.
    *
    * Nothing else covers it. No unit test reads the route-to-capability mapping in
-   * App.tsx -- CapabilityRoute.spec passes the requirement in directly -- so these
-   * are the only tests that fail if one of those three lines is changed back.
+   * App.tsx -- CapabilityRoute.spec passes the requirement in directly -- so this
+   * is the only test that fails if that line is changed back.
    */
   test("the platform overview asks for canAdministerPlatform, not canListUsers", async ({ page }) => {
     // A community admin holds canListUsers -- the backend grants it to anyone
@@ -119,29 +120,21 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("heading", { name: "Administración de plataforma" })).toHaveCount(0);
   });
 
-  test("editing a community asks that community's canUpdate, not canAdministerPlatform", async ({ page }) => {
-    // canUpdate is a platform-wide decision about a community the caller may
-    // merely be administering, so the answer has to come from the community in
-    // the URL rather than from the active one -- a platform admin has no
-    // membership of it at all.
+  // Editing a community has no route of its own since #374: it opens over the
+  // list from the row menu, which offers it on that row's canUpdate. Which
+  // rows offer it, per capability, is asserted in CommunitiesPage.spec.tsx;
+  // this pins that the served platform-admin fixture reaches the form.
+  test("editing a community opens from the row menu on the row's canUpdate", async ({ page }) => {
     await injectAuthToken(page);
     await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
 
-    await page.goto(`/communities/${FIXED_COMMUNITY_ID}/edit`);
+    await page.goto("/communities");
     await stabilizePage(page);
+    await page.getByRole("button", { name: /^Más acciones para / }).first().click();
+    await page.getByRole("menuitem", { name: "Editar" }).click();
 
-    await expect(page.getByRole("heading", { name: "Editar comunidad" })).toBeVisible();
-  });
-
-  test("and refuses a community admin, who does not hold canUpdate on it", async ({ page }) => {
-    await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
-    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-
-    await page.goto(`/communities/${FIXED_COMMUNITY_ID}/edit`);
-    await stabilizePage(page);
-
-    await expect(page.getByRole("heading", { name: "Editar comunidad" })).toHaveCount(0);
+    await expect(page.getByRole("dialog", { name: "Editar comunidad" })).toBeVisible();
+    await expect(page).toHaveURL(/\/communities$/);
   });
 
   // ── The four platform screens that had no capture ────────────────────────
@@ -172,16 +165,56 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("communities-list-page.png", await mainRegion(page));
   });
 
-  test("edit community page", async ({ page }) => {
+  // The community forms and a community's contact open over the list (#374).
+  // Admitted: the fields, the scope header, the channel list and the footer
+  // composed in a sheet or a dialog are a pixel risk; what each offers, sends,
+  // locks and shows is asserted in CommunityFormDialog.create/.edit.spec.tsx,
+  // CommunitiesPage.communityForm.spec.tsx and CommunityContactDialog.spec.tsx.
+  test("create community overlay", async ({ page }) => {
     await injectAuthToken(page);
     await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
 
-    await page.goto(`/communities/${FIXED_COMMUNITY_ID}/edit`);
-    await expect(page.getByRole("main")).toBeVisible();
+    await page.goto("/communities");
+    await page.getByRole("button", { name: "Nueva Comunidad" }).click();
+    const dialog = page.getByRole("dialog", { name: "Crear nueva comunidad" });
+    // The action has been handed out: a capture of a form that cannot submit would look plausible.
+    await expect(dialog.getByRole("button", { name: "Crear comunidad" })).toBeEnabled();
+    await expect(dialog.getByRole("textbox", { name: /^Nombre/ })).toBeEditable();
     await stabilizePage(page);
 
-    // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("edit-community-page.png", await mainRegion(page));
+    await expect(dialog).toHaveScreenshot("community-form-create-overlay.png", await hideAppBar(page));
+  });
+
+  test("edit community overlay", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto("/communities");
+    await page.getByRole("button", { name: /^Más acciones para / }).first().click();
+    await page.getByRole("menuitem", { name: "Editar" }).click();
+    const dialog = page.getByRole("dialog", { name: "Editar comunidad" });
+    // Seeded from the community: a capture of empty fields would look plausible.
+    await expect(dialog.getByRole("textbox", { name: /^Nombre/ })).not.toHaveValue("");
+    await expect(dialog.getByRole("textbox", { name: /^Código/ })).not.toHaveValue("");
+    await expect(dialog.getByRole("button", { name: "Guardar" })).toBeEnabled();
+    await stabilizePage(page);
+
+    await expect(dialog).toHaveScreenshot("community-form-edit-overlay.png", await hideAppBar(page));
+  });
+
+  test("community contact overlay", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto("/communities");
+    await page.getByRole("button", { name: /^Más acciones para / }).first().click();
+    await page.getByRole("menuitem", { name: "Ver contacto" }).click();
+    const dialog = page.getByRole("dialog", { name: "Contacto" });
+    // The channels have arrived: a capture of the spinner would look plausible.
+    await expect(dialog.getByRole("list", { name: "Canales de contacto" })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(dialog).toHaveScreenshot("community-contact-overlay.png", await hideAppBar(page));
   });
 
   // A community's admins (#276): the status chips with their invitation

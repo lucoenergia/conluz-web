@@ -7,15 +7,18 @@ import { APP_PATH, extractRoutePaths } from "./appRoutes";
  * to, never on a page of their own (#368). A route whose path ends in `new` or
  * `edit` is such a page.
  *
- * The routes below predate the rule. Each names the issue that turns it into
- * an overlay, and that issue removes it from here.
+ * Every route that predated the rule has become an overlay (the last two in
+ * #374), so the list is empty. An entry goes on its own line with a comment:
+ * a permanent one says why it is not an overlay flow, a temporary one names
+ * the issue that removes it. An entry with neither is not added.
  */
-const CREATE_EDIT_ROUTE_ALLOWLIST = [
-  "/communities/new", // temporary: #374
-  "/communities/:communityId/edit", // temporary: #374
-];
+const CREATE_EDIT_ROUTE_ALLOWLIST: string[] = [];
 
 const isCreateOrEditPath = (path: string) => /\/(new|edit)$/.test(path);
+
+/** The routes the rule refuses: a create or edit path the allowlist does not name. */
+const refusedPaths = (paths: string[]) =>
+  paths.filter((path) => isCreateOrEditPath(path) && !CREATE_EDIT_ROUTE_ALLOWLIST.includes(path));
 
 describe("UI-OVL-008 no route for a create or edit flow", () => {
   const paths = extractRoutePaths(readFileSync(APP_PATH, "utf8"));
@@ -28,7 +31,7 @@ describe("UI-OVL-008 no route for a create or edit flow", () => {
   });
 
   it("UI-OVL-008 adds no route whose path ends in new or edit", () => {
-    const added = paths.filter((path) => isCreateOrEditPath(path) && !CREATE_EDIT_ROUTE_ALLOWLIST.includes(path));
+    const added = refusedPaths(paths);
 
     expect(
       added,
@@ -45,9 +48,19 @@ describe("UI-OVL-008 no route for a create or edit flow", () => {
 
   it("UI-OVL-008 tells a create or edit path from a list or a detail path", () => {
     expect(
-      ["/things/new", "/communities/:communityId/edit", "/news", "/members", "/production/:plantId"].map(
+      ["/things/new", "/things/:thingId/edit", "/news", "/members", "/production/:plantId"].map(
         isCreateOrEditPath,
       ),
     ).toEqual([true, true, false, false, false]);
+  });
+
+  // With nothing left on the allowlist, the check must still refuse a new
+  // route rather than pass because there is nothing to compare against.
+  it("UI-OVL-008 still refuses a create or edit route added to the tree, with an empty allowlist", () => {
+    expect(CREATE_EDIT_ROUTE_ALLOWLIST).toEqual([]);
+    expect(refusedPaths([...paths, "/things/new", "/things/:thingId/edit"])).toEqual([
+      "/things/new",
+      "/things/:thingId/edit",
+    ]);
   });
 });

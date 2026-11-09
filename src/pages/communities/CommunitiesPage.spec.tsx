@@ -32,8 +32,13 @@ const PLATFORM_VIEW: Partial<CommunityCapabilitiesResponse> = {
   canManageAdmins: true,
 };
 
-/** What a community's own admin holds: its roster, but neither the community record nor its admins. */
-const COMMUNITY_ADMIN_VIEW: Partial<CommunityCapabilitiesResponse> = {
+/**
+ * A row that grants reading the community and managing its roster, but neither
+ * updating it nor managing its admins. Only a platform admin reaches this page
+ * (canAdministerPlatform), so the row-menu tests below are about per-row
+ * capability combinations, not about what another role would see.
+ */
+const READ_AND_ROSTER_ONLY: Partial<CommunityCapabilitiesResponse> = {
   canRead: true,
   canUpdate: false,
   canManageMemberships: true,
@@ -82,6 +87,8 @@ vi.mock(import("react-router"), async (importOriginal) => ({
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetAllCommunities: vi.fn(),
+  // Read by the edit form the row menu opens (#374).
+  useGetCommunityById: vi.fn(),
 }));
 
 vi.mock(import("../../context/error.context"), async (importOriginal) => ({
@@ -96,10 +103,16 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
   useLoggedUser: () => loggedUser.current,
 }));
 
-import { useGetAllCommunities, type getAllCommunities } from "../../api/communities/communities";
+import {
+  useGetAllCommunities,
+  useGetCommunityById,
+  type getAllCommunities,
+} from "../../api/communities/communities";
 import { CommunitiesPage } from "./CommunitiesPage";
 
 const menuFor = (name: string) => screen.getByRole("button", { name: `Más acciones para ${name}` });
+const menuItemNames = (menu: HTMLElement) =>
+  within(menu).getAllByRole("menuitem").map((item) => item.textContent);
 const noMenuFor = (name: string) =>
   screen.queryByRole("button", { name: `Más acciones para ${name}` });
 
@@ -120,6 +133,7 @@ function setup(
       ? null
       : buildCurrentUser({ platformCapabilities: buildPlatformCapabilities(platform) });
 
+  vi.mocked(useGetCommunityById).mockReturnValue(query.loading() as ReturnType<typeof useGetCommunityById>);
   vi.mocked(useGetAllCommunities).mockReturnValue(
     options.communitiesLoading
       ? query.loading()
@@ -170,23 +184,21 @@ describe("CommunitiesPage", () => {
     it("offers Nueva Comunidad when the platform permits it", () => {
       setup();
 
-      expect(screen.getByRole("link", { name: /Nueva Comunidad/i })).toHaveAttribute(
-        "href",
-        "/communities/new",
-      );
+      // Creating a community opens over the list (#374), so it is a button.
+      expect(screen.getByRole("button", { name: /Nueva Comunidad/i })).toBeInTheDocument();
     });
 
     it("offers nothing when it does not", () => {
       setup({ platform: { canAdministerPlatform: true, canCreateCommunity: false } });
 
-      expect(screen.queryByRole("link", { name: /Nueva Comunidad/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Nueva Comunidad/i })).not.toBeInTheDocument();
     });
 
     // Not yet known is not "no", and it is not "yes" either.
     it("offers nothing while the current user has not arrived", () => {
       setup({ platform: null });
 
-      expect(screen.queryByRole("link", { name: /Nueva Comunidad/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Nueva Comunidad/i })).not.toBeInTheDocument();
     });
   });
 
@@ -201,31 +213,54 @@ describe("CommunitiesPage", () => {
       expect(screen.getByRole("menuitem", { name: /Gestionar administradores/ })).toBeInTheDocument();
     });
 
-    // The roster is what a community admin administers; neither the community
-    // record nor the community's admins is: both are platform-wide decisions.
-    it("UI-ADM-001 gives a community admin no menu: neither the community record nor its admins", () => {
-      setup({ communities: [community({ id: "c1", name: "Sol Común" }, COMMUNITY_ADMIN_VIEW)] });
+    // Editing the record and managing its admins follow their own capabilities,
+    // whatever else the row grants; seeing its contact is reading it (#374).
+    it("UI-ADM-001 a row without canUpdate or canManageAdmins offers neither the community record nor its admins", async () => {
+      const user = userEvent.setup();
+      setup({ communities: [community({ id: "c1", name: "Sol Común" }, READ_AND_ROSTER_ONLY)] });
 
-      expect(noMenuFor("Sol Común")).toBeNull();
+      await user.click(menuFor("Sol Común"));
+
+      expect(menuItemNames(await screen.findByRole("menu"))).toEqual(["Ver contacto"]);
     });
 
-    it("gives a plain member no menu at all", () => {
+    it("a row with only canRead offers only Ver contacto", async () => {
+      const user = userEvent.setup();
       setup({ communities: [community({ id: "c1", name: "Sol Común" }, { canRead: true })] });
+
+      await user.click(menuFor("Sol Común"));
+
+      expect(menuItemNames(await screen.findByRole("menu"))).toEqual(["Ver contacto"]);
+    });
+
+    it("a row without canRead gets no menu at all", () => {
+      setup({ communities: [community({ id: "c1", name: "Sol Común" }, {})] });
 
       expect(noMenuFor("Sol Común")).toBeNull();
     });
 
     // Every community carries its own answer, so a list may legitimately mix them.
-    it("decides each row from its own community, not from the platform", () => {
+    it("decides each row from its own capabilities: all granted, only canRead, none", async () => {
+      const user = userEvent.setup();
       setup({
         communities: [
           community({ id: "c1", name: "Sol Común" }, PLATFORM_VIEW),
           community({ id: "c2", name: "Verde Activa" }, { canRead: true }),
+          community({ id: "c3", name: "Mar Clara" }, {}),
         ],
       });
 
-      expect(menuFor("Sol Común")).toBeInTheDocument();
-      expect(noMenuFor("Verde Activa")).toBeNull();
+      await user.click(menuFor("Sol Común"));
+      expect(menuItemNames(await screen.findByRole("menu"))).toEqual([
+        "Editar",
+        "Ver contacto",
+        "Gestionar administradores",
+      ]);
+      await user.keyboard("{Escape}");
+
+      await user.click(menuFor("Verde Activa"));
+      expect(menuItemNames(await screen.findByRole("menu"))).toEqual(["Ver contacto"]);
+      expect(noMenuFor("Mar Clara")).toBeNull();
     });
 
     it("offers nothing while the list has not loaded — not yet known is not 'no'", () => {
@@ -234,14 +269,16 @@ describe("CommunitiesPage", () => {
       expect(noMenuFor("Sol Común")).toBeNull();
     });
 
-    it("navigates to /communities/:id/edit when Editar is chosen from the menu", async () => {
+    it("opens the edit form over the list when Editar is chosen from the menu", async () => {
       const user = userEvent.setup();
       setup();
 
       await user.click(menuFor("Sol Común"));
       await user.click(await screen.findByRole("menuitem", { name: /Editar/ }));
 
-      expect(mockNavigate).toHaveBeenCalledWith("/communities/c1/edit");
+      expect(await screen.findByRole("dialog", { name: "Editar comunidad" })).toBeInTheDocument();
+      expect(vi.mocked(useGetCommunityById)).toHaveBeenCalledWith("c1");
+      expect(mockNavigate).not.toHaveBeenCalled();
     });
   });
 

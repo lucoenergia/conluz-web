@@ -4,11 +4,11 @@
 | --- | --- |
 | **Prefix** | `UI-CTU` |
 | **Status** | Active |
-| **Routes** | `/community/contact`, `/contact`, `/communities/:communityId/edit` (its Contacto section) |
-| **Roles** | Any signed-in caller (`/community/contact`), who edits the channels there when they may manage the active community; a platform admin who may update the community (`/communities/:communityId/edit`); a signed-out visitor (`/contact`) |
+| **Routes** | `/community/contact`, `/contact`, and "Ver contacto" in the `/communities` row menu, which opens in the shared overlay over the list |
+| **Roles** | Any signed-in caller (`/community/contact`), who edits the channels there when they may manage the active community; a platform admin, on a community whose row reports `canRead` ("Ver contacto"); a signed-out visitor (`/contact`) |
 | **Domain rules** | `lucoenergia/conluz`: CTC-001, CTC-004 |
 | **Design reference** | Design system: `ContactChannelList` (data display), `ContactChannelReorderList` (forms), `ContactChannelEditor` (dialogs) |
-| **Last reviewed against code** | #369 |
+| **Last reviewed against code** | #374 |
 
 ## Purpose
 
@@ -64,13 +64,20 @@ date from the same page, seeing them as members do, one channel at a time.
 ### UI-CTU-004 — Platform admins see a community's channels read-only
 
 - **Status:** Active
-- **Rule:** Platform admins MUST see a community's contact channels read-only on the community page
-  they open from the communities list, with no edit action; when there are none, they MUST see a
-  neutral "not configured" text, never the operator fallback.
-- **Rationale:** The operator routes users who cannot sign in to their community. The operator
-  fallback would point the operator at itself, so the operator contact is not even requested there.
+- **Rule:**
+  - A community's contact channels MUST be shown read-only in a "Ver contacto" overlay, opened from
+    that community's row menu on the communities list, and MUST NOT be shown in community editing.
+  - The overlay MUST name the community it shows, and MUST offer no input and no edit or delete
+    control; when there are no channels, it MUST show a neutral "not configured" text, never the
+    operator fallback.
+  - "Ver contacto" MUST be offered only when that community's `capabilities.canRead` is `true`.
+- **Rationale:** The operator routes users who cannot sign in to their community. Consulting a
+  contact is not editing a community, and a platform admin needs it for any community, not only
+  the active one. The operator fallback would point the operator at itself, so the operator contact
+  is not even requested there. The backend authorises the contact read with the policy it uses to
+  read the community, so the row's `canRead` is its answer.
 - **Implements:** CTC-001
-- **Source:** #295
+- **Source:** #295; changed in #374 (moved from community editing to a "Ver contacto" overlay)
 
 ### UI-CTU-005 — The public help page
 
@@ -146,7 +153,7 @@ date from the same page, seeing them as members do, one channel at a time.
 
 | State | Rendered | Actions available |
 | --- | --- | --- |
-| Loading (in-app page or platform admin section) | A progress indicator; no instruction, no "not configured" text | None |
+| Loading (in-app page or "Ver contacto" overlay) | A progress indicator; no instruction, no "not configured" text | None |
 | Channels | The channel list (UI-CTU-001, UI-CTU-002) | Tap a phone or an email |
 | Channels, caller may manage (in-app page) | The list with an "Editar" per channel, "Añadir canal" below 10 channels or the limit text at 10, "Cambiar orden" from 2 channels (UI-CTU-006) | Edit a channel, add one, enter the order mode |
 | No channels, or no community (in-app page) | The instruction, then the operator contact when configured and retrieved | Tap the operator's phone or email |
@@ -162,7 +169,8 @@ date from the same page, seeing them as members do, one channel at a time.
 | Order mode | Numbered rows with "Subir" and "Bajar"; no add or edit controls; each move announced, focus on the moved channel | Move, save the order, cancel |
 | Delete question | The editor, its footer replaced by the channel's name and the effect on the others; nothing sent until confirmed (UI-CTU-009) | Confirm, which saves under the lock; cancel, Escape, the close icon or back, which withdraw it and keep the editor (UI-OVL-004) |
 | Last channel deleted | The configure panel and a neutral notice; focus on "Configurar contacto" | "Configurar contacto" |
-| No channels (platform admin section) | The neutral "not configured" text, no alert colour | None |
+| No channels ("Ver contacto" overlay) | The neutral "not configured" text, no alert colour | None |
+| Community not found ("Ver contacto" overlay) | "Comunidad no encontrada", as in the community edit form (UI-COM-001), for a read answered "not found" | Close |
 | Channels request failed | An error with a retry | Retry |
 | Operator request failed | Nothing for the operator; no alert | — |
 | Signed out (`/contact`) | Instruction, password recovery, then the operator contact when configured and retrieved | Recover the password, tap the operator's phone or email, go back to sign in |

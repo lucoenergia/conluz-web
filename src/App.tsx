@@ -53,8 +53,6 @@ const IntegrationsPage = lazyPage(() => import("./pages/integrations/Integration
 const MembersPage = lazyPage(() => import("./pages/members/MembersPage"), "MembersPage");
 
 const CommunitiesPage = lazyPage(() => import("./pages/communities/CommunitiesPage"), "CommunitiesPage");
-const CreateCommunityPage = lazyPage(() => import("./pages/communities/CreateCommunityPage"), "CreateCommunityPage");
-const EditCommunityPage = lazyPage(() => import("./pages/communities/EditCommunityPage"), "EditCommunityPage");
 const CommunityAdminsPage = lazyPage(() => import("./pages/communities/CommunityAdminsPage"), "CommunityAdminsPage");
 
 const PlatformPage = lazyPage(() => import("./pages/platform/PlatformPage"), "PlatformPage");
@@ -150,17 +148,15 @@ function App() {
             element={<CapabilityRoute require={{ scope: "community", capability: "canManageMemberships" }}><MembersPage /></CapabilityRoute>}
           />
           <Route path="communities">
+            {/*
+              Creating and editing a community, and seeing its contact, open
+              over the list (#374). The old /communities/new and
+              /communities/:communityId/edit addresses are not redirected: a
+              redirect would be a route ending in new or edit (UI-OVL-008).
+            */}
             <Route
               index
               element={<CapabilityRoute require={{ scope: "platform", capability: "canAdministerPlatform" }}><CommunitiesPage /></CapabilityRoute>}
-            />
-            <Route
-              path="new"
-              element={<CapabilityRoute require={{ scope: "platform", capability: "canCreateCommunity" }}><CreateCommunityPage /></CapabilityRoute>}
-            />
-            <Route
-              path=":communityId/edit"
-              element={<CapabilityRoute require={{ scope: "communityById", capability: "canUpdate" }}><EditCommunityPage /></CapabilityRoute>}
             />
             <Route
               path=":communityId/admins"

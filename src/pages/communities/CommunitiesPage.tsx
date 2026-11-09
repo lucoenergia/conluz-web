@@ -1,5 +1,5 @@
-import { useRef, useState, type FC } from "react";
-import { Link, useNavigate } from "react-router";
+import { useEffect, useRef, useState, type FC } from "react";
+import { useNavigate } from "react-router";
 import { useTheme, alpha } from "@mui/material/styles";
 import {
   Box,
@@ -14,6 +14,7 @@ import {
 import BusinessIcon from "@mui/icons-material/Business";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import EditIcon from "@mui/icons-material/Edit";
+import ContactPhoneIcon from "@mui/icons-material/ContactPhone";
 import PeopleIcon from "@mui/icons-material/People";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
@@ -32,6 +33,8 @@ import { useGetAllCommunities } from "../../api/communities/communities";
 import type { CommunityResponse } from "../../api/models";
 import { useCommunityActions, usePlatformActions } from "../../hooks/actions";
 import { Can, outcomeFromResource } from "../../hooks/permissions";
+import { CommunityFormDialog, type CommunityFormTarget } from "./CommunityFormDialog";
+import { CommunityContactDialog } from "./CommunityContactDialog";
 
 const MAX_ADMIN_NAMES_SHOWN = 2;
 
@@ -95,6 +98,13 @@ export const CommunitiesPage: FC = () => {
   // on answering from before the change -- and it is that row's capabilities
   // that now decide what its menu offers.
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
+  // The overlay open over the list -- the community form, or a community's
+  // contact -- and the control that opened it: the create button, or the row's
+  // kebab, since the menu item that opened it is gone by the time it closes.
+  const [communityFormTarget, setCommunityFormTarget] = useState<CommunityFormTarget | null>(null);
+  // The id, not the row, for the same reason as the menu's.
+  const [contactCommunityId, setContactCommunityId] = useState<string | null>(null);
+  const overlayOpener = useRef<HTMLElement | null>(null);
 
   // What this caller may do, as the backend answers it. forCommunity is a plain
   // function rather than a hook precisely so it can be asked once per row, and
@@ -112,6 +122,10 @@ export const CommunitiesPage: FC = () => {
     ? (communities.find((community) => community.id === selectedCommunityId) ?? null)
     : null;
 
+  const contactCommunity = contactCommunityId
+    ? communities.find((community) => community.id === contactCommunityId)
+    : undefined;
+
   // Managing a community's admins is its canManageAdmins (#276), the
   // requirement of the page the item leads to. The item navigates rather than
   // performing a write, so it reads the capability directly; the writes on the
@@ -119,10 +133,18 @@ export const CommunitiesPage: FC = () => {
   const rowAdmins = (community: CommunityResponse | null) =>
     outcomeFromResource(community?.capabilities, "canManageAdmins");
 
+  // A community's contact is read with GET /communities/{id}/contact, which
+  // the backend authorises exactly as it does reading the community itself, so
+  // the row's canRead is its answer (#374).
+  const rowContact = (community: CommunityResponse | null) =>
+    outcomeFromResource(community?.capabilities, "canRead");
+
   // No permitted action means no menu at all, rather than a menu with nothing
   // in it or items the backend would refuse.
   const offersRowActions = (community: CommunityResponse) =>
-    !!forCommunity(community).actions.update || rowAdmins(community).state === "allowed";
+    !!forCommunity(community).actions.update ||
+    rowAdmins(community).state === "allowed" ||
+    rowContact(community).state === "allowed";
 
   const selectedUpdate = forCommunity(selectedCommunity ?? undefined).actions.update;
 
@@ -139,10 +161,33 @@ export const CommunitiesPage: FC = () => {
   const communityOfItem = (item: RecordListItem) =>
     communities.find((community) => String(community.id ?? "") === item.id);
 
+  const openCommunityForm = (target: CommunityFormTarget, opener: HTMLElement | null) => {
+    overlayOpener.current = opener;
+    setCommunityFormTarget(target);
+  };
+  // After the overlay has unmounted, so the overlay's own focus restoration,
+  // aimed at the vanished menu item, has already run.
+  const overlayOpen = !!communityFormTarget || !!contactCommunityId;
+  useEffect(() => {
+    if (overlayOpen || !overlayOpener.current) return;
+    overlayOpener.current.focus();
+    overlayOpener.current = null;
+  }, [overlayOpen]);
+
   const handleEditClick = () => {
+    const kebab = anchorEl;
     handleMenuClose();
     if (selectedCommunity?.id) {
-      navigate(`/communities/${selectedCommunity.id}/edit`);
+      openCommunityForm({ kind: "edit", communityId: selectedCommunity.id }, kebab);
+    }
+  };
+
+  const handleViewContactClick = () => {
+    const kebab = anchorEl;
+    handleMenuClose();
+    if (selectedCommunity?.id) {
+      overlayOpener.current = kebab;
+      setContactCommunityId(selectedCommunity.id);
     }
   };
 
@@ -194,8 +239,7 @@ export const CommunitiesPage: FC = () => {
           <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
             {createCommunity && (
             <Button
-              component={Link}
-              to="/communities/new"
+              onClick={(event) => openCommunityForm({ kind: "create" }, event.currentTarget)}
               variant="contained"
               startIcon={<AddCircleOutlineIcon />}
               sx={{
@@ -362,8 +406,9 @@ export const CommunitiesPage: FC = () => {
 
       {/* Every item is the selected row's own answer. Editing is the
           community's canUpdate, a platform-wide decision that being its admin
-          does not confer; so is managing its admins, canManageAdmins. The two
-          are separate answers, so they are asked separately. */}
+          does not confer; so is managing its admins, canManageAdmins. Seeing
+          its contact is reading it, canRead. They are separate answers, so
+          they are asked separately. */}
       <RowActionsMenu anchorEl={anchorEl} onClose={handleMenuClose}>
         {selectedUpdate && (
           <MenuItem onClick={handleEditClick}>
@@ -373,6 +418,14 @@ export const CommunitiesPage: FC = () => {
             <ListItemText>Editar</ListItemText>
           </MenuItem>
         )}
+        <Can outcome={rowContact(selectedCommunity)}>
+          <MenuItem onClick={handleViewContactClick}>
+            <ListItemIcon>
+              <ContactPhoneIcon fontSize="small" sx={{ color: "primary.main" }} />
+            </ListItemIcon>
+            <ListItemText>Ver contacto</ListItemText>
+          </MenuItem>
+        </Can>
         <Can outcome={rowAdmins(selectedCommunity)}>
           <MenuItem onClick={handleManageAdminsClick}>
             <ListItemIcon>
@@ -383,6 +436,15 @@ export const CommunitiesPage: FC = () => {
         </Can>
       </RowActionsMenu>
 
+      {contactCommunity && (
+        <CommunityContactDialog
+          community={{ id: contactCommunity.id, name: contactCommunity.name }}
+          onClose={() => setContactCommunityId(null)}
+        />
+      )}
+      {communityFormTarget && (
+        <CommunityFormDialog target={communityFormTarget} onClose={() => setCommunityFormTarget(null)} />
+      )}
     </Box>
   );
 };

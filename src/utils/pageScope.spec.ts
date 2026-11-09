@@ -65,7 +65,7 @@ describe("resolvePageScope", () => {
     const paths = authenticatedPaths();
     expect(paths).toContain("/");
     expect(paths).toContain("/production/sample-id/sharing-agreements/sample-id");
-    expect(paths).toContain("/communities/sample-id/edit");
+    expect(paths).toContain("/communities/sample-id/admins");
     expect(paths).toContain("/contact");
     expect(paths).not.toContain("/login");
   });
@@ -90,7 +90,7 @@ describe("resolvePageScope", () => {
     ["/community/contact", "community"],
     ["/platform", "platform"],
     ["/communities", "platform"],
-    ["/communities/c-1/edit", "platform"],
+    ["/communities/c-1/admins", "platform"],
     ["/platform-admins", "platform"],
     ["/profile", "personal"],
     ["/change-password", "personal"],
