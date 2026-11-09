@@ -1,17 +1,13 @@
-import { useState, useEffect, type FC } from "react";
-import { Box, Button, TextField, Autocomplete, CircularProgress } from "@mui/material";
+import { useState, type FC } from "react";
+import { Box, Button } from "@mui/material";
 import { sxStyles } from "../../theme/sx";
 import { fontSizes, interactiveTransition, motion} from "../../theme/tokens";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { alpha } from "@mui/material/styles";
-import dayjs, { type Dayjs } from "dayjs";
-import "dayjs/locale/es";
 import { useGetAllSupplies } from "../../api/supplies/supplies";
-import type { SupplyResponse } from "../../api/models";
 import { useActiveCommunity } from "../../context/community.context";
-import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
+import { PlantFormFields } from "./PlantFormFields";
+import { selectedSupplyOf, TOTAL_POWER_ERROR, totalPowerIsValid, type PlantFieldValues } from "./plantFields";
+import dayjs from "dayjs";
 
 export interface PlantFormValues {
   providerCode: string;
@@ -53,16 +49,16 @@ export const PlantForm: FC<PlantFormProps> = ({
   disableSupplySelector = false,
   disabled = false,
 }) => {
-  const [providerCode, setProviderCode] = useState(initialProviderCode);
-  const [regulatoryCode, setRegulatoryCode] = useState(initialRegulatoryCode);
-  const [name, setName] = useState(initialName);
-  const [address, setAddress] = useState(initialAddress);
-  const [description, setDescription] = useState(initialDescription);
-  const [totalPower, setTotalPower] = useState(initialTotalPower);
-  const [connectionDate, setConnectionDate] = useState<Dayjs | null>(
-    initialConnectionDate ? dayjs(initialConnectionDate) : null
-  );
-  const [selectedSupply, setSelectedSupply] = useState<SupplyResponse | null>(null);
+  const [values, setValues] = useState<PlantFieldValues>(() => ({
+    providerCode: initialProviderCode,
+    regulatoryCode: initialRegulatoryCode,
+    name: initialName,
+    address: initialAddress,
+    description: initialDescription,
+    totalPower: String(initialTotalPower),
+    connectionDate: initialConnectionDate ? dayjs(initialConnectionDate) : null,
+    supplyCode: selectedSupplyCode || initialSupplyCode || null,
+  }));
 
   // Fetch supplies for the selector
   const activeCommunityId = useActiveCommunity();
@@ -83,32 +79,18 @@ export const PlantForm: FC<PlantFormProps> = ({
     ? (suppliesData?.items ?? [])
     : (suppliesData?.items ?? []).filter((supply) => supply.capabilities.canCreatePlant);
 
-  // Set initial selected supply when editing
-  useEffect(() => {
-    const supplyCodeToUse = selectedSupplyCode || initialSupplyCode;
-    if (supplyCodeToUse && suppliesData?.items) {
-      const supply = suppliesData.items.find((s) => s.code === supplyCodeToUse);
-      if (supply) {
-        setSelectedSupply(supply);
-      }
-    }
-  }, [selectedSupplyCode, initialSupplyCode, suppliesData]);
+  // Resolved against every supply, as the selection always was: a plant's own
+  // supply is shown even where the caller may not start a plant on it.
+  const selectedSupply = selectedSupplyOf(suppliesData?.items ?? [], values.supplyCode);
 
   const [totalPowerError, setTotalPowerError] = useState<string | undefined>();
 
-  const totalPowerIsValid = (input: string): boolean => {
-    const num = Number(input);
-    return !isNaN(num) && num > 0;
-  };
-
-  const onTotalPowerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value && !totalPowerIsValid(value)) {
-      setTotalPowerError("Por favor, introduce un número mayor que 0");
-    } else {
-      setTotalPowerError(undefined);
+  const onChange = <K extends keyof PlantFieldValues>(field: K, value: PlantFieldValues[K]) => {
+    if (field === "totalPower") {
+      const input = value as string;
+      setTotalPowerError(input && !totalPowerIsValid(input) ? TOTAL_POWER_ERROR : undefined);
     }
-    setTotalPower(value);
+    setValues((current) => ({ ...current, [field]: value }));
   };
 
   const validateForm = (data: PlantFormValues): boolean => {
@@ -121,15 +103,15 @@ export const PlantForm: FC<PlantFormProps> = ({
     return true;
   };
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async () => {
     const newPlant = {
-      providerCode: data.get("providerCode") as string,
-      regulatoryCode: (data.get("regulatoryCode") as string) || undefined,
-      name: data.get("name") as string,
-      address: data.get("address") as string,
-      description: data.get("description") as string,
-      totalPower: Number(data.get("totalPower") as string),
-      connectionDate: connectionDate ? connectionDate.toISOString() : undefined,
+      providerCode: values.providerCode,
+      regulatoryCode: values.regulatoryCode || undefined,
+      name: values.name,
+      address: values.address,
+      description: values.description,
+      totalPower: Number(values.totalPower),
+      connectionDate: values.connectionDate ? values.connectionDate.toISOString() : undefined,
       supplyCode: selectedSupply?.code || "",
       inverterProvider: "HUAWEI" as const,
     } as PlantFormValues;
@@ -142,183 +124,15 @@ export const PlantForm: FC<PlantFormProps> = ({
   return (
     <Box component="form" action={onSubmit}>
       <Box sx={sxStyles.flexColumnGap3}>
-        <TextField
-          id="providerCode"
-          label="Código de proveedor"
-          type="text"
-          name="providerCode"
-          value={providerCode}
-          onChange={(e) => setProviderCode(e.target.value)}
-          slotProps={{ htmlInput: { maxLength: 50 } }}
-          required
-          autoFocus
-          fullWidth
-          variant="outlined"
+        <PlantFormFields
+          values={values}
+          onChange={onChange}
+          supplies={selectableSupplies}
+          selectedSupply={selectedSupply}
+          suppliesLoading={suppliesLoading}
+          disableSupplySelector={disableSupplySelector}
+          fieldErrors={{ totalPower: totalPowerError }}
         />
-
-        <TextField
-          id="regulatoryCode"
-          label="CAU"
-          type="text"
-          name="regulatoryCode"
-          value={regulatoryCode}
-          onChange={(e) => setRegulatoryCode(e.target.value)}
-          slotProps={{ htmlInput: { maxLength: 50 } }}
-          fullWidth
-          variant="outlined"
-        />
-
-        <TextField
-          id="name"
-          label="Nombre"
-          type="text"
-          name="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          slotProps={{ htmlInput: { maxLength: 50 } }}
-          required
-          fullWidth
-          variant="outlined"
-        />
-
-        <Autocomplete
-          options={selectableSupplies}
-          getOptionLabel={(option) => `${supplyDisplayLabel(option)} (${option.code})`}
-          value={selectedSupply}
-          onChange={(_, newValue) => setSelectedSupply(newValue)}
-          loading={suppliesLoading}
-          disabled={disableSupplySelector}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Punto de suministro"
-              required
-              variant="outlined"
-              slotProps={{
-                input: {
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {suppliesLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                },
-              }}
-            />
-          )}
-        />
-
-        <TextField
-          id="address"
-          label="Dirección"
-          type="text"
-          name="address"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          slotProps={{ htmlInput: { maxLength: 100 } }}
-          required
-          fullWidth
-          variant="outlined"
-        />
-
-        <TextField
-          id="description"
-          label="Descripción"
-          type="text"
-          name="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          slotProps={{ htmlInput: { maxLength: 250 } }}
-          multiline
-          rows={3}
-          fullWidth
-          variant="outlined"
-        />
-
-        <TextField
-          id="totalPower"
-          label="Potencia total (kW)"
-          type="number"
-          error={totalPowerError !== undefined}
-          helperText={totalPowerError}
-          name="totalPower"
-          value={totalPower}
-          onChange={onTotalPowerChange}
-          required
-          fullWidth
-          variant="outlined"
-          slotProps={{
-            htmlInput: {
-              min: 0,
-              step: 0.01,
-            },
-          }}
-
-        />
-
-        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
-          <DatePicker
-            label="Fecha de conexión"
-            value={connectionDate}
-            onChange={(value) => setConnectionDate(value)}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                size: "small",
-                sx: {
-                  "& .MuiOutlinedInput-root": {
-                    fontSize: fontSizes.lg,
-                    height: "40px",
-                  },
-                },
-              },
-              popper: {
-                sx: (theme) => ({
-                  "& .MuiPickersYear-yearButton.Mui-selected": {
-                    backgroundColor: theme.palette.primary.main,
-                    color: "white",
-                    "&:hover": {
-                      backgroundColor: theme.palette.primary.dark,
-                    },
-                    "&:focus": {
-                      backgroundColor: theme.palette.primary.main,
-                    },
-                  },
-                  "& .MuiPickersMonth-monthButton.Mui-selected": {
-                    backgroundColor: theme.palette.primary.main,
-                    color: "white",
-                    "&:hover": {
-                      backgroundColor: theme.palette.primary.dark,
-                    },
-                    "&:focus": {
-                      backgroundColor: theme.palette.primary.main,
-                    },
-                  },
-                  "& .MuiPickersDay-root.Mui-selected": {
-                    backgroundColor: theme.palette.primary.main,
-                    color: "white",
-                    "&:hover": {
-                      backgroundColor: theme.palette.primary.dark,
-                    },
-                    "&:focus": {
-                      backgroundColor: theme.palette.primary.main,
-                    },
-                  },
-                  "& .MuiPickersYear-yearButton:hover": {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                  },
-                  "& .MuiPickersMonth-monthButton:hover": {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                  },
-                  "& .MuiPickersDay-root:hover": {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                  },
-                }),
-              },
-            }}
-          />
-        </LocalizationProvider>
 
         <Button
           type="submit"
