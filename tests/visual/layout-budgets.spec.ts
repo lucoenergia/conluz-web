@@ -600,8 +600,6 @@ test.describe("Visual baselines", () => {
       [
         ["/members", "/members", mockCommunityManagementRoutes],
         ["/integrations", "/integrations", mockCommunityManagementRoutes],
-        ["/supply-points/new", "/supply-points/new"],
-        ["/supply-points/:supplyPointId/edit", `/supply-points/${FIXED_SUPPLY_ID}/edit`],
         ["/production/new", "/production/new"],
         [
           "/production/:plantId/edit",

@@ -1,4 +1,4 @@
-import { useMemo, useState, type FC, type MouseEvent, type SyntheticEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FC, type MouseEvent, type SyntheticEvent } from "react";
 import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
@@ -20,7 +20,7 @@ import { DisableSuccessModal } from "../../components/Modals/DisableSuccessModal
 import { EnableConfirmationModal } from "../../components/Modals/EnableConfirmationModal";
 import { EnableSuccessModal } from "../../components/Modals/EnableSuccesModal";
 import { EmptyState } from "../../components/EmptyState";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
@@ -36,6 +36,7 @@ import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 import { useActiveCommunityCapabilities } from "../../hooks/permissions";
 import { offersSupplyRowActions, supplyTableColumns, supplyTableTitle, toRecordListItem } from "./supplyRows";
 import { SupplyRowMenu } from "./SupplyRowMenu";
+import { SupplyFormDialog, type SupplyFormTarget } from "./SupplyFormDialog";
 
 /** A disable or enable the caller has asked for, by supply id, and where it stands. */
 type StatusChange = { supplyId: string; kind: "disable" | "enable"; step: "confirm" | "done" };
@@ -54,7 +55,11 @@ export const SupplyPointsPage: FC = () => {
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [menuSupplyId, setMenuSupplyId] = useState<string | null>(null);
   const [statusChange, setStatusChange] = useState<StatusChange | null>(null);
-  const navigate = useNavigate();
+  // The supply form open over the list (UI-SUP-019), and the control that
+  // opened it: the create button, or the row's kebab, since the menu item
+  // that opened an edit is gone by the time the form closes.
+  const [supplyFormTarget, setSupplyFormTarget] = useState<SupplyFormTarget | null>(null);
+  const supplyFormOpener = useRef<HTMLElement | null>(null);
   const [searchParams] = useSearchParams();
   const personId = searchParams.get("personId");
 
@@ -184,6 +189,18 @@ export const SupplyPointsPage: FC = () => {
     if (await action.run()) setStatusChange({ supplyId, kind, step: "done" });
   };
 
+  const openSupplyForm = (target: SupplyFormTarget, opener: HTMLElement | null) => {
+    supplyFormOpener.current = opener;
+    setSupplyFormTarget(target);
+  };
+  // After the form has unmounted, so the overlay's own focus restoration,
+  // aimed at the vanished menu item, has already run.
+  useEffect(() => {
+    if (supplyFormTarget || !supplyFormOpener.current) return;
+    supplyFormOpener.current.focus();
+    supplyFormOpener.current = null;
+  }, [supplyFormTarget]);
+
   const handleOpenImportModal = () => {
     setShowImportModal(true);
   };
@@ -262,8 +279,7 @@ export const SupplyPointsPage: FC = () => {
           <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
             {communityActions.createSupply && (
             <Button
-              component={Link}
-              to="/supply-points/new"
+              onClick={(event) => openSupplyForm({ kind: "create" }, event.currentTarget)}
               variant="contained"
               startIcon={<AddCircleOutlineIcon />}
               sx={{
@@ -344,7 +360,8 @@ export const SupplyPointsPage: FC = () => {
                   communityActions.createSupply
                     ? {
                         label: "Crear Punto de Suministro",
-                        onClick: () => navigate("/supply-points/new"),
+                        onClick: () =>
+                          openSupplyForm({ kind: "create" }, document.activeElement as HTMLElement | null),
                         startIcon: <AddCircleOutlineIcon />,
                       }
                     : undefined
@@ -406,8 +423,15 @@ export const SupplyPointsPage: FC = () => {
         actions={forSupply(menuSupply).actions}
         onDisable={() => menuSupply && setStatusChange({ supplyId: menuSupply.id, kind: "disable", step: "confirm" })}
         onEnable={() => menuSupply && setStatusChange({ supplyId: menuSupply.id, kind: "enable", step: "confirm" })}
+        onEdit={() => menuSupply && openSupplyForm({ kind: "edit", supplyId: menuSupply.id }, menuAnchor)}
         onDelete={() => menuSupply && setDeleteTargetId(menuSupply.id)}
       />
+
+      {/* Mounted on open, so every opening starts from its own values, and with
+          the gate of the control that opens it. */}
+      {supplyFormTarget && (supplyFormTarget.kind === "edit" || communityActions.createSupply) && (
+        <SupplyFormDialog target={supplyFormTarget} onClose={() => setSupplyFormTarget(null)} />
+      )}
 
       <DisableConfirmationModal
         isOpen={statusChange?.kind === "disable" && statusChange.step === "confirm"}

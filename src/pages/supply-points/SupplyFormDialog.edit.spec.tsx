@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { buildMemberRecord, buildSupply, buildSupplyCapabilities } from "../../test/fixtures";
@@ -9,15 +9,10 @@ import type { RestErrorDetailCode, SupplyCapabilitiesResponse, SupplyResponse } 
 
 const SUPPLY_ID = "supply-1";
 const COMMUNITY_ID = "community-a";
-const mockNavigate = vi.fn();
 const mockErrorDispatch = vi.fn();
+const onClose = vi.fn();
 const SERVER_MESSAGE = "TEST-SERVER-MESSAGE";
 const GENERIC = "Ha habido un problema al editar el punto de suministro. Por favor, inténtalo más tarde";
-
-vi.mock(import("react-router"), async (importOriginal) => ({
-  ...(await importOriginal()),
-  useNavigate: () => mockNavigate,
-}));
 
 vi.mock(import("../../context/error.context"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -48,7 +43,7 @@ import { useGetAllUsers } from "../../api/users/users";
 import { useGetMemberships } from "../../api/memberships/memberships";
 import { mutation } from "../../test/queryState";
 import { useSupplyInActiveCommunity } from "./useSupplyInActiveCommunity";
-import { EditSupplyPage } from "./EditSupply";
+import { SupplyFormDialog } from "./SupplyFormDialog";
 
 const mutateAsync = vi.fn();
 
@@ -73,11 +68,16 @@ function setup(
     refetch: vi.fn(),
   });
 
-  return renderWithProviders(<EditSupplyPage />, {
-    route: `/supply-points/${SUPPLY_ID}/edit`,
+  return renderDialog();
+}
+
+const renderDialog = () =>
+  renderWithProviders(<SupplyFormDialog target={{ kind: "edit", supplyId: SUPPLY_ID }} onClose={onClose} />, {
     activeCommunityId: COMMUNITY_ID,
   });
-}
+
+const DIALOG = "Editar punto de suministro";
+const saveButton = () => screen.getByRole("button", { name: "Guardar" });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -85,11 +85,22 @@ beforeEach(() => {
   vi.mocked(useUpdateSupply).mockReturnValue(mutation.idle({ mutateAsync }));
 });
 
-describe("EditSupplyPage", () => {
-  it("saves through the action when the supply permits editing", async () => {
+/**
+ * The supply form in edit mode (#372): what it loads, what it sends, where a
+ * refusal lands. Where it opens from, its overlay behaviour and a refetch
+ * while it is open are SupplyPointsPage.supplyForm.spec.tsx's.
+ */
+describe("SupplyFormDialog: editing", () => {
+  it("UI-OVL-006 is a dialog named by its title", () => {
     setup({ canEdit: true });
 
-    await userEvent.click(screen.getByRole("button", { name: /Guardar cambios/i }));
+    expect(screen.getByRole("dialog", { name: DIALOG })).toBeInTheDocument();
+  });
+
+  it("saves through the action when the supply permits editing, and closes", async () => {
+    setup({ canEdit: true });
+
+    await userEvent.click(saveButton());
 
     await waitFor(() => {
       expect(mutateAsync).toHaveBeenCalledWith({
@@ -97,39 +108,40 @@ describe("EditSupplyPage", () => {
         data: expect.objectContaining({ code: "ES0021000000000000AA", address: "Calle Mayor 1" }),
       });
     });
-    expect(mockNavigate).toHaveBeenCalledWith("/supply-points");
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 
-  // The route guard already refuses this, so it is the second line rather than
-  // the first -- but the form must not present itself as a live write path.
+  // The row menu already offers no "Editar" here, so it is the second line
+  // rather than the first -- but the form must not present itself as a live
+  // write path.
   it("offers no way to submit when the supply does not permit editing", async () => {
     setup({ canEdit: false });
 
-    expect(screen.getByRole("button", { name: /Guardar cambios/i })).toBeDisabled();
+    expect(saveButton()).toBeDisabled();
 
-    await userEvent.click(screen.getByRole("button", { name: /Guardar cambios/i }));
+    await userEvent.click(saveButton());
     expect(mutateAsync).not.toHaveBeenCalled();
-    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it("offers the submit once the supply permits editing", () => {
     setup({ canEdit: true });
 
-    expect(screen.getByRole("button", { name: /Guardar cambios/i })).not.toBeDisabled();
+    expect(saveButton()).not.toBeDisabled();
   });
 
   it("sends no address reference rather than an empty one", async () => {
     setup({ canEdit: true });
 
     await userEvent.clear(screen.getByLabelText(/Referencia catastral/i));
-    await userEvent.click(screen.getByRole("button", { name: /Guardar cambios/i }));
+    await userEvent.click(saveButton());
 
     await waitFor(() => expect(mutateAsync).toHaveBeenCalled());
     expect(mutateAsync.mock.calls[0][0].data.addressRef).toBeUndefined();
   });
 });
 
-describe("EditSupplyPage: naming the supply", () => {
+describe("SupplyFormDialog: naming the supply", () => {
   it("UI-SUP-010 names a supply without a name by its address under the title", () => {
     vi.mocked(useSupplyInActiveCommunity).mockReturnValue({
       supply: buildSupply({
@@ -144,17 +156,14 @@ describe("EditSupplyPage: naming the supply", () => {
       error: null,
       refetch: vi.fn(),
     });
-    renderWithProviders(<EditSupplyPage />, {
-      route: `/supply-points/${SUPPLY_ID}/edit`,
-      activeCommunityId: COMMUNITY_ID,
-    });
+    renderDialog();
 
     expect(screen.getByText("Plaza del Pueblo 3")).toBeInTheDocument();
     expect(screen.queryByText("Cargando...")).not.toBeInTheDocument();
   });
 });
 
-describe("EditSupplyPage: a refused edit", () => {
+describe("SupplyFormDialog: a refused edit", () => {
   const nameInput = () => screen.getByRole("textbox", { name: /^Nombre/ });
   const cupsInput = () => screen.getByRole("textbox", { name: /^CUPS/ });
   const addressInput = () => screen.getByRole("textbox", { name: /^Dirección/ });
@@ -163,7 +172,7 @@ describe("EditSupplyPage: a refused edit", () => {
     await u.clear(cupsInput());
     await u.type(cupsInput(), "ES0031300119158001DL0F");
     await u.type(addressInput(), ", bajo");
-    await u.click(screen.getByRole("button", { name: /Guardar cambios/i }));
+    await u.click(saveButton());
   }
 
   function expectTypedValuesKept() {
@@ -185,9 +194,10 @@ describe("EditSupplyPage: a refused edit", () => {
 
     await waitFor(() => expect(cupsInput()).toHaveAccessibleDescription(message));
     expect(cupsInput()).toBeInvalid();
+    await waitFor(() => expect(cupsInput()).toHaveFocus());
     expect(screen.queryByText(SERVER_MESSAGE)).not.toBeInTheDocument();
     expect(mockErrorDispatch).not.toHaveBeenCalled();
-    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
     expectTypedValuesKept();
   });
 
@@ -214,13 +224,14 @@ describe("EditSupplyPage: a refused edit", () => {
     await editAndSubmit(u);
 
     await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalledWith(GENERIC));
+    expect(screen.getByRole("dialog", { name: DIALOG })).toBeInTheDocument();
     expect(cupsInput()).toBeValid();
-    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
     expectTypedValuesKept();
   });
 });
 
-describe("EditSupplyPage: the owner", () => {
+describe("SupplyFormDialog: the owner", () => {
   const ownerInput = () => screen.getByRole("textbox", { name: "Propietario" });
 
   it("UI-SUP-005 shows the owner's record in the supply's community, read-only", () => {
@@ -240,11 +251,89 @@ describe("EditSupplyPage: the owner", () => {
   it("UI-SUP-018 reads neither the platform-wide user listing nor the community's memberships", async () => {
     setup({ canEdit: true }, { ownerRecord: buildMemberRecord({ fullName: "Lucía Martínez Soler" }) });
 
-    await userEvent.click(screen.getByRole("button", { name: /Guardar cambios/i }));
+    await userEvent.click(saveButton());
 
     await waitFor(() => expect(mutateAsync).toHaveBeenCalled());
     expect(vi.mocked(useGetAllUsers)).not.toHaveBeenCalled();
     expect(vi.mocked(useGetMemberships)).not.toHaveBeenCalled();
     expect(mutateAsync.mock.calls[0][0].data).not.toHaveProperty("personalId");
+  });
+});
+
+describe("UI-SUP-020 the edit submit", () => {
+  it.each([
+    ["a supply with no name", null],
+    ["a named supply", "Casa"],
+  ])("UI-SUP-020 reads Guardar for %s", (_, name) => {
+    setup({ canEdit: true }, { name });
+
+    expect(within(screen.getByRole("dialog", { name: DIALOG })).getByRole("button", { name: "Guardar" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: /Crear punto de suministro|Guardar cambios/ })).not.toBeInTheDocument();
+  });
+
+  it("UI-SUP-021 reads Guardando... while the save is in flight", async () => {
+    mutateAsync.mockReturnValue(new Promise(() => {}));
+    setup({ canEdit: true });
+
+    await userEvent.click(saveButton());
+
+    expect(await screen.findByRole("button", { name: "Guardando..." })).toBeDisabled();
+    for (const field of screen.getAllByRole("textbox")) expect(field).toHaveAttribute("readonly");
+  });
+});
+
+describe("SupplyFormDialog: the supply being loaded", () => {
+  const loadState = (state: Partial<ReturnType<typeof useSupplyInActiveCommunity>>) =>
+    vi.mocked(useSupplyInActiveCommunity).mockReturnValue({
+      supply: undefined,
+      isLoading: false,
+      isNotFound: false,
+      error: null,
+      refetch: vi.fn(),
+      ...state,
+    });
+
+  it("UI-SUP-019 shows its progress in the overlay while the supply loads, with nothing to submit", () => {
+    loadState({ isLoading: true });
+    renderDialog();
+
+    const dialog = screen.getByRole("dialog", { name: DIALOG });
+    expect(within(dialog).getByRole("progressbar")).toBeInTheDocument();
+    expect(within(dialog).queryByRole("textbox")).not.toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Guardar" })).toBeDisabled();
+  });
+
+  it("UI-SUP-019 says, as the detail page does, that a supply it cannot find does not exist", () => {
+    loadState({ isNotFound: true });
+    renderDialog();
+
+    const dialog = screen.getByRole("dialog", { name: DIALOG });
+    expect(within(dialog).getByRole("heading", { name: "Punto de suministro no encontrado" })).toBeInTheDocument();
+    expect(
+      within(dialog).getByText("Este punto de suministro no existe o no tienes acceso a su comunidad."),
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByRole("textbox")).not.toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Guardar" })).toBeDisabled();
+  });
+
+  it("UI-SUP-019 reports a failed load and offers it again, with the detail page's words", async () => {
+    const refetch = vi.fn();
+    loadState({ error: apiError(500), refetch });
+    renderDialog();
+
+    const dialog = screen.getByRole("dialog", { name: DIALOG });
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(
+      "Ha habido un problema al cargar la información de este punto de suministro. Por favor, inténtalo más tarde",
+    );
+    expect(within(dialog).queryByRole("textbox")).not.toBeInTheDocument();
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "Reintentar" }));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("UI-SUP-019 asks for the supply it was opened for", () => {
+    setup({ canEdit: true });
+
+    expect(vi.mocked(useSupplyInActiveCommunity)).toHaveBeenCalledWith(SUPPLY_ID);
   });
 });

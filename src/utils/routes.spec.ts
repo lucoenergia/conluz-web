@@ -110,14 +110,12 @@ describe("resolveCommunityScopedTarget", () => {
 
   it("sends a supply detail route back to the supplies list", () => {
     expect(resolveCommunityScopedTarget("/supply-points/supply-a", "")).toBe("/supply-points");
-    expect(resolveCommunityScopedTarget("/supply-points/supply-a/edit", "")).toBe("/supply-points");
   });
 
   // The creation forms hold no foreign entity -- only a half-typed draft, which
   // the remount clears anyway. Bouncing the user out of them would be rude.
   it("leaves the creation forms alone", () => {
     expect(resolveCommunityScopedTarget("/production/new", "")).toBeNull();
-    expect(resolveCommunityScopedTarget("/supply-points/new", "")).toBeNull();
   });
 
   it("leaves the section index routes alone -- they re-key on their own", () => {

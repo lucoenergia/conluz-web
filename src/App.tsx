@@ -43,8 +43,6 @@ const HistoricalAnalysisPage = lazyPage(() => import("./pages/historical-analysi
 
 const SupplyPointsPage = lazyPage(() => import("./pages/supply-points/SupplyPointsPage"), "SupplyPointsPage");
 const SupplyDetailPage = lazyPage(() => import("./pages/supply-points/SupplyDetailPage"), "SupplyDetailPage");
-const CreateSupplyPage = lazyPage(() => import("./pages/supply-points/CreateSupply"), "CreateSupplyPage");
-const EditSupplyPage = lazyPage(() => import("./pages/supply-points/EditSupply"), "EditSupplyPage");
 
 const PlantsPage = lazyPage(() => import("./pages/production/PlantsPage"), "PlantsPage");
 const CreatePlantPage = lazyPage(() => import("./pages/production/CreatePlantPage"), "CreatePlantPage");
@@ -121,18 +119,9 @@ function App() {
             path="supply-points"
             element={<CapabilityRoute require={{ scope: "community", capability: "canRead" }}><Outlet /></CapabilityRoute>}
           >
+            {/* Creating and editing a supply open over the list (#372). */}
             <Route index element={<SupplyPointsPage />}></Route>
-            <Route
-              path="new"
-              element={<CapabilityRoute require={{ scope: "community", capability: "canManage" }}><CreateSupplyPage /></CapabilityRoute>}
-            />
-            <Route path=":supplyPointId">
-              <Route index element={<SupplyDetailPage />} />
-              <Route
-                path="edit"
-                element={<CapabilityRoute require={{ scope: "supply", capability: "canEdit" }}><EditSupplyPage /></CapabilityRoute>}
-              />
-            </Route>
+            <Route path=":supplyPointId" element={<SupplyDetailPage />} />
           </Route>
           <Route
             path="production"

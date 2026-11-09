@@ -91,7 +91,7 @@ describe("SupplyPointsPage", () => {
     it("is offered neither creating nor importing", () => {
       setup({ community: { canManage: false } });
 
-      expect(screen.queryByRole("link", { name: NEW_BUTTON })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: NEW_BUTTON })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: IMPORT_BUTTON })).not.toBeInTheDocument();
     });
 
@@ -116,7 +116,7 @@ describe("SupplyPointsPage", () => {
     it("is offered creating and importing", () => {
       setup({ community: { canManage: true } });
 
-      expect(screen.getByRole("link", { name: NEW_BUTTON })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: NEW_BUTTON })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: IMPORT_BUTTON })).toBeInTheDocument();
     });
 
@@ -209,7 +209,7 @@ describe("SupplyPointsPage", () => {
 
     renderWithProviders(<SupplyPointsPage />, { activeCommunityId: COMMUNITY_ID });
 
-    expect(screen.queryByRole("link", { name: NEW_BUTTON })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: NEW_BUTTON })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: IMPORT_BUTTON })).not.toBeInTheDocument();
   });
 

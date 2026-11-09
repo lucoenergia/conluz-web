@@ -214,7 +214,11 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("supplies-list-admin.png", await mainRegion(page));
   });
 
-  test("create supply page", async ({ page }) => {
+  // The supply forms open over the list (#372). Admitted: the fields, the
+  // owner picker and the footer composed in a sheet or a dialog are a pixel
+  // risk; what each form offers, sends and locks is asserted in
+  // SupplyFormDialog.create/.edit.spec.tsx and SupplyPointsPage.supplyForm.spec.tsx.
+  test("create supply overlay", async ({ page }) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
@@ -222,25 +226,32 @@ test.describe("Visual baselines", () => {
     // the broad communities route would answer them with a list of communities.
     await mockCommunityManagementRoutes(page);
 
-    await page.goto("/supply-points/new");
-    await expect(page.getByRole("main")).toBeVisible();
+    await page.goto("/supply-points");
+    await page.getByRole("button", { name: "Nuevo Punto de Suministro" }).click();
+    const dialog = page.getByRole("dialog", { name: /^Crear punto de suministro en / });
+    // The owners have loaded: a capture of a spinning picker would look plausible.
+    await expect(dialog.getByRole("button", { name: "Crear punto de suministro" })).toBeEnabled();
+    await expect(dialog.getByLabel(/^CUPS/)).toBeEditable();
     await stabilizePage(page);
 
-    // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("create-supply-page.png", await mainRegion(page));
+    await expect(dialog).toHaveScreenshot("supply-form-create-overlay.png", await hideAppBar(page));
   });
 
-  test("edit supply page", async ({ page }) => {
+  test("edit supply overlay", async ({ page }) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
 
-    await page.goto(`/supply-points/${FIXED_SUPPLY_ID}/edit`);
-    await expect(page.getByRole("main")).toBeVisible();
+    await page.goto("/supply-points");
+    await page.getByRole("button", { name: `Más acciones para ${FIXED_SUPPLY_NAME}` }).click();
+    await page.getByRole("menuitem", { name: "Editar" }).click();
+    const dialog = page.getByRole("dialog", { name: "Editar punto de suministro" });
+    // Seeded from the supply: a capture of empty fields would look plausible.
+    await expect(dialog.getByLabel(/^Nombre/)).toHaveValue(FIXED_SUPPLY_NAME);
+    await expect(dialog.getByLabel(/^CUPS/)).toHaveValue("ES0021000000000000AA");
     await stabilizePage(page);
 
-    // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("edit-supply-page.png", await mainRegion(page));
+    await expect(dialog).toHaveScreenshot("supply-form-edit-overlay.png", await hideAppBar(page));
   });
 
   // Deleting a supply (#290). Each state below is asserted in Vitest first

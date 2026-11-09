@@ -30,7 +30,7 @@ import {
   useResendCommunityAdminInvitation,
   useRevokeCommunityAdminInvitation,
 } from "../../api/memberships/memberships";
-import { getGetCurrentUserQueryKey } from "../../api/users/users";
+import { getGetCurrentUserQueryKey, getGetSuppliesByUserIdQueryKey } from "../../api/users/users";
 import type {
   CommunityAdminResponse,
   CommunityContactResponse,
@@ -291,6 +291,11 @@ export function useCommunityActions(): CommunityActions {
               try {
                 const value = await createSupplyMutation.mutateAsync({ data });
                 invalidateSupplies();
+                // The form opens over a member's supplies too, which this
+                // community's list does not reach (#372).
+                if (value.user) {
+                  queryClient.invalidateQueries({ queryKey: getGetSuppliesByUserIdQueryKey(value.user.id) });
+                }
                 return { ok: true, value };
               } catch (error) {
                 return { error };

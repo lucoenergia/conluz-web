@@ -11,8 +11,6 @@ import { APP_PATH, extractRoutePaths } from "./appRoutes";
  * an overlay, and that issue removes it from here.
  */
 const CREATE_EDIT_ROUTE_ALLOWLIST = [
-  "/supply-points/new", // temporary: #372
-  "/supply-points/:supplyPointId/edit", // temporary: #372
   "/production/new", // temporary: #373
   "/production/:plantId/edit", // temporary: #373
   "/communities/new", // temporary: #374
@@ -49,7 +47,7 @@ describe("UI-OVL-008 no route for a create or edit flow", () => {
 
   it("UI-OVL-008 tells a create or edit path from a list or a detail path", () => {
     expect(
-      ["/supply-points/new", "/communities/:communityId/edit", "/news", "/members", "/production/:plantId"].map(
+      ["/things/new", "/communities/:communityId/edit", "/news", "/members", "/production/:plantId"].map(
         isCreateOrEditPath,
       ),
     ).toEqual([true, true, false, false, false]);

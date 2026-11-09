@@ -22,7 +22,8 @@ import {
   useDisableDatadisConfig,
   useEnableDatadisConfig,
 } from "../../api/consumption/consumption";
-import { buildCommunity, buildCommunityCapabilities } from "../../test/fixtures";
+import { buildCommunity, buildCommunityCapabilities, buildSupply } from "../../test/fixtures";
+import { getGetSuppliesByUserIdQueryKey } from "../../api/users/users";
 import { mutation } from "../../test/queryState";
 import { renderHookWithProviders } from "../../test/renderWithProviders";
 import { useCommunityActions } from "./useCommunityActions";
@@ -206,6 +207,22 @@ describe("useCommunityActions", () => {
       expect(invalidateQueries).toHaveBeenCalledWith({
         queryKey: getGetAllSuppliesQueryKey(COMMUNITY_ID),
       });
+    });
+
+    // The supply form opens over a member's supplies too (#372), a listing the
+    // community's list invalidation does not reach.
+    it("refreshes the new supply's owner's supplies as well", async () => {
+      const created = buildSupply({ id: "supply-new", user: { id: "u-owner" } });
+      mutateAsync.mockResolvedValue(created);
+      const { result, queryClient } = render(communityWith({ canManage: true }));
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await expect(result.current.actions.createSupply?.run(CREATE_SUPPLY_BODY)).resolves.toEqual({
+        ok: true,
+        value: created,
+      });
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetSuppliesByUserIdQueryKey("u-owner") });
+      expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: getGetSuppliesByUserIdQueryKey("") });
     });
   });
 

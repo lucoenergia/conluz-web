@@ -56,8 +56,6 @@ const ROUTE_ACCESS: Record<string, Access> = {
   // The pages still scope their own data to the active community.
   "/supply-points": { require: { scope: "community", capability: "canRead" } },
   "/supply-points/:supplyPointId": { require: { scope: "community", capability: "canRead" } },
-  "/supply-points/new": { require: { scope: "community", capability: "canManage" } },
-  "/supply-points/:supplyPointId/edit": { require: { scope: "supply", capability: "canEdit" } },
 
   "/production": { require: { scope: "community", capability: "canRead" } },
   "/production/:plantId": { require: { scope: "community", capability: "canRead" } },

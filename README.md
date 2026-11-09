@@ -62,8 +62,6 @@ conluz-web/
 │   │   ├── NewPassword.tsx
 │   │   ├── SupplyPointsPage.tsx
 │   │   ├── SupplyDetailPage.tsx
-│   │   ├── CreateSupply.tsx
-│   │   ├── EditSupply.tsx
 │   │   └── Contact.page.tsx
 │   └── utils/         # Utility functions
 ├── docker/            # Docker configuration
@@ -90,10 +88,8 @@ conluz-web/
 ## 📄 Main Routes
 
 - **Home** (`/`): Dashboard/landing page
-- **Supply Points** (`/supply-points`): List and manage energy supply points
-- **New Supply** (`/supply-points/new`): Create a new supply point
+- **Supply Points** (`/supply-points`): List and manage energy supply points; creating and editing one open in an overlay over the list
 - **Supply Detail** (`/supply-points/:id`): Detailed view of a supply point
-- **Edit Supply** (`/supply-points/:id/edit`): Edit supply point information
 - **Login** (`/login`): User authentication
 - **Forgot Password** (`/forgot-password`): Password recovery flow
 - **Reset Password** (`/forgot-password/:token`): Password reset with token

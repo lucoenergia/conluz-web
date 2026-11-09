@@ -1,10 +1,12 @@
 import "@testing-library/jest-dom";
-import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
-import { screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
 import { apiError } from "../../test/apiError";
+import { pressBack } from "../../test/overlay";
+import { overlayHistorySettled } from "../../components/ResponsiveOverlay/overlayHistory";
 import {
   buildCommunity,
   buildCommunityCapabilities,
@@ -20,13 +22,9 @@ const OTHER_COMMUNITY_ID = "c2";
 const SERVER_MESSAGE = "TEST-SERVER-MESSAGE";
 const GENERIC =
   "Ha habido un problema al crear un nuevo punto de suministro. Por favor, inténtalo más tarde";
-const mockNavigate = vi.fn();
 const mockErrorDispatch = vi.fn();
+const onClose = vi.fn();
 
-vi.mock(import("react-router"), async (importOriginal) => ({
-  ...(await importOriginal()),
-  useNavigate: () => mockNavigate,
-}));
 vi.mock(import("../../context/error.context"), async (importOriginal) => ({
   ...(await importOriginal()),
   useErrorDispatch: () => mockErrorDispatch,
@@ -74,7 +72,7 @@ import {
 import { useCreateSupply } from "../../api/supplies/supplies";
 import { useGetMemberships, type getMemberships } from "../../api/memberships/memberships";
 import { useGetAllUsers, useGetSuppliesByUserId, type getAllUsers } from "../../api/users/users";
-import { CreateSupplyPage } from "./CreateSupply";
+import { SupplyFormDialog } from "./SupplyFormDialog";
 
 const OWNER = buildMembership({
   id: "m-ana",
@@ -124,8 +122,16 @@ beforeEach(() => {
   vi.mocked(useGetMemberships).mockReturnValue(query.success<typeof getMemberships>([OWNER]));
 });
 
+/**
+ * The supply form in create mode (#372): what it offers as owner, what it
+ * sends, where a refusal lands, and its lock while the save is in flight.
+ * Where it opens from, and what the list shows afterwards, is
+ * SupplyPointsPage.supplyForm.spec.tsx's.
+ */
 const render = () =>
-  renderWithProviders(<CreateSupplyPage />, { activeCommunityId: COMMUNITY_ID, route: "/supply-points/new" });
+  renderWithProviders(<SupplyFormDialog target={{ kind: "create" }} onClose={onClose} />, {
+    activeCommunityId: COMMUNITY_ID,
+  });
 
 const createButton = () => screen.getByRole("button", { name: "Crear punto de suministro" });
 const nameInput = () => screen.getByRole("textbox", { name: /^Nombre/ });
@@ -149,16 +155,29 @@ function expectTypedValuesKept() {
   expect(addressInput()).toHaveValue("Calle Mayor 1");
 }
 
+afterEach(async () => {
+  // An overlay left open gives its history entry back on unmount: let that
+  // back land before the next test reads the history.
+  cleanup();
+  await act(() => overlayHistorySettled());
+});
+
 const refusal = (code: RestErrorDetailCode, status = 400) => apiError(status, { code, message: SERVER_MESSAGE });
 
-describe("CreateSupplyPage", () => {
-  it("creates the supply for the chosen owner, and returns to the list", async () => {
+describe("SupplyFormDialog: creating", () => {
+  it("UI-OVL-006 is a dialog named by its title", () => {
+    render();
+
+    expect(screen.getByRole("dialog", { name: "Crear punto de suministro en Sol Común" })).toBeInTheDocument();
+  });
+
+  it("creates the supply for the chosen owner, and closes", async () => {
     const u = userEvent.setup();
     render();
 
     await fillAndSubmit(u);
 
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/supply-points"));
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
     expect(mutateAsync).toHaveBeenCalledWith({
       data: expect.objectContaining({
         code: "ES0031300119158001DL0F",
@@ -170,7 +189,7 @@ describe("CreateSupplyPage", () => {
   });
 });
 
-describe("CreateSupplyPage: a refused creation", () => {
+describe("SupplyFormDialog: a refused creation", () => {
   it.each<[RestErrorDetailCode, string]>([
     ["SUPPLY_CUPS_INVALID", "El CUPS tiene que tener 20 o 22 caracteres, sin espacios."],
     ["SUPPLY_ALREADY_EXISTS", "Ya hay un punto de suministro con este CUPS en la comunidad."],
@@ -184,10 +203,11 @@ describe("CreateSupplyPage: a refused creation", () => {
 
     await waitFor(() => expect(cupsInput()).toHaveAccessibleDescription(message));
     expect(cupsInput()).toBeInvalid();
+    await waitFor(() => expect(cupsInput()).toHaveFocus());
     expect(ownerInput()).toBeValid();
     expect(screen.queryByText(SERVER_MESSAGE)).not.toBeInTheDocument();
     expect(mockErrorDispatch).not.toHaveBeenCalled();
-    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
     expectTypedValuesKept();
   });
 
@@ -202,9 +222,10 @@ describe("CreateSupplyPage: a refused creation", () => {
       expect(ownerInput()).toHaveAccessibleDescription("No hay ningún miembro de la comunidad con ese DNI/NIE/NIF."),
     );
     expect(ownerInput()).toBeInvalid();
+    await waitFor(() => expect(ownerInput()).toHaveFocus());
     expect(cupsInput()).toBeValid();
     expect(mockErrorDispatch).not.toHaveBeenCalled();
-    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
     expectTypedValuesKept();
   });
 
@@ -223,7 +244,7 @@ describe("CreateSupplyPage: a refused creation", () => {
     expect(cupsInput()).not.toHaveAccessibleDescription();
   });
 
-  it("UI-ERR-001 keeps the generic message for a refusal the form cannot place", async () => {
+  it("UI-ERR-001 keeps the generic message for a refusal the form cannot place, and stays open", async () => {
     mutateAsync.mockRejectedValue(apiError(500));
     const u = userEvent.setup();
     render();
@@ -231,9 +252,10 @@ describe("CreateSupplyPage: a refused creation", () => {
     await fillAndSubmit(u);
 
     await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalledWith(GENERIC));
+    expect(screen.getByRole("dialog", { name: "Crear punto de suministro en Sol Común" })).toBeInTheDocument();
     expect(cupsInput()).toBeValid();
     expect(ownerInput()).toBeValid();
-    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
     expectTypedValuesKept();
   });
 });
@@ -373,7 +395,7 @@ describe("UI-SUP-016 the owner options are the active community's memberships", 
     await u.click(createButton());
 
     expect(mutateAsync).not.toHaveBeenCalled();
-    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it("UI-SUP-016 replaces the options and clears the choice when the active community changes", async () => {
@@ -429,7 +451,7 @@ describe("UI-SUP-017 a community with no owner to offer cannot be submitted", ()
   });
 });
 
-describe("UI-SUP-018 the create page never reads the platform-wide user listing", () => {
+describe("UI-SUP-018 the create form never reads the platform-wide user listing", () => {
   it("UI-SUP-018 never calls getAllUsers", async () => {
     const u = userEvent.setup();
     render();
@@ -439,5 +461,59 @@ describe("UI-SUP-018 the create page never reads the platform-wide user listing"
     await waitFor(() => expect(mutateAsync).toHaveBeenCalled());
     expect(vi.mocked(useGetAllUsers)).not.toHaveBeenCalled();
     expect(screen.queryByText(/Luis Gil/)).not.toBeInTheDocument();
+  });
+});
+
+describe("UI-SUP-021 a create in flight", () => {
+  const DIALOG = "Crear punto de suministro en Sol Común";
+
+  // The request never answers, so the save stays in flight for the whole test.
+  async function sendAndHold(u: ReturnType<typeof userEvent.setup>) {
+    mutateAsync.mockReturnValue(new Promise(() => {}));
+    render();
+    await fillAndSubmit(u);
+    return screen.getByRole("dialog", { name: DIALOG });
+  }
+
+  it("UI-SUP-021 UI-OVL-002 shows its progress, makes every input read-only and offers no second submit", async () => {
+    const u = userEvent.setup();
+    const dialog = await sendAndHold(u);
+
+    expect(await within(dialog).findByRole("button", { name: "Creando..." })).toBeDisabled();
+    expect(within(dialog).getByRole("button", { name: "Cancelar" })).toBeDisabled();
+    for (const field of within(dialog).getAllByRole("textbox")) expect(field).toHaveAttribute("readonly");
+    expect(ownerInput()).toHaveAttribute("readonly");
+    await u.click(ownerInput());
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("UI-SUP-021 sends one request however often the form is submitted", async () => {
+    const u = userEvent.setup();
+    const dialog = await sendAndHold(u);
+    const form = within(dialog).getByRole("button", { name: "Creando..." }).closest("form");
+    if (!form) throw new Error("the submit is not inside a form");
+
+    // Enter in a field submits the form whatever its button shows.
+    fireEvent.submit(form);
+    fireEvent.submit(form);
+
+    expect(mutateAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it("UI-OVL-002 stays open on Escape, the backdrop and back while the create runs", async () => {
+    const u = userEvent.setup();
+    const dialog = await sendAndHold(u);
+    await within(dialog).findByRole("button", { name: "Creando..." });
+
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    // Structural: the backdrop has no role or name; it is MUI's own element.
+    await u.click(document.querySelector(".MuiBackdrop-root") as HTMLElement);
+    await pressBack();
+
+    expect(screen.getByRole("dialog", { name: DIALOG })).toBe(dialog);
+    expect(onClose).not.toHaveBeenCalled();
+    // The form has changes, so an attempt the lock let through would ask first
+    // rather than close: no question either.
+    expect(within(dialog).queryByRole("alert")).not.toBeInTheDocument();
   });
 });

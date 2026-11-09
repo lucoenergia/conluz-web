@@ -4,11 +4,11 @@
 | --- | --- |
 | **Prefix** | `UI-SUP` |
 | **Status** | Active |
-| **Routes** | `/supply-points`, `/supply-points?personId=…` (a member's supplies), `/supply-points/:supplyPointId`, `/supply-points/new`, `/supply-points/:supplyPointId/edit` |
+| **Routes** | `/supply-points`, `/supply-points?personId=…` (a member's supplies), `/supply-points/:supplyPointId`; creating and editing a supply open in the shared overlay over the list |
 | **Roles** | Any member of the active community reads them. Deleting: a caller to whom the supply reports `canDelete`. Creating and importing, and seeing each supply's owner in the list: a caller to whom the active community reports `canManage`. Editing: a caller to whom the supply reports `canEdit`. The supply's figures and "Ver análisis completo": a caller to whom the supply reports `canRead` |
 | **Domain rules** | `lucoenergia/conluz`: SUP-001, SUP-002, SUP-004, SUP-005, SUP-006, SUP-007, MEM-026, EPR-003, SEM-001 (lucoenergia/conluz#408) |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `FilterChipsBar` (the list; its shared rules are `record-lists.md`); the detail page's latest published month reuses `src/components/EnergyFigures/` (`PeriodHeader`, `PeriodUsageCard`, `PeriodTotals`), as the historical analysis page does |
-| **Last reviewed against code** | #388 |
+| **Last reviewed against code** | #372 |
 
 ## Purpose
 
@@ -19,7 +19,8 @@ deleted first (UI-MBR-015), so this is the step that makes that possible.
 Let a community admin import a community's supplies from a CSV file with the same dialog as the
 member import, the step that follows it during onboarding, and correct a supply refused for its
 CUPS or its owner on the input concerned. Offer as owner only someone the backend accepts: a member
-of the active community. Show a supply without a name by something that recognises it.
+of the active community. Show a supply without a name by something that recognises it. Create and
+edit a supply without leaving the list, and save it once however often the form is sent.
 
 List a community's supplies, or one member's, with only what the supply itself says: how it is
 named, its CUPS, its owner for whoever manages the community, whether a plant produces onto it, and
@@ -29,7 +30,7 @@ Make the supply detail page the supply's record: what it is, its coefficients, a
 saved in its latest published month, with the same figures the historical analysis page shows for
 it, and a way into that page for whoever may read them.
 
-This document covers only the rules #290, #302, #324, #339, #348, #252 and #388 introduced.
+This document covers only the rules #290, #302, #324, #339, #348, #252, #388 and #372 introduced.
 
 ## Rules
 
@@ -170,15 +171,19 @@ This document covers only the rules #290, #302, #324, #339, #348, #252 and #388 
 - **Status:** Active
 - **Rule:**
   - A supply create or edit refused with `SUPPLY_CUPS_INVALID`, `SUPPLY_ALREADY_EXISTS` or
-    `SUPPLY_REGISTERED_IN_ANOTHER_COMMUNITY` MUST keep the form open with the values typed, and show
-    the catalogue text on the CUPS input.
+    `SUPPLY_REGISTERED_IN_ANOTHER_COMMUNITY` MUST keep the form's overlay open with the values typed,
+    show the catalogue text on the CUPS input, and move focus to the CUPS input.
   - A create refused with `SUPPLY_OWNER_NOT_FOUND` MUST do the same on the owner input
     ("Propietario"). The edit form cannot change the owner and sends none, so the code does not
     reach it.
-  - Any other refusal MUST keep the generic message.
-- **Rationale:** The admin can fix these, and "try later" hides the cause.
+  - Any other refusal MUST keep the generic message, and MUST keep the overlay open with the values
+    typed.
+- **Rationale:** The admin can fix these, and "try later" hides the cause. Focus goes to the input
+  to fix: the inputs were read-only while the save ran (UI-SUP-021), and on a phone the refused
+  input may sit outside the sheet's visible part.
 - **Implements:** SUP-002, SUP-006, SUP-007
-- **Source:** #339, lucoenergia/conluz#532
+- **Source:** #339, lucoenergia/conluz#532; changed in #372 (the form moved into the overlay; focus
+  on the refused input)
 
 ### UI-SUP-010 — A supply is named by its name, else its address, else its CUPS
 
@@ -315,6 +320,57 @@ This document covers only the rules #290, #302, #324, #339, #348, #252 and #388 
 - **Implements:** n/a
 - **Source:** #388
 
+### UI-SUP-019 — Creating and editing a supply open over the supply list
+
+- **Status:** Active
+- **Rule:**
+  - "Nuevo Punto de Suministro", and "Crear Punto de Suministro" on an empty list, MUST open the
+    create form in the shared overlay over the supply list, and MUST leave the address unchanged.
+  - "Editar" on a supply's row menu MUST open the edit form in the shared overlay over the supply
+    list, filled from that supply's own read, and MUST leave the address unchanged.
+  - The create actions MUST be offered only when the active community hands over `createSupply`
+    (its `canManage`). "Editar" MUST be offered only when that supply's `capabilities.canEdit` is
+    `true`.
+  - The edit form MUST take its values from the supply's first successful read. A later read while
+    it is open MUST change neither the values nor what counts as a change (UI-OVL-003).
+  - While the supply loads, the overlay MUST show progress and nothing to submit. A supply that is
+    missing or outside the active community MUST show the supply detail page's not-found state, and
+    a failed read MUST show the detail page's load error, with "Reintentar".
+  - After a save, the overlay MUST close, the list MUST show the saved supply without a reload, and
+    focus MUST return to the control that opened the form: the create action, or the edited row's
+    actions button.
+- **Rationale:** Creating and editing are flows over the page they belong to (UI-OVL-001,
+  UI-OVL-008), so the admin keeps the list, its search and its filter. The old pages are removed
+  with no redirect: a redirect route would itself end in `new` or `edit`. A form reseeded by a
+  refetch would overwrite what is being typed. The menu item that opened an edit is gone once the
+  menu closes, so its row's actions button is where the admin was.
+- **Implements:** n/a
+- **Source:** #372
+
+### UI-SUP-020 — The edit form's submit reads "Guardar"
+
+- **Status:** Active
+- **Rule:** In edit mode, the supply form's submit MUST read "Guardar", whatever the supply's name.
+- **Rationale:** Editing is not creating. The page chose its label from the supply's name, so a
+  supply without one was saved with "Crear punto de suministro".
+- **Implements:** n/a
+- **Source:** #372
+
+### UI-SUP-021 — A supply save in flight sends nothing again, and the form is read-only
+
+- **Status:** Active
+- **Rule:**
+  - While a supply create or edit is in flight, submitting the form again MUST send no second
+    request.
+  - While a supply create or edit is in flight, every input of the form MUST be read-only, and the
+    submit MUST be disabled and say the save is running: "Creando..." in create mode,
+    "Guardando..." in edit mode.
+- **Rationale:** The page did not wait for its save, so a second tap sent a second request, and a
+  create could store the supply twice or answer the second request with a refusal for a CUPS the
+  first one had just registered.
+- **Implements:** n/a
+- **Source:** #372
+
 ## States
 
 The supply list follows the states of `record-lists.md`. What is particular to it:
@@ -344,6 +400,15 @@ The create form's owner input (UI-SUP-016, UI-SUP-017):
 | Members | The active community's memberships as options | Choose an owner; "Crear punto de suministro" |
 | No members | "Esta comunidad todavía no tiene miembros. Añádelos antes de crear un punto de suministro." | None: "Crear punto de suministro" is disabled |
 | Error | "No se pudieron cargar los miembros de esta comunidad. Inténtalo más tarde." | None: "Crear punto de suministro" is disabled |
+
+The edit form in the overlay (UI-SUP-019):
+
+| State | Rendered | Actions available |
+| --- | --- | --- |
+| Loading | Progress in the overlay's body | Cancelar |
+| Form | The supply's values, with the owner read-only | Guardar, Cancelar |
+| Not found | The supply detail page's not-found state | Cancelar |
+| Error | The supply detail page's load error | Reintentar, Cancelar |
 
 The import dialog, as the member import's (`members.md`):
 
