@@ -1,29 +1,20 @@
 import "@testing-library/jest-dom";
 import { screen, within } from "@testing-library/react";
-import { Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  useGetCommunityById,
-  useGetCommunityContact,
-  type getCommunityById,
-  type getCommunityContact,
-} from "../../api/communities/communities";
+import { useGetCommunityContact, type getCommunityContact } from "../../api/communities/communities";
 import { useGetOperatorContact } from "../../api/info/info";
 import { useGetCurrentUser, type getCurrentUser } from "../../api/users/users";
 import {
-  buildCommunity,
-  buildCommunityCapabilities,
   buildContactChannel,
   buildCurrentUser,
   buildPlatformCapabilities,
 } from "../../test/fixtures";
 import { query } from "../../test/queryState";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { EditCommunityPage } from "./EditCommunityPage";
+import { CommunityContactDialog } from "./CommunityContactDialog";
 
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useGetCommunityById: vi.fn(),
   useGetCommunityContact: vi.fn(),
 }));
 vi.mock(import("../../api/info/info"), async (importOriginal) => ({
@@ -53,36 +44,24 @@ const CHANNELS = [
 
 const NOT_CONFIGURED = "Esta comunidad aún no ha configurado su contacto.";
 
-function renderCommunityPage() {
+function renderContactDialog() {
   renderWithProviders(
-    <Routes>
-      <Route path="/communities/:communityId/edit" element={<EditCommunityPage />} />
-    </Routes>,
-    { route: `/communities/${COMMUNITY_ID}/edit`, token: "a-token" },
+    <CommunityContactDialog community={{ id: COMMUNITY_ID, name: "Norte Sol" }} onClose={() => {}} />,
+    { token: "a-token" },
   );
 }
 
-const contactSection = () => screen.getByRole("region", { name: "Contacto de la comunidad" });
+const contactSection = () => screen.getByRole("dialog", { name: "Contacto" });
 
 beforeEach(() => {
   vi.mocked(useGetOperatorContact).mockReset().mockReturnValue(query.disabled());
   vi.mocked(useGetCurrentUser).mockReturnValue(query.success<typeof getCurrentUser>(PLATFORM_ADMIN));
-  vi.mocked(useGetCommunityById).mockReturnValue(
-    query.success<typeof getCommunityById>(
-      buildCommunity({
-        id: COMMUNITY_ID,
-        name: "Norte Sol",
-        code: "NORTE",
-        capabilities: buildCommunityCapabilities({ canUpdate: true }),
-      }),
-    ),
-  );
 });
 
-describe("CommunityContactSection on the community page", () => {
+describe("CommunityContactDialog, opened from the communities list", () => {
   it("UI-CTU-004 shows a platform admin who is not a member the community's channels, read-only, in stored order", () => {
     vi.mocked(useGetCommunityContact).mockReturnValue(query.success<typeof getCommunityContact>({ channels: CHANNELS }));
-    renderCommunityPage();
+    renderContactDialog();
 
     expect(vi.mocked(useGetCommunityContact)).toHaveBeenCalledWith(COMMUNITY_ID);
     const section = contactSection();
@@ -95,8 +74,11 @@ describe("CommunityContactSection on the community page", () => {
     expect(within(section).getByRole("link", { name: "junta@nortesol.test" })).toHaveAttribute("href", "mailto:junta@nortesol.test");
     expect(within(section).getByRole("link", { name: "+34 600 111 222" })).toHaveAttribute("href", "tel:+34600111222");
 
-    // Read-only: nothing to press, and the only links are the channels themselves.
-    expect(within(section).queryAllByRole("button")).toEqual([]);
+    // Read-only: nothing to press but the overlay's own close, and the only
+    // links are the channels themselves.
+    expect(within(section).getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual([
+      "Cerrar",
+    ]);
     expect(within(section).queryAllByRole("textbox")).toEqual([]);
     expect(within(section).getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual([
       "mailto:junta@nortesol.test",
@@ -106,7 +88,7 @@ describe("CommunityContactSection on the community page", () => {
 
   it("UI-CTU-004 with no channels, says the community has not configured its contact, neutrally and without the operator", () => {
     vi.mocked(useGetCommunityContact).mockReturnValue(query.success<typeof getCommunityContact>({ channels: [] }));
-    renderCommunityPage();
+    renderContactDialog();
 
     const section = contactSection();
     expect(within(section).getByText(NOT_CONFIGURED)).toBeVisible();
@@ -118,7 +100,7 @@ describe("CommunityContactSection on the community page", () => {
 
   it("UI-CTU-004 shows no 'not configured' text while the channels are loading", () => {
     vi.mocked(useGetCommunityContact).mockReturnValue(query.loading());
-    renderCommunityPage();
+    renderContactDialog();
 
     expect(within(contactSection()).getByRole("progressbar", { name: "Cargando el contacto de la comunidad" })).toBeVisible();
     expect(screen.queryByText(NOT_CONFIGURED)).not.toBeInTheDocument();

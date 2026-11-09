@@ -106,6 +106,8 @@ import {
 import { CommunitiesPage } from "./CommunitiesPage";
 
 const menuFor = (name: string) => screen.getByRole("button", { name: `Más acciones para ${name}` });
+const menuItemNames = (menu: HTMLElement) =>
+  within(menu).getAllByRole("menuitem").map((item) => item.textContent);
 const noMenuFor = (name: string) =>
   screen.queryByRole("button", { name: `Más acciones para ${name}` });
 
@@ -208,29 +210,54 @@ describe("CommunitiesPage", () => {
 
     // The roster is what a community admin administers; neither the community
     // record nor the community's admins is: both are platform-wide decisions.
-    it("UI-ADM-001 gives a community admin no menu: neither the community record nor its admins", () => {
+    // Seeing a community's contact is reading it (#374), which a community
+    // admin may; editing it and managing its admins are not theirs.
+    it("UI-ADM-001 offers a community admin neither the community record nor its admins", async () => {
+      const user = userEvent.setup();
       setup({ communities: [community({ id: "c1", name: "Sol Común" }, COMMUNITY_ADMIN_VIEW)] });
 
-      expect(noMenuFor("Sol Común")).toBeNull();
+      await user.click(menuFor("Sol Común"));
+
+      expect(menuItemNames(await screen.findByRole("menu"))).toEqual(["Ver contacto"]);
     });
 
-    it("gives a plain member no menu at all", () => {
+    it("offers a plain member only the community's contact", async () => {
+      const user = userEvent.setup();
       setup({ communities: [community({ id: "c1", name: "Sol Común" }, { canRead: true })] });
+
+      await user.click(menuFor("Sol Común"));
+
+      expect(menuItemNames(await screen.findByRole("menu"))).toEqual(["Ver contacto"]);
+    });
+
+    it("gives a row the caller may not even read no menu at all", () => {
+      setup({ communities: [community({ id: "c1", name: "Sol Común" }, {})] });
 
       expect(noMenuFor("Sol Común")).toBeNull();
     });
 
     // Every community carries its own answer, so a list may legitimately mix them.
-    it("decides each row from its own community, not from the platform", () => {
+    it("decides each row from its own community, not from the platform", async () => {
+      const user = userEvent.setup();
       setup({
         communities: [
           community({ id: "c1", name: "Sol Común" }, PLATFORM_VIEW),
           community({ id: "c2", name: "Verde Activa" }, { canRead: true }),
+          community({ id: "c3", name: "Mar Clara" }, {}),
         ],
       });
 
-      expect(menuFor("Sol Común")).toBeInTheDocument();
-      expect(noMenuFor("Verde Activa")).toBeNull();
+      await user.click(menuFor("Sol Común"));
+      expect(menuItemNames(await screen.findByRole("menu"))).toEqual([
+        "Editar",
+        "Ver contacto",
+        "Gestionar administradores",
+      ]);
+      await user.keyboard("{Escape}");
+
+      await user.click(menuFor("Verde Activa"));
+      expect(menuItemNames(await screen.findByRole("menu"))).toEqual(["Ver contacto"]);
+      expect(noMenuFor("Mar Clara")).toBeNull();
     });
 
     it("offers nothing while the list has not loaded — not yet known is not 'no'", () => {
