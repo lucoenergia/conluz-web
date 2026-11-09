@@ -149,6 +149,8 @@ sheet below, one close path, back and the leave-page prompt handled once. Rules:
 - **Open an overlay only from a user interaction** (a click, a tap, a key press). Chrome's history
   intervention lets back skip entries added without user activation, so an overlay opened on load or
   after a redirect would not be closed by back.
+- **Inside an overlay, date pickers open in place** (`DesktopDatePicker`); never use a picker variant
+  that opens its own modal.
 
 ### Styling Contract
 

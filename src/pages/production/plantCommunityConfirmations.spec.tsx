@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
 import { buildCommunity, buildCommunityCapabilities, buildCurrentUser } from "../../test/fixtures";
@@ -13,7 +13,7 @@ import {
 import { useCreatePlant } from "../../api/plants/plants";
 import { useGetAllSupplies, type getAllSupplies } from "../../api/supplies/supplies";
 import { DeleteConfirmationModal } from "../../components/Modals/DeleteConfirmationModal";
-import { CreatePlantPage } from "./CreatePlantPage";
+import { PlantFormDialog } from "./PlantFormDialog";
 
 /**
  * AC9 (#186): creating or deleting a plant changes the configuration of a
@@ -49,7 +49,7 @@ const COMMUNITY_NAME = "Comunidad Solar Norte";
 const HEADER_LINE = `Comunidad · ${COMMUNITY_NAME}`;
 
 beforeEach(() => {
-  // The admin reaching the create page may create plants there.
+  // The admin opening the create form may create plants there.
   vi.mocked(useGetCommunityById).mockReturnValue(
     query.success<typeof getCommunityById>(
       buildCommunity({ id: "c1", name: COMMUNITY_NAME, capabilities: buildCommunityCapabilities({ canCreatePlants: true }) }),
@@ -74,11 +74,10 @@ describe("plant confirmations name the community (AC9)", () => {
     expect(screen.getByText(HEADER_LINE)).toBeInTheDocument();
   });
 
-  test("creating a plant, on its full-page form", () => {
-    renderWithProviders(<CreatePlantPage />, { activeCommunityId: "c1", route: "/production/new" });
+  test("creating a plant, in the form over the plant list", () => {
+    renderWithProviders(<PlantFormDialog target={{ kind: "create" }} onClose={vi.fn()} />, { activeCommunityId: "c1" });
 
-    const heading = screen.getByRole("heading", { level: 1 });
-    expect(heading).toHaveTextContent(`Crear planta en ${COMMUNITY_NAME}`);
-    expect(heading.parentElement).toHaveTextContent(HEADER_LINE);
+    const dialog = screen.getByRole("dialog", { name: `Crear planta en ${COMMUNITY_NAME}` });
+    expect(within(dialog).getByText(HEADER_LINE)).toBeInTheDocument();
   });
 });

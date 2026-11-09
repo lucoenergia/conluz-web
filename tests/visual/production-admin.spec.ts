@@ -4,21 +4,22 @@ import {
   COMMUNITY_ADMIN_SUPPLY_CAPABILITIES,
   FIXED_COMMUNITY_ADMIN_USER,
   FIXED_PLANT,
-  FIXED_PLANT_ID,
   FIXED_SUPPLY,
   FIXED_SUPPLY_2,
+  hideAppBar,
   injectAuthToken,
   mainRegion,
   mockAllApiRoutes,
   mockPlantDetailRoutes,
+  PAGED_PLANTS,
   PAGED_SUPPLIES,
   seedActiveCommunity,
   stabilizePage,
 } from "./fixtures";
 
 /**
- * Production as a community admin: the list layout, and the two forms behind
- * the capability guards added for this issue.
+ * Production as a community admin: the list layout, and the two plant forms
+ * that open over it.
  *
  * production-member.spec.ts covers the same list for a member, which is where
  * the absence of create and of the card menus is proven. The admin list had no
@@ -45,28 +46,42 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("production-list-admin.png", await mainRegion(page));
   });
 
-  test("create plant page", async ({ page }) => {
-    await injectAuthToken(page);
-    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
-    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
-
-    await page.goto("/production/new");
-    await expect(page.getByRole("main")).toBeVisible();
-    await stabilizePage(page);
-
-    // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("create-plant-page.png", await mainRegion(page));
-  });
-
-  test("edit plant page", async ({ page }) => {
+  // The plant forms open over the list (#373). Admitted: the fields, the
+  // supply picker, the date field and the footer composed in a sheet or a
+  // dialog are a pixel risk; what each form offers, sends and locks is
+  // asserted in PlantFormDialog.create/.edit.spec.tsx and
+  // PlantsPage.plantForm.spec.tsx.
+  test("create plant overlay", async ({ page }) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockPlantDetailRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
 
-    // Registered last, so it wins: the community's supplies include the one
-    // the plant produces onto, as the backend's always do, so the form's
-    // selector can show it.
+    await page.goto("/production");
+    await page.getByRole("button", { name: "Nueva Planta" }).click();
+    const dialog = page.getByRole("dialog", { name: /^Crear planta en / });
+    // The action has been handed out: a capture of a form that cannot submit would look plausible.
+    await expect(dialog.getByRole("button", { name: "Crear planta" })).toBeEnabled();
+    await expect(dialog.getByLabel(/^Código de proveedor/)).toBeEditable();
+    await stabilizePage(page);
+
+    await expect(dialog).toHaveScreenshot("plant-form-create-overlay.png", await hideAppBar(page));
+  });
+
+  test("edit plant overlay", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockPlantDetailRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+
+    // Registered last, so they win: the list holds the plant whose row opens
+    // the form, and the community's supplies include the one the plant
+    // produces onto, as the backend's always do, so the selector can show it.
+    await page.route(
+      (url) => /\/api\/v1\/communities\/[^/]+\/plants$/.test(url.pathname),
+      (route) =>
+        route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(PAGED_PLANTS) }),
+    );
     const plantSupply = { ...FIXED_SUPPLY, ...FIXED_PLANT.supply };
     await page.route(
       (url) => /\/api\/v1\/communities\/[^/]+\/supplies$/.test(url.pathname),
@@ -84,14 +99,17 @@ test.describe("Visual baselines", () => {
         }),
     );
 
-    await page.goto(`/production/${FIXED_PLANT_ID}/edit`);
-    await expect(page.getByRole("main")).toBeVisible();
-    await expect(page.getByRole("combobox", { name: "Punto de suministro" })).toHaveValue(
+    await page.goto("/production");
+    await page.getByRole("button", { name: `Más acciones para ${FIXED_PLANT.name}` }).click();
+    await page.getByRole("menuitem", { name: "Editar" }).click();
+    const dialog = page.getByRole("dialog", { name: "Editar planta" });
+    // Seeded from the plant: a capture of empty fields would look plausible.
+    await expect(dialog.getByLabel(/^Nombre/)).toHaveValue(FIXED_PLANT.name);
+    await expect(dialog.getByRole("combobox", { name: "Punto de suministro" })).toHaveValue(
       `${FIXED_PLANT.supply.name} (${FIXED_PLANT.supply.code})`,
     );
     await stabilizePage(page);
 
-    // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("edit-plant-page.png", await mainRegion(page));
+    await expect(dialog).toHaveScreenshot("plant-form-edit-overlay.png", await hideAppBar(page));
   });
 });

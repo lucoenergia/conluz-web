@@ -11,8 +11,6 @@ import { APP_PATH, extractRoutePaths } from "./appRoutes";
  * an overlay, and that issue removes it from here.
  */
 const CREATE_EDIT_ROUTE_ALLOWLIST = [
-  "/production/new", // temporary: #373
-  "/production/:plantId/edit", // temporary: #373
   "/communities/new", // temporary: #374
   "/communities/:communityId/edit", // temporary: #374
 ];

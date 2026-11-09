@@ -1,4 +1,4 @@
-import { useMemo, useState, type FC, type MouseEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FC, type MouseEvent } from "react";
 import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
@@ -15,7 +15,6 @@ import { ListPagination } from "../../components/ListPagination";
 import { useListPage } from "../../components/ListPagination/useListPage";
 import { EmptyState } from "../../components/EmptyState";
 import { formatKilowatts } from "../../utils/formatKilowatts";
-import { Link, useNavigate } from "react-router";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
@@ -25,6 +24,7 @@ import { useCommunityActions, usePlantActions } from "../../hooks/actions";
 import { offersPlantRowActions, plantTableColumns, plantTableTitle, toRecordListItem } from "./plantRows";
 import { PlantRowMenu } from "./PlantRowMenu";
 import { PlantDeletionDialog } from "./PlantDeletionDialog";
+import { PlantFormDialog, type PlantFormTarget } from "./PlantFormDialog";
 
 export const PlantsPage: FC = () => {
   const theme = useTheme();
@@ -34,7 +34,11 @@ export const PlantsPage: FC = () => {
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [menuPlantId, setMenuPlantId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const navigate = useNavigate();
+  // The plant form open over the list, and the control that opened it: the
+  // create button, or the row's kebab, since the menu item that opened an edit
+  // is gone by the time the form closes.
+  const [plantFormTarget, setPlantFormTarget] = useState<PlantFormTarget | null>(null);
+  const plantFormOpener = useRef<HTMLElement | null>(null);
   const activeCommunityId = useActiveCommunity();
   const { data: { items: responseFromApi = [] } = {}, isLoading, error, refetch } = useGetAllPlants(
     activeCommunityId ?? "",
@@ -89,6 +93,18 @@ export const PlantsPage: FC = () => {
   };
   const handleMenuClose = () => setMenuAnchor(null);
   const menuPlant = plantById(menuPlantId);
+
+  const openPlantForm = (target: PlantFormTarget, opener: HTMLElement | null) => {
+    plantFormOpener.current = opener;
+    setPlantFormTarget(target);
+  };
+  // After the form has unmounted, so the overlay's own focus restoration,
+  // aimed at the vanished menu item, has already run.
+  useEffect(() => {
+    if (plantFormTarget || !plantFormOpener.current) return;
+    plantFormOpener.current.focus();
+    plantFormOpener.current = null;
+  }, [plantFormTarget]);
 
   return (
     <Box
@@ -147,8 +163,7 @@ export const PlantsPage: FC = () => {
           {/* New Plant Button */}
           {createPlant && (
             <Button
-              component={Link}
-              to="/production/new"
+              onClick={(event) => openPlantForm({ kind: "create" }, event.currentTarget)}
               variant="contained"
               startIcon={<AddCircleOutlineIcon />}
               sx={{
@@ -201,7 +216,8 @@ export const PlantsPage: FC = () => {
                   createPlant
                     ? {
                         label: "Crear Planta",
-                        onClick: () => navigate("/production/new"),
+                        onClick: () =>
+                          openPlantForm({ kind: "create" }, document.activeElement as HTMLElement | null),
                         startIcon: <AddCircleOutlineIcon />,
                       }
                     : undefined
@@ -260,8 +276,15 @@ export const PlantsPage: FC = () => {
         onClose={handleMenuClose}
         plant={menuPlant}
         actions={forPlant(menuPlant).actions}
+        onEdit={() => menuPlant && openPlantForm({ kind: "edit", plantId: menuPlant.id }, menuAnchor)}
         onDelete={() => menuPlant && setDeleteTargetId(menuPlant.id)}
       />
+
+      {/* Mounted on open, so every opening starts from its own values, and with
+          the gate of the control that opens it. */}
+      {plantFormTarget && (plantFormTarget.kind === "edit" || createPlant) && (
+        <PlantFormDialog target={plantFormTarget} onClose={() => setPlantFormTarget(null)} />
+      )}
 
       <PlantDeletionDialog plant={plantById(deleteTargetId)} onClose={() => setDeleteTargetId(null)} />
     </Box>

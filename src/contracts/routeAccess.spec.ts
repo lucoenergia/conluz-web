@@ -59,8 +59,6 @@ const ROUTE_ACCESS: Record<string, Access> = {
 
   "/production": { require: { scope: "community", capability: "canRead" } },
   "/production/:plantId": { require: { scope: "community", capability: "canRead" } },
-  "/production/new": { require: { scope: "community", capability: "canCreatePlants" } },
-  "/production/:plantId/edit": { require: { scope: "plant", capability: "canManage" } },
   "/production/:plantId/sharing-agreements": {
     require: { scope: "plant", capability: "canListSharingAgreements" },
   },

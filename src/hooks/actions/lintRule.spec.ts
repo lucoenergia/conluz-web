@@ -111,7 +111,7 @@ describe("the mutation guard rail", () => {
     it("stop being exempt once they migrate, for the production screens too", async () => {
       const errors = await restrictedImportErrors(
         `import { useUpdatePlant } from "../../api/plants/plants";\nexport const x = useUpdatePlant;\n`,
-        "src/pages/production/EditPlantPage.tsx",
+        "src/pages/production/PlantFormDialog.tsx",
       );
 
       expect(errors).toHaveLength(1);

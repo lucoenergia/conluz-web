@@ -33,7 +33,7 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-ENT` | Community entry: which community is active and where a caller lands | [`community-entry.md`](community-entry.md) |
 | `UI-INT` | Integrations: the community integrations page and the plant's Huawei integration | [`integrations.md`](integrations.md) |
 | `UI-PLT` | Plant detail: the plant's production, and the status of its agreements and integration; a plant deletion's refusal and its confirmation | [`plant-detail.md`](plant-detail.md) |
-| `UI-PLS` | Plants: the plant list and its rows, its search, and the plant deletion dialog | [`plants.md`](plants.md) |
+| `UI-PLS` | Plants: the plant list and its rows, its search, the plant deletion dialog, and the plant create and edit form | [`plants.md`](plants.md) |
 | `UI-SUP` | Supplies: the supply list and its rows, deleting a supply from its row menu or its detail page, the CSV import, a create or edit refused for its CUPS or owner, how a supply is named, and the supply detail page's latest published month | [`supplies.md`](supplies.md) |
 | `UI-USR` | Users: the edit screen (removed in #285; tombstones only) | [`users.md`](users.md) |
 | `UI-MBR` | Members: registration, the CSV import, invitations, member status, the member record edit and suspension, the last active admin's role change and removal, and a member's investment on the members page | [`members.md`](members.md) |
