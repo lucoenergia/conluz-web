@@ -1,35 +1,24 @@
 import { radii, alphas, colors } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
-import { useMemo, useState, type FC } from "react";
+import { useState, type FC } from "react";
 import { Box, Typography, Paper, Avatar } from "@mui/material";
-import type { CreateSupplyBody, MembershipResponse } from "../../api/models";
+import type { CreateSupplyBody } from "../../api/models";
 import { useNavigate } from "react-router";
 import {
   SupplyForm,
   type SupplyFormField,
   type SupplyFormValues,
-  type SupplyOwnerField,
 } from "../../components/SupplyForm/SupplyForm";
 import { supplyRefusalOf } from "./supplyForm";
 import { useActiveCommunity } from "../../context/community.context";
 import { useErrorDispatch } from "../../context/error.context";
 import { useCommunityActions } from "../../hooks/actions";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
-import { useActiveCommunityCapabilities } from "../../hooks/permissions";
-import { useGetMemberships } from "../../api/memberships/memberships";
+import { useSupplyOwnerOptions } from "./useSupplyOwnerOptions";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
-
-/**
- * The owner options by the member record's name, as a Spanish reader sorts it
- * (case and accents aside), ties by membership id: getMemberships has no order
- * of its own (UI-SUP-016).
- */
-function byFullName(a: MembershipResponse, b: MembershipResponse): number {
-  return a.fullName.localeCompare(b.fullName, "es", { sensitivity: "base" }) || a.id.localeCompare(b.id);
-}
 
 export const CreateSupplyPage: FC = () => {
   const navigate = useNavigate();
@@ -40,23 +29,7 @@ export const CreateSupplyPage: FC = () => {
   const { createSupply } = useCommunityActions().forCommunity(activeCommunity).actions;
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<SupplyFormField, string>>>({});
 
-  // The owner must be a member of the supply's community, in any state
-  // (SUP-002), so the options are exactly its memberships (UI-SUP-016).
-  const canListMembers = useActiveCommunityCapabilities("canManageMemberships");
-  const memberships = useGetMemberships(activeCommunityId ?? "", {
-    query: { enabled: !!activeCommunityId && canListMembers.state === "allowed" },
-  });
-  const ownerOptions = useMemo(() => (memberships.data ?? []).slice().sort(byFullName), [memberships.data]);
-  const owner: SupplyOwnerField = {
-    mode: "choose",
-    options: ownerOptions,
-    status:
-      canListMembers.state === "pending" || (canListMembers.state === "allowed" && memberships.isLoading)
-        ? "loading"
-        : canListMembers.state !== "allowed" || memberships.isError
-          ? "error"
-          : "ready",
-  };
+  const owner = useSupplyOwnerOptions();
 
   const handleSubmit = async ({ name, cups, address, addressRef, personalId }: SupplyFormValues) => {
     // The route guard has already established the caller may create here, so
