@@ -165,16 +165,56 @@ test.describe("Visual baselines", () => {
     await expect(page).toHaveScreenshot("communities-list-page.png", await mainRegion(page));
   });
 
-  test("edit community page", async ({ page }) => {
+  // The community forms and a community's contact open over the list (#374).
+  // Admitted: the fields, the scope header, the channel list and the footer
+  // composed in a sheet or a dialog are a pixel risk; what each offers, sends,
+  // locks and shows is asserted in CommunityFormDialog.create/.edit.spec.tsx,
+  // CommunitiesPage.communityForm.spec.tsx and CommunityContactDialog.spec.tsx.
+  test("create community overlay", async ({ page }) => {
     await injectAuthToken(page);
     await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
 
-    await page.goto(`/communities/${FIXED_COMMUNITY_ID}/edit`);
-    await expect(page.getByRole("main")).toBeVisible();
+    await page.goto("/communities");
+    await page.getByRole("button", { name: "Nueva Comunidad" }).click();
+    const dialog = page.getByRole("dialog", { name: "Crear nueva comunidad" });
+    // The action has been handed out: a capture of a form that cannot submit would look plausible.
+    await expect(dialog.getByRole("button", { name: "Crear comunidad" })).toBeEnabled();
+    await expect(dialog.getByRole("textbox", { name: /^Nombre/ })).toBeEditable();
     await stabilizePage(page);
 
-    // Layout subject: the main region, with the app bar hidden (see mainRegion).
-    await expect(page).toHaveScreenshot("edit-community-page.png", await mainRegion(page));
+    await expect(dialog).toHaveScreenshot("community-form-create-overlay.png", await hideAppBar(page));
+  });
+
+  test("edit community overlay", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto("/communities");
+    await page.getByRole("button", { name: /^Más acciones para / }).first().click();
+    await page.getByRole("menuitem", { name: "Editar" }).click();
+    const dialog = page.getByRole("dialog", { name: "Editar comunidad" });
+    // Seeded from the community: a capture of empty fields would look plausible.
+    await expect(dialog.getByRole("textbox", { name: /^Nombre/ })).not.toHaveValue("");
+    await expect(dialog.getByRole("textbox", { name: /^Código/ })).not.toHaveValue("");
+    await expect(dialog.getByRole("button", { name: "Guardar" })).toBeEnabled();
+    await stabilizePage(page);
+
+    await expect(dialog).toHaveScreenshot("community-form-edit-overlay.png", await hideAppBar(page));
+  });
+
+  test("community contact overlay", async ({ page }) => {
+    await injectAuthToken(page);
+    await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+
+    await page.goto("/communities");
+    await page.getByRole("button", { name: /^Más acciones para / }).first().click();
+    await page.getByRole("menuitem", { name: "Ver contacto" }).click();
+    const dialog = page.getByRole("dialog", { name: "Contacto" });
+    // The channels have arrived: a capture of the spinner would look plausible.
+    await expect(dialog.getByRole("list", { name: "Canales de contacto" })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(dialog).toHaveScreenshot("community-contact-overlay.png", await hideAppBar(page));
   });
 
   // A community's admins (#276): the status chips with their invitation
