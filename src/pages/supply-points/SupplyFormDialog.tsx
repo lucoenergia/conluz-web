@@ -40,9 +40,9 @@ interface SupplyFormDialogProps {
  */
 export const SupplyFormDialog: FC<SupplyFormDialogProps> = ({ target, onClose }) =>
   target.kind === "create" ? (
-    <CreateSupplyDialog onClose={onClose} />
+    <SupplyCreateForm onClose={onClose} />
   ) : (
-    <EditSupplyDialog supplyId={target.supplyId} onClose={onClose} />
+    <SupplyEditForm supplyId={target.supplyId} onClose={onClose} />
   );
 
 type SaveOutcome = { ok: true } | { error: unknown };
@@ -50,7 +50,7 @@ type SaveOutcome = { ok: true } | { error: unknown };
 /** An empty input is sent as no value rather than an empty one. */
 const optional = (value: string) => value || undefined;
 
-const CreateSupplyDialog: FC<{ onClose: () => void }> = ({ onClose }) => {
+const SupplyCreateForm: FC<{ onClose: () => void }> = ({ onClose }) => {
   const communityName = useActiveCommunityName();
   const activeCommunityId = useActiveCommunity();
   const activeCommunity = useActiveCommunityResource();
@@ -96,7 +96,7 @@ const valuesOf = (supply: SupplyResponse): SupplyFieldValues => ({
   ownerId: null,
 });
 
-const EditSupplyDialog: FC<{ supplyId: string; onClose: () => void }> = ({ supplyId, onClose }) => {
+const SupplyEditForm: FC<{ supplyId: string; onClose: () => void }> = ({ supplyId, onClose }) => {
   const { supply, isNotFound, error, refetch } = useSupplyInActiveCommunity(supplyId);
   const { edit } = useSupplyActions().forSupply(supply).actions;
   // Seeded once, from the first read: a refetch while the form is open (focus,
