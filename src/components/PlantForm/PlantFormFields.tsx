@@ -22,6 +22,8 @@ interface PlantFormFieldsProps {
   disableSupplySelector?: boolean;
   /** An error shown on the input it is about. */
   fieldErrors?: Partial<Record<PlantFormField, string>>;
+  /** While a save is in flight, nothing can be changed. */
+  readOnly?: boolean;
 }
 
 /** The plant's inputs, controlled by the screen that holds them. */
@@ -33,6 +35,7 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
   suppliesLoading = false,
   disableSupplySelector = false,
   fieldErrors = {},
+  readOnly = false,
 }) => (
   <>
     <TextField
@@ -42,7 +45,7 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
       name="providerCode"
       value={values.providerCode}
       onChange={(e) => onChange("providerCode", e.target.value)}
-      slotProps={{ htmlInput: { maxLength: 50 } }}
+      slotProps={{ htmlInput: { maxLength: 50, readOnly } }}
       required
       autoFocus
       fullWidth
@@ -56,7 +59,7 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
       name="regulatoryCode"
       value={values.regulatoryCode}
       onChange={(e) => onChange("regulatoryCode", e.target.value)}
-      slotProps={{ htmlInput: { maxLength: 50 } }}
+      slotProps={{ htmlInput: { maxLength: 50, readOnly } }}
       fullWidth
       variant="outlined"
     />
@@ -68,7 +71,7 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
       name="name"
       value={values.name}
       onChange={(e) => onChange("name", e.target.value)}
-      slotProps={{ htmlInput: { maxLength: 50 } }}
+      slotProps={{ htmlInput: { maxLength: 50, readOnly } }}
       required
       fullWidth
       variant="outlined"
@@ -81,6 +84,7 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
       onChange={(_, newValue) => onChange("supplyCode", newValue?.code ?? null)}
       loading={suppliesLoading}
       disabled={disableSupplySelector}
+      readOnly={readOnly}
       renderInput={(params) => (
         <TextField
           {...params}
@@ -109,7 +113,7 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
       name="address"
       value={values.address}
       onChange={(e) => onChange("address", e.target.value)}
-      slotProps={{ htmlInput: { maxLength: 100 } }}
+      slotProps={{ htmlInput: { maxLength: 100, readOnly } }}
       required
       fullWidth
       variant="outlined"
@@ -122,7 +126,7 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
       name="description"
       value={values.description}
       onChange={(e) => onChange("description", e.target.value)}
-      slotProps={{ htmlInput: { maxLength: 250 } }}
+      slotProps={{ htmlInput: { maxLength: 250, readOnly } }}
       multiline
       rows={3}
       fullWidth
@@ -145,6 +149,7 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
         htmlInput: {
           min: 0,
           step: 0.01,
+          readOnly,
         },
       }}
     />
@@ -154,6 +159,7 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
         label="Fecha de conexión"
         value={values.connectionDate}
         onChange={(value) => onChange("connectionDate", value)}
+        readOnly={readOnly}
         slotProps={{
           textField: {
             fullWidth: true,

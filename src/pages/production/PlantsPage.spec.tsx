@@ -77,7 +77,7 @@ describe("PlantsPage", () => {
     it("is not offered a way to create a plant", () => {
       setup({ community: { canCreatePlants: false } });
 
-      expect(screen.queryByRole("link", { name: NEW_BUTTON })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: NEW_BUTTON })).not.toBeInTheDocument();
     });
 
     it("gets a row with no actions menu for a plant they may only read", () => {
@@ -99,7 +99,8 @@ describe("PlantsPage", () => {
     it("is offered a way to create a plant", () => {
       setup({ community: { canCreatePlants: true } });
 
-      expect(screen.getByRole("link", { name: NEW_BUTTON })).toHaveAttribute("href", "/production/new");
+      // A button: the form opens over the list, not on a page of its own (#373).
+      expect(screen.getByRole("button", { name: NEW_BUTTON })).toBeInTheDocument();
     });
 
     it("gets a row with the actions menu", () => {
@@ -132,6 +133,6 @@ describe("PlantsPage", () => {
   it("offers nothing while the community has not loaded -- not yet known is not 'no'", () => {
     setup({ communityLoading: true });
 
-    expect(screen.queryByRole("link", { name: NEW_BUTTON })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: NEW_BUTTON })).not.toBeInTheDocument();
   });
 });

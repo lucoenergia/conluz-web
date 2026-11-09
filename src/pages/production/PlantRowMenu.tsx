@@ -17,6 +17,8 @@ export interface PlantRowMenuProps {
   plant: PlantResponse | undefined;
   /** That plant's actions, from `forPlant`. An action it was not given is undefined, and its item is not offered. */
   actions: PlantRowActions["actions"];
+  /** Opens the plant form over the list. */
+  onEdit: () => void;
   onDelete: () => void;
 }
 
@@ -24,7 +26,7 @@ export interface PlantRowMenuProps {
  * The plant list's row menu. Each item is the plant's own answer. Deleting is
  * destructive, so it goes last, below a divider, in the error colour.
  */
-export const PlantRowMenu: FC<PlantRowMenuProps> = ({ anchorEl, onClose, plant, actions, onDelete }) => (
+export const PlantRowMenu: FC<PlantRowMenuProps> = ({ anchorEl, onClose, plant, actions, onEdit, onDelete }) => (
   <RowActionsMenu anchorEl={plant ? anchorEl : null} onClose={onClose}>
     {plant && (
       <MenuItem component={Link} to={plantHref(plant)} onClick={onClose}>
@@ -35,7 +37,12 @@ export const PlantRowMenu: FC<PlantRowMenuProps> = ({ anchorEl, onClose, plant, 
       </MenuItem>
     )}
     {plant && actions.edit && (
-      <MenuItem component={Link} to={`${plantHref(plant)}/edit`} onClick={onClose}>
+      <MenuItem
+        onClick={() => {
+          onClose();
+          onEdit();
+        }}
+      >
         <ListItemIcon>
           <EditOutlinedIcon fontSize="small" sx={{ color: "primary.main" }} />
         </ListItemIcon>
