@@ -88,7 +88,7 @@ describe("useCommunitySwitchRedirect", () => {
   });
 
   it("redirects to the supplies list when the community changes under a supply route", () => {
-    const { rerenderWith } = renderAt("/supply-points/supply-a/edit", "community-a");
+    const { rerenderWith } = renderAt("/supply-points/supply-a", "community-a");
     rerenderWith("community-b");
 
     expectLocation("/supply-points");

@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { mutation, query } from "../../test/queryState";
 import { buildCommunity, buildCommunityCapabilities, buildCurrentUser } from "../../test/fixtures";
@@ -14,7 +14,7 @@ import { useCreateSupply } from "../../api/supplies/supplies";
 import { useGetSuppliesByUserId } from "../../api/users/users";
 import { DisableConfirmationModal } from "../../components/Modals/DisableConfirmationModal";
 import { EnableConfirmationModal } from "../../components/Modals/EnableConfirmationModal";
-import { CreateSupplyPage } from "./CreateSupply";
+import { SupplyFormDialog } from "./SupplyFormDialog";
 
 /**
  * AC9 (#186): every surface that confirms a write changing the supply points
@@ -53,7 +53,7 @@ const HEADER_LINE = `Comunidad · ${COMMUNITY_NAME}`;
 
 beforeEach(() => {
   vi.mocked(useGetSuppliesByUserId).mockReturnValue(query.disabled());
-  // The admin reaching the create page may create supply points there.
+  // The admin opening the create form may create supply points there.
   vi.mocked(useGetCommunityById).mockReturnValue(
     query.success<typeof getCommunityById>(
       buildCommunity({ id: "c1", name: COMMUNITY_NAME, capabilities: buildCommunityCapabilities({ canManage: true }) }),
@@ -93,12 +93,11 @@ describe("supply point confirmations name the community (AC9)", () => {
     expect(screen.getByText(HEADER_LINE)).toBeInTheDocument();
   });
 
-  test("creating a supply point, on its full-page form", () => {
-    renderWithProviders(<CreateSupplyPage />, { activeCommunityId: "c1", route: "/supply-points/new" });
+  test("creating a supply point, in its overlay", () => {
+    renderWithProviders(<SupplyFormDialog target={{ kind: "create" }} onClose={vi.fn()} />, { activeCommunityId: "c1" });
 
-    const heading = screen.getByRole("heading", { level: 1 });
-    expect(heading).toHaveTextContent(`Crear punto de suministro en ${COMMUNITY_NAME}`);
-    expect(heading.parentElement).toHaveTextContent(HEADER_LINE);
+    const dialog = screen.getByRole("dialog", { name: `Crear punto de suministro en ${COMMUNITY_NAME}` });
+    expect(within(dialog).getByText(HEADER_LINE)).toBeInTheDocument();
   });
 
   test("names the switched-to community after a switch, never a stale one", () => {

@@ -113,7 +113,7 @@ function setup(require: CapabilityRequirement, { route = "/protected" }: { route
         }
       />
       <Route
-        path="/supply-points/:supplyPointId/edit"
+        path="/supply-points/:supplyPointId"
         element={
           <CapabilityRoute require={require}>
             <span>protected</span>
@@ -280,11 +280,11 @@ describe("CapabilityRoute — plant scope", () => {
 });
 
 describe("CapabilityRoute — supply scope", () => {
-  const editRoute = `/supply-points/${SUPPLY_ID}/edit`;
+  const supplyRoute = `/supply-points/${SUPPLY_ID}`;
 
   it("renders children when the supply capability is granted", () => {
     setSupplyCapabilities({ canEdit: true });
-    setup({ scope: "supply", capability: "canEdit" }, { route: editRoute });
+    setup({ scope: "supply", capability: "canEdit" }, { route: supplyRoute });
     expectProtected();
   });
 
@@ -292,7 +292,7 @@ describe("CapabilityRoute — supply scope", () => {
   // that used to render a live edit form that would 403 on submit.
   it("redirects an owner who may read but not edit", () => {
     setSupplyCapabilities({ canRead: true, canEdit: false });
-    setup({ scope: "supply", capability: "canEdit" }, { route: editRoute });
+    setup({ scope: "supply", capability: "canEdit" }, { route: supplyRoute });
     expectRedirected();
   });
 
@@ -306,7 +306,7 @@ describe("CapabilityRoute — supply scope", () => {
       error: null,
       refetch: vi.fn(),
     });
-    setup({ scope: "supply", capability: "canEdit" }, { route: editRoute });
+    setup({ scope: "supply", capability: "canEdit" }, { route: supplyRoute });
     expectRedirected();
   });
 
@@ -318,7 +318,7 @@ describe("CapabilityRoute — supply scope", () => {
 
   it("fires no supply request when the requirement is not a supply one, even on a supply URL", () => {
     setPlatformCapabilities({ canListPlatformAdmins: true });
-    setup({ scope: "platform", capability: "canListPlatformAdmins" }, { route: editRoute });
+    setup({ scope: "platform", capability: "canListPlatformAdmins" }, { route: supplyRoute });
     expect(vi.mocked(useSupplyInActiveCommunity)).toHaveBeenCalledWith("");
     expect(vi.mocked(useSupplyInActiveCommunity)).not.toHaveBeenCalledWith(SUPPLY_ID);
   });

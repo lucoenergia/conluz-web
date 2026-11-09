@@ -178,7 +178,6 @@ beforeAll(async () => {
     import("../landing/LandingRoute"),
     import("../supply-points/SupplyPointsPage"),
     import("../supply-points/SupplyDetailPage"),
-    import("../supply-points/EditSupply"),
     import("../production/PlantsPage"),
     import("../production/PlantDetailPage"),
   ]);
@@ -217,8 +216,10 @@ describe("a platform admin with no membership", () => {
     ["a member's supplies", "/supply-points?personId=u-mario"],
     // GET /supplies/{id} and every consumption query
     ["a supply", "/supply-points/supply-1"],
-    // GET /supplies/{id}, then GET /users from the form
-    ["editing a supply", "/supply-points/supply-1/edit"],
+    // GET /communities/{id}/supplies; creating and editing a supply open
+    // over this list (#372), so it is also the way into GET /supplies/{id}
+    // and the community's memberships.
+    ["the supplies, where a supply is created and edited", "/supply-points"],
     ["the plants", "/production"],
     // GET /plants/{id}
     ["a plant", "/production/plant-1"],

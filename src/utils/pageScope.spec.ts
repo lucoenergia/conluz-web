@@ -84,7 +84,7 @@ describe("resolvePageScope", () => {
     ["/production/new", "community"],
     ["/production/p-1/sharing-agreements/a-1", "community"],
     ["/supply-points", "community"],
-    ["/supply-points/s-1/edit", "community"],
+    ["/supply-points/s-1", "community"],
     ["/members", "community"],
     ["/integrations", "community"],
     ["/community/contact", "community"],

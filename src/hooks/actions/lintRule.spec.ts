@@ -101,7 +101,7 @@ describe("the mutation guard rail", () => {
     it("stop being exempt once they migrate", async () => {
       const errors = await restrictedImportErrors(
         `import { useUpdateSupply } from "../../api/supplies/supplies";\nexport const x = useUpdateSupply;\n`,
-        "src/pages/supply-points/EditSupply.tsx",
+        "src/pages/supply-points/SupplyFormDialog.tsx",
       );
 
       expect(errors).toHaveLength(1);
