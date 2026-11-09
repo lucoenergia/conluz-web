@@ -1,6 +1,6 @@
 import type { FC, Ref } from "react";
 import { TextField, Autocomplete, CircularProgress } from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { alpha } from "@mui/material/styles";
@@ -171,7 +171,7 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
     />
 
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
-      <DatePicker
+      <DesktopDatePicker
         label="Fecha de conexión"
         value={values.connectionDate}
         onChange={(value) => onChange("connectionDate", value)}
