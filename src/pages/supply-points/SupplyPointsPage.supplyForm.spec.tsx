@@ -463,7 +463,7 @@ describe("UI-OVL-004 back closes a supply form, not the list", () => {
 });
 
 describe("closing a supply form returns focus to what opened it", () => {
-  it("returns focus to Nuevo Punto de Suministro after Cancelar", async () => {
+  it("UI-SUP-019 returns focus to Nuevo Punto de Suministro after Cancelar", async () => {
     const u = userEvent.setup();
     serve();
     await renderPage();
@@ -475,7 +475,7 @@ describe("closing a supply form returns focus to what opened it", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: NEW_BUTTON })).toHaveFocus());
   });
 
-  it("returns focus to Nuevo Punto de Suministro after a create is saved", async () => {
+  it("UI-SUP-019 returns focus to Nuevo Punto de Suministro after a create is saved", async () => {
     const u = userEvent.setup();
     serve();
     await renderPage();
@@ -493,7 +493,7 @@ describe("closing a supply form returns focus to what opened it", () => {
   it.each([
     ["Cancelar", (u: User, dialog: HTMLElement) => u.click(within(dialog).getByRole("button", { name: "Cancelar" }))],
     ["a save", (u: User, dialog: HTMLElement) => u.click(within(dialog).getByRole("button", { name: "Guardar" }))],
-  ] as const)("returns focus to the edited row's actions after %s", async (_, close) => {
+  ] as const)("UI-SUP-019 returns focus to the edited row's actions after %s", async (_, close) => {
     const u = userEvent.setup();
     serve();
     await renderPage();
@@ -511,7 +511,7 @@ describe("the edit form under a refetch", () => {
   // Answered differently the second time, as if somebody else had saved it meanwhile.
   const CHANGED_ELSEWHERE = { ...LOCAL, name: "Cambiado en otra sesión", address: "Avenida Nueva 9" };
 
-  it("keeps what is typed, and measures its changes from the values it opened with", async () => {
+  it("UI-SUP-019 keeps what is typed, and measures its changes from the values it opened with", async () => {
     const u = userEvent.setup();
     const router = serve({ supply: (id, call) => (id === LOCAL.id && call > 1 ? CHANGED_ELSEWHERE : undefined) });
     const { queryClient } = await renderPage();

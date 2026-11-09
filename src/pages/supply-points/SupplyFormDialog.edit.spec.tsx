@@ -293,7 +293,7 @@ describe("SupplyFormDialog: the supply being loaded", () => {
       ...state,
     });
 
-  it("shows its progress in the overlay while the supply loads, with nothing to submit", () => {
+  it("UI-SUP-019 shows its progress in the overlay while the supply loads, with nothing to submit", () => {
     loadState({ isLoading: true });
     renderDialog();
 
@@ -303,7 +303,7 @@ describe("SupplyFormDialog: the supply being loaded", () => {
     expect(within(dialog).getByRole("button", { name: "Guardar" })).toBeDisabled();
   });
 
-  it("says, as the detail page does, that a supply it cannot find does not exist", () => {
+  it("UI-SUP-019 says, as the detail page does, that a supply it cannot find does not exist", () => {
     loadState({ isNotFound: true });
     renderDialog();
 
@@ -316,7 +316,7 @@ describe("SupplyFormDialog: the supply being loaded", () => {
     expect(within(dialog).getByRole("button", { name: "Guardar" })).toBeDisabled();
   });
 
-  it("reports a failed load and offers it again, with the detail page's words", async () => {
+  it("UI-SUP-019 reports a failed load and offers it again, with the detail page's words", async () => {
     const refetch = vi.fn();
     loadState({ error: apiError(500), refetch });
     renderDialog();
@@ -331,7 +331,7 @@ describe("SupplyFormDialog: the supply being loaded", () => {
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
-  it("asks for the supply it was opened for", () => {
+  it("UI-SUP-019 asks for the supply it was opened for", () => {
     setup({ canEdit: true });
 
     expect(vi.mocked(useSupplyInActiveCommunity)).toHaveBeenCalledWith(SUPPLY_ID);
