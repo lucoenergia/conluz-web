@@ -58,3 +58,27 @@ export function totalPowerIsValid(input: string): boolean {
 }
 
 export const TOTAL_POWER_ERROR = "Por favor, introduce un número mayor que 0";
+
+/** What each input that can be left wrong says, in the order the form shows them. */
+const REQUIRED: [PlantFormField, string][] = [
+  ["providerCode", "El código de proveedor es obligatorio"],
+  ["name", "El nombre es obligatorio"],
+  ["supplyCode", "El punto de suministro es obligatorio"],
+  ["address", "La dirección es obligatoria"],
+];
+
+/**
+ * Every input the backend would refuse, with what it says, in the order the
+ * form shows them. Empty when the values can be sent. The supply counts only
+ * once it resolves against the options, so a stale code is not "chosen".
+ */
+export function plantFieldErrors(
+  values: PlantFieldValues,
+  selectedSupply: SupplyResponse | null,
+): [PlantFormField, string][] {
+  const errors = REQUIRED.filter(([field]) =>
+    field === "supplyCode" ? !selectedSupply : !values[field],
+  );
+  if (!totalPowerIsValid(values.totalPower)) errors.push(["totalPower", TOTAL_POWER_ERROR]);
+  return errors;
+}

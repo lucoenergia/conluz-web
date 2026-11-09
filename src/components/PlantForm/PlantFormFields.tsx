@@ -1,4 +1,4 @@
-import type { FC } from "react";
+import type { FC, Ref } from "react";
 import { TextField, Autocomplete, CircularProgress } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -24,6 +24,8 @@ interface PlantFormFieldsProps {
   fieldErrors?: Partial<Record<PlantFormField, string>>;
   /** While a save is in flight, nothing can be changed. */
   readOnly?: boolean;
+  /** The inputs an error can be shown on, so the screen can focus one. */
+  inputRefs?: Partial<Record<PlantFormField, Ref<HTMLInputElement>>>;
 }
 
 /** The plant's inputs, controlled by the screen that holds them. */
@@ -36,6 +38,7 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
   disableSupplySelector = false,
   fieldErrors = {},
   readOnly = false,
+  inputRefs = {},
 }) => (
   <>
     <TextField
@@ -43,6 +46,9 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
       label="Código de proveedor"
       type="text"
       name="providerCode"
+      inputRef={inputRefs.providerCode}
+      error={fieldErrors.providerCode !== undefined}
+      helperText={fieldErrors.providerCode}
       value={values.providerCode}
       onChange={(e) => onChange("providerCode", e.target.value)}
       slotProps={{ htmlInput: { maxLength: 50, readOnly } }}
@@ -69,6 +75,9 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
       label="Nombre"
       type="text"
       name="name"
+      inputRef={inputRefs.name}
+      error={fieldErrors.name !== undefined}
+      helperText={fieldErrors.name}
       value={values.name}
       onChange={(e) => onChange("name", e.target.value)}
       slotProps={{ htmlInput: { maxLength: 50, readOnly } }}
@@ -91,6 +100,9 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
           label="Punto de suministro"
           required
           variant="outlined"
+          inputRef={inputRefs.supplyCode}
+          error={fieldErrors.supplyCode !== undefined}
+          helperText={fieldErrors.supplyCode}
           slotProps={{
             input: {
               ...params.InputProps,
@@ -111,6 +123,9 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
       label="Dirección"
       type="text"
       name="address"
+      inputRef={inputRefs.address}
+      error={fieldErrors.address !== undefined}
+      helperText={fieldErrors.address}
       value={values.address}
       onChange={(e) => onChange("address", e.target.value)}
       slotProps={{ htmlInput: { maxLength: 100, readOnly } }}
@@ -140,6 +155,7 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
       error={fieldErrors.totalPower !== undefined}
       helperText={fieldErrors.totalPower}
       name="totalPower"
+      inputRef={inputRefs.totalPower}
       value={values.totalPower}
       onChange={(e) => onChange("totalPower", e.target.value)}
       required

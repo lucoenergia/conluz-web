@@ -1,4 +1,4 @@
-import { useRef, useState, type FC, type FormEvent, type ReactNode } from "react";
+import { useRef, useState, type FC, type FormEvent, type ReactNode, type RefObject } from "react";
 import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import type { CreatePlantBody, SupplyResponse, UpdatePlantBody } from "../../api/models";
@@ -13,6 +13,7 @@ import {
   EMPTY_PLANT_FIELD_VALUES,
   plantFieldValuesOf,
   selectedSupplyOf,
+  plantFieldErrors,
   TOTAL_POWER_ERROR,
   totalPowerIsValid,
   type PlantFieldValues,
@@ -195,6 +196,13 @@ const PlantFormOverlay: FC<PlantFormOverlayProps> = ({
   // state locks the overlay and the inputs (UI-OVL-002).
   const savingRef = useRef(false);
   const [saving, setSaving] = useState(false);
+  const inputRefs: Record<PlantFormField, RefObject<HTMLInputElement | null>> = {
+    providerCode: useRef(null),
+    name: useRef(null),
+    supplyCode: useRef(null),
+    address: useRef(null),
+    totalPower: useRef(null),
+  };
 
   const selectedSupply = selectedSupplyOf(supplies, values?.supplyCode ?? null);
   const dirty =
@@ -203,27 +211,30 @@ const PlantFormOverlay: FC<PlantFormOverlayProps> = ({
     (Object.keys(seeded) as (keyof PlantFieldValues)[]).some((field) => !sameValue(field, values[field], seeded[field]));
 
   const onChange = <K extends keyof PlantFieldValues>(field: K, value: PlantFieldValues[K]) => {
+    // Editing an input clears what was said about it; the power is checked as it is typed.
     if (field === "totalPower") {
       const input = value as string;
       setFieldErrors((errors) => ({
         ...errors,
         totalPower: input && !totalPowerIsValid(input) ? TOTAL_POWER_ERROR : undefined,
       }));
+    } else if (field in inputRefs) {
+      setFieldErrors((errors) => ({ ...errors, [field]: undefined }));
     }
     setValues((current) => current && { ...current, [field]: value });
   };
 
-  const isValid = (current: PlantFieldValues) =>
-    !!current.providerCode &&
-    !!current.name &&
-    !!current.address &&
-    !!selectedSupply &&
-    totalPowerIsValid(current.totalPower);
-
   const handleSubmit = async (event: FormEvent<HTMLElement>) => {
     event.preventDefault();
     if (!values || !save || savingRef.current) return;
-    if (!isValid(values) || !selectedSupply) return;
+    // Nothing is sent while an input is wrong: each says why, and the first
+    // takes focus, rather than the submit being dropped without a word.
+    const errors = plantFieldErrors(values, selectedSupply);
+    if (errors.length > 0 || !selectedSupply) {
+      setFieldErrors(Object.fromEntries(errors));
+      inputRefs[errors[0][0]].current?.focus();
+      return;
+    }
     savingRef.current = true;
     setSaving(true);
     const outcome = await save(bodyOf(values, selectedSupply.code));
@@ -272,6 +283,7 @@ const PlantFormOverlay: FC<PlantFormOverlayProps> = ({
           disableSupplySelector={disableSupplySelector}
           fieldErrors={fieldErrors}
           readOnly={saving}
+          inputRefs={inputRefs}
         />
       ) : (
         status
