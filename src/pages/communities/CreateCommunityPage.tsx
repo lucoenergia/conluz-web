@@ -5,7 +5,6 @@ import {
   Typography,
   Paper,
   Avatar,
-  TextField,
   Button,
 } from "@mui/material";
 import BusinessIcon from "@mui/icons-material/Business";
@@ -15,6 +14,7 @@ import { BreadCrumb } from "../../components/Breadcrumb";
 import { usePlatformActions } from "../../hooks/actions";
 import { useErrorDispatch } from "../../context/error.context";
 import { communityRefusalOf, type CommunityField } from "./communityForm";
+import { CommunityFormFields } from "./CommunityFormFields";
 
 export const CreateCommunityPage: FC = () => {
   const navigate = useNavigate();
@@ -132,41 +132,19 @@ export const CreateCommunityPage: FC = () => {
             onSubmit={handleSubmit}
             sx={{ display: "flex", flexDirection: "column", gap: 3 }}
           >
-            <TextField
-              label="Nombre *"
-              fullWidth
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              error={!!nameError}
-              helperText={nameError}
-            />
-            <TextField
-              label="Código *"
-              fullWidth
-              value={code}
-              onChange={(e) => {
-                setCode(e.target.value);
-                setApiErrors((errors) => ({ ...errors, code: undefined }));
+            <CommunityFormFields
+              values={{ name, code, legalId, address }}
+              onChange={(field, value) => {
+                ({ name: setName, code: setCode, legalId: setLegalId, address: setAddress })[field](value);
+                if (field === "code" || field === "legalId") {
+                  setApiErrors((errors) => ({ ...errors, [field]: undefined }));
+                }
               }}
-              error={!!(codeError || apiErrors.code)}
-              helperText={codeError || apiErrors.code || "Identificador corto único para la comunidad"}
-            />
-            <TextField
-              label="NIF/CIF"
-              fullWidth
-              value={legalId}
-              onChange={(e) => {
-                setLegalId(e.target.value);
-                setApiErrors((errors) => ({ ...errors, legalId: undefined }));
+              fieldErrors={{
+                name: nameError || undefined,
+                code: codeError || apiErrors.code,
+                legalId: apiErrors.legalId,
               }}
-              error={!!apiErrors.legalId}
-              helperText={apiErrors.legalId}
-            />
-            <TextField
-              label="Dirección"
-              fullWidth
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
             />
 
             <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end" }}>
