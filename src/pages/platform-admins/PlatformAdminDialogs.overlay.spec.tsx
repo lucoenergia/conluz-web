@@ -341,15 +341,15 @@ const copyButton = (dialog: HTMLElement) => within(dialog).getByRole("button", {
 
 describe("UI-PAD-010 while the code shows, any close but Hecho asks first", () => {
   describe.each(CODE_FLOWS)("%s", (_, flow) => {
-    it("UI-PAD-010 shows in the overlay that sent it, at that flow's size, with focus left where the dialog puts it", async () => {
+    it("UI-PAD-010 UI-OVL-009 shows in the overlay that sent it, at that flow's size, with focus on the code", async () => {
       const { sender, dialog } = await showCode(userEvent.setup(), flow);
 
       expect(dialog).toBe(sender);
       expect(screen.getAllByRole("dialog")).toHaveLength(1);
       expect(declaredStyles(dialog)).toContain(`width:${flow.width}`);
-      // Unchanged from before the code panel moved onto the overlay: nothing in
-      // the panel takes focus when the code appears (#370).
-      expect(dialog).not.toContainElement(document.activeElement as HTMLElement);
+      // Read out as it appears: focus moves from the button that sent it to the code (#371).
+      expect(within(dialog).getByText(flow.grouped)).toHaveFocus();
+      expect(dialog).toContainElement(document.activeElement as HTMLElement);
     });
 
     it.each([

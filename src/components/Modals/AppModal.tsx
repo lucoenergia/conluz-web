@@ -39,6 +39,8 @@ export type AppModalProps = AppModalName & {
   iconSize?: number;
   /** Centres the icon and the content in the body, for an outcome with no title. */
   centered?: boolean;
+  /** Names what the body shows; a change moves focus to the new content (UI-OVL-009). */
+  contentKey?: string;
   /** Makes the dialog a form: a submit button in `actions`, or Enter in a field, submits it. */
   onSubmit?: (event: FormEvent<HTMLElement>) => void;
   actions?: ReactNode;
@@ -68,6 +70,7 @@ export const AppModal: FC<AppModalProps> = ({
   iconBg,
   iconSize,
   centered = false,
+  contentKey,
   onSubmit,
   actions,
   children,
@@ -108,6 +111,7 @@ export const AppModal: FC<AppModalProps> = ({
       onClose={() => onClose()}
       eyebrow={scopeHeader}
       icon={centered ? undefined : circle}
+      contentKey={contentKey}
       onSubmit={onSubmit}
       actions={actions}
     >

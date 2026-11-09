@@ -422,7 +422,8 @@ describe("resending an invitation", () => {
     await confirmFromMenu(u, "Luis Lapsado", "Reenviar", "Reenviar invitación");
     const dialog = await codeDialog();
 
-    // On the dialog itself: jsdom leaves focus on the body once the confirm button unmounts.
+    // On the dialog itself, so the key reaches it wherever focus is: this test is about what Escape does,
+    // not where focus lands, which UI-OVL-009 covers in PlatformAdminDialogs.overlay.spec.tsx.
     fireEvent.keyDown(dialog, { key: "Escape" });
     expect(within(dialog).getByRole("alert")).toHaveTextContent(CODE_QUESTION);
     expect(within(dialog).queryByRole("button", { name: "Hecho" })).not.toBeInTheDocument();
@@ -669,7 +670,8 @@ describe("inviting a platform admin", () => {
     await u.click(within(form).getByRole("button", { name: "Invitar" }));
     const dialog = await codeDialog();
 
-    // On the dialog itself: jsdom leaves focus on the body once the submit button unmounts.
+    // On the dialog itself, so the key reaches it wherever focus is: this test is about what Escape does,
+    // not where focus lands, which UI-OVL-009 covers in PlatformAdminDialogs.overlay.spec.tsx.
     fireEvent.keyDown(dialog, { key: "Escape" });
     expect(within(dialog).getByRole("alert")).toHaveTextContent(CODE_QUESTION);
     await u.click(within(dialog).getByRole("button", { name: "Volver al código" }));

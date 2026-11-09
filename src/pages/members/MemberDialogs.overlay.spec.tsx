@@ -473,6 +473,35 @@ describe("a result replaces its form in the same overlay", () => {
   });
 });
 
+describe("UI-OVL-009 focus follows a member dialog's result into the overlay", () => {
+  it("UI-OVL-009 the registration's result takes focus on its message", async () => {
+    const u = userEvent.setup();
+    serve({ register: () => REGISTERED });
+    await renderPage();
+    const form = await openRegister(u);
+    await fillRegistration(u, form);
+
+    await u.click(within(form).getByRole("button", { name: "Registrar" }));
+
+    const result = await dialogNamed(REGISTERED_TITLE);
+    await waitFor(() => expect(within(result).getByText(/^Has registrado a/)).toHaveFocus());
+    expect(screen.getByRole("dialog")).toContainElement(document.activeElement as HTMLElement);
+  });
+
+  it("UI-OVL-009 the send's result takes focus on its summary", async () => {
+    const u = userEvent.setup();
+    serve({ bulk: () => SENT });
+    await renderPage();
+    const confirmation = await openSend(u);
+
+    await u.click(within(confirmation).getByRole("button", { name: "Enviar invitación (2)" }));
+
+    const summary = (await within(confirmation).findByText("Primeras invitaciones enviadas: 2.")).closest('[role="note"]');
+    await waitFor(() => expect(summary).toHaveFocus());
+    expect(screen.getByRole("dialog")).toContainElement(document.activeElement as HTMLElement);
+  });
+});
+
 describe("UI-OVL-006 each member dialog is named by its title", () => {
   it.each(FLOWS)("UI-OVL-006 %s is a dialog named by the heading it shows", async (_, flow) => {
     const u = userEvent.setup();

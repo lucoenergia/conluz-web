@@ -1,4 +1,5 @@
 export { ResponsiveOverlay } from "./ResponsiveOverlay";
+export { OVERLAY_FOCUS_TARGET } from "./focusTarget";
 export type {
   ResponsiveOverlayName,
   ResponsiveOverlayProps,

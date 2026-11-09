@@ -35,6 +35,30 @@ export function declaredStyles(element: Element): string {
     .join(";");
 }
 
+/**
+ * The declarations of every style rule whose selector matches `element` now, `:focus` included,
+ * joined like `declaredStyles`. Unlike it, this sees a rule an ancestor's class declares for its
+ * descendants. Media and layer conditions are not evaluated: every rule inside them counts.
+ */
+export function matchedStyles(element: Element): string {
+  const styleRules = (rules: CSSRuleList): CSSStyleRule[] =>
+    [...rules].flatMap((rule) =>
+      "selectorText" in rule ? [rule as CSSStyleRule] : "cssRules" in rule ? styleRules((rule as CSSGroupingRule).cssRules) : [],
+    );
+  return [...document.styleSheets]
+    .flatMap((sheet) => styleRules(sheet.cssRules))
+    .filter((rule) => {
+      try {
+        return element.matches(rule.selectorText);
+      } catch {
+        // A selector jsdom cannot parse, e.g. a vendor pseudo-element.
+        return false;
+      }
+    })
+    .map((rule) => rule.style.cssText.replace(/\s/g, ""))
+    .join(";");
+}
+
 /** Presses back and resolves once the `popstate` has been handled. */
 export async function pressBack() {
   const landed = new Promise<void>((resolve) => window.addEventListener("popstate", () => resolve(), { once: true }));
@@ -46,3 +70,12 @@ export async function pressBack() {
 
 /** Whether the current history entry is one an open overlay pushed. */
 export const hasOverlayEntry = () => !!window.history.state && "__overlay" in window.history.state;
+
+/** The elements between `content` and `dialog` whose declared styles let them scroll. */
+export function scrollingAncestors(content: HTMLElement, dialog: HTMLElement): HTMLElement[] {
+  const found: HTMLElement[] = [];
+  for (let element = content.parentElement; element && element !== dialog; element = element.parentElement) {
+    if (/overflow(-y)?:auto/.test(declaredStyles(element))) found.push(element);
+  }
+  return found;
+}

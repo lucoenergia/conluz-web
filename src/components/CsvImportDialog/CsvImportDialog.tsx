@@ -1,16 +1,5 @@
 import { useState, type ChangeEvent, type ReactNode } from "react";
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Button, Chip, CircularProgress, Typography } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import type { RestErrorDetailCode } from "../../api/models";
@@ -20,8 +9,10 @@ import { communityLabel } from "../../hooks/useActiveCommunityName";
 import { getFirstApiErrorCode, getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
 import { radii } from "../../theme/tokens";
 import { Notice } from "../Notice";
-import { inFlightDialogProps } from "../../utils/inFlightDialog";
 import { ActionStatus } from "../ActionStatus";
+import { AppModal } from "../Modals/AppModal";
+import { ModalCancelButton } from "../Modals/ModalCancelButton";
+import { OVERLAY_FOCUS_TARGET } from "../ResponsiveOverlay";
 import type { CsvImportColumn } from "./csvImport";
 
 /** What an import answers: how many rows failed, and one result per row, by line. */
@@ -66,7 +57,8 @@ const GENERIC_FAILURE = "No se ha podido importar el archivo. Inténtalo de nuev
 /**
  * Imports the rows of a CSV file into a community: a guide to the columns, a
  * template, the import, and its result row by row. Mounted on open, so every
- * opening starts from the guide.
+ * opening starts from the guide. Every step renders in the same overlay
+ * (#371), which switches its body and its footer.
  */
 export function CsvImportDialog<R extends CsvImportResult>({
   communityName,
@@ -131,146 +123,148 @@ export function CsvImportDialog<R extends CsvImportResult>({
 
   const failedRows = result ? result.rows.filter((row) => row.outcome === "FAILED") : [];
 
-  return (
-    <Dialog
-      open
-      // The import can take several seconds, and closing would hide its result.
-      {...inFlightDialogProps(importing, onClose)}
-      maxWidth="sm"
-      fullWidth
-    >
-      <Box sx={{ px: 3, pt: 2.5 }}>
-        <CommunityScopeHeader name={communityName} />
-      </Box>
-      <DialogTitle sx={{ pt: 0 }}>
-        {title} en {community}
-      </DialogTitle>
+  const actions = importing ? undefined : result ? (
+    <>
+      <Button onClick={importAnother}>Importar otro archivo</Button>
+      <Button onClick={onClose} variant="contained">
+        Cerrar
+      </Button>
+    </>
+  ) : (
+    <>
+      <ModalCancelButton />
+      <Button variant="contained" onClick={handleImport} disabled={!file}>
+        Importar
+      </Button>
+    </>
+  );
 
+  return (
+    <AppModal
+      isOpen
+      onClose={onClose}
+      size="form"
+      title={`${title} en ${community}`}
+      scopeHeader={<CommunityScopeHeader name={communityName} />}
+      // The import can take several seconds, and closing would hide its result.
+      dismissible={!importing}
+      // A file chosen and not imported yet; a result has nothing left to lose.
+      dirty={!importing && !result && file !== null}
+      // Each step replaces the last: focus moves to the new one (UI-OVL-009).
+      contentKey={importing ? "progress" : result ? "result" : refusal ? "refused" : "guide"}
+      actions={actions}
+    >
       {importing ? (
-        <DialogContent>
-          <Box role="status" sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, py: 4 }}>
-            <CircularProgress aria-hidden />
-            <Typography variant="body2" sx={{ textAlign: "center" }}>
-              {progress}
-            </Typography>
-          </Box>
-        </DialogContent>
+        <Box
+          role="status"
+          {...OVERLAY_FOCUS_TARGET}
+          tabIndex={-1}
+          sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, py: 4 }}
+        >
+          <CircularProgress aria-hidden />
+          <Typography variant="body2" sx={{ textAlign: "center" }}>
+            {progress}
+          </Typography>
+        </Box>
       ) : result ? (
         <>
-          <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Notice severity={result.failed > 0 ? "warning" : "success"}>{summaryOf(result)}</Notice>
+          <Notice severity={result.failed > 0 ? "warning" : "success"} {...OVERLAY_FOCUS_TARGET} tabIndex={-1}>
+            {summaryOf(result)}
+          </Notice>
 
-            {failedRows.length > 0 && (
-              <Box>
-                <Typography component="h3" variant="subtitle2" sx={{ mb: 1 }}>
-                  {failedRowsHeading}
-                </Typography>
-                <Box
-                  component="ul"
-                  aria-label={failedRowsHeading}
-                  sx={{
-                    m: 0,
-                    pl: 2.5,
-                    maxHeight: 280,
-                    overflowY: "auto",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 0.75,
-                  }}
-                >
-                  {failedRows.map((row) => (
-                    <li key={row.line}>
-                      <Typography variant="body2">
-                        <strong>Línea {row.line}:</strong> {rowReason(row)}
-                      </Typography>
-                    </li>
-                  ))}
-                </Box>
-              </Box>
-            )}
-
-            {resultNote?.(result)}
-          </DialogContent>
-          <DialogActions sx={{ p: 2, flexWrap: "wrap", gap: 1 }}>
-            <Button onClick={importAnother}>Importar otro archivo</Button>
-            <Button onClick={onClose} variant="contained">
-              Cerrar
-            </Button>
-          </DialogActions>
-        </>
-      ) : (
-        <>
-          <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {refusal && (
-              <Alert severity="error">
-                {refusal.message}
-                {refusal.nothingImported && ` ${nothingImported}`}
-              </Alert>
-            )}
-            <Notice severity="info">
-              <Box component="ul" sx={{ m: 0, pl: 2 }}>
-                {notes}
-              </Box>
-            </Notice>
-
+          {failedRows.length > 0 && (
             <Box>
               <Typography component="h3" variant="subtitle2" sx={{ mb: 1 }}>
-                Columnas del archivo
+                {failedRowsHeading}
               </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
-                La primera fila tiene que llevar estas cabeceras, tal cual, en cualquier orden.
-              </Typography>
-              <Box component="ul" aria-label="Columnas del archivo" sx={{ listStyle: "none", m: 0, p: 0 }}>
-                {columns.map((column) => (
-                  <Box
-                    component="li"
-                    key={column.header}
-                    sx={{ py: 1.25, borderTop: 1, borderColor: "divider", display: "flex", flexDirection: "column", gap: 0.5 }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                      <Typography component="code" variant="body2" sx={{ fontFamily: "monospace", fontWeight: 600 }}>
-                        {column.header}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: column.required ? "primary.main" : "text.secondary" }}>
-                        {column.required ? "Obligatoria" : "Opcional"}
-                      </Typography>
-                    </Box>
-                    <Typography variant="body2">{column.meaning}</Typography>
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                      Ejemplo: {column.example}
+              {/* No height of its own: the overlay's body scrolls (UI-OVL-007). */}
+              <Box
+                component="ul"
+                aria-label={failedRowsHeading}
+                sx={{ m: 0, pl: 2.5, display: "flex", flexDirection: "column", gap: 0.75 }}
+              >
+                {failedRows.map((row) => (
+                  <li key={row.line}>
+                    <Typography variant="body2">
+                      <strong>Línea {row.line}:</strong> {rowReason(row)}
                     </Typography>
-                  </Box>
+                  </li>
                 ))}
               </Box>
             </Box>
+          )}
 
-            <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1.5 }}>
-              <Button variant="outlined" startIcon={<DownloadIcon />} onClick={onDownloadTemplate}>
-                Descargar plantilla
-              </Button>
-              <Button variant="outlined" component="label" startIcon={<UploadFileIcon />}>
-                Seleccionar archivo CSV
-                <input type="file" accept=".csv,text/csv" hidden onChange={chooseFile} />
-              </Button>
+          {resultNote?.(result)}
+        </>
+      ) : (
+        <>
+          {refusal && (
+            <Alert severity="error" {...OVERLAY_FOCUS_TARGET} tabIndex={-1}>
+              {refusal.message}
+              {refusal.nothingImported && ` ${nothingImported}`}
+            </Alert>
+          )}
+          <Notice severity="info">
+            <Box component="ul" sx={{ m: 0, pl: 2 }}>
+              {notes}
             </Box>
-            {file && (
-              <Box>
-                <Chip label={file.name} sx={{ borderRadius: radii.small, maxWidth: "100%" }} />
-              </Box>
-            )}
-          </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
-            <Button onClick={onClose}>Cancelar</Button>
-            <Button variant="contained" onClick={handleImport} disabled={!file}>
-              Importar
+          </Notice>
+
+          <Box>
+            <Typography component="h3" variant="subtitle2" sx={{ mb: 1 }}>
+              Columnas del archivo
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
+              La primera fila tiene que llevar estas cabeceras, tal cual, en cualquier orden.
+            </Typography>
+            <Box component="ul" aria-label="Columnas del archivo" sx={{ listStyle: "none", m: 0, p: 0 }}>
+              {columns.map((column) => (
+                <Box
+                  component="li"
+                  key={column.header}
+                  sx={{ py: 1.25, borderTop: 1, borderColor: "divider", display: "flex", flexDirection: "column", gap: 0.5 }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                    <Typography component="code" variant="body2" sx={{ fontFamily: "monospace", fontWeight: 600 }}>
+                      {column.header}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: column.required ? "primary.main" : "text.secondary" }}>
+                      {column.required ? "Obligatoria" : "Opcional"}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2">{column.meaning}</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    Ejemplo: {column.example}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1.5 }}>
+            <Button variant="outlined" startIcon={<DownloadIcon />} onClick={onDownloadTemplate}>
+              Descargar plantilla
             </Button>
-          </DialogActions>
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={<UploadFileIcon />}
+              // Where "Importar otro archivo" leaves focus; a refusal takes it instead.
+              {...(refusal ? {} : OVERLAY_FOCUS_TARGET)}
+            >
+              Seleccionar archivo CSV
+              <input type="file" accept=".csv,text/csv" hidden onChange={chooseFile} />
+            </Button>
+          </Box>
+          {file && (
+            <Box>
+              <Chip label={file.name} sx={{ borderRadius: radii.small, maxWidth: "100%" }} />
+            </Box>
+          )}
         </>
       )}
-      {/* In place from the moment the dialog opens, so the result is announced.
-          Last, so it does not separate the title from the content: MUI pads the
-          content less when it follows the title directly. */}
+      {/* In place from the moment the dialog opens, so the result is announced. */}
       <ActionStatus message={result ? summaryOf(result) : ""} />
-    </Dialog>
+    </AppModal>
   );
 }
