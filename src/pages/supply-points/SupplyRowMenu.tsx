@@ -20,6 +20,8 @@ export interface SupplyRowMenuProps {
   actions: SupplyRowActions["actions"];
   onDisable: () => void;
   onEnable: () => void;
+  /** Opens the supply form over the list (UI-SUP-019). */
+  onEdit: () => void;
   onDelete: () => void;
 }
 
@@ -35,6 +37,7 @@ export const SupplyRowMenu: FC<SupplyRowMenuProps> = ({
   actions,
   onDisable,
   onEnable,
+  onEdit,
   onDelete,
 }) => {
   const disable = supply?.enabled ? actions.disable : undefined;
@@ -55,7 +58,7 @@ export const SupplyRowMenu: FC<SupplyRowMenuProps> = ({
         </MenuItem>
       )}
       {supply && actions.edit && (
-        <MenuItem component={Link} to={`${supplyHref(supply)}/edit`} onClick={onClose}>
+        <MenuItem onClick={select(onEdit)}>
           <ListItemIcon>
             <EditOutlinedIcon fontSize="small" sx={{ color: "primary.main" }} />
           </ListItemIcon>
