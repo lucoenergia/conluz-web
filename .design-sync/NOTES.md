@@ -10,7 +10,7 @@
   (the entry comes from `cfg.entry`; no `--entry` flag needed).
 - Included = components that render with only `ConluzProvider`. Excluded on purpose: anything calling
   `src/hooks/actions/`, a generated query hook, auth/logged-user context or `useLogout`
-  (Header, ProfileMenu, PasswordChangeHeader, Auth routes, Errors/Success displays, PlantForm,
+  (Header, ProfileMenu, PasswordChangeHeader, Auth routes, Errors/Success displays,
   Csv/Import modals and CsvImportDialog (its `run` is an action), SharingAgreement{CoefficientSet,DetailHeader,FilePanel,FormDialog,
   GenerateDialog,UploadDialog}, CoefficientHistoryDrawer, SupplyCoefficientHistorySection,
   ScopeContext, AddSupplyDialog).

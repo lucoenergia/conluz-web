@@ -153,7 +153,7 @@ const ACTION_COVERAGE: Record<string, Decision> = {
     capability: "canCreatePlant",
     hook: ["useCommunityActions", "useSupplyActions"],
     approximates:
-      "two surfaces, and CreatePlantPage uses both: the community's canCreatePlants gates the entry point (the Nueva Planta button, the production/new route) and hands out the action, while the supply's canCreatePlant bounds the choice -- PlantForm offers only supplies that report it, so the form cannot submit one the backend would refuse. useSupplyActions carries the per-supply action for callers that start from a supply",
+      "two surfaces, and the plant form overlay uses both: the community's canCreatePlants gates the entry point (the Nueva Planta and Crear Planta buttons on the plant list) and hands out the action, while the supply's canCreatePlant bounds the choice -- PlantFormDialog offers only supplies that report it, so the form cannot submit one the backend would refuse. useSupplyActions carries the per-supply action for callers that start from a supply",
   },
   useUpdatePlant: {
     scope: "plant",

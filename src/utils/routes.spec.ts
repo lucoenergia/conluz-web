@@ -103,19 +103,12 @@ describe("resolveCommunityScopedTarget", () => {
   });
 
   it("sends every nested plant route back to the plants list, however deep", () => {
-    expect(resolveCommunityScopedTarget("/production/plant-a/edit", "")).toBe("/production");
     expect(resolveCommunityScopedTarget("/production/plant-a/sharing-agreements", "")).toBe("/production");
     expect(resolveCommunityScopedTarget("/production/plant-a/sharing-agreements/agreement-1", "")).toBe("/production");
   });
 
   it("sends a supply detail route back to the supplies list", () => {
     expect(resolveCommunityScopedTarget("/supply-points/supply-a", "")).toBe("/supply-points");
-  });
-
-  // The creation forms hold no foreign entity -- only a half-typed draft, which
-  // the remount clears anyway. Bouncing the user out of them would be rude.
-  it("leaves the creation forms alone", () => {
-    expect(resolveCommunityScopedTarget("/production/new", "")).toBeNull();
   });
 
   it("leaves the section index routes alone -- they re-key on their own", () => {

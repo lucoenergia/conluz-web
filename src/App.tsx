@@ -45,8 +45,6 @@ const SupplyPointsPage = lazyPage(() => import("./pages/supply-points/SupplyPoin
 const SupplyDetailPage = lazyPage(() => import("./pages/supply-points/SupplyDetailPage"), "SupplyDetailPage");
 
 const PlantsPage = lazyPage(() => import("./pages/production/PlantsPage"), "PlantsPage");
-const CreatePlantPage = lazyPage(() => import("./pages/production/CreatePlantPage"), "CreatePlantPage");
-const EditPlantPage = lazyPage(() => import("./pages/production/EditPlantPage"), "EditPlantPage");
 const PlantDetailPage = lazyPage(() => import("./pages/production/PlantDetailPage"), "PlantDetailPage");
 const SharingAgreementsPage = lazyPage(() => import("./pages/production/SharingAgreementsPage"), "SharingAgreementsPage");
 const SharingAgreementDetailPage = lazyPage(() => import("./pages/production/SharingAgreementDetailPage"), "SharingAgreementDetailPage");
@@ -127,17 +125,10 @@ function App() {
             path="production"
             element={<CapabilityRoute require={{ scope: "community", capability: "canRead" }}><Outlet /></CapabilityRoute>}
           >
+            {/* Creating and editing a plant open over the list (#373). */}
             <Route index element={<PlantsPage />}></Route>
-            <Route
-              path="new"
-              element={<CapabilityRoute require={{ scope: "community", capability: "canCreatePlants" }}><CreatePlantPage /></CapabilityRoute>}
-            />
             <Route path=":plantId">
               <Route index element={<PlantDetailPage />} />
-              <Route
-                path="edit"
-                element={<CapabilityRoute require={{ scope: "plant", capability: "canManage" }}><EditPlantPage /></CapabilityRoute>}
-              />
               <Route
                 path="sharing-agreements"
                 element={<CapabilityRoute require={{ scope: "plant", capability: "canListSharingAgreements" }}><SharingAgreementsPage /></CapabilityRoute>}
