@@ -141,7 +141,8 @@ const EditSupplyDialog: FC<{ supplyId: string; onClose: () => void }> = ({ suppl
       owner={{ mode: "show", fullName: supply?.ownerRecord?.fullName ?? null }}
       seeded={seeded}
       status={status}
-      submitLabel={seeded?.name ? "Guardar cambios" : "Crear punto de suministro"}
+      // Editing is not creating, whatever the supply is called (UI-SUP-020).
+      submitLabel="Guardar"
       pendingLabel="Guardando..."
       save={edit && save}
       generic="Ha habido un problema al editar el punto de suministro. Por favor, inténtalo más tarde"
