@@ -277,8 +277,7 @@ describe("importing a file", () => {
 
     await waitFor(() => expect(rosterReads(r)).toBeGreaterThan(readsBefore));
     // The roster is hidden from the accessibility tree while the dialog is open.
-    // By text: the overlay's close icon is named "Cerrar" too, and carries no text.
-    await u.click(within(dialog).getByText("Cerrar"));
+    await u.click(within(dialog).getByRole("button", { name: "Cerrar" }));
     expect(await within(screen.getByRole("table")).findByText("Nuria Nueva")).toBeInTheDocument();
   });
 
@@ -410,8 +409,6 @@ describe("after an import", () => {
     ).toBeInTheDocument();
     // The import hands over to no send: closing is all that is left to do here.
     expect(within(dialog).getAllByRole("button").map((button) => button.textContent)).toEqual([
-      // The overlay's close icon, named "Cerrar", carries no text.
-      "",
       "Importar otro archivo",
       "Cerrar",
     ]);

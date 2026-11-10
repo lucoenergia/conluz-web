@@ -23,6 +23,8 @@ export type AppModalProps = AppModalName & {
   onClose: (event?: SyntheticEvent) => void;
   /** False while the dialog's write is in flight: nothing closes it (#310, UI-OVL-002). */
   dismissible?: boolean;
+  /** The dialog offers its own "Cerrar", in `actions` or the body: no close icon of the same name (UI-OVL-010). */
+  hideCloseIcon?: boolean;
   /** The dialog's width from `md` up: `form` for a form, `compact` for a confirmation or short action. */
   size?: ResponsiveOverlaySize;
   /** Unsaved changes: a close attempt asks first (UI-OVL-003). */
@@ -59,6 +61,7 @@ export const AppModal: FC<AppModalProps> = ({
   labelledBy,
   label,
   dismissible = true,
+  hideCloseIcon = false,
   size = "form",
   dirty = false,
   discardMessage,
@@ -108,6 +111,7 @@ export const AppModal: FC<AppModalProps> = ({
       discardCancelLabel={discardCancelLabel}
       discardReturnFocus={discardReturnFocus}
       inFlight={!dismissible}
+      hideCloseIcon={hideCloseIcon}
       onClose={() => onClose()}
       eyebrow={scopeHeader}
       icon={centered ? undefined : circle}

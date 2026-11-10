@@ -18,6 +18,7 @@ export const EnableSuccessModal: FC<EnableSuccessModalProps> = ({ onClose, isOpe
       onClose={onClose}
       centered
       size="compact"
+      hideCloseIcon
       labelledBy={`${nameId}-lead ${nameId}-code ${nameId}-outcome`}
       icon={<CheckCircleIcon sx={{ fontSize: 40, color: "success.main" }} />}
       iconBg={alphas.success.light}

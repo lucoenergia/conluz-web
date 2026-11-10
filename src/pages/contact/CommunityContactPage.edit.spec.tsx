@@ -533,8 +533,7 @@ describe("refused saves", () => {
     expect(field("Horario (opcional)")).toHaveAttribute("readonly");
     expect(within(sheet()).queryByRole("button", { name: "Guardar" })).not.toBeInTheDocument();
 
-    const close = within(sheet()).getAllByRole("button", { name: "Cerrar" });
-    await user.click(close[close.length - 1]);
+    await user.click(within(sheet()).getByRole("button", { name: "Cerrar" }));
 
     // The member view that follows is in CommunityContactSave.cache.spec.tsx.
     expect(invalidate).toHaveBeenCalledWith({ queryKey: getGetCommunityByIdQueryKey(COMMUNITY_ID) });

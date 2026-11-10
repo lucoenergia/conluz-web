@@ -184,8 +184,7 @@ describe("ContactChannelEditor", () => {
     expect(screen.queryByRole("button", { name: "Guardar" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Eliminar canal" })).not.toBeInTheDocument();
 
-    const close = screen.getAllByRole("button", { name: "Cerrar" });
-    await user.click(close[close.length - 1]);
+    await user.click(screen.getByRole("button", { name: "Cerrar" }));
     expect(onLostRightsClose).toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
   });

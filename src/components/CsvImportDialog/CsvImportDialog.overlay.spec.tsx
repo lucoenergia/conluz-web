@@ -203,8 +203,7 @@ const GUIDE_CLOSE_ATTEMPTS = [
 ] as const;
 
 const RESULT_CLOSE_ATTEMPTS = [
-  // By text: the overlay's close icon is named "Cerrar" too, and carries no text.
-  ["Cerrar", (u: User, dialog: HTMLElement) => u.click(within(dialog).getByText("Cerrar"))],
+  ["Cerrar", (u: User, dialog: HTMLElement) => u.click(within(dialog).getByRole("button", { name: "Cerrar" }))],
   ["Escape", (_: User, dialog: HTMLElement) => fireEvent.keyDown(dialog, { key: "Escape" })],
   ["back", () => pressBack()],
 ] as const;
@@ -258,10 +257,9 @@ describe("UI-OVL-007 the CSV import's result scrolls in the body", () => {
     const scrolling = scrollingAncestors(list, dialog);
     expect(scrolling).toHaveLength(1);
     const [body] = scrolling;
-    // The footer's "Cerrar", and the header's close icon of the same name.
     for (const button of [
       within(dialog).getByRole("button", { name: "Importar otro archivo" }),
-      ...within(dialog).getAllByRole("button", { name: "Cerrar" }),
+      within(dialog).getByRole("button", { name: "Cerrar" }),
     ]) {
       expect(body).not.toContainElement(button);
     }

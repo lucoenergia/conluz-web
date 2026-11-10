@@ -316,10 +316,7 @@ describe("UI-OVL-007 only the body scrolls", () => {
     const scrolling = scrollingAncestors(screen.getByText("Errores por línea"), dialog);
     expect(scrolling).toHaveLength(1);
     const [body] = scrolling;
-    // The footer's "Cerrar", and the header's close icon of the same name.
-    const closers = within(dialog).getAllByRole("button", { name: "Cerrar" });
-    expect(closers).toHaveLength(2);
-    for (const closer of closers) expect(body).not.toContainElement(closer);
+    expect(body).not.toContainElement(within(dialog).getByRole("button", { name: "Cerrar" }));
   });
 
   it("UI-OVL-007 the add-supply picker scrolls as one body, its search held at the top", async () => {

@@ -344,6 +344,7 @@ export const ContactChannelEditor: FC<ContactChannelEditorProps> = ({
       // A caller who lost the right to edit has nothing left to keep.
       dirty={dirty && !lostRights}
       inFlight={saving}
+      hideCloseIcon={lostRights}
       onClose={lostRights ? onLostRightsClose : onClose}
       discardMessage="Tienes cambios sin guardar en este canal. Si cierras, se perderán."
       question={deleteQuestion}
