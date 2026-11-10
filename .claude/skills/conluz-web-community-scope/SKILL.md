@@ -178,9 +178,9 @@ Every response carries a `capabilities` object, and `GET /users/current` carries
   own `role` (a `MembershipResponse`) is the resource's state and is allowed
   too.
 - **Route level:** one guard, `CapabilityRoute`, given the capability the page
-  needs. Six scopes: `platform`; `community`, meaning the **active** one; and
-  four read from a route parameter — `plant`, `supply`, `user` (`:userId`) and
-  `communityById` (`:communityId`). The capability name is a key of the generated
+  needs. Four scopes: `platform`; `community`, meaning the **active** one; and
+  two read from a route parameter — `plant` (`:plantId`) and `communityById`
+  (`:communityId`). The capability name is a key of the generated
   type for its scope, so a typo — or a real capability borrowed from the wrong
   resource — does not compile.
 - **`communityById` is not `community`.** The active community is the one the
@@ -192,13 +192,12 @@ Every response carries a `capabilities` object, and `GET /users/current` carries
 - **Menu:** entries in `MENU_SECTIONS` carry the same requirement as the route
   they lead to, which is what stops the menu offering pages the router refuses.
   `MenuRequirement` excludes every parameter-keyed scope: a menu entry is a fixed
-  destination, so it has no `:userId` or `:communityId` to resolve.
+  destination, so it has no `:plantId` or `:communityId` to resolve.
 - **Anything else:** `useActiveCommunityCapabilities`, `usePlatformCapabilities`,
-  `usePlantCapabilities`, `useSupplyCapabilities`, `useUserCapabilities`,
-  `useCommunityCapabilities`, and `<Can>` for conditional rendering. A screen
-  that already holds the resource does not need any of them:
-  `outcomeFromResource(row.capabilities, "canX")` reads the answer the payload
-  came with, and an action hook's `forX(row)` does it for you.
+  `usePlantCapabilities`, `useCommunityCapabilities`, and `<Can>` for
+  conditional rendering. A screen that already holds the resource does not
+  need any of them: `outcomeFromResource(row.capabilities, "canX")` reads the
+  answer the payload came with, and an action hook's `forX(row)` does it for you.
 - **An answer has four states, not two.** `pending` waits, `allowed` renders,
   `denied` redirects, and `error` means the check itself failed — that one shows
   a retry. Never fold `error` into `denied`: a network blip would tell somebody
