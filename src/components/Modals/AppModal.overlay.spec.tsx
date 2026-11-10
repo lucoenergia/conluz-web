@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
-import type { ReactElement } from "react";
-import { act, cleanup, screen, waitFor, within } from "@testing-library/react";
+import { useState, type ReactElement } from "react";
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/renderWithProviders";
@@ -23,6 +23,8 @@ import { SharingAgreementFormDialog } from "../SharingAgreementFormDialog/Sharin
 import { SharingAgreementGenerateDialog } from "../SharingAgreementGenerateDialog/SharingAgreementGenerateDialog";
 import { SharingAgreementUploadDialog } from "../SharingAgreementUploadDialog/SharingAgreementUploadDialog";
 import { AddSupplyDialog } from "../AddSupplyDialog/AddSupplyDialog";
+import { DisableSuccessModal } from "./DisableSuccessModal";
+import { EnableSuccessModal } from "./EnableSuccesModal";
 
 /**
  * The confirmation and app modals on the shared overlay (#369): their size,
@@ -287,6 +289,123 @@ describe("UI-OVL-006 a modal dialog, named by its title or by a label", () => {
     );
     const dialog = screen.getByRole("dialog", { name: "Eliminar planta" });
     expect(within(dialog).getByText("Comunidad · Sol de la Sierra")).toBeInTheDocument();
+  });
+});
+
+/** A parent that really closes the dialog it holds, so closing is observable. */
+function Closable({ children }: { children: (isOpen: boolean, close: () => void) => ReactElement }) {
+  const [isOpen, setOpen] = useState(true);
+  return children(isOpen, () => setOpen(false));
+}
+
+const SUPPLY_CODE = "ES0031406912345678JN0F";
+const SUCCESS_DIALOGS = [
+  [
+    "the supply disable success dialog",
+    (isOpen: boolean, close: () => void) => <DisableSuccessModal isOpen={isOpen} onClose={close} code={SUPPLY_CODE} />,
+    `El punto de suministro ${SUPPLY_CODE} ha sido deshabilitado`,
+  ],
+  [
+    "the supply enable success dialog",
+    (isOpen: boolean, close: () => void) => <EnableSuccessModal isOpen={isOpen} onClose={close} code={SUPPLY_CODE} />,
+    `El punto de suministro ${SUPPLY_CODE} ha sido rehabilitado`,
+  ],
+] as const;
+
+type User = ReturnType<typeof userEvent.setup>;
+const CLOSE_ATTEMPTS = [
+  ["its Cerrar", (u: User, dialog: HTMLElement) => u.click(within(dialog).getByRole("button", { name: "Cerrar" }))],
+  ["Escape", (_: User, dialog: HTMLElement) => fireEvent.keyDown(dialog, { key: "Escape" })],
+  ["back", () => pressBack()],
+] as const;
+
+const closed = () => waitFor(() => expect(screen.queryByRole("dialog", { hidden: true })).not.toBeInTheDocument());
+
+const rejectedUpload = () =>
+  vi.fn().mockResolvedValue({
+    success: false,
+    groupedErrors: getGroupedApiErrorDetails({
+      response: {
+        status: 400,
+        data: { errors: [{ message: "raw", code: "DISTRIBUTOR_FILE_CUPS_UNKNOWN", params: { line: "3", cups: "ES1" } }] },
+      },
+    }),
+  });
+const UPLOAD_TITLE = /^Importar un fichero que ya tengas en /;
+
+async function showRejectedLines() {
+  const run = rejectedUpload();
+  const user = await render(
+    <Closable>
+      {(isOpen, close) => (
+        <SharingAgreementUploadDialog isOpen={isOpen} uploadFile={{ run, isPending: false }} regulatoryCode="CAU0001" onClose={close} />
+      )}
+    </Closable>,
+  );
+  const dialog = screen.getByRole("dialog", { name: UPLOAD_TITLE });
+  await user.upload(document.querySelector('input[type="file"]') as HTMLInputElement, new File(["x"], "CAU0001_2026.txt", { type: "text/plain" }));
+  await user.click(within(dialog).getByRole("button", { name: "Subir fichero" }));
+  await within(dialog).findByText("Errores por línea");
+  return { user, dialog };
+}
+
+describe("UI-OVL-010 one control named Cerrar", () => {
+  describe.each(SUCCESS_DIALOGS)("%s", (_, dialogOf, name) => {
+    it("UI-OVL-010 offers exactly one Cerrar, and is named by the sentence it shows", async () => {
+      await render(<Closable>{dialogOf}</Closable>);
+
+      const dialog = screen.getByRole("dialog", { name });
+      expect(within(dialog).getAllByRole("button", { name: "Cerrar" })).toHaveLength(1);
+      expect(within(dialog).getAllByRole("button").map((button) => button.textContent)).toEqual(["Cerrar"]);
+    });
+
+    it.each(CLOSE_ATTEMPTS)("UI-OVL-010 %s closes it", async (__, attempt) => {
+      const user = await render(<Closable>{dialogOf}</Closable>);
+      const dialog = screen.getByRole("dialog", { name });
+
+      await attempt(user, dialog);
+
+      await closed();
+    });
+
+    it("UI-OVL-010 as a sheet at 390 px, keeps its grab handle and shows no close icon", async () => {
+      await render(<Closable>{dialogOf}</Closable>);
+
+      const sheet = screen.getByRole("dialog", { name });
+      expect(sheet).toHaveClass("MuiDrawer-paperAnchorBottom");
+      // Structural: the handle is decorative, aria-hidden, with no role or name;
+      // it is told apart by its declared size, the one thing that makes it a handle.
+      const handles = [...sheet.querySelectorAll('div[aria-hidden="true"]')].filter((element) =>
+        /width:36px.*height:4px|height:4px.*width:36px/.test(declaredStyles(element)),
+      );
+      expect(handles).toHaveLength(1);
+      expect(within(sheet).getAllByRole("button").map((button) => button.textContent)).toEqual(["Cerrar"]);
+    });
+  });
+
+  describe("the sharing agreement upload dialog", () => {
+    it("UI-OVL-010 keeps its close icon before a file is rejected, beside its Cancelar", async () => {
+      await render(<SharingAgreementUploadDialog isOpen uploadFile={{ run: vi.fn(), isPending: false }} regulatoryCode="CAU0001" onClose={vi.fn()} />);
+
+      const dialog = screen.getByRole("dialog", { name: UPLOAD_TITLE });
+      expect(within(dialog).getByRole("button", { name: "Cerrar" })).toBeInTheDocument();
+      expect(within(dialog).getByRole("button", { name: "Cancelar" })).toBeInTheDocument();
+    });
+
+    it("UI-OVL-010 on the rejected lines, offers exactly one Cerrar and stays named by its title", async () => {
+      const { dialog } = await showRejectedLines();
+
+      expect(within(dialog).getAllByRole("button", { name: "Cerrar" })).toHaveLength(1);
+      expect(dialog).toHaveAccessibleName(UPLOAD_TITLE);
+    });
+
+    it.each(CLOSE_ATTEMPTS)("UI-OVL-010 on the rejected lines, %s closes it", async (_, attempt) => {
+      const { user, dialog } = await showRejectedLines();
+
+      await attempt(user, dialog);
+
+      await closed();
+    });
   });
 });
 
