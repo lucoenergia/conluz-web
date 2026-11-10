@@ -19,7 +19,7 @@ import {
   DOCUMENTED_SUPPLY_HOURLY_CONSUMPTION_BUCKET,
 } from "../../test/documentedResponses";
 import { buildCurrentUser } from "../../test/fixtures";
-import { localIsoAt } from "../home/member/monthBounds";
+import { localIsoAt } from "../../utils/zonedTime";
 
 // Data shared by the historical analysis page specs. No vi.mock here: each
 // spec mocks its own modules.

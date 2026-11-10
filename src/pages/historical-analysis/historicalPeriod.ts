@@ -1,6 +1,6 @@
 import { formatCalendarMonth } from "../../utils/formatEnergyFigures";
 import { APP_TIME_ZONE } from "../../utils/formatCalendarDate";
-import { wallTimeAt, zonedIso } from "../home/member/monthBounds";
+import { wallTimeAt, zonedIso } from "../../utils/zonedTime";
 
 /**
  * The periods of the historical analysis page (#248, ADR-0005 in

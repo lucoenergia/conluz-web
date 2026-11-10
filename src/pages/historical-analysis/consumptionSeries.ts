@@ -24,7 +24,7 @@ import {
   type HistoricalPeriod,
 } from "./historicalPeriod";
 import { slotStateText } from "./slotStateText";
-import { localIsoAt, wallTimeAt } from "../home/member/monthBounds";
+import { localIsoAt, wallTimeAt } from "../../utils/zonedTime";
 import type { ConsumptionSeries } from "./usePeriodConsumptionSeries";
 
 /**
