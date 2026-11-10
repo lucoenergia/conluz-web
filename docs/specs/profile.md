@@ -42,9 +42,9 @@ yet.
 
 - **Status:** Active
 - **Rule:** When the account's `number` is null or absent, the profile MUST NOT render the
-  member-number chip. A number that is there, 0 included, MUST render as "Socio #<number>".
+  member-number chip. A number that is there, 0 included, MUST render as "Miembro #<number>".
 - **Rationale:** Accounts created by member registration have no global number: the member number
-  lives on each community's member record (lucoenergia/conluz#392). Rendering "Socio #0" would
+  lives on each community's member record (lucoenergia/conluz#392). Rendering "Miembro #0" would
   state a number the member does not have.
 - **Implements:** ACC-006
 - **Source:** #272
