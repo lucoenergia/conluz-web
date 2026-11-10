@@ -16,6 +16,8 @@ import { PeriodHeader } from "../../components/EnergyFigures/PeriodHeader";
 import { PeriodSelector } from "../../components/period/PeriodSelector";
 import { SupplySelector } from "./SupplySelector";
 import { useHistoricalAnchor, type HistoricalAnchor } from "../../components/period/useHistoricalAnchor";
+import { MEMBER_DEFAULT_PRESET, MEMBER_PRESETS, memberClampNotice, memberPublicationText } from "./memberPeriod";
+import { readMonthAnchor, useMemberAnchorQuery } from "./useMemberAnchorQuery";
 import { useHistoricalPeriodState, type HistoricalPeriodState } from "../../components/period/useHistoricalPeriodState";
 import { useOwnSupplies } from "./useOwnSupplies";
 import { useSelectedSupply } from "./useSelectedSupply";
@@ -38,8 +40,13 @@ export const HistoricalAnalysisPage: FC = () => {
   const ownsSupplies = supplies !== undefined && supplies.length > 0;
   // A caller who owns none here may still be viewing a supply they manage (#385).
   const noSupplyToShow = supplies?.length === 0 && viewed === null;
-  const anchor = useHistoricalAnchor(selected, { allMine: ownsSupplies });
-  const period = useHistoricalPeriodState(anchor, selected);
+  const anchor = useHistoricalAnchor(useMemberAnchorQuery(selected, { allMine: ownsSupplies }), readMonthAnchor);
+  const period = useHistoricalPeriodState(anchor, {
+    presets: MEMBER_PRESETS,
+    defaultPreset: MEMBER_DEFAULT_PRESET,
+    scopeKey: selected?.id ?? "all",
+    clampNotice: memberClampNotice(selected),
+  });
   const errorDispatch = useErrorDispatch();
 
   useEffect(() => {
@@ -67,7 +74,7 @@ export const HistoricalAnalysisPage: FC = () => {
             {anchor.status === "loading" && <Skeleton variant="rounded" height={56} sx={{ flex: 1, width: "100%" }} />}
             {anchor.status === "ready" && (
               <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
-                <PeriodSelector anchor={anchor.anchor} selection={period.selection} onSelect={period.select} />
+                <PeriodSelector anchor={anchor.anchor} presets={MEMBER_PRESETS} selection={period.selection} onSelect={period.select} />
               </Box>
             )}
           </Box>
@@ -106,7 +113,7 @@ const AnchoredContent: FC<{ anchor: HistoricalAnchor; period: HistoricalPeriodSt
       return (
         <>
           {period.clampNotice && <Notice severity="info">{period.clampNotice}</Notice>}
-          {resolved && <PeriodHeader anchor={anchor.anchor} resolution={resolved} />}
+          {resolved && <PeriodHeader anchor={anchor.anchor} resolution={resolved} publication={memberPublicationText} />}
           <HistoricalPeriodContext.Provider value={resolved?.period}>
             {/* The content region the figures land in. */}
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>

@@ -201,7 +201,7 @@ const COMMUNITY_SCOPE_WRAPPERS = [
   "src/pages/home/management/usePlantSharingAgreements.ts",
   // Driven by a supply from useOwnSupplies, narrowed to the active community,
   // and remounted by the keyed Outlet when the community changes.
-  "src/components/period/useHistoricalAnchor.ts",
+  "src/pages/historical-analysis/useMemberAnchorQuery.ts",
   // Driven by the same selected supply, under the same keyed Outlet.
   "src/pages/historical-analysis/usePeriodEnergyMetrics.ts",
   // Driven by the same selected supply, under the same keyed Outlet (#250).

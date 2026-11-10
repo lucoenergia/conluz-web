@@ -17,25 +17,29 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { colors, radii } from "../../theme/tokens";
 import { CustomRangePicker } from "./CustomRangePicker";
-import { MAX_MONTHS, presetSummary, yearPresetName, type CalendarMonth, type PeriodSelection, type PresetKind } from "./historicalPeriod";
+import {
+  MAX_MONTHS,
+  offeredPresets,
+  presetSummary,
+  type Anchor,
+  type PeriodSelection,
+  type PresetDefinition,
+} from "./historicalPeriod";
 
 const LABEL = "Periodo";
-
-const nameOf = (kind: PeriodSelection["kind"], anchor: CalendarMonth): string =>
-  ({
-    latest: "Último mes publicado",
-    year: yearPresetName(anchor),
-    last12: "Últimos 12 meses",
-    custom: "Rango personalizado",
-  })[kind];
+const CUSTOM_NAME = "Rango personalizado";
 export const CUSTOM_SUMMARY = `Elige las fechas, hasta ${MAX_MONTHS} meses`;
-const PRESETS: PresetKind[] = ["latest", "year", "last12"];
 
 interface PeriodSelectorProps {
-  anchor: CalendarMonth;
+  anchor: Anchor;
+  /** The page's presets: only the ones that take this kind of anchor are offered, in this order. */
+  presets: readonly PresetDefinition[];
   selection: PeriodSelection;
   onSelect: (selection: PeriodSelection) => void;
 }
+
+const nameOf = (kind: PeriodSelection["kind"], anchor: Anchor, presets: readonly PresetDefinition[]): string =>
+  kind === "custom" ? CUSTOM_NAME : (presets.find(({ value }) => value === kind)?.name(anchor) ?? "");
 
 interface Option {
   kind: PeriodSelection["kind"];
@@ -44,13 +48,17 @@ interface Option {
   summary: string;
 }
 
-const optionsFor = (anchor: CalendarMonth): Option[] => [
-  ...PRESETS.map((kind) => ({ kind, name: nameOf(kind, anchor), summary: presetSummary(anchor, kind) })),
-  { kind: "custom", name: nameOf("custom", anchor), summary: CUSTOM_SUMMARY },
+const optionsFor = (anchor: Anchor, presets: readonly PresetDefinition[]): Option[] => [
+  ...offeredPresets(presets, anchor).map((preset) => ({
+    kind: preset.value,
+    name: preset.name(anchor),
+    summary: presetSummary(anchor, preset),
+  })),
+  { kind: "custom", name: CUSTOM_NAME, summary: CUSTOM_SUMMARY },
 ];
 
 /**
- * Picks the period (#248): the three presets, each showing the period it
+ * Picks the period (#248): the page's presets, each showing the period it
  * resolves to from the anchor, or a custom range. A dropdown from sm up, as
  * the supply selector is; below it, a bottom sheet.
  */
@@ -60,7 +68,7 @@ export const PeriodSelector: FC<PeriodSelectorProps> = (props) => {
   return isWide ? <PeriodDropdown {...props} /> : <PeriodSheet {...props} />;
 };
 
-const PeriodDropdown: FC<PeriodSelectorProps> = ({ anchor, selection, onSelect }) => {
+const PeriodDropdown: FC<PeriodSelectorProps> = ({ anchor, presets, selection, onSelect }) => {
   const [rangeOpen, setRangeOpen] = useState(false);
   const fieldRef = useRef<HTMLDivElement>(null);
 
@@ -75,10 +83,10 @@ const PeriodDropdown: FC<PeriodSelectorProps> = ({ anchor, selection, onSelect }
           const kind = event.target.value as PeriodSelection["kind"];
           if (kind !== "custom") onSelect({ kind });
         }}
-        slotProps={{ select: { renderValue: (kind) => nameOf(kind as PeriodSelection["kind"], anchor) } }}
+        slotProps={{ select: { renderValue: (kind) => nameOf(kind as PeriodSelection["kind"], anchor, presets) } }}
         fullWidth
       >
-        {optionsFor(anchor).map((option) => (
+        {optionsFor(anchor, presets).map((option) => (
           <MenuItem
             key={option.kind}
             value={option.kind}
@@ -107,7 +115,7 @@ const PeriodDropdown: FC<PeriodSelectorProps> = ({ anchor, selection, onSelect }
   );
 };
 
-const PeriodSheet: FC<PeriodSelectorProps> = ({ anchor, selection, onSelect }) => {
+const PeriodSheet: FC<PeriodSelectorProps> = ({ anchor, presets, selection, onSelect }) => {
   const [open, setOpen] = useState(false);
   const [rangeOpen, setRangeOpen] = useState(false);
   const labelId = useId();
@@ -136,7 +144,7 @@ const PeriodSheet: FC<PeriodSelectorProps> = ({ anchor, selection, onSelect }) =
         sx={{ justifyContent: "space-between", textAlign: "left", textTransform: "none", borderRadius: radii.default, minWidth: 0 }}
       >
         <Box id={valueId} component="span" sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
-          {nameOf(selection.kind, anchor)}
+          {nameOf(selection.kind, anchor, presets)}
         </Box>
       </Button>
       <SwipeableDrawer
@@ -169,7 +177,7 @@ const PeriodSheet: FC<PeriodSelectorProps> = ({ anchor, selection, onSelect }) =
             setOpen(false);
           }}
         >
-          {optionsFor(anchor).map((option) => (
+          {optionsFor(anchor, presets).map((option) => (
             <FormControlLabel
               key={option.kind}
               value={option.kind}

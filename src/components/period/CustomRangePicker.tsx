@@ -14,13 +14,17 @@ import { colors, radii } from "../../theme/tokens";
 import { toCalendarDay, toDayjs } from "./calendarDayjs";
 import {
   addMonths,
+  anchorEnd,
+  anchorMonth,
   compareDays,
   DAILY_LIMIT_DAYS,
+  dayName,
   lastDayOf,
   MAX_MONTHS,
   monthYearName,
   rangeResultText,
-  resolvePeriod,
+  resolveCustomRange,
+  type Anchor,
   type CalendarDay,
   type CalendarMonth,
   type PeriodSelection,
@@ -38,6 +42,9 @@ const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1
 /** "Octubre de 2026 aún no está publicado." */
 const unpublishedText = (month: CalendarMonth) => `${capitalise(monthYearName(month))} aún no está publicado.`;
 
+/** "Los días después del 8 de noviembre de 2026 todavía no tienen datos.", under a day anchor's month. */
+const noDataYetText = (day: CalendarDay) => `Los días después del ${dayName(day)} todavía no tienen datos.`;
+
 const pad = (value: number) => String(value).padStart(2, "0");
 const shortDay = ({ year, month, day }: CalendarDay) => `${pad(day)}/${pad(month)}/${year}`;
 
@@ -45,7 +52,7 @@ const monthsBetween = (from: CalendarMonth, to: CalendarMonth) => (to.year - fro
 
 export interface CustomRangePickerProps {
   open: boolean;
-  anchor: CalendarMonth;
+  anchor: Anchor;
   /** The selection in force: a custom range opens on its days. */
   current: PeriodSelection;
   /** A popover beside the selector from sm up, a sheet below it. */
@@ -57,7 +64,7 @@ export interface CustomRangePickerProps {
 
 /**
  * "Rango personalizado" (#248): two calendar days, "Desde" and "Hasta", both
- * included, no later than the last day of the anchor month (UI-HIS-005). The
+ * included, no later than the anchor's last day (UI-HIS-005). The
  * resulting period and granularity are announced before the range is applied
  * (UI-HIS-006), and a range over 24 months once snapped cannot be applied
  * (UI-HIS-007).
@@ -113,7 +120,7 @@ export const CustomRangePicker: FC<CustomRangePickerProps> = ({ open, variant, a
 };
 
 interface RangePickerBodyProps {
-  anchor: CalendarMonth;
+  anchor: Anchor;
   current: PeriodSelection;
   titleId: string;
   monthsShown: number;
@@ -137,12 +144,14 @@ const RangePickerBody: FC<RangePickerBodyProps> = ({ anchor, current, titleId, m
   const [to, setTo] = useState<CalendarDay | null>(current.kind === "custom" ? current.to : null);
   const [editing, setEditing] = useState<"from" | "to">("from");
   // The first month shown: the one "Hasta" falls in, or the anchor month, as the design opens.
-  const [firstMonth, setFirstMonth] = useState<CalendarMonth>(to ?? anchor);
+  const [firstMonth, setFirstMonth] = useState<CalendarMonth>(to ?? anchorMonth(anchor));
 
-  const anchorEnd = lastDayOf(anchor);
+  const end = anchorEnd(anchor);
   const months = Array.from({ length: monthsShown }, (_, index) => addMonths(firstMonth, index));
   // Never page past the anchor month: from sm up, the month after it is shown, unpublished, beside it.
-  const canGoNext = monthsBetween(firstMonth, anchor) > 0;
+  const canGoNext = monthsBetween(firstMonth, anchorMonth(anchor)) > 0;
+  // A day anchor short of its month's end leaves days of that month with no data yet, disabled.
+  const daysWithoutData = anchor.kind === "day" && compareDays(end, lastDayOf(end)) < 0;
 
   const pick = (day: CalendarDay) => {
     if (editing === "from" || !from) {
@@ -158,7 +167,7 @@ const RangePickerBody: FC<RangePickerBodyProps> = ({ anchor, current, titleId, m
   };
 
   const draft: PeriodSelection | null = from && to ? { kind: "custom", from, to } : null;
-  const resolution = draft ? resolvePeriod(anchor, draft) : null;
+  const resolution = draft ? resolveCustomRange(anchor, draft.from, draft.to) : null;
   const result = resolution?.status === "tooLong" ? RANGE_TOO_LONG : resolution ? rangeResultText(resolution) : null;
 
   return (
@@ -194,14 +203,19 @@ const RangePickerBody: FC<RangePickerBodyProps> = ({ anchor, current, titleId, m
                     // The month's own days only: keyboard focus stays in this calendar.
                     minDate={toDayjs({ ...month, day: 1 })}
                     maxDate={toDayjs(lastDayOf(month))}
-                    shouldDisableDate={(value: Dayjs) => compareDays(toCalendarDay(value), anchorEnd) > 0}
+                    shouldDisableDate={(value: Dayjs) => compareDays(toCalendarDay(value), end) > 0}
                     disableHighlightToday
                     slots={{ calendarHeader: MonthHeader, day: RangeDay }}
                     sx={{ width: "100%", height: "auto", maxHeight: "none", m: 0 }}
                   />
-                  {compareDays({ ...month, day: 1 }, anchorEnd) > 0 && (
+                  {compareDays({ ...month, day: 1 }, end) > 0 && (
                     <Typography variant="body2" sx={{ color: colors.text.subtle }}>
                       {unpublishedText(month)}
+                    </Typography>
+                  )}
+                  {daysWithoutData && month.year === end.year && month.month === end.month && (
+                    <Typography variant="body2" sx={{ color: colors.text.subtle }}>
+                      {noDataYetText(end)}
                     </Typography>
                   )}
                 </Box>
