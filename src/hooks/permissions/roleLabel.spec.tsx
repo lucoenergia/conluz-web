@@ -48,8 +48,8 @@ describe("useActiveCommunityRoleLabel", () => {
     expect(result.current.label).toBe("Administrador de comunidad");
   });
 
-  // "Miembro" is the app's word for the role, used by the members page, the
-  // users page and the menu. "Socio" is the counting noun for a person.
+  // "Miembro" is the app's word for a member (#400), used by the members page,
+  // the users page and the menu.
   it("names a member", () => {
     const { result } = renderWith({ role: CommunityRole.COMMUNITY_MEMBER });
     expect(result.current.label).toBe("Miembro");

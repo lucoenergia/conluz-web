@@ -53,7 +53,7 @@ const PROVIDERS = [
     icon: "electric_meter",
     color: colors.accent.cyan,
     description:
-      "Plataforma oficial de las distribuidoras eléctricas para acceder a datos de consumo de los socios.",
+      "Plataforma oficial de las distribuidoras eléctricas para acceder a datos de consumo de los miembros.",
     fields: ["credentials"] as string[],
     urlPlaceholder: "https://datadis.es",
     help: "Necesitas una cuenta dada de alta en datadis.es con permiso de consulta de los CUPS de la comunidad.",
@@ -499,7 +499,7 @@ export const IntegrationsPage: FC = () => {
       >
         <Typography sx={{ color: "text.secondary", lineHeight: 1.6 }}>
           {datadisToggle.requested ? "Se empezará a sincronizar" : "Se dejará de sincronizar"} desde Datadis el consumo de
-          los socios de <strong>{communityLabel(communityName)}</strong>.
+          los miembros de <strong>{communityLabel(communityName)}</strong>.
           {!datadisToggle.requested && " La configuración guardada se conserva."}
         </Typography>
       </ConfirmationModal>

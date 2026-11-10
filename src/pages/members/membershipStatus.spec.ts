@@ -4,7 +4,7 @@ import { membershipStatusOf, statusLabelOf } from "./membershipStatus";
 
 const LINK = { invitedAt: "2026-10-01T10:00:00Z", invitationExpiresAt: "2026-10-08T10:00:00Z" };
 const pending = (overrides: Parameters<typeof buildMembership>[0] = {}) =>
-  buildMembership({ acceptedAt: null, contactEmail: "socia@example.com", ...overrides });
+  buildMembership({ acceptedAt: null, contactEmail: "ana@example.com", ...overrides });
 
 describe("the status a membership shows (#331)", () => {
   it.each([

@@ -313,7 +313,7 @@ describe("a member of the community", () => {
     ["a member", CommunityRole.COMMUNITY_MEMBER],
     ["a community admin", CommunityRole.COMMUNITY_ADMIN],
   ])("still reaches the supplies and the plants as %s", async (_, role) => {
-    const caller = buildCurrentUser({ id: "u-ana", fullName: "Ana Socia", memberships: { [COMMUNITY_ID]: role } });
+    const caller = buildCurrentUser({ id: "u-ana", fullName: "Ana Sánchez", memberships: { [COMMUNITY_ID]: role } });
 
     for (const path of ["/supply-points", "/supply-points/supply-1", "/production", "/production/plant-1"]) {
       const router = routeRequests([

@@ -74,11 +74,10 @@ describe("ProfilePage role label", () => {
     expect(screen.getByText("Administrador de comunidad")).toBeInTheDocument();
   });
 
-  // Was "Socio" here and "Miembro" in the profile menu, for the same role.
-  // "Miembro" is the app's word for the role -- the members page, the users
-  // page and the menu all use it -- while "Socio" counts people (`Socio #7`
-  // just below this chip, the "Socios" totals on the platform and community
-  // pages). Both screens now render whichever the module reports.
+  // This chip and the profile menu once named the same role differently.
+  // "Miembro" is the app's word for a member (#400) -- the members page, the
+  // users page and the menu all use it. Both screens now render whichever the
+  // module reports.
   it("names a plain member Miembro", () => {
     mockRoleLabel = "Miembro";
     setup();
@@ -228,8 +227,8 @@ describe("ProfilePage identity fields", () => {
   it("shows the member number once, as the chip", () => {
     renderWithProviders(<ProfilePage />);
 
-    expect(screen.getByText("Socio #7")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Número de socio")).not.toBeInTheDocument();
+    expect(screen.getByText("Miembro #7")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Número de miembro")).not.toBeInTheDocument();
   });
 
   it("UI-PRF-003 shows no member-number chip for an account without a number", () => {
@@ -239,7 +238,7 @@ describe("ProfilePage identity fields", () => {
     );
     renderWithProviders(<ProfilePage />);
 
-    expect(screen.queryByText(/^Socio #/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Miembro #/)).not.toBeInTheDocument();
     // Only the number's chip goes; the role chip beside it stays.
     expect(screen.getByText("Miembro")).toBeInTheDocument();
   });
@@ -250,6 +249,6 @@ describe("ProfilePage identity fields", () => {
     );
     renderWithProviders(<ProfilePage />);
 
-    expect(screen.getByText("Socio #0")).toBeInTheDocument();
+    expect(screen.getByText("Miembro #0")).toBeInTheDocument();
   });
 });

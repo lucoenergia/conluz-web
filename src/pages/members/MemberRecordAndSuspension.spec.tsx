@@ -237,8 +237,8 @@ describe("editing a member record", () => {
 
   it.each([
     ["a blank name", /Nombre completo/, "   ", "Escribe el nombre completo"],
-    ["a negative number", "Número de socio", "-1", "Escribe un número entero igual o mayor que 0"],
-    ["a number that is not an integer", "Número de socio", "1.5", "Escribe un número entero igual o mayor que 0"],
+    ["a negative number", "Número de miembro", "-1", "Escribe un número entero igual o mayor que 0"],
+    ["a number that is not an integer", "Número de miembro", "1.5", "Escribe un número entero igual o mayor que 0"],
     ["an invalid email", "Email de contacto", "nope@", "Introduce un email válido"],
   ])("UI-MBR-003 rejects %s on its field and sends nothing", async (_case, label, value, message) => {
     const u = user();

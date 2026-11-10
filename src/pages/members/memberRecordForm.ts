@@ -195,7 +195,7 @@ export function registrationRefusalOf(error: unknown): MemberRecordRefusal {
   const personalId = personalIdRefusalOf(error);
   if (personalId) return personalId;
   if (getFirstApiErrorCode(error) === "MEMBERSHIP_ALREADY_EXISTS") {
-    return { form: getFirstApiErrorMessage(error, "Esta persona ya es miembro de la comunidad.") };
+    return { form: getFirstApiErrorMessage(error, "Ya es miembro de la comunidad.") };
   }
   switch (statusOf(error)) {
     case 403:
@@ -218,7 +218,7 @@ export function adminInvitationRefusalOf(error: unknown): MemberRecordRefusal {
   if (personalId) return personalId;
   switch (getFirstApiErrorCode(error)) {
     case "MEMBERSHIP_ALREADY_EXISTS":
-      return { form: getFirstApiErrorMessage(error, "Esta persona ya es miembro de la comunidad.") };
+      return { form: getFirstApiErrorMessage(error, "Ya es miembro de la comunidad.") };
     case "MEMBERSHIP_INVITATION_UNAVAILABLE":
       return {
         form: getFirstApiErrorMessage(error, "Ahora mismo no se pueden enviar invitaciones. Inténtalo más tarde."),

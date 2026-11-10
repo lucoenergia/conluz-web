@@ -87,7 +87,7 @@ async function openRegistration(u: ReturnType<typeof userEvent.setup>) {
 async function fill(
   u: ReturnType<typeof userEvent.setup>,
   dialog: HTMLElement,
-  fields: Partial<Record<"DNI/NIE/NIF" | "Nombre completo" | "Número de socio" | "Email de contacto" | "Dirección" | "Teléfono", string>>,
+  fields: Partial<Record<"DNI/NIE/NIF" | "Nombre completo" | "Número de miembro" | "Email de contacto" | "Dirección" | "Teléfono", string>>,
 ) {
   for (const [label, value] of Object.entries(fields)) {
     if (!value) continue;
@@ -116,7 +116,7 @@ describe("registering a member", () => {
     await fill(u, dialog, {
       "DNI/NIE/NIF": "12.345.678-z",
       "Nombre completo": "  Nuria Nueva  ",
-      "Número de socio": "12",
+      "Número de miembro": "12",
       "Email de contacto": "nuria@example.com",
     });
     await u.click(within(dialog).getByRole("button", { name: "Registrar" }));
@@ -280,8 +280,8 @@ describe("registering a member", () => {
     ["no name", { "DNI/NIE/NIF": "12345678Z" }, /^Nombre completo/, "Escribe el nombre completo"],
     [
       "a number that is not an integer",
-      { "DNI/NIE/NIF": "12345678Z", "Nombre completo": "Nuria Nueva", "Número de socio": "1.5" },
-      /^Número de socio/,
+      { "DNI/NIE/NIF": "12345678Z", "Nombre completo": "Nuria Nueva", "Número de miembro": "1.5" },
+      /^Número de miembro/,
       "Escribe un número entero igual o mayor que 0",
     ],
     [

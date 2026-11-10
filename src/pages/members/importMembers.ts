@@ -23,8 +23,8 @@ export const IMPORT_COLUMNS: readonly CsvImportColumn[] = [
   },
   {
     header: "memberNumber",
-    label: "Número de socio",
-    meaning: "Su número de socio en la comunidad: un número entero, 0 o mayor.",
+    label: "Número de miembro",
+    meaning: "Su número de miembro en la comunidad: un número entero, 0 o mayor.",
     required: false,
     example: "42",
   },

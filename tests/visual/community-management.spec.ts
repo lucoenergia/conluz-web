@@ -177,7 +177,7 @@ test.describe("Visual baselines", () => {
       const dialog = await openSend(page);
       await dialog.getByRole("button", { name: "Enviar invitación (9)" }).click();
       await expect(
-        dialog.getByRole("list", { name: "Personas a las que no se ha enviado" }).getByRole("listitem"),
+        dialog.getByRole("list", { name: "Miembros a los que no se ha enviado" }).getByRole("listitem"),
       ).toHaveCount(5);
       await stabilizePage(page);
 

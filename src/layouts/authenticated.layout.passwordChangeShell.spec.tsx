@@ -45,7 +45,7 @@ vi.mock(import("../http/custom-instance"), async (importOriginal) => ({
 
 const MEMBER = buildCurrentUser({
   id: "user-1",
-  fullName: "Ana Socia",
+  fullName: "Ana Sánchez",
   memberships: { "community-a": CommunityRole.COMMUNITY_MEMBER },
   mustChangePassword: false,
 });
