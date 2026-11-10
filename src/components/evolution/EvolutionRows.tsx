@@ -320,10 +320,10 @@ export const EnergyEvolutionRows: FC<{
   );
 };
 
-/** Below sm, the savings chart: a row per slot, with its bar and its amount. */
-export const SavingsEvolutionRows: FC<{ view: EvolutionView<string>; look: SeriesLook<string>; copy: EvolutionCopy }> = ({
+/** Below sm, the savings chart of a series that has savings: a row per slot, with its bar and its amount. */
+export const SavingsEvolutionRows: FC<{ view: EvolutionView<string>; savings: NonNullable<SeriesLook<string>["savings"]>; copy: EvolutionCopy }> = ({
   view,
-  look,
+  savings,
   copy,
 }) => {
   const scaleEnd = view.rowScale.savingsEur;
@@ -345,7 +345,7 @@ export const SavingsEvolutionRows: FC<{ view: EvolutionView<string>; look: Serie
                 sx={{
                   height: 10,
                   width: share(slot.savingsEur, scaleEnd),
-                  bgcolor: look.savings.color,
+                  bgcolor: savings.color,
                 }}
               />
               {slot.state.kind === "partial" && <StateMark kind="asterisk" />}

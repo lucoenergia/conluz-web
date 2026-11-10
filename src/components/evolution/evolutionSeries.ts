@@ -45,6 +45,26 @@ export type SlotState =
 /** What a bucket says about its own state, before its figures are read: a gap, a partial slot, or nothing to report. */
 export type SlotSignal = { kind: "gap" } | { kind: "partial"; reported: number; total: number } | null;
 
+/**
+ * A bucket that counts the supplies it adds up (#401): a gap when none
+ * reported, partial when only some did.
+ */
+export function supplyCountSignal({ suppliesWithData, supplyCount }: { suppliesWithData: number; supplyCount: number }): SlotSignal {
+  if (suppliesWithData === 0) return { kind: "gap" };
+  if (suppliesWithData < supplyCount) return { kind: "partial", reported: suppliesWithData, total: supplyCount };
+  return null;
+}
+
+/**
+ * A bucket that counts the hours it adds up (#401): a gap when no hour has
+ * data, partial when only some do.
+ */
+export function hoursSignal({ hoursWithData, expectedHours }: { hoursWithData: number; expectedHours: number }): SlotSignal {
+  if (hoursWithData === 0) return { kind: "gap" };
+  if (hoursWithData < expectedHours) return { kind: "partial", reported: hoursWithData, total: expectedHours };
+  return null;
+}
+
 /** The hour an hourly slot stands for (#378). */
 export interface SlotHour {
   /** The instant it starts at, in the app's time zone with its offset: "2026-10-25T02:00:00+01:00". */
@@ -76,10 +96,10 @@ export interface SavingsDefinition<B> {
   isZero: (bucket: B) => boolean;
 }
 
-/** How the charts draw a series: its segments, in order, and its savings. */
+/** How the charts draw a series: its segments, in order, and its savings, if it has any. */
 export interface SeriesLook<K extends string> {
   segments: readonly SegmentDefinition<K>[];
-  savings: { label: string; color: string };
+  savings?: { label: string; color: string };
 }
 
 /** A series: what its buckets hold, where each sits on the axis, and how each marks its state. */
@@ -91,7 +111,8 @@ export interface SeriesDefinition<B, K extends string> extends SeriesLook<K> {
    */
   read: (bucket: B) => { timeKey: string | null; values: Record<K, number> };
   signal: (bucket: B) => SlotSignal;
-  savings: SavingsDefinition<B>;
+  /** Without it, no savings are read or drawn, and no price is asked for. */
+  savings?: SavingsDefinition<B>;
 }
 
 /** The words of a series' evolution charts, in its page's voice. */
@@ -146,6 +167,7 @@ export interface EvolutionSlot<K extends string> {
    * the chart draws, since a bucket carries no total (UI-HIS-025). Null on a gap.
    */
   total: number | null;
+  /** Null on a gap, and on every slot of a series without savings. */
   savingsEur: number | null;
   savingsText: string | null;
   /** The savings are a measured 0. */
@@ -164,6 +186,7 @@ export interface EvolutionView<K extends string> {
   slots: EvolutionSlot<K>[];
   categories: string[];
   energySeries: ChartSeries[];
+  /** Empty for a series without savings. */
   savingsSeries: ChartSeries[];
   energyAnnotations: ApexOptions["annotations"];
   savingsAnnotations: ApexOptions["annotations"];
@@ -376,15 +399,16 @@ function slotOf<B, K extends string>(
   }
   const { values } = definition.read(bucket);
   const [firstGroup] = groupsOf(definition.segments);
-  const savingsEur = definition.savings.read(bucket);
+  const { savings } = definition;
+  const savingsEur = savings ? savings.read(bucket) : null;
   return {
     ...base,
     values: byKey((segment) => values[segment]),
     texts: byKey((segment) => kilowattHoursText(values[segment])),
     total: firstGroup.reduce((sum, { key: segment }) => sum + values[segment], 0),
     savingsEur,
-    savingsText: eurosText(savingsEur),
-    savingsZero: definition.savings.isZero(bucket),
+    savingsText: savingsEur === null ? null : eurosText(savingsEur),
+    savingsZero: !!savings && savings.isZero(bucket),
   };
 }
 
@@ -564,17 +588,19 @@ export function toEvolutionView<B, K extends string>(
     slots,
     categories: slots.map((slot) => slot.key),
     energySeries: definition.segments.map(({ key, label, group }) => ({ name: label, group, data: slots.map((slot) => slot.values[key]) })),
-    savingsSeries: [{ name: definition.savings.label, group: SAVINGS_GROUP, data: slots.map((slot) => slot.savingsEur) }],
+    savingsSeries: definition.savings ? [{ name: definition.savings.label, group: SAVINGS_GROUP, data: slots.map((slot) => slot.savingsEur) }] : [],
     energyAnnotations: annotationsFor(
       slots,
       (slot) => slot.state.kind === "measuredZero",
       (slot) => groupSum(slot, groups[0]) ?? 0,
     ),
-    savingsAnnotations: annotationsFor(
-      slots,
-      (slot) => slot.savingsZero,
-      (slot) => slot.savingsEur ?? 0,
-    ),
+    savingsAnnotations: definition.savings
+      ? annotationsFor(
+          slots,
+          (slot) => slot.savingsZero,
+          (slot) => slot.savingsEur ?? 0,
+        )
+      : undefined,
     coverageText: coverageTextOf(slots, period),
     gapsNotice: gapsNoticeOf(slots, granularity),
     partialNotice: partialNoticeOf(slots, granularity, copy.partialNotice),

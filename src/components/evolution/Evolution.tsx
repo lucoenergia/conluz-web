@@ -49,14 +49,18 @@ export interface EvolutionProps {
   copy: EvolutionCopy;
   /** The page's own lines about the scope, in every tooltip and row detail. */
   extraLines: readonly string[];
-  /** The price the savings were estimated with, shown above the savings chart. */
+  /**
+   * The price the savings were estimated with, shown above the savings chart.
+   * Mounted only when the series has savings, so a label that asks for its
+   * price asks for nothing otherwise.
+   */
   priceLabel: ReactNode;
 }
 
 /**
  * The body of an evolution card (#250, #401): the period's coverage and
  * notices, the energy chart with its legend and caption, the savings chart
- * with its price, and the key to the marks. From sm up the charts are
+ * with its price when the series has savings, and the key to the marks. From sm up the charts are
  * charts; below it, rows, and the page scrolls only vertically (UI-HIS-025).
  * The page puts it in its card, under `copy.title`.
  */
@@ -64,6 +68,7 @@ export const Evolution: FC<EvolutionProps> = ({ view, look, copy, extraLines, pr
   const theme = useTheme();
   const isWide = useMediaQuery(theme.breakpoints.up("sm"), { noSsr: true });
   const segment = (key: string) => look.segments.find((candidate) => candidate.key === key)!;
+  const { savings } = look;
   return (
     <>
       <Typography variant="body2" sx={{ color: colors.text.subtle }}>
@@ -88,9 +93,17 @@ export const Evolution: FC<EvolutionProps> = ({ view, look, copy, extraLines, pr
       ) : (
         <EnergyEvolutionRows view={view} look={look} copy={copy} extraLines={extraLines} />
       )}
-      <SeriesLegend items={[{ label: look.savings.label, swatch: swatch.solid(look.savings.color) }]} />
-      {priceLabel}
-      {isWide ? <SavingsEvolutionChart view={view} look={look} extraLines={extraLines} /> : <SavingsEvolutionRows view={view} look={look} copy={copy} />}
+      {savings && (
+        <>
+          <SeriesLegend items={[{ label: savings.label, swatch: swatch.solid(savings.color) }]} />
+          {priceLabel}
+          {isWide ? (
+            <SavingsEvolutionChart view={view} look={look} savings={savings} extraLines={extraLines} />
+          ) : (
+            <SavingsEvolutionRows view={view} savings={savings} copy={copy} />
+          )}
+        </>
+      )}
       <MarkerKey />
     </>
   );

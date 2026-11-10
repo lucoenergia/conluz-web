@@ -18,9 +18,14 @@ export const EnergyEvolutionChart: FC<EvolutionChartProps> = ({ view, look, extr
   </ChartScrollArea>
 );
 
-/** Draws the savings chart exactly as the view says. */
-export const SavingsEvolutionChart: FC<EvolutionChartProps> = ({ view, look, extraLines }) => (
+/** Draws the savings chart exactly as the view says, for a series that has savings. */
+export const SavingsEvolutionChart: FC<EvolutionChartProps & { savings: NonNullable<SeriesLook<string>["savings"]> }> = ({
+  view,
+  look,
+  savings,
+  extraLines,
+}) => (
   <ChartScrollArea minWidth={view.minChartWidth}>
-    <Chart type="bar" height={160} width="100%" options={savingsChartOptions(view, look, extraLines)} series={view.savingsSeries} />
+    <Chart type="bar" height={160} width="100%" options={savingsChartOptions(view, look, savings, extraLines)} series={view.savingsSeries} />
   </ChartScrollArea>
 );

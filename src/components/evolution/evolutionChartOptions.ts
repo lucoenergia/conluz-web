@@ -35,7 +35,7 @@ export function slotDetail<K extends string>(
 ): { title: string; lines: string[]; figures: SlotFigure[] } {
   const rows: [string, string | undefined, string, string | null][] = [
     ...look.segments.map(({ key, label, technicalTerm, color }) => [label, technicalTerm, color, slot.texts[key]] as [string, string | undefined, string, string | null]),
-    [look.savings.label, undefined, look.savings.color, slot.savingsText],
+    ...(look.savings ? [[look.savings.label, undefined, look.savings.color, slot.savingsText] as [string, undefined, string, string | null]] : []),
   ];
   return {
     title: slot.name,
@@ -110,10 +110,16 @@ export function energyChartOptions<K extends string>(view: EvolutionView<K>, loo
   };
 }
 
-export function savingsChartOptions<K extends string>(view: EvolutionView<K>, look: SeriesLook<K>, extraLines: readonly string[]): ApexOptions {
+/** The savings chart of a series that has savings: `savings` is its look's. */
+export function savingsChartOptions<K extends string>(
+  view: EvolutionView<K>,
+  look: SeriesLook<K>,
+  savings: NonNullable<SeriesLook<K>["savings"]>,
+  extraLines: readonly string[],
+): ApexOptions {
   return {
     ...baseOptions(view, look, extraLines, view.savingsAnnotations),
-    colors: [look.savings.color],
+    colors: [savings.color],
     plotOptions: { bar: { columnWidth: "50%", borderRadius: 2, borderRadiusApplication: "end" } },
     yaxis: { labels: { style: { colors: colors.text.secondary }, formatter: formatEuros } },
   };
