@@ -14,6 +14,7 @@ import { ContactChannelReorderList, type ContactChannelReorderStatus } from "../
 import { EmptyState } from "../../components/EmptyState";
 import { SectionHeading } from "../../components/SectionHeading";
 import type { CommunityRowActions } from "../../hooks/actions/useCommunityActions";
+import { useOpenerRecord } from "../../hooks/useOverlayOpener";
 import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
 import {
@@ -79,7 +80,7 @@ export const ManagedContactChannels: FC<ManagedContactChannelsProps> = ({
   // The in-flight flag the handlers read: state would let a second press in
   // before the first one's render.
   const inFlight = useRef(false);
-  const opener = useRef<HTMLElement | null>(null);
+  const { opener, record: recordOpener } = useOpenerRecord();
   const nextKey = useRef(0);
 
   useEffect(() => {
@@ -102,7 +103,7 @@ export const ManagedContactChannels: FC<ManagedContactChannelsProps> = ({
 
   const open = (next: { mode: "edit"; index: number } | { mode: "add" }) => {
     if (inFlight.current) return;
-    opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    recordOpener();
     setStatus("idle");
     setFieldErrors(undefined);
     setSheet({ ...next, snapshot: toContactChannelDrafts(channels), key: nextKey.current++ });
@@ -185,7 +186,7 @@ export const ManagedContactChannels: FC<ManagedContactChannelsProps> = ({
 
   const startOrdering = () => {
     if (inFlight.current) return;
-    opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    recordOpener();
     setOrderStatus("idle");
     setOrdering(channels);
   };

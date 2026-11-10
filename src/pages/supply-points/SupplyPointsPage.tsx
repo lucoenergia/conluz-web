@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FC, type MouseEvent, type SyntheticEvent } from "react";
+import { useMemo, useState, type FC, type MouseEvent, type SyntheticEvent } from "react";
 import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
@@ -31,6 +31,7 @@ import { useActiveCommunity } from "../../context/community.context";
 import { isSupplyOutsideActiveCommunity } from "./supplyCommunityScope";
 import { useCommunityActions, useSupplyActions } from "../../hooks/actions";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
+import { useOverlayOpener } from "../../hooks/useOverlayOpener";
 import { SupplyDeletionDialog } from "./SupplyDeletionDialog";
 import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 import { useActiveCommunityCapabilities } from "../../hooks/permissions";
@@ -59,7 +60,7 @@ export const SupplyPointsPage: FC = () => {
   // opened it: the create button, or the row's kebab, since the menu item
   // that opened an edit is gone by the time the form closes.
   const [supplyFormTarget, setSupplyFormTarget] = useState<SupplyFormTarget | null>(null);
-  const supplyFormOpener = useRef<HTMLElement | null>(null);
+  const supplyFormOpener = useOverlayOpener(!!supplyFormTarget);
   const [searchParams] = useSearchParams();
   const personId = searchParams.get("personId");
 
@@ -189,17 +190,11 @@ export const SupplyPointsPage: FC = () => {
     if (await action.run()) setStatusChange({ supplyId, kind, step: "done" });
   };
 
-  const openSupplyForm = (target: SupplyFormTarget, opener: HTMLElement | null) => {
-    supplyFormOpener.current = opener;
+  // Without an opener, the control holding focus.
+  const openSupplyForm = (target: SupplyFormTarget, opener?: HTMLElement | null) => {
+    supplyFormOpener.record(opener);
     setSupplyFormTarget(target);
   };
-  // After the form has unmounted, so the overlay's own focus restoration,
-  // aimed at the vanished menu item, has already run.
-  useEffect(() => {
-    if (supplyFormTarget || !supplyFormOpener.current) return;
-    supplyFormOpener.current.focus();
-    supplyFormOpener.current = null;
-  }, [supplyFormTarget]);
 
   const handleOpenImportModal = () => {
     setShowImportModal(true);
@@ -361,7 +356,7 @@ export const SupplyPointsPage: FC = () => {
                     ? {
                         label: "Crear Punto de Suministro",
                         onClick: () =>
-                          openSupplyForm({ kind: "create" }, document.activeElement as HTMLElement | null),
+                          openSupplyForm({ kind: "create" }),
                         startIcon: <AddCircleOutlineIcon />,
                       }
                     : undefined

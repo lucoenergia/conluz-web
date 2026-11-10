@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FC, type MouseEvent } from "react";
+import { useMemo, useState, type FC, type MouseEvent } from "react";
 import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
@@ -20,6 +20,7 @@ import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { useActiveCommunity } from "../../context/community.context";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
+import { useOverlayOpener } from "../../hooks/useOverlayOpener";
 import { useCommunityActions, usePlantActions } from "../../hooks/actions";
 import { offersPlantRowActions, plantTableColumns, plantTableTitle, toRecordListItem } from "./plantRows";
 import { PlantRowMenu } from "./PlantRowMenu";
@@ -38,7 +39,7 @@ export const PlantsPage: FC = () => {
   // create button, or the row's kebab, since the menu item that opened an edit
   // is gone by the time the form closes.
   const [plantFormTarget, setPlantFormTarget] = useState<PlantFormTarget | null>(null);
-  const plantFormOpener = useRef<HTMLElement | null>(null);
+  const plantFormOpener = useOverlayOpener(!!plantFormTarget);
   const activeCommunityId = useActiveCommunity();
   const { data: { items: responseFromApi = [] } = {}, isLoading, error, refetch } = useGetAllPlants(
     activeCommunityId ?? "",
@@ -94,17 +95,11 @@ export const PlantsPage: FC = () => {
   const handleMenuClose = () => setMenuAnchor(null);
   const menuPlant = plantById(menuPlantId);
 
-  const openPlantForm = (target: PlantFormTarget, opener: HTMLElement | null) => {
-    plantFormOpener.current = opener;
+  // Without an opener, the control holding focus.
+  const openPlantForm = (target: PlantFormTarget, opener?: HTMLElement | null) => {
+    plantFormOpener.record(opener);
     setPlantFormTarget(target);
   };
-  // After the form has unmounted, so the overlay's own focus restoration,
-  // aimed at the vanished menu item, has already run.
-  useEffect(() => {
-    if (plantFormTarget || !plantFormOpener.current) return;
-    plantFormOpener.current.focus();
-    plantFormOpener.current = null;
-  }, [plantFormTarget]);
 
   return (
     <Box
@@ -217,7 +212,7 @@ export const PlantsPage: FC = () => {
                     ? {
                         label: "Crear Planta",
                         onClick: () =>
-                          openPlantForm({ kind: "create" }, document.activeElement as HTMLElement | null),
+                          openPlantForm({ kind: "create" }),
                         startIcon: <AddCircleOutlineIcon />,
                       }
                     : undefined

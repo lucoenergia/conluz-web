@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FC } from "react";
+import { useRef, useState, type FC } from "react";
 import { useNavigate } from "react-router";
 import { useTheme, alpha } from "@mui/material/styles";
 import {
@@ -33,6 +33,7 @@ import { useGetAllCommunities } from "../../api/communities/communities";
 import type { CommunityResponse } from "../../api/models";
 import { useCommunityActions, usePlatformActions } from "../../hooks/actions";
 import { Can, outcomeFromResource } from "../../hooks/permissions";
+import { useOverlayOpener } from "../../hooks/useOverlayOpener";
 import { CommunityFormDialog, type CommunityFormTarget } from "./CommunityFormDialog";
 import { CommunityContactDialog } from "./CommunityContactDialog";
 
@@ -104,7 +105,7 @@ export const CommunitiesPage: FC = () => {
   const [communityFormTarget, setCommunityFormTarget] = useState<CommunityFormTarget | null>(null);
   // The id, not the row, for the same reason as the menu's.
   const [contactCommunityId, setContactCommunityId] = useState<string | null>(null);
-  const overlayOpener = useRef<HTMLElement | null>(null);
+  const overlayOpener = useOverlayOpener(!!communityFormTarget || !!contactCommunityId);
 
   // What this caller may do, as the backend answers it. forCommunity is a plain
   // function rather than a hook precisely so it can be asked once per row, and
@@ -162,17 +163,9 @@ export const CommunitiesPage: FC = () => {
     communities.find((community) => String(community.id ?? "") === item.id);
 
   const openCommunityForm = (target: CommunityFormTarget, opener: HTMLElement | null) => {
-    overlayOpener.current = opener;
+    overlayOpener.record(opener);
     setCommunityFormTarget(target);
   };
-  // After the overlay has unmounted, so the overlay's own focus restoration,
-  // aimed at the vanished menu item, has already run.
-  const overlayOpen = !!communityFormTarget || !!contactCommunityId;
-  useEffect(() => {
-    if (overlayOpen || !overlayOpener.current) return;
-    overlayOpener.current.focus();
-    overlayOpener.current = null;
-  }, [overlayOpen]);
 
   const handleEditClick = () => {
     const kebab = anchorEl;
@@ -186,7 +179,7 @@ export const CommunitiesPage: FC = () => {
     const kebab = anchorEl;
     handleMenuClose();
     if (selectedCommunity?.id) {
-      overlayOpener.current = kebab;
+      overlayOpener.record(kebab);
       setContactCommunityId(selectedCommunity.id);
     }
   };
