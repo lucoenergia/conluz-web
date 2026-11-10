@@ -36,7 +36,7 @@ export interface CalendarDay extends CalendarMonth {
 export type Anchor = { kind: "month"; month: CalendarMonth } | { kind: "day"; day: CalendarDay };
 
 /** A preset's query value. Each page offers its own list of presets (`PresetDefinition`). */
-export type PresetKind = "latest" | "year" | "last12";
+export type PresetKind = "latest" | "year" | "last12" | "last7" | "last30";
 
 /** What the caller picked. A custom range's days are both included, as the user reads them. */
 export type PeriodSelection = { kind: PresetKind } | { kind: "custom"; from: CalendarDay; to: CalendarDay };
@@ -259,15 +259,20 @@ function granularityOf(pickedDays: number, hourlyAllowed: boolean): Granularity 
  * month by month, so the totals and the monthly buckets cover the same period
  * (ADR-0005). The cap applies to the snapped period, which is what gets
  * requested.
+ *
+ * Widening never moves the end past the anchor's last day (`end`): under a
+ * month anchor the last month is whole anyway; under a day anchor it ends at
+ * that day, and its bucket is partial.
  */
-function resolveRange(from: CalendarDay, to: CalendarDay, hourlyAllowed = false): PeriodResolution {
+function resolveRange(from: CalendarDay, to: CalendarDay, end: CalendarDay, hourlyAllowed = false): PeriodResolution {
   const pickedDays = calendarDayCount(from, to);
   const granularity = granularityOf(pickedDays, hourlyAllowed);
   const months = monthIndex(to) - monthIndex(from) + 1;
   if (granularity === "monthly" && months > MAX_MONTHS) return { status: "tooLong", pickedDays };
 
   const first = granularity === "monthly" ? firstDayOf(from) : from;
-  const last = granularity === "monthly" ? lastDayOf(to) : to;
+  const monthEnd = lastDayOf(to);
+  const last = granularity !== "monthly" ? to : compareDays(monthEnd, end) <= 0 ? monthEnd : end;
   const { label, title } = describe(first, last, granularity);
   const moved = compareDays(first, from) !== 0 || compareDays(last, to) !== 0;
 
@@ -287,8 +292,9 @@ function resolveRange(from: CalendarDay, to: CalendarDay, hourlyAllowed = false)
  * One that runs backwards or ends after the anchor cannot be requested.
  */
 export function resolveCustomRange(anchor: Anchor, from: CalendarDay, to: CalendarDay): PeriodResolution {
-  if (compareDays(from, to) > 0 || compareDays(to, anchorEnd(anchor)) > 0) return { status: "unpickable" };
-  return resolveRange(from, to, true);
+  const end = anchorEnd(anchor);
+  if (compareDays(from, to) > 0 || compareDays(to, end) > 0) return { status: "unpickable" };
+  return resolveRange(from, to, end, true);
 }
 
 /**
@@ -301,7 +307,7 @@ export function resolvePeriod(anchor: Anchor, selection: PeriodSelection, preset
   const preset = offeredPresets(presets, anchor).find(({ value }) => value === selection.kind);
   if (!preset) return { status: "unpickable" };
   const { from, to } = preset.range(anchor);
-  return resolveRange(from, to);
+  return resolveRange(from, to, anchorEnd(anchor));
 }
 
 /** "62 días: se mostrará por días.", what the range picker says before it is applied. */
@@ -367,6 +373,34 @@ export const LAST_12: PresetDefinition = {
   name: () => "Últimos 12 meses",
   accepts: ["month"],
   range: (anchor) => ({ from: firstDayOf(addMonths(anchorMonth(anchor), -11)), to: anchorEnd(anchor) }),
+};
+
+/** "Últimos 7 días": the anchor day and the six before it. */
+export const LAST_7: PresetDefinition = {
+  value: "last7",
+  name: () => "Últimos 7 días",
+  accepts: ["day"],
+  range: (anchor) => ({ from: addDays(anchorEnd(anchor), -6), to: anchorEnd(anchor) }),
+};
+
+/** "Últimos 30 días": the anchor day and the 29 before it. */
+export const LAST_30: PresetDefinition = {
+  value: "last30",
+  name: () => "Últimos 30 días",
+  accepts: ["day"],
+  range: (anchor) => ({ from: addDays(anchorEnd(anchor), -29), to: anchorEnd(anchor) }),
+};
+
+/**
+ * "Año {año}" under a day anchor: the anchor's own year, from 1 January to the
+ * anchor day. Its query value is the month anchor's year preset's: a page
+ * offers one or the other, never both.
+ */
+export const DAY_YEAR: PresetDefinition = {
+  value: "year",
+  name: (anchor) => yearPresetName(anchorEnd(anchor)),
+  accepts: ["day"],
+  range: (anchor) => ({ from: { year: anchorEnd(anchor).year, month: 1, day: 1 }, to: anchorEnd(anchor) }),
 };
 
 /**
