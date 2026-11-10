@@ -114,7 +114,7 @@ call-site opt-in. `.light` is the vivid tone — never put small text on it.
 ### Accent
 | Token | Value | Use |
 |---|---|---|
-| `colors.accent.violet` | `#8050e8` | Production figures — 4.96:1 |
+| `colors.accent.violet` | `#8050e8` | The plant supply's mark (UI-SUP-012) — 4.96:1. Production figures use `ENERGY_COLORS.assigned` |
 | `colors.accent.blue` | `#286cdb` | Consumption figures — 4.93:1 |
 | `colors.accent.cyan` | `#0078ac` | Integration provider marks — 4.90:1 |
 | `colors.accent.violetDeep` | `#5826b1` | Dark tone for a mark beside a lighter one — 9.02:1, 7.90:1 on its own tint |
