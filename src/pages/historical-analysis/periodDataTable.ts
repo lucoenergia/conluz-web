@@ -1,5 +1,5 @@
-import type { SlotView } from "./consumptionSeries";
-import type { Granularity } from "./historicalPeriod";
+import type { SlotView } from "../../components/evolution/consumptionSeries";
+import type { Granularity } from "../../components/period/historicalPeriod";
 
 /** Rows shown before "Ver todos". */
 export const PAGE_SIZE = 7;

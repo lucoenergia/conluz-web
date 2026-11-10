@@ -75,15 +75,14 @@ import {
 } from "../../api/memberships/memberships";
 import { getCommunityById, useGetCommunityById } from "../../api/communities/communities";
 import { HistoricalAnalysisPage } from "./HistoricalAnalysisPage";
+import { HOME, supplyBucket } from "../../components/evolution/consumptionSeries.testData";
 import {
   COMMUNITY_ID,
-  HOME,
   OWNER_ID,
   SEPTEMBER_2026,
   derivedMembershipFigures,
   derivedSupplyFigures,
   membershipLatest,
-  supplyBucket,
   supplyLatest,
 } from "./historicalAnalysis.testData";
 

@@ -45,12 +45,12 @@ import { getMembershipEnergyMetrics, useGetMembershipEnergyMetrics } from "../..
 import { useActiveCommunity } from "../../context/community.context";
 import { useCommunitySwitchRedirect } from "../../hooks/useCommunitySwitchRedirect";
 import { HistoricalAnalysisPage } from "./HistoricalAnalysisPage";
+import { HOME } from "../../components/evolution/consumptionSeries.testData";
 import {
   AUGUST_2026,
   COMMUNITY_ID,
   DECEMBER_2025,
   GARAGE,
-  HOME,
   NOTHING_PUBLISHED,
   OWNER_ID,
   SEPTEMBER_2026,

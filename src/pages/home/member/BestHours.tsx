@@ -10,7 +10,7 @@ import { NeutralNotice } from "../../../components/EnergyFigures/NeutralNotice";
 import { BestHoursChart } from "./BestHoursChart";
 import { ENERGY_COLORS, swatch } from "../../../components/EnergyFigures/energyColors";
 import { BEST_HOURS_LABEL, CONSUMPTION_SERIES, PRODUCTION_SERIES, toHourlyProfileView, type HourlyProfileView } from "./hourlyProfile";
-import { SeriesLegend } from "./SeriesLegend";
+import { SeriesLegend } from "../../../components/evolution/SeriesLegend";
 import { useHourlyProfile } from "./useHourlyProfile";
 
 /** The heading says what the hours are best for; it also names the block's region. */

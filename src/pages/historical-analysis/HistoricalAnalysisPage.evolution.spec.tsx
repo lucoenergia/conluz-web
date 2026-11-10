@@ -60,26 +60,28 @@ import {
   useGetMembershipMonthlyConsumption,
 } from "../../api/memberships/memberships";
 import { HistoricalAnalysisPage } from "./HistoricalAnalysisPage";
-import { MEASURED_ZERO_EUR_TEXT, SELF_CONSUMPTION_SERIES, SAVINGS_SERIES } from "./consumptionSeries";
+import { MEASURED_ZERO_EUR_TEXT, SELF_CONSUMPTION_SERIES, SAVINGS_SERIES } from "../../components/evolution/consumptionSeries";
 import { ENERGY_COLORS, SAVINGS_COLOR } from "../../components/EnergyFigures/energyColors";
 import {
-  COMMUNITY_ID,
   HOME,
+  membershipDay,
+  membershipGapDay,
+  membershipMonth,
+  membershipPartialDay,
+  supplyBucket,
+  supplyGapDay,
+  supplyMeasuredZeroDay,
+} from "../../components/evolution/consumptionSeries.testData";
+import {
+  COMMUNITY_ID,
   OWNER_ID,
   PLANT_SUPPLY,
   SEPTEMBER_2026,
   derivedMembershipFigures,
   derivedSupplyFigures,
   member,
-  membershipDay,
-  membershipGapDay,
   membershipLatest,
-  membershipMonth,
-  membershipPartialDay,
-  supplyBucket,
-  supplyGapDay,
   supplyLatest,
-  supplyMeasuredZeroDay,
 } from "./historicalAnalysis.testData";
 
 const DAILY_TITLE = "Tu energía día a día";

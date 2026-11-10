@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import Chart from "react-apexcharts";
-import { ChartScrollArea } from "../home/member/ChartScrollArea";
+import { ChartScrollArea } from "./ChartScrollArea";
 import type { ConsumptionSeriesView } from "./consumptionSeries";
 import { energyChartOptions, savingsChartOptions } from "./evolutionChartOptions";
 

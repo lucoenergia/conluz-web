@@ -1,5 +1,11 @@
 import type { ApexOptions } from "apexcharts";
-import type { MembershipHourlyConsumptionBucketResponse, SupplyConsumptionBucketResponse } from "../../api/models";
+import type {
+  MembershipDailyConsumptionBucketResponse,
+  MembershipHourlyConsumptionBucketResponse,
+  MembershipMonthlyConsumptionBucketResponse,
+  SupplyConsumptionBucketResponse,
+  SupplyHourlyConsumptionBucketResponse,
+} from "../../api/models";
 import {
   formatCalendarDay,
   formatCalendarMonth,
@@ -22,10 +28,18 @@ import {
   type CalendarDay,
   type Granularity,
   type HistoricalPeriod,
-} from "./historicalPeriod";
+} from "../period/historicalPeriod";
 import { slotStateText } from "./slotStateText";
 import { localIsoAt, wallTimeAt } from "../../utils/zonedTime";
-import type { ConsumptionSeries } from "./usePeriodConsumptionSeries";
+
+/** The buckets of the selected scope and granularity, tagged by the series they came from: each marks its states its own way. */
+export type ConsumptionSeries =
+  | { kind: "membershipHourly"; buckets: MembershipHourlyConsumptionBucketResponse[] }
+  | { kind: "membershipDaily"; buckets: MembershipDailyConsumptionBucketResponse[] }
+  | { kind: "membershipMonthly"; buckets: MembershipMonthlyConsumptionBucketResponse[] }
+  | { kind: "supplyHourly"; buckets: SupplyHourlyConsumptionBucketResponse[] }
+  | { kind: "supplyDaily"; buckets: SupplyConsumptionBucketResponse[] }
+  | { kind: "supplyMonthly"; buckets: SupplyConsumptionBucketResponse[] };
 
 /**
  * What a slot of the axis stands for. When several signals coincide, the

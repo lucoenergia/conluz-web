@@ -15,7 +15,7 @@ import {
   type MonthlySeriesView,
 } from "./monthlySeries";
 import { ENERGY_COLORS, SAVINGS_COLOR, swatch } from "../../../components/EnergyFigures/energyColors";
-import { SeriesLegend } from "./SeriesLegend";
+import { SeriesLegend } from "../../../components/evolution/SeriesLegend";
 import { TwelveMonthChart } from "./TwelveMonthChart";
 import { useMemberEnergyMetrics, type ReferencePeriod } from "./useMemberEnergyMetrics";
 import { useTwelveMonthSeries } from "./useTwelveMonthSeries";

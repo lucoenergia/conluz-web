@@ -1,7 +1,7 @@
 import { useGetSupplyEnergyMetrics } from "../../api/supplies/supplies";
 import { GetSupplyEnergyMetricsPeriod, type SupplyEnergyMetricsResponse, type SupplyResponse } from "../../api/models";
 import { outcomeFromResource } from "../../hooks/permissions";
-import { anchorFromPeriodStart, type CalendarMonth } from "../historical-analysis/historicalPeriod";
+import { anchorFromPeriodStart, type CalendarMonth } from "../../components/period/historicalPeriod";
 
 export type SupplyLatestMonth =
   /** The supply does not open its figures to this caller, so nothing is asked. */

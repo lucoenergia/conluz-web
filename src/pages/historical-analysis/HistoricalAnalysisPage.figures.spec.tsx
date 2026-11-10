@@ -41,10 +41,10 @@ import { getSupplyEnergyMetrics, useGetSupplyEnergyMetrics } from "../../api/sup
 import { getMembershipEnergyMetrics, useGetMembershipEnergyMetrics } from "../../api/memberships/memberships";
 import { HistoricalAnalysisPage } from "./HistoricalAnalysisPage";
 import { usePeriodConsumptionSeries } from "./usePeriodConsumptionSeries";
+import { HOME, membershipDay, membershipGapDay } from "../../components/evolution/consumptionSeries.testData";
 import {
   COMMUNITY_ID,
   GARAGE,
-  HOME,
   NOTHING_PUBLISHED,
   OWNER_ID,
   PLANT_SUPPLY,
@@ -52,8 +52,6 @@ import {
   derivedMembershipFigures,
   derivedSupplyFigures,
   member,
-  membershipDay,
-  membershipGapDay,
   membershipLatest,
   supplyLatest,
 } from "./historicalAnalysis.testData";

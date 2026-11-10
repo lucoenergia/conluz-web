@@ -12,7 +12,7 @@ import { plantSupplyNotice } from "../../components/EnergyFigures/periodUsage";
 import { outcomeFromResource } from "../../hooks/permissions";
 import { colors } from "../../theme/tokens";
 import { HISTORICAL_ANALYSIS_PATH, SUPPLY_ID_PARAM } from "../../utils/routes";
-import { resolvePeriod, type CalendarMonth } from "../historical-analysis/historicalPeriod";
+import { resolvePeriod, type CalendarMonth } from "../../components/period/historicalPeriod";
 import { useSupplyLatestMonth } from "./useSupplyLatestMonth";
 
 const TITLE = "Último mes publicado";

@@ -13,7 +13,7 @@ import {
   toConsumptionSeriesView,
   type SlotView,
 } from "./consumptionSeries";
-import type { HistoricalPeriod } from "./historicalPeriod";
+import type { HistoricalPeriod } from "../period/historicalPeriod";
 import {
   HOME,
   hoursOf,
@@ -30,7 +30,7 @@ import {
   supplyBucket,
   supplyGapDay,
   supplyMeasuredZeroDay,
-} from "./historicalAnalysis.testData";
+} from "./consumptionSeries.testData";
 
 const period = (startDate: string, endDate: string, granularity: HistoricalPeriod["granularity"], label = "Periodo"): HistoricalPeriod => ({
   startDate,

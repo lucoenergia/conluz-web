@@ -2,7 +2,7 @@ import type { FC } from "react";
 import { Box, Chip, Typography } from "@mui/material";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import { colors } from "../../theme/tokens";
-import { monthYearName, type CalendarMonth, type PeriodResolution } from "../../pages/historical-analysis/historicalPeriod";
+import { monthYearName, type CalendarMonth, type PeriodResolution } from "../period/historicalPeriod";
 
 const GRANULARITY_LABEL = { hourly: "Por horas", daily: "Por días", monthly: "Por meses" } as const;
 

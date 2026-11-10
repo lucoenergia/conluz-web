@@ -8,7 +8,7 @@ import { HomeCard } from "../home/HomeCard";
 import { NeutralNotice } from "../../components/EnergyFigures/NeutralNotice";
 import { ENERGY_COLORS, SAVINGS_COLOR, swatch } from "../../components/EnergyFigures/energyColors";
 import { EstimatedPriceLabel } from "../../components/EnergyFigures/EstimatedPriceLabel";
-import { SeriesLegend, type LegendItem } from "../home/member/SeriesLegend";
+import { SeriesLegend, type LegendItem } from "../../components/evolution/SeriesLegend";
 import {
   GRID_IMPORT_SERIES,
   SAVINGS_SERIES,
@@ -16,14 +16,15 @@ import {
   SURPLUS_SERIES,
   TECHNICAL_TERM,
   toConsumptionSeriesView,
+  type ConsumptionSeries,
   type ConsumptionSeriesView,
-} from "./consumptionSeries";
-import { EnergyEvolutionChart, SavingsEvolutionChart } from "./EvolutionCharts";
-import { EnergyEvolutionRows, SavingsEvolutionRows } from "./EvolutionRows";
-import { StateMark, type StateMarkKind } from "./StateMark";
-import { useHistoricalPeriod } from "./HistoricalPeriodContext";
-import type { HistoricalPeriod } from "./historicalPeriod";
-import { usePeriodConsumptionSeries, type ConsumptionSeries } from "./usePeriodConsumptionSeries";
+} from "../../components/evolution/consumptionSeries";
+import { EnergyEvolutionChart, SavingsEvolutionChart } from "../../components/evolution/EvolutionCharts";
+import { EnergyEvolutionRows, SavingsEvolutionRows } from "../../components/evolution/EvolutionRows";
+import { StateMark, type StateMarkKind } from "../../components/evolution/StateMark";
+import { useHistoricalPeriod } from "../../components/period/HistoricalPeriodContext";
+import type { HistoricalPeriod } from "../../components/period/historicalPeriod";
+import { usePeriodConsumptionSeries } from "./usePeriodConsumptionSeries";
 import { usePeriodEnergyMetrics } from "./usePeriodEnergyMetrics";
 
 const TITLE = { hourly: "Tu energía hora a hora", daily: "Tu energía día a día", monthly: "Tu energía mes a mes" } as const;

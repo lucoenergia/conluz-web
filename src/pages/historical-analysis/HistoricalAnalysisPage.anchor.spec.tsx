@@ -35,11 +35,11 @@ import { getSuppliesByUserId, useGetSuppliesByUserId } from "../../api/users/use
 import { getSupplyEnergyMetrics, useGetSupplyEnergyMetrics } from "../../api/supplies/supplies";
 import { getMembershipEnergyMetrics, useGetMembershipEnergyMetrics } from "../../api/memberships/memberships";
 import { HistoricalAnalysisPage } from "./HistoricalAnalysisPage";
+import { HOME } from "../../components/evolution/consumptionSeries.testData";
 import {
   AUGUST_2026,
   COMMUNITY_ID,
   GARAGE,
-  HOME,
   NOTHING_PUBLISHED,
   OWNER_ID,
   SEPTEMBER_2026,

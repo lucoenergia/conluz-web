@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { expectEastDeviceTimeZone } from "../../test/deviceTimeZone";
+import { expectDeviceTimeZone } from "../../test/deviceTimeZone";
 import { toConsumptionSeriesView } from "./consumptionSeries";
-import { supplyBucket, supplyHour } from "./historicalAnalysis.testData";
+import { supplyBucket, supplyHour } from "./consumptionSeries.testData";
 
-// Runs in the `app-time-zone-east` Vitest project, as a device in Kiritimati, fourteen hours ahead of UTC.
+// Runs in the `app-time-zone` Vitest project, as a device in New York, behind Madrid.
 // A bucket's `date` is a calendar date in Madrid: read as the device's
 // midnight, it would fall on another Madrid day in some zone, and every label
 // and every bucket-to-slot match would move with it.
 
 describe("UI-HIS-018 the evolution charts' labels and axis are Madrid's, wherever the device is (#250)", () => {
   it("runs in the project's device zone", () => {
-    expectEastDeviceTimeZone();
+    expectDeviceTimeZone();
   });
 
   it("UI-HIS-018 labels and names each day, and builds the axis, exactly as in Madrid", () => {

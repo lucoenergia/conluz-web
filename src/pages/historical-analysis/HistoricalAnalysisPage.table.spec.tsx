@@ -55,22 +55,24 @@ import {
   useGetMembershipMonthlyConsumption,
 } from "../../api/memberships/memberships";
 import { HistoricalAnalysisPage } from "./HistoricalAnalysisPage";
-import { toConsumptionSeriesView } from "./consumptionSeries";
-import type { HistoricalPeriod } from "./historicalPeriod";
+import { toConsumptionSeriesView } from "../../components/evolution/consumptionSeries";
+import type { HistoricalPeriod } from "../../components/period/historicalPeriod";
 import { periodCsv } from "./periodCsv";
 import {
-  COMMUNITY_ID,
   HOME,
+  membershipDay,
+  membershipGapDay,
+  membershipMonth,
+  membershipPartialDay,
+  supplyBucket,
+} from "../../components/evolution/consumptionSeries.testData";
+import {
+  COMMUNITY_ID,
   SEPTEMBER_2026,
   derivedMembershipFigures,
   derivedSupplyFigures,
   member,
-  membershipDay,
-  membershipGapDay,
   membershipLatest,
-  membershipMonth,
-  membershipPartialDay,
-  supplyBucket,
   supplyLatest,
 } from "./historicalAnalysis.testData";
 

@@ -4,7 +4,7 @@ import type { SupplyResponse } from "../../api/models";
 import type { PeriodEnergyMetrics } from "../../components/EnergyFigures/periodEnergyMetrics";
 import { useActiveCommunity } from "../../context/community.context";
 import { useLoggedUser } from "../../context/logged-user.context";
-import { useHistoricalPeriod } from "./HistoricalPeriodContext";
+import { useHistoricalPeriod } from "../../components/period/HistoricalPeriodContext";
 
 export type PeriodEnergyMetricsState =
   | { status: "loading" }

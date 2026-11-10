@@ -22,14 +22,22 @@ import { colors } from "../../theme/tokens";
 import { formatEuroAmount, formatEurosPerKilowattHour, formatKilowattHourAmount } from "../../utils/formatEnergyFigures";
 import { triggerBrowserDownload } from "../../utils/triggerBrowserDownload";
 import { HomeCard } from "../home/HomeCard";
-import { GRID_IMPORT_SERIES, SAVINGS_SERIES, SELF_CONSUMPTION_SERIES, SURPLUS_SERIES, toConsumptionSeriesView, type SlotView } from "./consumptionSeries";
-import { useHistoricalPeriod } from "./HistoricalPeriodContext";
-import { GRANULARITY_PHRASE, type Granularity, type HistoricalPeriod } from "./historicalPeriod";
-import { PairedTerm } from "./PairedTerm";
+import {
+  GRID_IMPORT_SERIES,
+  SAVINGS_SERIES,
+  SELF_CONSUMPTION_SERIES,
+  SURPLUS_SERIES,
+  toConsumptionSeriesView,
+  type ConsumptionSeries,
+  type SlotView,
+} from "../../components/evolution/consumptionSeries";
+import { useHistoricalPeriod } from "../../components/period/HistoricalPeriodContext";
+import { GRANULARITY_PHRASE, type Granularity, type HistoricalPeriod } from "../../components/period/historicalPeriod";
+import { PairedTerm } from "../../components/evolution/PairedTerm";
 import { CSV_MIME_TYPE, periodCsv, periodCsvFileName } from "./periodCsv";
 import { PAGE_SIZE, showingText, totalsStateText } from "./periodDataTable";
-import { slotStateText } from "./slotStateText";
-import { usePeriodConsumptionSeries, type ConsumptionSeries } from "./usePeriodConsumptionSeries";
+import { slotStateText } from "../../components/evolution/slotStateText";
+import { usePeriodConsumptionSeries } from "./usePeriodConsumptionSeries";
 import type { PeriodEnergyMetrics } from "../../components/EnergyFigures/periodEnergyMetrics";
 import { usePeriodEnergyMetrics } from "./usePeriodEnergyMetrics";
 

@@ -4,26 +4,11 @@ import {
   useGetMembershipMonthlyConsumption,
 } from "../../api/memberships/memberships";
 import { useGetSupplyDailyConsumption, useGetSupplyHourlyConsumption, useGetSupplyMonthlyConsumption } from "../../api/supplies/supplies";
-import type {
-  MembershipDailyConsumptionBucketResponse,
-  MembershipHourlyConsumptionBucketResponse,
-  MembershipMonthlyConsumptionBucketResponse,
-  SupplyConsumptionBucketResponse,
-  SupplyHourlyConsumptionBucketResponse,
-  SupplyResponse,
-} from "../../api/models";
+import type { SupplyResponse } from "../../api/models";
 import { useActiveCommunity } from "../../context/community.context";
 import { useLoggedUser } from "../../context/logged-user.context";
-import { useHistoricalPeriod } from "./HistoricalPeriodContext";
-
-/** The buckets of the selected scope and granularity, tagged by the series they came from: each marks its states its own way. */
-export type ConsumptionSeries =
-  | { kind: "membershipHourly"; buckets: MembershipHourlyConsumptionBucketResponse[] }
-  | { kind: "membershipDaily"; buckets: MembershipDailyConsumptionBucketResponse[] }
-  | { kind: "membershipMonthly"; buckets: MembershipMonthlyConsumptionBucketResponse[] }
-  | { kind: "supplyHourly"; buckets: SupplyHourlyConsumptionBucketResponse[] }
-  | { kind: "supplyDaily"; buckets: SupplyConsumptionBucketResponse[] }
-  | { kind: "supplyMonthly"; buckets: SupplyConsumptionBucketResponse[] };
+import { useHistoricalPeriod } from "../../components/period/HistoricalPeriodContext";
+import type { ConsumptionSeries } from "../../components/evolution/consumptionSeries";
 
 export type PeriodConsumptionSeriesState =
   | { status: "loading" }

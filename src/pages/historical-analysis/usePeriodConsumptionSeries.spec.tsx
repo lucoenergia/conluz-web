@@ -17,18 +17,10 @@ import { useLoggedUser } from "../../context/logged-user.context";
 import { apiError } from "../../test/apiError";
 import { query } from "../../test/queryState";
 import { renderHookWithProviders } from "../../test/renderWithProviders";
-import type { HistoricalPeriod } from "./historicalPeriod";
-import { useHistoricalPeriod } from "./HistoricalPeriodContext";
-import {
-  COMMUNITY_ID,
-  HOME,
-  OWNER_ID,
-  member,
-  membershipDay,
-  membershipHour,
-  supplyBucket,
-  supplyHour,
-} from "./historicalAnalysis.testData";
+import type { HistoricalPeriod } from "../../components/period/historicalPeriod";
+import { useHistoricalPeriod } from "../../components/period/HistoricalPeriodContext";
+import { HOME, membershipDay, membershipHour, supplyBucket, supplyHour } from "../../components/evolution/consumptionSeries.testData";
+import { COMMUNITY_ID, OWNER_ID, member } from "./historicalAnalysis.testData";
 import { usePeriodConsumptionSeries } from "./usePeriodConsumptionSeries";
 
 vi.mock(import("../../api/memberships/memberships"), async (importOriginal) => ({
@@ -47,7 +39,7 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
   ...(await importOriginal()),
   useLoggedUser: vi.fn(),
 }));
-vi.mock(import("./HistoricalPeriodContext"), async (importOriginal) => ({
+vi.mock(import("../../components/period/HistoricalPeriodContext"), async (importOriginal) => ({
   ...(await importOriginal()),
   useHistoricalPeriod: vi.fn(),
 }));
