@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FC, type SyntheticEvent } from "react";
 import { Typography } from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs, { type Dayjs } from "dayjs";
@@ -124,7 +124,7 @@ export const CorrectCoefficientDateConfirmationModal: FC<CorrectCoefficientDateC
         </Typography>
       )}
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
-        <DatePicker
+        <DesktopDatePicker
           label="Nueva fecha de aplicación"
           value={selectedDate}
           onChange={setSelectedDate}

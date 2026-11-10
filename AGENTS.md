@@ -150,7 +150,16 @@ sheet below, one close path, back and the leave-page prompt handled once. Rules:
   intervention lets back skip entries added without user activation, so an overlay opened on load or
   after a redirect would not be closed by back.
 - **Inside an overlay, date pickers open in place** (`DesktopDatePicker`); never use a picker variant
-  that opens its own modal.
+  that opens its own modal (UI-OVL-011).
+- **One control named "Cerrar".** When an overlay offers its own "Cerrar", wherever it sits (footer or
+  body), set `hideCloseIcon` (on `ResponsiveOverlay`, or `AppModal`) in that state only, so the close
+  icon of the same name is not shown (UI-OVL-010). Escape, the backdrop, a swipe and back still close
+  it under the overlay rules.
+- **Focus goes back to the opener.** A list page that opens a form or contact overlay over itself uses
+  `useOverlayOpener` (`src/hooks/useOverlayOpener.ts`): `record(element)` for a given opener, such as
+  the row's kebab when the menu item is gone; `record()` for the control holding focus, such as
+  `EmptyState`'s action. It returns focus once the overlay has unmounted. No page reads
+  `document.activeElement` itself; a screen that picks its own focus target uses `useOpenerRecord`.
 
 ### Styling Contract
 

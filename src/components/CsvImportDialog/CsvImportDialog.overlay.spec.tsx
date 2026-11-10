@@ -203,8 +203,7 @@ const GUIDE_CLOSE_ATTEMPTS = [
 ] as const;
 
 const RESULT_CLOSE_ATTEMPTS = [
-  // By text: the overlay's close icon is named "Cerrar" too, and carries no text.
-  ["Cerrar", (u: User, dialog: HTMLElement) => u.click(within(dialog).getByText("Cerrar"))],
+  ["Cerrar", (u: User, dialog: HTMLElement) => u.click(within(dialog).getByRole("button", { name: "Cerrar" }))],
   ["Escape", (_: User, dialog: HTMLElement) => fireEvent.keyDown(dialog, { key: "Escape" })],
   ["back", () => pressBack()],
 ] as const;
@@ -240,6 +239,30 @@ describe.each(CONSUMERS)("UI-OVL-003 %s asks before discarding a chosen file", (
   });
 });
 
+describe.each(CONSUMERS)("UI-OVL-010 %s offers one Cerrar on its result", (_, consumer) => {
+  it("UI-OVL-010 the guide keeps the overlay's close icon beside Cancelar", async () => {
+    const { dialog } = await openImport(consumer);
+
+    expect(within(dialog).getByRole("button", { name: "Cerrar" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Cancelar" })).toBeInTheDocument();
+  });
+
+  it("UI-OVL-010 the result offers exactly one Cerrar, and stays named by its title", async () => {
+    const { dialog } = await showResult(consumer);
+
+    expect(within(dialog).getAllByRole("button", { name: "Cerrar" })).toHaveLength(1);
+    expect(dialog).toHaveAccessibleName(consumer.title);
+  });
+
+  it.each(RESULT_CLOSE_ATTEMPTS)("UI-OVL-010 on the result, %s closes it", async (__, attempt) => {
+    const { u, dialog } = await showResult(consumer);
+
+    await attempt(u, dialog);
+
+    await closed();
+  });
+});
+
 describe("UI-OVL-006 the CSV import is named by its title", () => {
   it.each(CONSUMERS)("UI-OVL-006 %s is a dialog named by the heading it shows", async (_, consumer) => {
     const { dialog } = await openImport(consumer);
@@ -258,10 +281,9 @@ describe("UI-OVL-007 the CSV import's result scrolls in the body", () => {
     const scrolling = scrollingAncestors(list, dialog);
     expect(scrolling).toHaveLength(1);
     const [body] = scrolling;
-    // The footer's "Cerrar", and the header's close icon of the same name.
     for (const button of [
       within(dialog).getByRole("button", { name: "Importar otro archivo" }),
-      ...within(dialog).getAllByRole("button", { name: "Cerrar" }),
+      within(dialog).getByRole("button", { name: "Cerrar" }),
     ]) {
       expect(body).not.toContainElement(button);
     }

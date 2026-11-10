@@ -8,7 +8,7 @@
 | **Roles** | Whoever may start the flow; the overlay adds no rule of its own |
 | **Domain rules** | `lucoenergia/conluz`: none |
 | **Design reference** | Design system: `ContactChannelEditor` (dialogs), the reference the overlay was taken from |
-| **Last reviewed against code** | #374 |
+| **Last reviewed against code** | #398 |
 
 <!-- Domain rules are cited by ID; the prefix registry in lucoenergia/conluz → docs/specs/README.md maps each prefix to its file. -->
 
@@ -131,6 +131,29 @@ changes, and back closes it rather than the page.
 - **Implements:** n/a
 - **Source:** #371
 
+### UI-OVL-010 — One control named "Cerrar"
+
+- **Status:** Active
+- **Rule:** An overlay MUST NOT have two controls with the same accessible name. When the overlay
+  offers its own control named "Cerrar" (in its footer or its body), the close icon is not shown;
+  Escape, the backdrop, swipe and back still close it under the overlay rules.
+- **Rationale:** Screen readers cannot tell same-named controls apart: two "Cerrar" buttons leave a
+  screen-reader user guessing which one to press. Without the icon, the sheet's grab handle remains
+  the visible sign that it can be dismissed.
+- **Implements:** n/a
+- **Source:** #398
+
+### UI-OVL-011 — Nothing opens a modal over an overlay
+
+- **Status:** Active
+- **Rule:** A control inside an overlay MUST NOT open another modal over it; date pickers open in
+  place.
+- **Rationale:** The overlay's back and focus handling cover one modal layer only. On a touch device
+  the responsive date picker opened its calendar in a modal dialog of its own, stacked over the sheet
+  and outside that handling.
+- **Implements:** n/a
+- **Source:** #398
+
 ## States
 
 | State | Rendered | Actions available |
@@ -138,6 +161,7 @@ changes, and back closes it rather than the page.
 | Open, no changes | Header with the title, the scrolling body, the footer with the flow's own controls; focus trapped (UI-OVL-001, UI-OVL-006, UI-OVL-007) | The flow's controls; close directly by any means, back included |
 | Open, with changes | The same; a close attempt, back included, replaces the footer with the unsaved-changes question (UI-OVL-003, UI-OVL-004) | Keep editing, discard |
 | Write in flight | The same, read-only, with no close icon (UI-OVL-002) | None that closes it |
+| Overlay offers its own Cerrar | No close icon; the sheet keeps its grab handle (UI-OVL-010) | Its own Cerrar; Escape, the backdrop, a swipe and back still close it |
 | Asking the flow's own question | The footer replaced by the question, such as deleting a contact channel (UI-CTU-009) | Its two answers; any close attempt, back included, withdraws it (UI-OVL-004). Whether typing withdraws it is the flow's choice; the unsaved-changes question is always withdrawn by typing (UI-OVL-003) |
 | Stacked | Each overlay above the previous one | Back closes the top one only (UI-OVL-004) |
 | Content replaced | The new step, result or code, with focus on its main message or first control (UI-OVL-009) | The new content's controls |

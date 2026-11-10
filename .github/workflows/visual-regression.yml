@@ -35,7 +35,11 @@ concurrency:
 
 jobs:
   visual-regression:
-    runs-on: ubuntu-latest
+    # Pinned, not ubuntu-latest: Playwright installs Chromium's system
+    # dependencies only on the Ubuntu releases it supports, and ubuntu-latest
+    # moved to 26.04 before Playwright 1.60 did. Move it with a Playwright
+    # upgrade that lists the new release as supported.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
 

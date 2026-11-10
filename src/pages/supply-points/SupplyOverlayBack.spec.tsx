@@ -167,9 +167,7 @@ describe("disabling a supply from the list", () => {
     await act(async () => answerDisable());
     const success = await screen.findByRole("dialog", { name: /ha sido deshabilitado/ });
     await act(() => overlayHistorySettled());
-    // The dialog's own "Cerrar" button, not the header's close icon of the same name.
-    const closers = within(success).getAllByRole("button", { name: "Cerrar" });
-    await user.click(closers[closers.length - 1]);
+    await user.click(within(success).getByRole("button", { name: "Cerrar" }));
 
     await waitFor(() => expect(success).not.toBeInTheDocument());
     await act(() => overlayHistorySettled());

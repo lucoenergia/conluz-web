@@ -342,8 +342,6 @@ describe("importing a file", () => {
     ]);
     expect(within(dialog).queryByText(/TEST-SERVER-MESSAGE/)).not.toBeInTheDocument();
     expect(within(dialog).getAllByRole("button").map((button) => button.textContent)).toEqual([
-      // The overlay's close icon, named "Cerrar", carries no text.
-      "",
       "Importar otro archivo",
       "Cerrar",
     ]);
@@ -360,8 +358,6 @@ describe("importing a file", () => {
     expect(await within(dialog).findByText("Se han creado 2 puntos de suministro.", VISIBLE)).toBeInTheDocument();
     expect(within(dialog).queryByRole("list", { name: "Filas no creadas" })).not.toBeInTheDocument();
     expect(within(dialog).getAllByRole("button").map((button) => button.textContent)).toEqual([
-      // The overlay's close icon, named "Cerrar", carries no text.
-      "",
       "Importar otro archivo",
       "Cerrar",
     ]);
@@ -382,8 +378,7 @@ describe("importing a file", () => {
     await within(dialog).findByText(/Se ha creado 1 punto de suministro/, VISIBLE);
 
     await waitFor(() => expect(requestsTo(r, "GET", SUPPLIES_URL).length).toBeGreaterThan(readsBefore));
-    // By text: the overlay's close icon is named "Cerrar" too, and carries no text.
-    await u.click(within(dialog).getByText("Cerrar"));
+    await u.click(within(dialog).getByRole("button", { name: "Cerrar" }));
     expect(await screen.findByRole("link", { name: "Casa del pueblo" })).toBeInTheDocument();
   });
 

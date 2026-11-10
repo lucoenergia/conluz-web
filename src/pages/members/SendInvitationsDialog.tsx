@@ -107,6 +107,7 @@ export const SendInvitationsDialog: FC<SendInvitationsDialogProps> = ({
       isOpen
       onClose={onClose}
       dismissible={!isPending}
+      hideCloseIcon={!!results}
       title={`Enviar invitación en ${community}`}
       contentKey={results ? "result" : "confirm"}
       scopeHeader={<CommunityScopeHeader name={communityName} />}

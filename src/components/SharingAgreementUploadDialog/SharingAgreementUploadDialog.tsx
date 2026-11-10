@@ -77,6 +77,7 @@ export const SharingAgreementUploadDialog: FC<SharingAgreementUploadDialogProps>
       isOpen={isOpen}
       onClose={handleClose}
       dismissible={!uploadFile.isPending}
+      hideCloseIcon={!!groupedErrors}
       // A file chosen and not yet imported; a rejected one has nothing left to keep.
       dirty={file !== null && !groupedErrors}
       title={`Importar un fichero que ya tengas en ${communityLabel(communityName)}`}

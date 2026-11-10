@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { useEffect, useRef, useState, type FC } from "react";
-import { act, cleanup, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -19,6 +19,7 @@ import { useOverlayNavigate } from "./useOverlayNavigate";
 const Consumer: FC<{
   size?: ResponsiveOverlaySize;
   inFlight?: boolean;
+  hideCloseIcon?: boolean;
   onClose?: () => void;
   /** Cancelar also leaves for this path, in the same handler or after an await. */
   leaveTo?: { path: string; afterAwait: boolean };
@@ -27,7 +28,7 @@ const Consumer: FC<{
   extraControl?: boolean;
   /** Mounted open, as ManagedContactChannels mounts the contact editor. */
   initiallyOpen?: boolean;
-}> = ({ size = "form", inFlight = false, onClose, leaveTo, stacked = false, extraControl = false, initiallyOpen = false }) => {
+}> = ({ size = "form", inFlight = false, hideCloseIcon, onClose, leaveTo, stacked = false, extraControl = false, initiallyOpen = false }) => {
   const [open, setOpen] = useState(initiallyOpen);
   const [name, setName] = useState("Oficina");
   const [innerOpen, setInnerOpen] = useState(false);
@@ -50,6 +51,7 @@ const Consumer: FC<{
         subtitle="Sol de la Sierra"
         dirty={name !== "Oficina"}
         inFlight={inFlight}
+        hideCloseIcon={hideCloseIcon}
         onClose={close}
         actions={({ requestClose }) => (
           <>
@@ -562,6 +564,90 @@ describe("UI-OVL-006 focus is trapped, named by the title and given back", () =>
     for (const name of ["Descartar cambios", "Seguir editando"]) {
       expect(declaredStyles(within(overlay()).getByRole("button", { name }))).toContain("min-height:44px");
     }
+  });
+});
+
+describe("UI-OVL-010 no close icon beside the overlay's own Cerrar", () => {
+  it.each([390, 900])("UI-OVL-010 an overlay without the prop keeps its close icon at %i px", async (width) => {
+    stubViewport(width);
+    const { user } = renderConsumer();
+
+    const paper = await openOverlay(user);
+    expect(within(paper).getByRole("button", { name: "Cerrar" })).toBeInTheDocument();
+  });
+
+  it.each([390, 900])("UI-OVL-010 with the prop, no close icon at %i px, still named by its title", async (width) => {
+    stubViewport(width);
+    const { user } = renderConsumer({ hideCloseIcon: true });
+
+    const paper = await openOverlay(user);
+    expect(within(paper).queryByRole("button", { name: "Cerrar" })).not.toBeInTheDocument();
+    expect(paper).toHaveAccessibleName("Editar ficha");
+  });
+
+  it("UI-OVL-010 with the prop, Escape still closes it", async () => {
+    const onClose = vi.fn();
+    const { user } = renderConsumer({ hideCloseIcon: true, onClose });
+
+    const paper = await openOverlay(user);
+    expect(paper).toContainElement(document.activeElement as HTMLElement);
+    await user.keyboard("{Escape}");
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ["dialog's backdrop", 900],
+    ["sheet's backdrop", 390],
+  ])("UI-OVL-010 with the prop, the %s still closes it", async (_, width) => {
+    stubViewport(width);
+    const onClose = vi.fn();
+    const { user } = renderConsumer({ hideCloseIcon: true, onClose });
+
+    await openOverlay(user);
+    // Structural: the backdrop has no role or name; it is MUI's own element.
+    await user.click(document.querySelector(".MuiBackdrop-root")!);
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("UI-OVL-010 with the prop, back still closes it", async () => {
+    const onClose = vi.fn();
+    const { user } = renderConsumer({ hideCloseIcon: true, onClose });
+
+    await openOverlay(user);
+    await pressBack();
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("UI-OVL-010 with the prop, a close attempt with changes still asks first", async () => {
+    const onClose = vi.fn();
+    const { user } = renderConsumer({ hideCloseIcon: true, onClose });
+
+    await openOverlay(user);
+    await user.type(nameField(), " central");
+    await user.keyboard("{Escape}");
+
+    expect(within(overlay()).getByRole("button", { name: "Descartar cambios" })).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("UI-OVL-010 with the prop, nothing closes it while a write is in flight", async () => {
+    const onClose = vi.fn();
+    const { user } = renderConsumer({ hideCloseIcon: true, inFlight: true, onClose });
+
+    const paper = await openOverlay(user);
+    fireEvent.keyDown(paper, { key: "Escape" });
+    // Structural: the backdrop has no role or name; it is MUI's own element.
+    await user.click(document.querySelector(".MuiBackdrop-root")!);
+    await pressBack();
+
+    expect(overlay()).toBe(paper);
+    expect(onClose).not.toHaveBeenCalled();
   });
 });
 

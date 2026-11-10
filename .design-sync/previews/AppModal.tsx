@@ -38,3 +38,24 @@ export const Centered = () => (
     <Mui.Button variant="contained">Aceptar</Mui.Button>
   </AppModal>
 );
+
+// A dialog that offers its own "Cerrar" shows no close icon of the same name.
+export const OwnCerrar = () => (
+  <AppModal
+    isOpen
+    onClose={() => {}}
+    title="Importar miembros en Comunidad Energética Benimaclet"
+    scopeHeader={<CommunityScopeHeader name="Comunidad Energética Benimaclet" />}
+    hideCloseIcon
+    actions={
+      <>
+        <Mui.Button>Importar otro archivo</Mui.Button>
+        <Mui.Button variant="contained">Cerrar</Mui.Button>
+      </>
+    }
+  >
+    <Mui.Typography variant="body2" sx={{ color: "text.secondary" }}>
+      Se han registrado 12 miembros. Todavía no se ha enviado ninguna invitación.
+    </Mui.Typography>
+  </AppModal>
+);

@@ -148,6 +148,7 @@ export function CsvImportDialog<R extends CsvImportResult>({
       scopeHeader={<CommunityScopeHeader name={communityName} />}
       // The import can take several seconds, and closing would hide its result.
       dismissible={!importing}
+      hideCloseIcon={!!result}
       // A file chosen and not imported yet; a result has nothing left to lose.
       dirty={!importing && !result && file !== null}
       // Each step replaces the last: focus moves to the new one (UI-OVL-009).

@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { AxiosError, AxiosHeaders } from "axios";
 import { Route, Routes } from "react-router";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { buildCommunity, buildCommunityCapabilities, buildCurrentUser, buildPlatformCapabilities, buildPlatformCapabilitiesWithout, buildPlant, buildPlantCapabilities, buildSupply, buildSupplyCapabilities } from "../../test/fixtures";
+import { buildCommunity, buildCommunityCapabilities, buildCurrentUser, buildPlatformCapabilities, buildPlatformCapabilitiesWithout, buildPlant, buildPlantCapabilities } from "../../test/fixtures";
 import { query } from "../../test/queryState";
 import type { CommunityCapabilitiesResponse, PlatformCapabilitiesResponse } from "../../api/models";
 
@@ -21,10 +21,6 @@ vi.mock(import("../../pages/production/usePlantInActiveCommunity"), () => ({
   usePlantInActiveCommunity: vi.fn(),
 }));
 
-vi.mock(import("../../pages/supply-points/useSupplyInActiveCommunity"), () => ({
-  useSupplyInActiveCommunity: vi.fn(),
-}));
-
 const loggedUser = vi.hoisted(() => ({ current: null as ReturnType<typeof Object> | null }));
 
 vi.mock(import("../../context/logged-user.context"), async (importOriginal) => ({
@@ -34,12 +30,10 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
 
 import { getCommunityById, useGetAllCommunities, useGetCommunityById } from "../../api/communities/communities";
 import { usePlantInActiveCommunity } from "../../pages/production/usePlantInActiveCommunity";
-import { useSupplyInActiveCommunity } from "../../pages/supply-points/useSupplyInActiveCommunity";
 import { CapabilityRoute, type CapabilityRequirement } from "./CapabilityRoute";
 
 const COMMUNITY_ID = "community-A";
 const PLANT_ID = "plant-1";
-const SUPPLY_ID = "supply-1";
 // Deliberately not COMMUNITY_ID: the communityById scope must answer about the
 // community in the URL, never about the one the caller happens to be in.
 const OTHER_COMMUNITY_ID = "community-Z";
@@ -82,16 +76,6 @@ function setPlantCapabilities(capabilities: Partial<Parameters<typeof buildPlant
  * Renders the guard at a guarded URL, with a home route to land on so a
  * redirect is observable rather than inferred.
  */
-function setSupplyCapabilities(capabilities: Partial<Parameters<typeof buildSupplyCapabilities>[0]>) {
-  vi.mocked(useSupplyInActiveCommunity).mockReturnValue({
-    supply: buildSupply({ id: SUPPLY_ID, capabilities: buildSupplyCapabilities(capabilities) }),
-    isLoading: false,
-    isNotFound: false,
-    error: null,
-    refetch: vi.fn(),
-  });
-}
-
 function setup(require: CapabilityRequirement, { route = "/protected" }: { route?: string } = {}) {
   return renderWithProviders(
     <Routes>
@@ -106,14 +90,6 @@ function setup(require: CapabilityRequirement, { route = "/protected" }: { route
       />
       <Route
         path="/production/:plantId/sharing-agreements"
-        element={
-          <CapabilityRoute require={require}>
-            <span>protected</span>
-          </CapabilityRoute>
-        }
-      />
-      <Route
-        path="/supply-points/:supplyPointId"
         element={
           <CapabilityRoute require={require}>
             <span>protected</span>
@@ -150,13 +126,6 @@ beforeEach(() => {
   vi.mocked(useGetCommunityById).mockReturnValue(query.loading());
   vi.mocked(usePlantInActiveCommunity).mockReturnValue({
     plant: undefined,
-    isLoading: true,
-    isNotFound: false,
-    error: null,
-    refetch: vi.fn(),
-  });
-  vi.mocked(useSupplyInActiveCommunity).mockReturnValue({
-    supply: undefined,
     isLoading: true,
     isNotFound: false,
     error: null,
@@ -276,51 +245,6 @@ describe("CapabilityRoute — plant scope", () => {
     setup({ scope: "platform", capability: "canListPlatformAdmins" }, { route: plantRoute });
     expect(vi.mocked(usePlantInActiveCommunity)).toHaveBeenCalledWith("");
     expect(vi.mocked(usePlantInActiveCommunity)).not.toHaveBeenCalledWith(PLANT_ID);
-  });
-});
-
-describe("CapabilityRoute — supply scope", () => {
-  const supplyRoute = `/supply-points/${SUPPLY_ID}`;
-
-  it("renders children when the supply capability is granted", () => {
-    setSupplyCapabilities({ canEdit: true });
-    setup({ scope: "supply", capability: "canEdit" }, { route: supplyRoute });
-    expectProtected();
-  });
-
-  // The owner of a supply reads it but may not change it, so this is the case
-  // that used to render a live edit form that would 403 on submit.
-  it("redirects an owner who may read but not edit", () => {
-    setSupplyCapabilities({ canRead: true, canEdit: false });
-    setup({ scope: "supply", capability: "canEdit" }, { route: supplyRoute });
-    expectRedirected();
-  });
-
-  // A supply in another community is withheld by the wrapper. That has to read
-  // as a refusal, not as "still loading", or the page would hang for ever.
-  it("redirects for a supply outside the active community", () => {
-    vi.mocked(useSupplyInActiveCommunity).mockReturnValue({
-      supply: undefined,
-      isLoading: false,
-      isNotFound: true,
-      error: null,
-      refetch: vi.fn(),
-    });
-    setup({ scope: "supply", capability: "canEdit" }, { route: supplyRoute });
-    expectRedirected();
-  });
-
-  it("fires no supply request on a route that has no supply", () => {
-    setPlatformCapabilities({ canListPlatformAdmins: true });
-    setup({ scope: "platform", capability: "canListPlatformAdmins" });
-    expect(vi.mocked(useSupplyInActiveCommunity)).toHaveBeenCalledWith("");
-  });
-
-  it("fires no supply request when the requirement is not a supply one, even on a supply URL", () => {
-    setPlatformCapabilities({ canListPlatformAdmins: true });
-    setup({ scope: "platform", capability: "canListPlatformAdmins" }, { route: supplyRoute });
-    expect(vi.mocked(useSupplyInActiveCommunity)).toHaveBeenCalledWith("");
-    expect(vi.mocked(useSupplyInActiveCommunity)).not.toHaveBeenCalledWith(SUPPLY_ID);
   });
 });
 

@@ -1,8 +1,10 @@
 import "@testing-library/jest-dom";
-import { screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { pressBack } from "../../test/overlay";
+import { overlayHistorySettled } from "../ResponsiveOverlay/overlayHistory";
 import { blankContactChannel, type ContactChannelDraft } from "../../utils/contactChannelRules";
 import { ContactChannelEditor, type ContactChannelEditorProps } from "./ContactChannelEditor";
 
@@ -184,10 +186,49 @@ describe("ContactChannelEditor", () => {
     expect(screen.queryByRole("button", { name: "Guardar" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Eliminar canal" })).not.toBeInTheDocument();
 
-    const close = screen.getAllByRole("button", { name: "Cerrar" });
-    await user.click(close[close.length - 1]);
+    await user.click(screen.getByRole("button", { name: "Cerrar" }));
     expect(onLostRightsClose).toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  describe("UI-OVL-010 after losing the right to edit, one control named Cerrar", () => {
+    afterEach(async () => {
+      // An overlay left open gives its history entry back on unmount: let that
+      // back land before the next test reads the history.
+      cleanup();
+      await act(() => overlayHistorySettled());
+    });
+
+    it("UI-OVL-010 keeps the close icon beside Cancelar while editing", () => {
+      renderEditor();
+
+      const dialog = screen.getByRole("dialog", { name: "Editar canal" });
+      expect(within(dialog).getByRole("button", { name: "Cerrar" })).toBeInTheDocument();
+      expect(within(dialog).getByRole("button", { name: "Cancelar" })).toBeInTheDocument();
+    });
+
+    it("UI-OVL-010 offers exactly one Cerrar, and stays named by its title", () => {
+      renderEditor({ status: "lostRights" });
+
+      const dialog = screen.getByRole("dialog", { name: "Editar canal" });
+      expect(within(dialog).getAllByRole("button", { name: "Cerrar" })).toHaveLength(1);
+      expect(dialog).toHaveAccessibleName("Editar canal");
+    });
+
+    it.each([
+      ["its Cerrar", (user: ReturnType<typeof userEvent.setup>, dialog: HTMLElement) => user.click(within(dialog).getByRole("button", { name: "Cerrar" }))],
+      ["Escape", (_: ReturnType<typeof userEvent.setup>, dialog: HTMLElement) => fireEvent.keyDown(dialog, { key: "Escape" })],
+      ["back", () => pressBack()],
+    ])("UI-OVL-010 %s closes it the lost-rights way", async (_, attempt) => {
+      const user = userEvent.setup();
+      const { onLostRightsClose, onClose } = renderEditor({ status: "lostRights" });
+      await act(() => overlayHistorySettled());
+
+      await attempt(user, screen.getByRole("dialog", { name: "Editar canal" }));
+
+      expect(onLostRightsClose).toHaveBeenCalledTimes(1);
+      expect(onClose).not.toHaveBeenCalled();
+    });
   });
 
   describe("AC10 closing", () => {

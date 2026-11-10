@@ -97,6 +97,7 @@ export const RegisterMemberDialog: FC<RegisterMemberDialogProps> = ({
         isOpen
         onClose={onClose}
         dismissible={!inviting}
+        hideCloseIcon
         title={`Miembro registrado en ${community}`}
         contentKey="result"
         scopeHeader={<CommunityScopeHeader name={communityName} />}

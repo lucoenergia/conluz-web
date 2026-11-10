@@ -317,9 +317,8 @@ describe("the result", () => {
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey(COMMUNITY_ID) });
     await waitFor(() => expect(rosterReads(router)).toBeGreaterThan(readsBefore));
     // Only "Cerrar" is left, and the selection is already cleared behind the dialog.
-    // The overlay's close icon, also named "Cerrar", carries no text.
-    expect(within(dialog).getAllByRole("button").map((button) => button.textContent).filter(Boolean)).toEqual(["Cerrar"]);
-    await u.click(within(dialog).getByText("Cerrar"));
+    expect(within(dialog).getAllByRole("button").map((button) => button.textContent)).toEqual(["Cerrar"]);
+    await u.click(within(dialog).getByRole("button", { name: "Cerrar" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(screen.queryByRole("button", { name: /Enviar invitación/ })).not.toBeInTheDocument();
     expect(screen.getAllByRole("checkbox").filter((checkbox) => (checkbox as HTMLInputElement).checked)).toEqual([]);

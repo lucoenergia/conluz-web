@@ -226,8 +226,7 @@ describe("losing the right to edit", () => {
 
     // The capabilities the refetch brings say the caller is a member now.
     capabilities = MEMBER;
-    const close = within(sheet()).getAllByRole("button", { name: "Cerrar" });
-    await user.click(close[close.length - 1]);
+    await user.click(within(sheet()).getByRole("button", { name: "Cerrar" }));
 
     await waitFor(() => expect(screen.queryByRole("button", { name: /^Editar / })).not.toBeInTheDocument());
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

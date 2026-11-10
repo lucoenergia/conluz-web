@@ -5,7 +5,6 @@ import {
   useCommunityCapabilities,
   usePlantCapabilities,
   usePlatformCapabilities,
-  useSupplyCapabilities,
 } from "../../hooks/permissions";
 import { CapabilityLoadError } from "./CapabilityLoadError";
 import type { CapabilityRequirement } from "../../hooks/permissions";
@@ -35,12 +34,12 @@ interface CapabilityRouteProps {
  * read. That costs nothing it would not otherwise cost: platform capabilities
  * are a context read; the community query is the one the side menu already
  * makes on every authenticated page, so React Query serves both from a single
- * fetch. The resolvers keyed by a route parameter are the exceptions -- plant,
- * supply and a named community -- so each is disabled unless the
- * requirement names its scope, and a platform route fires none of them.
+ * fetch. The resolvers keyed by a route parameter are the exceptions -- a plant
+ * and a named community -- so each is disabled unless the requirement names
+ * its scope, and a platform route fires none of them.
  */
 export const CapabilityRoute: FC<CapabilityRouteProps> = ({ require, children }) => {
-  const { plantId, supplyPointId, communityId } = useParams();
+  const { plantId, communityId } = useParams();
 
   const platform = usePlatformCapabilities(
     require.scope === "platform" ? require.capability : "canAdministerPlatform",
@@ -51,11 +50,6 @@ export const CapabilityRoute: FC<CapabilityRouteProps> = ({ require, children })
   const plant = usePlantCapabilities(plantId, require.scope === "plant" ? require.capability : "canRead", {
     enabled: require.scope === "plant",
   });
-  const supply = useSupplyCapabilities(
-    supplyPointId,
-    require.scope === "supply" ? require.capability : "canRead",
-    { enabled: require.scope === "supply" },
-  );
   // The community named in the URL, not the active one. A platform admin
   // editing a community is not a member of it, so the active-community answer
   // would be about the wrong resource, or about none.
@@ -72,9 +66,7 @@ export const CapabilityRoute: FC<CapabilityRouteProps> = ({ require, children })
         ? community
         : require.scope === "plant"
           ? plant
-          : require.scope === "supply"
-            ? supply
-            : namedCommunity;
+          : namedCommunity;
 
   if (outcome.state === "pending") return null;
   if (outcome.state === "error") return <CapabilityLoadError onRetry={outcome.retry} />;

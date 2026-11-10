@@ -2,7 +2,6 @@ import type {
   CommunityCapabilitiesResponse,
   PlantCapabilitiesResponse,
   PlatformCapabilitiesResponse,
-  SupplyCapabilitiesResponse,
 } from "../../api/models";
 
 /**
@@ -19,8 +18,6 @@ export type CapabilityRequirement =
   | { scope: "community"; capability: keyof CommunityCapabilitiesResponse }
   /** Reads `:plantId` from the route. */
   | { scope: "plant"; capability: keyof PlantCapabilitiesResponse }
-  /** Reads `:supplyPointId` from the route. */
-  | { scope: "supply"; capability: keyof SupplyCapabilitiesResponse }
   /**
    * Reads `:communityId` from the route. Distinct from `community`, which is
    * the ACTIVE one: administering a community is not working in it, and a
@@ -52,7 +49,7 @@ export type MenuCommunityCapability = "canRead" | "canManage" | "canManageMember
  * which src/contracts/routeAccess.spec.ts checks entry by entry.
  *
  * No scope keyed by a route parameter -- a menu entry is a fixed destination,
- * so it has no `:plantId`, `:supplyPointId` or `:communityId` to
+ * so it has no `:plantId` or `:communityId` to
  * resolve. Excluding them here is what stops one being written.
  */
 export type MenuRequirement =

@@ -77,6 +77,12 @@ export type ResponsiveOverlayProps = ResponsiveOverlayName & {
   dirty?: boolean;
   /** A write is in flight: nothing closes the overlay and the close icon is hidden. */
   inFlight?: boolean;
+  /**
+   * The overlay offers its own control named "Cerrar", in its footer or its
+   * body: the close icon, of the same name, is not shown (UI-OVL-010). Escape,
+   * the backdrop, a swipe and back still close it.
+   */
+  hideCloseIcon?: boolean;
   /** Closes the overlay: nothing changed, or the changes were discarded. */
   onClose: () => void;
   /** The question shown in the footer before discarding changes. */
@@ -142,6 +148,7 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
   size,
   dirty = false,
   inFlight = false,
+  hideCloseIcon = false,
   onClose,
   discardMessage = DEFAULT_DISCARD_MESSAGE,
   discardConfirmLabel = "Descartar cambios",
@@ -270,51 +277,54 @@ export const ResponsiveOverlay: FC<ResponsiveOverlayProps> = ({
       {!isDesktop && (
         <Box aria-hidden sx={{ width: 36, height: 4, borderRadius: radii.small, bgcolor: colors.border.inactive, mx: "auto", mt: 1 }} />
       )}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          gap: 1,
-          borderBottom: hasHeading ? 1 : 0,
-          borderColor: "divider",
-          p: { xs: "4px 8px 12px 16px", md: "16px 16px 16px 24px" },
-          pb: hasHeading ? undefined : 0,
-        }}
-      >
-        <Box sx={{ flex: 1, minWidth: 0, pt: 1 }}>
-          {eyebrow}
-          {(icon || title !== undefined || subtitle) && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              {icon}
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                {title !== undefined && (
-                  <Typography
-                    id={titleId}
-                    ref={titleRef}
-                    tabIndex={-1}
-                    variant="h6"
-                    component="h2"
-                    // Focused by UI-OVL-009 only, as the fallback target.
-                    sx={{ "&:focus": { outline: "none" } }}
-                  >
-                    {title}
-                  </Typography>
-                )}
-                {subtitle && (
-                  <Typography variant="body2" sx={{ color: colors.text.subtle }}>
-                    {subtitle}
-                  </Typography>
-                )}
+      {/* With nothing left to show, no header: the sheet keeps its handle above. */}
+      {(hasHeading || !hideCloseIcon) && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 1,
+            borderBottom: hasHeading ? 1 : 0,
+            borderColor: "divider",
+            p: { xs: "4px 8px 12px 16px", md: "16px 16px 16px 24px" },
+            pb: hasHeading ? undefined : 0,
+          }}
+        >
+          <Box sx={{ flex: 1, minWidth: 0, pt: 1 }}>
+            {eyebrow}
+            {(icon || title !== undefined || subtitle) && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                {icon}
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  {title !== undefined && (
+                    <Typography
+                      id={titleId}
+                      ref={titleRef}
+                      tabIndex={-1}
+                      variant="h6"
+                      component="h2"
+                      // Focused by UI-OVL-009 only, as the fallback target.
+                      sx={{ "&:focus": { outline: "none" } }}
+                    >
+                      {title}
+                    </Typography>
+                  )}
+                  {subtitle && (
+                    <Typography variant="body2" sx={{ color: colors.text.subtle }}>
+                      {subtitle}
+                    </Typography>
+                  )}
+                </Box>
               </Box>
-            </Box>
+            )}
+          </Box>
+          {!inFlight && !hideCloseIcon && (
+            <IconButton aria-label="Cerrar" onClick={requestClose} sx={{ width: 44, height: 44 }}>
+              <CloseIcon />
+            </IconButton>
           )}
         </Box>
-        {!inFlight && (
-          <IconButton aria-label="Cerrar" onClick={requestClose} sx={{ width: 44, height: 44 }}>
-            <CloseIcon />
-          </IconButton>
-        )}
-      </Box>
+      )}
 
       <Box
         ref={bodyRef}

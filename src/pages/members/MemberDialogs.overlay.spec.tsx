@@ -502,6 +502,85 @@ describe("UI-OVL-009 focus follows a member dialog's result into the overlay", (
   });
 });
 
+type Result = {
+  title: string;
+  answers: Partial<Record<Write, (config: RequestConfig) => unknown>>;
+  /** Opens the dialog and brings it to its result. */
+  open: (u: User) => Promise<HTMLElement>;
+};
+
+const RESULTS: Array<[string, Result]> = [
+  [
+    "the registration's result",
+    { title: REGISTERED_TITLE, answers: { register: () => REGISTERED }, open: openRegistered },
+  ],
+  [
+    "the send's result",
+    {
+      title: SEND_TITLE,
+      answers: { bulk: () => SENT },
+      open: async (u) => {
+        const dialog = await openSend(u);
+        await u.click(within(dialog).getByRole("button", { name: "Enviar invitación (2)" }));
+        await within(dialog).findByText("Primeras invitaciones enviadas: 2.");
+        return dialog;
+      },
+    },
+  ],
+];
+
+const RESULT_CLOSE_ATTEMPTS = [
+  ["its Cerrar", (u: User, dialog: HTMLElement) => u.click(within(dialog).getByRole("button", { name: "Cerrar" }))],
+  ["Escape", (_: User, dialog: HTMLElement) => fireEvent.keyDown(dialog, { key: "Escape" })],
+  ["back", () => pressBack()],
+] as const;
+
+describe.each(RESULTS)("UI-OVL-010 %s offers one Cerrar", (_, result) => {
+  it("UI-OVL-010 offers exactly one Cerrar, and stays named by its title", async () => {
+    const u = userEvent.setup();
+    serve(result.answers);
+    await renderPage();
+    const dialog = await result.open(u);
+
+    expect(within(dialog).getAllByRole("button", { name: "Cerrar" })).toHaveLength(1);
+    expect(dialog).toHaveAccessibleName(result.title);
+  });
+
+  it.each(RESULT_CLOSE_ATTEMPTS)("UI-OVL-010 %s closes it", async (__, attempt) => {
+    const u = userEvent.setup();
+    serve(result.answers);
+    await renderPage();
+    const dialog = await result.open(u);
+    await act(() => overlayHistorySettled());
+
+    await attempt(u, dialog);
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { hidden: true })).not.toBeInTheDocument());
+    expect(screen.getByRole("heading", { name: /Miembros/ })).toBeInTheDocument();
+  });
+});
+
+describe("UI-OVL-010 the registration's result, with no close icon, stays open while its invitation is sent", () => {
+  it("UI-OVL-010 nothing closes it while the invitation runs, and its one Cerrar is disabled", async () => {
+    const u = userEvent.setup();
+    serve({ register: () => REGISTERED });
+    await renderPage();
+    const dialog = await openRegistered(u);
+    await u.click(within(dialog).getByRole("button", { name: "Invitar ahora" }));
+    expect(await within(dialog).findByRole("button", { name: "Enviando..." })).toBeDisabled();
+
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    // Structural: the backdrop has no role or name; it is MUI's own element.
+    await u.click(document.querySelector(".MuiBackdrop-root") as HTMLElement);
+    await pressBack();
+
+    expect(screen.getByRole("dialog", { name: REGISTERED_TITLE })).toBe(dialog);
+    const closers = within(dialog).getAllByRole("button", { name: "Cerrar" });
+    expect(closers).toHaveLength(1);
+    expect(closers[0]).toBeDisabled();
+  });
+});
+
 describe("UI-OVL-006 each member dialog is named by its title", () => {
   it.each(FLOWS)("UI-OVL-006 %s is a dialog named by the heading it shows", async (_, flow) => {
     const u = userEvent.setup();
