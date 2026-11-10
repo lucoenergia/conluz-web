@@ -28,7 +28,6 @@ export { usePlatformCapabilities } from "./usePlatformCapabilities";
 export { useActiveCommunityCapabilities } from "./useActiveCommunityCapabilities";
 export { useCommunityCapabilities } from "./useCommunityCapabilities";
 export { usePlantCapabilities } from "./usePlantCapabilities";
-export { useSupplyCapabilities } from "./useSupplyCapabilities";
 export { Can } from "./Can";
 export { useActiveCommunityRoleLabel } from "./roleLabel";
 export { CommunityRole } from "./communityRole";
