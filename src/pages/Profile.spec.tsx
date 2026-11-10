@@ -100,11 +100,11 @@ describe("ProfilePage role label", () => {
  *
  * The screen saves through PUT /users/profile, which acts on the caller, takes
  * no id and is open to any authenticated caller -- so these tests are mostly
- * about who it does NOT ask. Every persona's record grants nothing, because
+ * about who it does NOT ask. Every caller's record grants nothing, because
  * nothing on this page may consult a capability.
  */
 describe("ProfilePage save", () => {
-  const PERSONAS: [string, CurrentUserResponse][] = [
+  const CALLERS: [string, CurrentUserResponse][] = [
     [
       "a plain member",
       buildCurrentUser({
@@ -147,7 +147,7 @@ describe("ProfilePage save", () => {
     await userEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
   };
 
-  it.each(PERSONAS)("saves through the profile endpoint for %s", async (_name, user) => {
+  it.each(CALLERS)("saves through the profile endpoint for %s", async (_name, user) => {
     await save(user);
 
     await waitFor(() => expect(mockSaveProfile).toHaveBeenCalledTimes(1));
