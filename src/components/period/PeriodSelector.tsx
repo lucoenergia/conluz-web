@@ -17,7 +17,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { colors, radii } from "../../theme/tokens";
 import { CustomRangePicker } from "./CustomRangePicker";
-import { presetSummary, yearPresetName, type CalendarMonth, type PeriodSelection, type PresetKind } from "./historicalPeriod";
+import { MAX_MONTHS, presetSummary, yearPresetName, type CalendarMonth, type PeriodSelection, type PresetKind } from "./historicalPeriod";
 
 const LABEL = "Periodo";
 
@@ -28,7 +28,7 @@ const nameOf = (kind: PeriodSelection["kind"], anchor: CalendarMonth): string =>
     last12: "Últimos 12 meses",
     custom: "Rango personalizado",
   })[kind];
-const CUSTOM_SUMMARY = "Elige las fechas, hasta 24 meses";
+export const CUSTOM_SUMMARY = `Elige las fechas, hasta ${MAX_MONTHS} meses`;
 const PRESETS: PresetKind[] = ["latest", "year", "last12"];
 
 interface PeriodSelectorProps {

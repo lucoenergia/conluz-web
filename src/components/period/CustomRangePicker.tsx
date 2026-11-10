@@ -15,7 +15,9 @@ import { toCalendarDay, toDayjs } from "./calendarDayjs";
 import {
   addMonths,
   compareDays,
+  DAILY_LIMIT_DAYS,
   lastDayOf,
+  MAX_MONTHS,
   monthYearName,
   rangeResultText,
   resolvePeriod,
@@ -25,9 +27,11 @@ import {
 } from "./historicalPeriod";
 
 const RANGE_TITLE = "Rango personalizado";
-const RANGE_RULE =
-  "Un solo día se ve por horas; hasta 62 días, por días; si eliges más, se ajusta a meses completos. Como máximo, 24 meses.";
-const RANGE_TOO_LONG = "El rango puede ser de 24 meses como máximo. Acorta las fechas.";
+// "Un solo día" is HOURLY_DAYS (1) in words: the copy names it, never "1 día".
+export const RANGE_RULE =
+  `Un solo día se ve por horas; hasta ${DAILY_LIMIT_DAYS} días, por días; si eliges más, se ajusta a meses completos. ` +
+  `Como máximo, ${MAX_MONTHS} meses.`;
+export const RANGE_TOO_LONG = `El rango puede ser de ${MAX_MONTHS} meses como máximo. Acorta las fechas.`;
 
 const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
