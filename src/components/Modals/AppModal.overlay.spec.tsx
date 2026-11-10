@@ -4,7 +4,7 @@ import { act, cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { declaredStyles, pressBack, stubViewport } from "../../test/overlay";
+import { declaredStyles, pressBack, scrollingAncestors, stubViewport } from "../../test/overlay";
 import { overlayHistorySettled } from "../ResponsiveOverlay/overlayHistory";
 import { buildSupply } from "../../test/fixtures";
 import { getAllSupplies } from "../../api/supplies/supplies";
@@ -289,19 +289,6 @@ describe("UI-OVL-006 a modal dialog, named by its title or by a label", () => {
     expect(within(dialog).getByText("Comunidad · Sol de la Sierra")).toBeInTheDocument();
   });
 });
-
-/**
- * The scrolling elements between a piece of content and its dialog's paper
- * (the paper itself is MUI's, sized to fit the viewport). Only the overlay's
- * body may be one: an inner box with its own height would be a second.
- */
-function scrollingAncestors(content: HTMLElement, dialog: HTMLElement): HTMLElement[] {
-  const found: HTMLElement[] = [];
-  for (let element = content.parentElement; element && element !== dialog; element = element.parentElement) {
-    if (/overflow(-y)?:auto/.test(declaredStyles(element))) found.push(element);
-  }
-  return found;
-}
 
 describe("UI-OVL-007 only the body scrolls", () => {
   it("UI-OVL-007 the upload dialog's rejected lines scroll in the body, with the footer outside it", async () => {
