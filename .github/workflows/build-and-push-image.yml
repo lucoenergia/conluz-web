@@ -43,7 +43,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: "22"
@@ -83,7 +83,7 @@ jobs:
       # Checks out the repo at the tag's commit (github.ref is refs/tags/X.Y.Z
       # both for tag pushes and for `gh workflow run --ref X.Y.Z`).
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       # Buildx is a prerequisite for the GitHub Actions cache backend
       # (`type=gha`) configured below.
