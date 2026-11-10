@@ -4,15 +4,12 @@ import {
   COMPLETE_TEXT,
   CONSUMPTION_GROUP,
   GRID_IMPORT_SERIES,
-  MEASURED_ZERO_KWH_TEXT,
   SELF_CONSUMPTION_SERIES,
   SURPLUS_SERIES,
-  REPEATED_HOUR_NOTE,
-  axisOf,
-  scaleEnd,
   toConsumptionSeriesView,
   type SlotView,
 } from "./consumptionSeries";
+import { MEASURED_ZERO_KWH_TEXT, REPEATED_HOUR_NOTE, axisOf, scaleEnd } from "./evolutionSeries";
 import type { HistoricalPeriod } from "../period/historicalPeriod";
 import {
   HOME,

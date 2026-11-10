@@ -27,6 +27,7 @@ import {
   SAVINGS_SERIES,
   SELF_CONSUMPTION_SERIES,
   SURPLUS_SERIES,
+  TECHNICAL_TERM,
   toConsumptionSeriesView,
   type ConsumptionSeries,
   type SlotView,
@@ -144,7 +145,7 @@ const DesktopTable: FC<{ caption: string; granularity: Granularity; rows: Row[];
           {VALUE_COLUMNS.map(({ term, unit }) => (
             // Each line on one line: the unit stays with its term, and the term and its technical companion stay whole.
             <TableCell key={term} scope="col" align="right" sx={{ whiteSpace: "nowrap" }}>
-              <PairedTerm term={term} unit={unit} stacked />
+              <PairedTerm term={term} technical={TECHNICAL_TERM[term]} unit={unit} stacked />
               {term === SAVINGS_SERIES && price && (
                 <>
                   {" "}
@@ -195,7 +196,11 @@ const RowCard: FC<{ row: Row; total?: boolean }> = ({ row, total = false }) => (
       {row.values.map((value, index) => (
         <Box key={VALUE_COLUMNS[index].term} sx={{ display: "contents" }}>
           <Typography component="dt" variant="body2" sx={{ color: colors.text.subtle, minWidth: 0 }}>
-            <PairedTerm term={VALUE_COLUMNS[index].term} unit={VALUE_COLUMNS[index].unit} />
+            <PairedTerm
+              term={VALUE_COLUMNS[index].term}
+              technical={TECHNICAL_TERM[VALUE_COLUMNS[index].term]}
+              unit={VALUE_COLUMNS[index].unit}
+            />
           </Typography>
           <Typography component="dd" variant="body2" sx={{ m: 0, textAlign: "right", color: colors.text.primary, ...numericCell, fontWeight: total ? 600 : 400 }}>
             {value}

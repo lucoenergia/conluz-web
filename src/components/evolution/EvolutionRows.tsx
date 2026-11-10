@@ -1,21 +1,29 @@
 import { useId, useState, type FC, type ReactNode } from "react";
 import { Box, ButtonBase, Typography } from "@mui/material";
 import { colors, radii, shadows } from "../../theme/tokens";
-import { ENERGY_COLORS, SAVINGS_COLOR } from "../../components/EnergyFigures/energyColors";
 import { formatEuros, formatKilowattHourAmount, formatKilowattHours } from "../../utils/formatEnergyFigures";
-import { MEASURED_ZERO_KWH_TEXT, type ConsumptionSeriesView, type SlotView } from "./consumptionSeries";
 import { slotDetail } from "./evolutionChartOptions";
+import {
+  MEASURED_ZERO_KWH_TEXT,
+  groupsOf,
+  groupSum,
+  type EvolutionCopy,
+  type EvolutionSlot,
+  type EvolutionView,
+  type SegmentDefinition,
+  type SeriesLook,
+} from "./evolutionSeries";
 import { PairedTerm } from "./PairedTerm";
 import { StateMark } from "./StateMark";
 
 // Below sm, the evolution charts turned 90° (#361): a row per slot, top to
 // bottom, with horizontal bars (UI-HIS-025). The energy rows open the slot's
-// detail beneath them (UI-HIS-026). Every figure and word comes from the view.
+// detail beneath them (UI-HIS-026). Every figure comes from the view, every
+// word from it or from the page's copy.
 
 const LABEL_WIDTH = 52;
 const VALUE_WIDTH = { energy: 44, savings: 60 } as const;
 const GAP_TEXT = "Sin datos";
-const CONSUMPTION_HEADER = "Consumo";
 const UNIT = { hourly: "hora", daily: "día", monthly: "mes" } as const;
 
 const share = (value: number | null, scaleEnd: number) => `${Math.min(Math.max((value ?? 0) / scaleEnd, 0), 1) * 100}%`;
@@ -24,6 +32,8 @@ const share = (value: number | null, scaleEnd: number) => `${Math.min(Math.max((
 const scaleLines = {
   backgroundImage: `repeating-linear-gradient(to right, ${colors.border.light} 0 1px, transparent 1px 25%)`,
 } as const;
+
+type SlotView = EvolutionSlot<string>;
 
 const rowLabelSx = (slot: SlotView) =>
   ({
@@ -85,47 +95,66 @@ const rowSx = (slot: SlotView) =>
     borderBottom: slot.endsWeek ? `1px solid ${colors.divider}` : "none",
   }) as const;
 
-/** The energy row's bars: consumption, community stacked with grid, and the unused assigned energy beneath. */
-const EnergyBars: FC<{ slot: SlotView; scaleEnd: number }> = ({ slot, scaleEnd }) => (
-  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, height: 11 }}>
-      {slot.state.kind === "measuredZero" && <StateMark kind="dot" />}
+/** A group's segments side by side in one bar, each as wide as its share of the group. */
+const GroupSegments: FC<{ slot: SlotView; group: readonly SegmentDefinition<string>[] }> = ({ slot, group }) => (
+  <>
+    {group.map(({ key, color }) => (
       <Box
+        key={key}
         sx={{
-          display: "flex",
-          height: 11,
-          width: share(slot.consumptionKWh, scaleEnd),
+          flex: `${slot.values[key] ?? 0} 0 0`,
+          bgcolor: color,
         }}
-      >
-        <Box
-          sx={{
-            flex: `${slot.selfConsumptionKWh ?? 0} 0 0`,
-            bgcolor: ENERGY_COLORS.community,
-          }}
-        />
-        <Box
-          sx={{
-            flex: `${slot.gridImportKWh ?? 0} 0 0`,
-            bgcolor: ENERGY_COLORS.grid,
-          }}
-        />
-      </Box>
-      {slot.state.kind === "partial" && <StateMark kind="asterisk" />}
-    </Box>
+      />
+    ))}
+  </>
+);
+
+/** A bar after the first: one segment, or its segments side by side. */
+const ThinBar: FC<{ slot: SlotView; group: readonly SegmentDefinition<string>[]; scaleEnd: number }> = ({ slot, group, scaleEnd }) =>
+  group.length === 1 ? (
     <Box
       sx={{
         height: 6,
-        width: share(slot.surplusKWh, scaleEnd),
-        bgcolor: ENERGY_COLORS.exported,
+        width: share(groupSum(slot, group), scaleEnd),
+        bgcolor: group[0].color,
       }}
     />
-  </Box>
-);
+  ) : (
+    <Box sx={{ display: "flex", height: 6, width: share(groupSum(slot, group), scaleEnd) }}>
+      <GroupSegments slot={slot} group={group} />
+    </Box>
+  );
 
-/** The row's name: its date and its consumption, in words a screen reader reads as one. */
+/** The energy row's bars: the first group stacked in the thick bar, every other group in a thin bar beneath it. */
+const EnergyBars: FC<{ slot: SlotView; look: SeriesLook<string>; scaleEnd: number }> = ({ slot, look, scaleEnd }) => {
+  const [first, ...others] = groupsOf(look.segments);
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, height: 11 }}>
+        {slot.state.kind === "measuredZero" && <StateMark kind="dot" />}
+        <Box
+          sx={{
+            display: "flex",
+            height: 11,
+            width: share(slot.total, scaleEnd),
+          }}
+        >
+          <GroupSegments slot={slot} group={first} />
+        </Box>
+        {slot.state.kind === "partial" && <StateMark kind="asterisk" />}
+      </Box>
+      {others.map((group) => (
+        <ThinBar key={group[0].group} slot={slot} group={group} scaleEnd={scaleEnd} />
+      ))}
+    </Box>
+  );
+};
+
+/** The row's name: its date and its first group's total, in words a screen reader reads as one. */
 function energyRowName(slot: SlotView): string {
-  if (slot.state.kind === "gap" || slot.consumptionKWh === null) return `${slot.name}: ${GAP_TEXT.toLowerCase()}`;
-  const value = slot.state.kind === "measuredZero" ? MEASURED_ZERO_KWH_TEXT : formatKilowattHours(slot.consumptionKWh);
+  if (slot.state.kind === "gap" || slot.total === null) return `${slot.name}: ${GAP_TEXT.toLowerCase()}`;
+  const value = slot.state.kind === "measuredZero" ? MEASURED_ZERO_KWH_TEXT : formatKilowattHours(slot.total);
   return slot.state.kind === "partial" ? `${slot.name}: ${value}, datos parciales` : `${slot.name}: ${value}`;
 }
 
@@ -138,8 +167,13 @@ function savingsRowName(slot: SlotView): string {
 }
 
 /** What the tooltip says, beneath the open row (UI-HIS-026). */
-const RowDetail: FC<{ id: string; slot: SlotView; isPlantSupply: boolean }> = ({ id, slot, isPlantSupply }) => {
-  const { title, lines, figures } = slotDetail(slot, isPlantSupply);
+const RowDetail: FC<{ id: string; slot: SlotView; look: SeriesLook<string>; extraLines: readonly string[] }> = ({
+  id,
+  slot,
+  look,
+  extraLines,
+}) => {
+  const { title, lines, figures } = slotDetail(slot, look, extraLines);
   return (
     <Box
       id={id}
@@ -165,7 +199,7 @@ const RowDetail: FC<{ id: string; slot: SlotView; isPlantSupply: boolean }> = ({
           {line}
         </Typography>
       ))}
-      {figures.map(({ term, swatch, value }) => (
+      {figures.map(({ term, technical, swatch, value }) => (
         <Box key={term} sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
           <Box
             aria-hidden
@@ -178,7 +212,7 @@ const RowDetail: FC<{ id: string; slot: SlotView; isPlantSupply: boolean }> = ({
             }}
           />
           <Typography variant="body2" sx={{ flex: 1, minWidth: 0, color: colors.text.body }}>
-            <PairedTerm term={term} />
+            <PairedTerm term={term} technical={technical} />
           </Typography>
           <Typography
             variant="body2"
@@ -198,7 +232,7 @@ const RowDetail: FC<{ id: string; slot: SlotView; isPlantSupply: boolean }> = ({
 };
 
 /** The energy scale above the rows: where it starts, its middle and its end, and the figures' column. */
-const EnergyScale: FC<{ scaleEnd: number }> = ({ scaleEnd }) => (
+const EnergyScale: FC<{ scaleEnd: number; header: string }> = ({ scaleEnd, header }) => (
   <Box
     aria-hidden
     sx={{
@@ -232,23 +266,26 @@ const EnergyScale: FC<{ scaleEnd: number }> = ({ scaleEnd }) => (
       ))}
     </Box>
     <Typography component="span" variant="caption" sx={{ ...valueSx(VALUE_WIDTH.energy), color: colors.text.secondary }}>
-      {CONSUMPTION_HEADER}
+      {header}
     </Typography>
   </Box>
 );
 
 /** Below sm, the energy chart: a button per slot that opens its detail beneath it, one at a time. */
 export const EnergyEvolutionRows: FC<{
-  view: ConsumptionSeriesView;
-  isPlantSupply: boolean;
-}> = ({ view, isPlantSupply }) => {
+  view: EvolutionView<string>;
+  look: SeriesLook<string>;
+  copy: EvolutionCopy;
+  /** The page's own lines about the scope, in every row's detail. */
+  extraLines: readonly string[];
+}> = ({ view, look, copy, extraLines }) => {
   const [open, setOpen] = useState<string | null>(null);
   const detailId = useId();
   const scaleEnd = view.rowScale.energyKWh;
   return (
     <Box>
-      <EnergyScale scaleEnd={scaleEnd} />
-      <Box component="ul" aria-label={`Tu energía por ${UNIT[view.granularity]}`} sx={{ listStyle: "none", m: 0, p: 0 }}>
+      <EnergyScale scaleEnd={scaleEnd} header={copy.rowHeader} />
+      <Box component="ul" aria-label={copy.rowsLabel(UNIT[view.granularity])} sx={{ listStyle: "none", m: 0, p: 0 }}>
         {view.slots.map((slot) => {
           const isOpen = open === slot.key;
           const id = `${detailId}-${slot.key}`;
@@ -268,13 +305,13 @@ export const EnergyEvolutionRows: FC<{
               >
                 <RowFrame
                   slot={slot}
-                  value={slot.consumptionKWh === null ? "—" : formatKilowattHourAmount(slot.consumptionKWh)}
+                  value={slot.total === null ? "—" : formatKilowattHourAmount(slot.total)}
                   valueWidth={VALUE_WIDTH.energy}
                 >
-                  <EnergyBars slot={slot} scaleEnd={scaleEnd} />
+                  <EnergyBars slot={slot} look={look} scaleEnd={scaleEnd} />
                 </RowFrame>
               </ButtonBase>
-              {isOpen && <RowDetail id={id} slot={slot} isPlantSupply={isPlantSupply} />}
+              {isOpen && <RowDetail id={id} slot={slot} look={look} extraLines={extraLines} />}
             </Box>
           );
         })}
@@ -284,10 +321,14 @@ export const EnergyEvolutionRows: FC<{
 };
 
 /** Below sm, the savings chart: a row per slot, with its bar and its amount. */
-export const SavingsEvolutionRows: FC<{ view: ConsumptionSeriesView }> = ({ view }) => {
+export const SavingsEvolutionRows: FC<{ view: EvolutionView<string>; look: SeriesLook<string>; copy: EvolutionCopy }> = ({
+  view,
+  look,
+  copy,
+}) => {
   const scaleEnd = view.rowScale.savingsEur;
   return (
-    <Box component="ul" aria-label={`Tu ahorro estimado por ${UNIT[view.granularity]}`} sx={{ listStyle: "none", m: 0, p: 0 }}>
+    <Box component="ul" aria-label={copy.savingsRowsLabel(UNIT[view.granularity])} sx={{ listStyle: "none", m: 0, p: 0 }}>
       {view.slots.map((slot) => (
         <Box component="li" key={slot.key} aria-label={savingsRowName(slot)} sx={rowSx(slot)}>
           <RowFrame slot={slot} value={slot.savingsEur === null ? "—" : formatEuros(slot.savingsEur)} valueWidth={VALUE_WIDTH.savings}>
@@ -299,12 +340,12 @@ export const SavingsEvolutionRows: FC<{ view: ConsumptionSeriesView }> = ({ view
                 height: 14,
               }}
             >
-              {slot.savingsEur === 0 && <StateMark kind="dot" />}
+              {slot.savingsZero && <StateMark kind="dot" />}
               <Box
                 sx={{
                   height: 10,
                   width: share(slot.savingsEur, scaleEnd),
-                  bgcolor: SAVINGS_COLOR,
+                  bgcolor: look.savings.color,
                 }}
               />
               {slot.state.kind === "partial" && <StateMark kind="asterisk" />}

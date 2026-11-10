@@ -60,7 +60,8 @@ import {
   useGetMembershipMonthlyConsumption,
 } from "../../api/memberships/memberships";
 import { HistoricalAnalysisPage } from "./HistoricalAnalysisPage";
-import { MEASURED_ZERO_EUR_TEXT, SELF_CONSUMPTION_SERIES, SAVINGS_SERIES } from "../../components/evolution/consumptionSeries";
+import { SELF_CONSUMPTION_SERIES, SAVINGS_SERIES } from "../../components/evolution/consumptionSeries";
+import { MEASURED_ZERO_EUR_TEXT } from "../../components/evolution/evolutionSeries";
 import { ENERGY_COLORS, SAVINGS_COLOR } from "../../components/EnergyFigures/energyColors";
 import {
   HOME,

@@ -1,15 +1,18 @@
 import type { FC } from "react";
 import { Box } from "@mui/material";
 import { colors } from "../../theme/tokens";
-import { TECHNICAL_TERM } from "./consumptionSeries";
 
 /**
  * A home term with the technical term it carries, if any, muted after it
  * (UI-HIS-027): "De la comunidad · autoconsumo". `stacked` puts the technical
  * term on a line of its own, as a column header does, followed by `unit`.
  */
-export const PairedTerm: FC<{ term: string; unit?: string; stacked?: boolean }> = ({ term, unit, stacked = false }) => {
-  const technical = TECHNICAL_TERM[term];
+export const PairedTerm: FC<{ term: string; technical?: string; unit?: string; stacked?: boolean }> = ({
+  term,
+  technical,
+  unit,
+  stacked = false,
+}) => {
   const unitText = unit ? ` (${unit})` : "";
   if (!technical) return <>{`${term}${unitText}`}</>;
   if (stacked) {
