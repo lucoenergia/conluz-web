@@ -6,6 +6,10 @@ import { axisTime, type InverterCurve } from "./inverterCurve";
 import { GAP_LABEL, NOW_LABEL } from "./inverterTodayTexts";
 
 const HOUR_MS = 3_600_000;
+const MINUTE_MS = 60_000;
+
+/** ApexCharts hands its formatters floats a few ms off a tick: read them to the minute. */
+const toMinute = (value: number) => Math.round(value / MINUTE_MS) * MINUTE_MS;
 
 /** The chart's options: the instant axis, the gold curve, the "Ahora" mark and the "Sin datos" bands. */
 export function inverterChartOptions(curve: InverterCurve, wide: boolean): ApexOptions {
@@ -31,12 +35,17 @@ export function inverterChartOptions(curve: InverterCurve, wide: boolean): ApexO
       type: "numeric",
       min: dayStart,
       max: dayEnd,
-      // Every 3 hours from midnight on a wide screen, every 6 on a phone.
-      stepSize: (wide ? 3 : 6) * HOUR_MS,
+      // One tick per hour of the day, 23, 24 or 25 of them; labelled every 3
+      // hours from midnight on a wide screen, every 6 on a phone.
+      tickAmount: Math.round((dayEnd - dayStart) / HOUR_MS),
       labels: {
-        formatter: (value) => axisTime(Number(value), dayEnd),
+        formatter: (value) => {
+          const instant = toMinute(Number(value));
+          const hours = Math.round((instant - dayStart) / HOUR_MS);
+          return hours % (wide ? 3 : 6) === 0 ? axisTime(instant, dayEnd) : "";
+        },
         style: { colors: colors.text.secondary, fontSize: fontSizes.xs },
-        hideOverlappingLabels: true,
+        hideOverlappingLabels: false,
       },
       axisBorder: { color: colors.border.light },
       tooltip: { enabled: false },
@@ -48,7 +57,7 @@ export function inverterChartOptions(curve: InverterCurve, wide: boolean): ApexO
       labels: { formatter: (value) => formatKilowatts(value), style: { colors: colors.text.secondary, fontSize: fontSizes.xs } },
     },
     tooltip: {
-      x: { formatter: (value) => axisTime(value, dayEnd) },
+      x: { formatter: (value) => axisTime(toMinute(value), dayEnd) },
       y: { formatter: (value) => formatKilowatts(value) },
     },
     annotations: {
