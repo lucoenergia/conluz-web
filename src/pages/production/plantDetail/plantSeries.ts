@@ -51,7 +51,7 @@ export const PLANT_EVOLUTION_COPY: EvolutionCopy = {
     wide: "Cada barra es la energía que la planta vertió a la red, según la distribuidora.",
     narrow: "Cada fila es la energía que la planta vertió a la red, según la distribuidora.",
   },
-  rowHeader: "Energía vertida",
+  rowHeader: "kWh",
   rowsLabel: (unit) => `Energía vertida a la red por ${unit}`,
   // The plant series has no savings, so no savings rows are drawn.
   savingsRowsLabel: (unit) => `Ahorro por ${unit}`,
