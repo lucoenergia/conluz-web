@@ -50,7 +50,44 @@ describe("UI-HIS-005 a day anchor's presets end on the anchor day, bounded in Ma
   it("UI-HIS-006 each preset is offered with the period it resolves to and its granularity", () => {
     expect(presetSummary(NOVEMBER_8, LAST_7)).toBe("Del 2 al 8 de noviembre de 2026 · por días");
     expect(presetSummary(NOVEMBER_8, LAST_30)).toBe("Del 10 de octubre al 8 de noviembre de 2026 · por días");
-    expect(presetSummary(NOVEMBER_8, DAY_YEAR)).toBe("De enero a noviembre de 2026 · por meses");
+    expect(presetSummary(NOVEMBER_8, DAY_YEAR)).toBe("Del 1 de enero al 8 de noviembre de 2026 · por meses");
+  });
+});
+
+describe("UI-PLT-011 under a day anchor every range is labelled by days, a monthly one included (#406)", () => {
+  it.each<[string, PeriodSelection, string, string]>([
+    ["Últimos 7 días", { kind: "last7" }, "Del 2 al 8 de noviembre de 2026", "Datos del 2 al 8 de noviembre de 2026"],
+    [
+      "Últimos 30 días",
+      { kind: "last30" },
+      "Del 10 de octubre al 8 de noviembre de 2026",
+      "Datos del 10 de octubre al 8 de noviembre de 2026",
+    ],
+    ["Año 2026", { kind: "year" }, "Del 1 de enero al 8 de noviembre de 2026", "Datos del 1 de enero al 8 de noviembre de 2026"],
+  ])("UI-PLT-011 AC5 AC7 -- %s against 8 November 2026 is labelled by its days", (_, selection, label, title) => {
+    const resolution = ok(resolvePeriod(NOVEMBER_8, selection, DAY_PRESETS));
+    expect(resolution.period.label).toBe(label);
+    expect(resolution.title).toBe(title);
+  });
+
+  it("UI-PLT-011 AC7 -- a custom range widened to months is labelled from the first of its month to the anchor day", () => {
+    const resolution = ok(resolvePeriod(NOVEMBER_8, custom(day(2026, 8, 15), day(2026, 11, 8)), DAY_PRESETS));
+    expect(resolution.period.granularity).toBe("monthly");
+    expect(resolution.period.label).toBe("Del 1 de agosto al 8 de noviembre de 2026");
+  });
+
+  it("UI-PLT-011 a whole calendar month picked under a day anchor is still named by its days", () => {
+    const resolution = ok(resolvePeriod(NOVEMBER_8, custom(day(2026, 10, 1), day(2026, 10, 31)), DAY_PRESETS));
+    expect(resolution.period.label).toBe("Del 1 al 31 de octubre de 2026");
+  });
+
+  it("UI-PLT-011 AC7 -- a month anchor keeps its month labels, as on Mi consumo y ahorro", () => {
+    const september = monthAnchor({ year: 2026, month: 9 });
+    expect(ok(resolvePeriod(september, { kind: "year" }, [LATEST, YEAR, LAST_12])).period.label).toBe("De enero a septiembre de 2026");
+    expect(ok(resolvePeriod(september, { kind: "latest" }, [LATEST, YEAR, LAST_12])).period.label).toBe("Septiembre de 2026");
+    expect(ok(resolvePeriod(september, { kind: "last12" }, [LATEST, YEAR, LAST_12])).period.label).toBe(
+      "De octubre de 2025 a septiembre de 2026",
+    );
   });
 });
 

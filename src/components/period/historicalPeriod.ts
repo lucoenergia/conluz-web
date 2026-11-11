@@ -218,9 +218,21 @@ const isWholeMonth = (from: CalendarDay, to: CalendarDay) =>
 
 const isSingleDay = (from: CalendarDay, to: CalendarDay) => compareDays(from, to) === 0;
 
-/** The label and the header title of the days a period covers. */
-function describe(from: CalendarDay, to: CalendarDay, granularity: Granularity): { label: string; title: string } {
-  if (granularity === "monthly" || isWholeMonth(from, to)) {
+/**
+ * The label and the header title of the days a period covers.
+ *
+ * Under a day anchor a period is always named by its days, a monthly one
+ * included: its last month ends on the anchor day, and naming it by whole
+ * months would promise data the period does not hold (#406). Under a month
+ * anchor every month is whole, and a monthly period is named by its months.
+ */
+function describe(
+  from: CalendarDay,
+  to: CalendarDay,
+  granularity: Granularity,
+  anchorKind: Anchor["kind"],
+): { label: string; title: string } {
+  if (anchorKind === "month" && (granularity === "monthly" || isWholeMonth(from, to))) {
     if (from.year === to.year && from.month === to.month) {
       const month = monthYearName(from);
       return { label: capitalise(month), title: `Datos de ${month}` };
@@ -264,7 +276,13 @@ function granularityOf(pickedDays: number, hourlyAllowed: boolean): Granularity 
  * month anchor the last month is whole anyway; under a day anchor it ends at
  * that day, and its bucket is partial.
  */
-function resolveRange(from: CalendarDay, to: CalendarDay, end: CalendarDay, hourlyAllowed = false): PeriodResolution {
+function resolveRange(
+  from: CalendarDay,
+  to: CalendarDay,
+  anchor: Anchor,
+  hourlyAllowed = false,
+): PeriodResolution {
+  const end = anchorEnd(anchor);
   const pickedDays = calendarDayCount(from, to);
   const granularity = granularityOf(pickedDays, hourlyAllowed);
   const months = monthIndex(to) - monthIndex(from) + 1;
@@ -273,7 +291,7 @@ function resolveRange(from: CalendarDay, to: CalendarDay, end: CalendarDay, hour
   const first = granularity === "monthly" ? firstDayOf(from) : from;
   const monthEnd = lastDayOf(to);
   const last = granularity !== "monthly" ? to : compareDays(monthEnd, end) <= 0 ? monthEnd : end;
-  const { label, title } = describe(first, last, granularity);
+  const { label, title } = describe(first, last, granularity, anchor.kind);
   const moved = compareDays(first, from) !== 0 || compareDays(last, to) !== 0;
 
   return {
@@ -294,7 +312,7 @@ function resolveRange(from: CalendarDay, to: CalendarDay, end: CalendarDay, hour
 export function resolveCustomRange(anchor: Anchor, from: CalendarDay, to: CalendarDay): PeriodResolution {
   const end = anchorEnd(anchor);
   if (compareDays(from, to) > 0 || compareDays(to, end) > 0) return { status: "unpickable" };
-  return resolveRange(from, to, end, true);
+  return resolveRange(from, to, anchor, true);
 }
 
 /**
@@ -307,7 +325,7 @@ export function resolvePeriod(anchor: Anchor, selection: PeriodSelection, preset
   const preset = offeredPresets(presets, anchor).find(({ value }) => value === selection.kind);
   if (!preset) return { status: "unpickable" };
   const { from, to } = preset.range(anchor);
-  return resolveRange(from, to, anchorEnd(anchor));
+  return resolveRange(from, to, anchor);
 }
 
 /** "62 días: se mostrará por días.", what the range picker says before it is applied. */
