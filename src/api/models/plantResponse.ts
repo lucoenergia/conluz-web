@@ -32,5 +32,6 @@ export interface PlantResponse {
   regulatoryCode: string | null;
   /** The supply this plant produces onto. A reference: the full supply, including its owner, is fetched from GET /supplies/{supplyId}, which not every caller who may list plants is allowed to call. */
   supply: SupplyReferenceResponse;
+  /** Installed power of the plant, in kWp. */
   totalPower: number;
 }

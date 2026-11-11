@@ -328,6 +328,390 @@
         ],
         "type" : "object"
       },
+      "CommunityDailyEnergyBucketResponse" : {
+        "properties" : {
+          "date" : {
+            "description" : "The day, a local calendar date in the community's time zone.",
+            "example" : "2024/01/15",
+            "type" : "string"
+          },
+          "selfConsumptionKWh" : {
+            "description" : "Energy produced by the community and consumed by every supply of the community with data over the day, as reported by the distributor. In kWh, rounded to 3 decimals. Null when no supply had data that day, which is not a measured zero.",
+            "example" : 12.5,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "suppliesWithData" : {
+            "description" : "Number of those supplies with data that day: whose hourly records carrying self-consumed energy, zero included, cover at least 90% of the day's hours inside the period. Below supplyCount, the day is incomplete.",
+            "example" : 11,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "supplyCount" : {
+            "description" : "Number of enabled supplies of the community, whatever the membership status of their owners. The model records no date a supply joined, so the same count applies to every day.",
+            "example" : 12,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "surplusKWh" : {
+            "description" : "Energy assigned to every supply of the community with data and fed back to the grid over the day. In kWh, rounded to 3 decimals. Null when no supply had data that day, which is not a measured zero.",
+            "example" : 3.25,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "time" : {
+            "description" : "Always 00:00: the bucket covers the whole local day.",
+            "example" : "00:00",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "date",
+          "selfConsumptionKWh",
+          "suppliesWithData",
+          "supplyCount",
+          "surplusKWh",
+          "time"
+        ],
+        "type" : "object"
+      },
+      "CommunityEnergyMetricsCo2AvoidedResponse" : {
+        "properties" : {
+          "amountKg" : {
+            "description" : "Estimated CO₂ avoided by the community's plants over the period, in kg CO₂e: the emissions that the same electricity would have caused had it been bought from a retailer without guarantees of origin. It uses the MITECO \"Mix sin GdO\" electricity emission factors, not the average grid mix. The production of each calendar year, in the community's time zone, is multiplied by that year's factor, or by the latest earlier year's factor when its own is not published yet; the products are summed, then rounded to 3 decimals. Null when energy.productionKWh is null, or when a year with production is earlier than every available factor.",
+            "example" : 392.16,
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "factorYears" : {
+            "description" : "The years of the emission factors applied to amountKg, distinct and in ascending order. A year later than the last published factor shows that earlier year. Null exactly when amountKg is null.",
+            "items" : {
+              "format" : "int32",
+              "type" : "integer"
+            },
+            "type" : [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required" : [
+          "amountKg",
+          "factorYears"
+        ],
+        "type" : "object"
+      },
+      "CommunityEnergyMetricsCoverageResponse" : {
+        "properties" : {
+          "suppliesWithData" : {
+            "description" : "Number of those supplies with data for the period: whose hourly records carrying self-consumed energy cover at least 90% of the hours the period spans. Measured against a threshold, whereas the energy metrics of a membership count a supply with at least one hourly record, so the two figures are not comparable across endpoints. 0 when no period could be resolved.",
+            "example" : 11,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "supplyCount" : {
+            "description" : "Number of enabled supplies of the community, whatever the membership status of their owners",
+            "example" : 12,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [
+          "suppliesWithData",
+          "supplyCount"
+        ],
+        "type" : "object"
+      },
+      "CommunityEnergyMetricsEnergyResponse" : {
+        "properties" : {
+          "productionKWh" : {
+            "description" : "Energy the community's plants exported to the grid at their connection points over the period, as measured by the distributor for each plant's own supply (net of the plants' own consumption). In kWh, rounded to 3 decimals after summing. Null when no plant stored a production record in the period, or when no period could be resolved.",
+            "example" : 1520,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "selfConsumptionKWh" : {
+            "description" : "Energy produced by the community and consumed by every supply of the community over the period, as reported by the distributor. In kWh, rounded to 3 decimals. Null when no supply stored a record in the period, or when no period could be resolved.",
+            "example" : 1210,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "surplusKWh" : {
+            "description" : "Energy assigned to every supply of the community and fed back to the grid over the period. In kWh, rounded to 3 decimals. Null when no supply stored a record in the period, or when no period could be resolved.",
+            "example" : 260,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required" : [
+          "productionKWh",
+          "selfConsumptionKWh",
+          "surplusKWh"
+        ],
+        "type" : "object"
+      },
+      "CommunityEnergyMetricsResponse" : {
+        "properties" : {
+          "co2Avoided" : {
+            "$ref" : "#/components/schemas/CommunityEnergyMetricsCo2AvoidedResponse",
+            "description" : "An estimate of the CO₂ the community's plants avoided over the period, computed from exactly the production reported in energy.productionKWh with the MITECO \"Mix sin GdO\" electricity emission factors, and the years of the factors applied."
+          },
+          "coverage" : {
+            "$ref" : "#/components/schemas/CommunityEnergyMetricsCoverageResponse",
+            "description" : "How many supplies of the community have data for the period."
+          },
+          "energy" : {
+            "$ref" : "#/components/schemas/CommunityEnergyMetricsEnergyResponse",
+            "description" : "The energy totals of the community: its plants' production, and the self-consumption and surplus of every supply of the community, summed."
+          },
+          "installedPowerKWp" : {
+            "description" : "Installed power of every plant of the community, summed, in kWp.",
+            "example" : 200,
+            "format" : "double",
+            "type" : "number"
+          },
+          "period" : {
+            "$ref" : "#/components/schemas/SupplyEnergyMetricsPeriodResponse",
+            "description" : "The period the metrics were computed over, the same for every supply and plant."
+          },
+          "plants" : {
+            "description" : "Every plant of the community, ordered by name, with its production over the period.",
+            "items" : {
+              "$ref" : "#/components/schemas/CommunityPlantEnergyResponse"
+            },
+            "type" : "array"
+          },
+          "selfConsumptionRatio" : {
+            "description" : "Share of the energy assigned to the community's supplies that they consumed rather than fed back to the grid, on a 0-1 scale, computed once from the summed self-consumption and surplus of every supply of the community, plant's own supplies included. Adds up to 1 with surplusRatio. Null when both are zero or unknown.",
+            "example" : 0.82,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "surplusIncome" : {
+            "$ref" : "#/components/schemas/CommunityEnergyMetricsSurplusIncomeResponse",
+            "description" : "An estimate of what the community's surplus earned at OMIE day-ahead prices over the period, and the surplus that could not be priced. Computed over exactly the surplus reported in energy.surplusKWh."
+          },
+          "surplusRatio" : {
+            "description" : "Share of the energy assigned to the community's supplies that was fed back to the grid, on a 0-1 scale, computed once from the summed self-consumption and surplus of every supply of the community. Adds up to 1 with selfConsumptionRatio. Null when both are zero or unknown.",
+            "example" : 0.18,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required" : [
+          "co2Avoided",
+          "coverage",
+          "energy",
+          "installedPowerKWp",
+          "period",
+          "plants",
+          "selfConsumptionRatio",
+          "surplusIncome",
+          "surplusRatio"
+        ],
+        "type" : "object"
+      },
+      "CommunityEnergyMetricsSurplusIncomeResponse" : {
+        "properties" : {
+          "amountEur" : {
+            "description" : "Estimated income of the surplus over the period, in euros, at OMIE day-ahead prices (the Spanish system's marginal price): each hour's surplus multiplied by the mean of the prices stored for that hour, summed, then rounded to cents. It is a market-price estimate, without taxes, fees, deviation costs or retailer margins. Market prices may be zero or negative and are applied as they are, so the amount may be negative. Hours without a stored price add nothing; their surplus is reported in unpricedSurplusKWh. Null when energy.surplusKWh is null.",
+            "example" : 18.42,
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "unpricedSurplusKWh" : {
+            "description" : "The part of energy.surplusKWh in hours without a stored OMIE price, which amountEur does not include. In kWh, rounded to 3 decimals. 0 when every hour was priced. Null when energy.surplusKWh is null.",
+            "example" : 1.5,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required" : [
+          "amountEur",
+          "unpricedSurplusKWh"
+        ],
+        "type" : "object"
+      },
+      "CommunityHourlyEnergyBucketResponse" : {
+        "properties" : {
+          "date" : {
+            "description" : "Local calendar date the hour starts on, in the community's time zone.",
+            "example" : "2024/01/15",
+            "type" : "string"
+          },
+          "selfConsumptionKWh" : {
+            "description" : "Energy produced by the community and consumed by every supply of the community with data over the hour, as reported by the distributor. In kWh, rounded to 3 decimals. Null when no supply had data that hour, which is not a measured zero.",
+            "example" : 12.5,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "startsAt" : {
+            "description" : "Instant the hour starts at, with the offset in force in the community's time zone at that instant. Unique within the series, including on the day the clocks go back.",
+            "example" : "2026-10-25T02:00:00+01:00",
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "suppliesWithData" : {
+            "description" : "Number of those supplies with data that hour: whose record of that hour carries self-consumed energy, zero included. Below supplyCount, the hour is incomplete.",
+            "example" : 11,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "supplyCount" : {
+            "description" : "Number of enabled supplies of the community, whatever the membership status of their owners. The model records no date a supply joined, so the same count applies to every hour.",
+            "example" : 12,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "surplusKWh" : {
+            "description" : "Energy assigned to every supply of the community with data and fed back to the grid over the hour. In kWh, rounded to 3 decimals. Null when no supply had data that hour, which is not a measured zero.",
+            "example" : 3.25,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "time" : {
+            "description" : "Local time the hour starts at, in the community's time zone, from 00:00 to 23:00. On the day the clocks go back, two consecutive hours carry the same date and time.",
+            "example" : "13:00",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "date",
+          "selfConsumptionKWh",
+          "startsAt",
+          "suppliesWithData",
+          "supplyCount",
+          "surplusKWh",
+          "time"
+        ],
+        "type" : "object"
+      },
+      "CommunityMonthlyEnergyBucketResponse" : {
+        "properties" : {
+          "date" : {
+            "description" : "First day of the month, a local calendar date in the community's time zone.",
+            "example" : "2024/01/01",
+            "type" : "string"
+          },
+          "selfConsumptionKWh" : {
+            "description" : "Energy produced by the community and consumed by every supply of the community with data over the month, as reported by the distributor. In kWh, rounded to 3 decimals. Null when no supply had data that month, which is not a measured zero.",
+            "example" : 12.5,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "suppliesWithData" : {
+            "description" : "Number of those supplies with data that month: whose hourly records carrying self-consumed energy, zero included, cover at least 90% of the month's hours inside the period. The same threshold as the energy metrics' suppliesWithData, so for a whole month the two agree. Below supplyCount, the month is incomplete.",
+            "example" : 11,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "supplyCount" : {
+            "description" : "Number of enabled supplies of the community, whatever the membership status of their owners. The model records no date a supply joined, so the same count applies to every month.",
+            "example" : 12,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "surplusKWh" : {
+            "description" : "Energy assigned to every supply of the community with data and fed back to the grid over the month. In kWh, rounded to 3 decimals. Null when no supply had data that month, which is not a measured zero.",
+            "example" : 3.25,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "time" : {
+            "description" : "Always 00:00: the bucket covers the local month, as far as it lies inside the period.",
+            "example" : "00:00",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "date",
+          "selfConsumptionKWh",
+          "suppliesWithData",
+          "supplyCount",
+          "surplusKWh",
+          "time"
+        ],
+        "type" : "object"
+      },
+      "CommunityPlantEnergyResponse" : {
+        "properties" : {
+          "installedPowerKWp" : {
+            "description" : "Installed power of the plant, in kWp.",
+            "example" : 100,
+            "format" : "double",
+            "type" : "number"
+          },
+          "plant" : {
+            "$ref" : "#/components/schemas/PlantReferenceResponse",
+            "description" : "The plant."
+          },
+          "productionKWh" : {
+            "description" : "Energy the plant exported to the grid at its connection point over the period, as measured by the distributor for the plant's own supply (net of the plant's own consumption). In kWh, rounded to 3 decimals. Null when the plant stored no production record in the period, which is not a measured zero, or when no period could be resolved.",
+            "example" : 760,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "productionShare" : {
+            "description" : "Share of the community's production that came from this plant, on a 0-1 scale, computed from the unrounded figures. Null when productionKWh is null, and when the community produced nothing in the period.",
+            "example" : 0.5,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required" : [
+          "installedPowerKWp",
+          "plant",
+          "productionKWh",
+          "productionShare"
+        ],
+        "type" : "object"
+      },
       "CommunityReferenceResponse" : {
         "properties" : {
           "id" : {
@@ -2849,6 +3233,284 @@
         ],
         "type" : "object"
       },
+      "PlantDailyEnergyBucketResponse" : {
+        "properties" : {
+          "date" : {
+            "description" : "Local calendar date of the day, in the community's time zone.",
+            "example" : "2024/01/15",
+            "type" : "string"
+          },
+          "expectedHours" : {
+            "description" : "Number of the day's hours inside the period. Accounts for daylight saving transitions, so a whole transition day spans 23 or 25 hours rather than 24.",
+            "example" : 24,
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "hoursWithData" : {
+            "description" : "Number of hourly production records stored for the day inside the period, zeros included. Below expectedHours, the day is incomplete.",
+            "example" : 24,
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "productionKWh" : {
+            "description" : "Energy the plant exported to the grid at its connection point over the day, as measured by the distributor for the plant's own supply (net of the plant's own consumption). In kWh, rounded to 3 decimals. Null when the plant stored no production record for the day, which is not a measured zero.",
+            "example" : 12.5,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "time" : {
+            "description" : "Always 00:00: the bucket covers the local day, as far as it lies inside the period.",
+            "example" : "00:00",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "date",
+          "expectedHours",
+          "hoursWithData",
+          "productionKWh",
+          "time"
+        ],
+        "type" : "object"
+      },
+      "PlantEnergyMetricsCoverageResponse" : {
+        "properties" : {
+          "expectedHours" : {
+            "description" : "Number of hours the period spans. Accounts for daylight saving transitions, so a transition day contributes 23 or 25 hours rather than 24. 0 when no period could be resolved.",
+            "example" : 24,
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "hoursWithData" : {
+            "description" : "Number of hourly production records found in the period, zeros included. 0 when no period could be resolved.",
+            "example" : 24,
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "required" : [
+          "expectedHours",
+          "hoursWithData"
+        ],
+        "type" : "object"
+      },
+      "PlantEnergyMetricsEnergyResponse" : {
+        "properties" : {
+          "productionKWh" : {
+            "description" : "Energy the plant exported to the grid at its connection point over the period, as measured by the distributor for the plant's own supply (net of the plant's own consumption). In kWh, rounded to 3 decimals. Null when the plant stored no production record in the period, which is not a measured zero, or when no period could be resolved.",
+            "example" : 152.4,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required" : [
+          "productionKWh"
+        ],
+        "type" : "object"
+      },
+      "PlantEnergyMetricsResponse" : {
+        "properties" : {
+          "coverage" : {
+            "$ref" : "#/components/schemas/PlantEnergyMetricsCoverageResponse",
+            "description" : "How much of the period is backed by the plant's stored production records."
+          },
+          "energy" : {
+            "$ref" : "#/components/schemas/PlantEnergyMetricsEnergyResponse",
+            "description" : "The energy totals of the plant: its production."
+          },
+          "period" : {
+            "$ref" : "#/components/schemas/SupplyEnergyMetricsPeriodResponse",
+            "description" : "The period the metrics were computed over."
+          }
+        },
+        "required" : [
+          "coverage",
+          "energy",
+          "period"
+        ],
+        "type" : "object"
+      },
+      "PlantHourlyEnergyBucketResponse" : {
+        "properties" : {
+          "date" : {
+            "description" : "Local calendar date the hour starts on, in the community's time zone.",
+            "example" : "2024/01/15",
+            "type" : "string"
+          },
+          "expectedHours" : {
+            "description" : "Number of hours the bucket spans inside the period: always 1.",
+            "example" : 1,
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "hoursWithData" : {
+            "description" : "Number of hourly production records stored for the hour: 1, or 0 when the hour is a gap.",
+            "example" : 1,
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "productionKWh" : {
+            "description" : "Energy the plant exported to the grid at its connection point over the hour, as measured by the distributor for the plant's own supply (net of the plant's own consumption). In kWh, rounded to 3 decimals. Null when the plant stored no production record for the hour, which is not a measured zero.",
+            "example" : 12.5,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "startsAt" : {
+            "description" : "Instant the hour starts at, with the offset in force in the community's time zone at that instant. Unique within the series, including on the day the clocks go back.",
+            "example" : "2026-10-25T02:00:00+01:00",
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "time" : {
+            "description" : "Local time the hour starts at, in the community's time zone, from 00:00 to 23:00. On the day the clocks go back, two consecutive hours carry the same date and time.",
+            "example" : "13:00",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "date",
+          "expectedHours",
+          "hoursWithData",
+          "productionKWh",
+          "startsAt",
+          "time"
+        ],
+        "type" : "object"
+      },
+      "PlantInverterPowerPointResponse" : {
+        "properties" : {
+          "endsAt" : {
+            "description" : "Instant of the later of the two consecutive inverter snapshots the point is averaged between, where its interval ends, with the offset in force in the community's time zone at that instant.",
+            "example" : "2026-09-15T08:05:00+02:00",
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "powerKW" : {
+            "description" : "Average power of the inverter over the interval between the two snapshots, in kW, rounded to 3 decimals: the energy the inverter counted in the interval divided by the interval's real duration. Never negative. Null when the interval is longer than 15 minutes: a gap in the snapshots, never drawn as production.",
+            "example" : 0.48,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required" : [
+          "endsAt",
+          "powerKW"
+        ],
+        "type" : "object"
+      },
+      "PlantInverterProductionTodayResponse" : {
+        "properties" : {
+          "lastUpdatedAt" : {
+            "description" : "Instant of the latest inverter snapshot of today, with the offset in force in the community's time zone at that instant. Null unless the status is AVAILABLE.",
+            "example" : "2026-09-15T13:05:00+02:00",
+            "format" : "date-time",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "powerCurve" : {
+            "description" : "The inverter's average power between each pair of consecutive snapshots of today, in time order. Empty with a single snapshot. Null unless the status is AVAILABLE.",
+            "items" : {
+              "$ref" : "#/components/schemas/PlantInverterPowerPointResponse"
+            },
+            "type" : [
+              "array",
+              "null"
+            ]
+          },
+          "stale" : {
+            "description" : "True when the latest inverter snapshot of today is more than 60 minutes old; one exactly 60 minutes old is not stale. Null unless the status is AVAILABLE.",
+            "example" : false,
+            "type" : [
+              "boolean",
+              "null"
+            ]
+          },
+          "status" : {
+            "description" : "Whether today's inverter production can be shown. AVAILABLE: the plant has an enabled Huawei configuration and at least one inverter snapshot of the current local day. NO_DATA_TODAY: the configuration is enabled, but no snapshot of the current local day is stored. NOT_AVAILABLE: the plant has no Huawei configuration, or it is disabled. Every other field is null unless the status is AVAILABLE.",
+            "enum" : [
+              "AVAILABLE",
+              "NO_DATA_TODAY",
+              "NOT_AVAILABLE"
+            ],
+            "example" : "AVAILABLE",
+            "type" : "string"
+          },
+          "todayEnergyKWh" : {
+            "description" : "Energy the plant's inverter produced today, from local midnight in the community's time zone, in kWh, rounded to 3 decimals: the latest inverter day counter of today, a snapshot still carrying the previous day's total counting as 0. This is gross inverter output, which may differ from the distributor's figures and is never summed with the energy metrics. Null unless the status is AVAILABLE.",
+            "example" : 152.4,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required" : [
+          "lastUpdatedAt",
+          "powerCurve",
+          "stale",
+          "status",
+          "todayEnergyKWh"
+        ],
+        "type" : "object"
+      },
+      "PlantMonthlyEnergyBucketResponse" : {
+        "properties" : {
+          "date" : {
+            "description" : "First day of the month, a local calendar date in the community's time zone.",
+            "example" : "2024/01/01",
+            "type" : "string"
+          },
+          "expectedHours" : {
+            "description" : "Number of the month's hours inside the period. Accounts for daylight saving transitions, so a whole transition month spans one hour less or more.",
+            "example" : 744,
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "hoursWithData" : {
+            "description" : "Number of hourly production records stored for the month inside the period, zeros included. Below expectedHours, the month is incomplete.",
+            "example" : 480,
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "productionKWh" : {
+            "description" : "Energy the plant exported to the grid at its connection point over the month, as measured by the distributor for the plant's own supply (net of the plant's own consumption). In kWh, rounded to 3 decimals. Null when the plant stored no production record for the month, which is not a measured zero.",
+            "example" : 12.5,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "time" : {
+            "description" : "Always 00:00: the bucket covers the local month, as far as it lies inside the period.",
+            "example" : "00:00",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "date",
+          "expectedHours",
+          "hoursWithData",
+          "productionKWh",
+          "time"
+        ],
+        "type" : "object"
+      },
       "PlantReferenceResponse" : {
         "properties" : {
           "id" : {
@@ -2924,6 +3586,8 @@
             "description" : "The supply this plant produces onto. A reference: the full supply, including its owner, is fetched from GET /supplies/{supplyId}, which not every caller who may list plants is allowed to call."
           },
           "totalPower" : {
+            "description" : "Installed power of the plant, in kWp.",
+            "example" : 100,
             "format" : "double",
             "type" : "number"
           }
@@ -7482,7 +8146,7 @@
     },
     "/api/v1/communities/{communityId}/consumption/datadis/sync" : {
       "post" : {
-        "description" : "This endpoint enables users to synchronize consumption data from datadis for a specific year.\n\nThe request body must contain:\n- **year** (required, integer): The year for which to synchronize consumption data\n- **supplyCode** (optional, string): The supply code (CUPS) to synchronize. If not provided, all active supplies will be synchronized.\n\nThe synchronization will retrieve data from January 1st to December 31st of the specified year.\n\n**Behavior:**\n- If supplyCode is provided: Synchronizes only that specific supply\n- If supplyCode is not provided or is empty: Synchronizes all active supplies\n\nThe community is taken from the path; the configured Datadis credentials of that\ncommunity are used and only that community's supplies are synchronized.\n\nProper authentication, through an authentication token, is required for secure access to this endpoint.\n**Required: Community Admin of the community. Returns 404 if the community does not exist or the\ncaller is not a member of it, or 403 if the caller is a member but not one of its admins.**\n\nA successful request returns an HTTP status code of 200.\n\nIn cases of errors, the server responds with an appropriate error status code accompanied by a\ndescriptive message to guide users in resolving any issues.\n",
+        "description" : "This endpoint enables users to synchronize consumption data from datadis for a specific year.\n\nThe request body must contain:\n- **year** (required, integer): The year for which to synchronize consumption data\n- **supplyCode** (optional, string): The supply code (CUPS) to synchronize. If not provided, all active supplies will be synchronized.\n\nThe synchronization will retrieve data from January 1st to December 31st of the specified year.\n\n**Behavior:**\n- If supplyCode is provided: Synchronizes only that specific supply\n- If supplyCode is not provided or is empty: Synchronizes all active supplies\n\nThe community is taken from the path; the configured Datadis credentials of that\ncommunity are used and only that community's supplies are synchronized.\n\nProper authentication, through an authentication token, is required for secure access to this endpoint.\n**Required: Community Admin of the community. Returns 404 if the community does not exist or the\ncaller is not a member of it, or 403 if the caller is a member but not one of its admins.**\n\nA successful request returns an HTTP status code of 200.\n\nThe server responds with `409` when the community has no Datadis configuration, or it is\ndisabled; Datadis is not called.\n\nIn cases of errors, the server responds with an appropriate error status code accompanied by a\ndescriptive message to guide users in resolving any issues.\n",
         "operationId" : "syncDatadisConsumptions",
         "parameters" : [
           {
@@ -7587,6 +8251,22 @@
               }
             },
             "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "409" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "Datadis integration is disabled. Enable it via POST /api/v1/communities/{communityId}/config/datadis/enable before triggering this operation.",
+                  "status" : 409,
+                  "timestamp" : "2026-11-09T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "The community has no Datadis configuration, or it is disabled."
           },
           "500" : {
             "content" : {
@@ -8373,6 +9053,615 @@
           }
         ],
         "summary" : "Enables a community.",
+        "tags" : [
+          "Communities"
+        ]
+      }
+    },
+    "/api/v1/communities/{communityId}/energy-metrics" : {
+      "get" : {
+        "description" : "Aggregates the distributor's records of the whole community over one period. Only\ncommunity totals are reported: no figure, identifier or code of a single supply or\nmember.\n\n- `energy.productionKWh`: what every plant of the community produced, as reported for\n  the plant's own supply.\n- `energy.selfConsumptionKWh` and `energy.surplusKWh`: summed over every **enabled**\n  supply of the community, whatever the membership status of its owner. A plant's own\n  supply counts with its self-consumption; its surplus is stored as 0, since it is\n  reported as production.\n- `selfConsumptionRatio` and `surplusRatio`: the shares of the assigned energy that\n  was used in the community and that went to the grid, on a 0-1 scale, computed\n  **once** from the summed self-consumption and surplus, so they add up to 1. Both\n  are `null` when both figures are zero or unknown, never `0`.\n- `installedPowerKWp`: the installed power of every plant of the community.\n- `surplusIncome.amountEur`: an **estimate** of what `energy.surplusKWh` earned at\n  OMIE day-ahead prices, the Spanish system's marginal price. Each hour's surplus is\n  priced at the mean of the prices stored for that hour (four quarter-hour prices, or a\n  single hourly one), summed unrounded and rounded once to cents. Market prices may be\n  zero or **negative** and are applied as they are, so the amount may be negative. No\n  taxes, fees, deviation costs or retailer margins are included.\n- `surplusIncome.unpricedSurplusKWh`: the surplus of the hours without a stored price,\n  which add nothing to the amount. Both are `null` exactly when `energy.surplusKWh` is.\n- `co2Avoided.amountKg`: an **estimate** of the CO₂ that `energy.productionKWh`\n  avoided, in kg CO₂e: what the same electricity would have emitted had it been bought\n  from a retailer without guarantees of origin, using the MITECO \"Mix sin GdO\" factors,\n  **not** the average grid mix. Each calendar year of the period, in the community's\n  time zone, uses its own factor, or the latest earlier one when its own is not\n  published yet; the products are summed unrounded and rounded once to 3 decimals.\n- `co2Avoided.factorYears`: the years of the factors applied, in ascending order. Both\n  are `null` when `energy.productionKWh` is, or when a year with production is earlier\n  than every available factor.\n- `plants`: every plant of the community with its installed power, its production\n  and its share of the community's production.\n\nA figure nothing was stored for is `null`, never `0`: a plant without any production\nrecord in the period has null production and share, and so do the energy totals\nwhen nothing was stored for any plant or supply.\n\n**Period:**\nThe period is resolved in exactly one of three ways, and the resolved bounds are\nalways reported in `period`, also when the caller supplied them, with an end after\nthe current hour clipped as described under **Period checks**.\n\n- `startDate` and `endDate`: an explicit period. They must be supplied together, and\n  a `startDate` that is not before the `endDate` is a bad request.\n- `period=LATEST_PUBLISHED_MONTH`: the most recent complete calendar month, in the\n  community's time zone, that the distributor has published for any supply of the\n  community, exactly as a membership's latest published month is resolved over the\n  member's supplies. An hourly record is published when it carries self-consumed\n  energy, zero included, and a month is published for a supply when at least\n  90% of the hours it could have published carry it. The search goes backwards\n  through the 24 complete months before the current one; the current month is never\n  a candidate. When no month in the search window is published, no period is\n  resolved. Combining it with `startDate` or `endDate` is a bad request.\n- Neither: from the earliest record stored for any supply of the community to the end\n  of the hour of the latest.\n\nWhen no period can be resolved, the response is still successful, with null period\nbounds, null figures and ratios, no supply with data, and every plant listed with\nits installed power alone.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Coverage:**\n`coverage.supplyCount` is the number of enabled supplies of the community, and\n`coverage.suppliesWithData` how many of them have data for the period: their hourly\nrecords carrying self-consumed energy cover at least 90% of the hours the period\nspans, the same threshold a month is published by.\n\nReadable by any active member of the community, whatever their role. A platform\nadmin who is not a member is answered 403, and every other caller who may not read\nit 404.\n",
+        "operationId" : "getCommunityEnergyMetrics",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "communityId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "Start of an explicit period, inclusive. Requires endDate.",
+            "in" : "query",
+            "name" : "startDate",
+            "required" : false,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "End of an explicit period, exclusive. Requires startDate.",
+            "in" : "query",
+            "name" : "endDate",
+            "required" : false,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "A period the server resolves by itself. Cannot be combined with startDate or endDate.",
+            "in" : "query",
+            "name" : "period",
+            "required" : false,
+            "schema" : {
+              "enum" : [
+                "LATEST_PUBLISHED_MONTH"
+              ],
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CommunityEnergyMetricsResponse"
+                }
+              }
+            },
+            "description" : "Energy metrics retrieved successfully"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The request contains invalid data.",
+                  "status" : 400,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The request contains invalid data."
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "You are not authorized to make this request.",
+                  "status" : 401,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request."
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Not authorized" : {
+                    "description" : "Not authorized",
+                    "value" : {
+                      "message" : "You are not authorized to make this request.",
+                      "status" : 403,
+                      "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Password change required" : {
+                    "description" : "Password change required",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "USER_PASSWORD_CHANGE_REQUIRED",
+                          "message" : "You must change your password before you can continue.",
+                          "params" : null
+                        }
+                      ],
+                      "message" : "You must change your password before you can continue.",
+                      "status" : 403,
+                      "timestamp" : "2026-10-06T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request, or your password must be changed first (`USER_PASSWORD_CHANGE_REQUIRED`): while `mustChangePassword` is true on `GET /api/v1/users/current`, every request other than reading the current user, changing the password and logging out is refused."
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The requested data can not be found. Please check you are authorised or this content exists.",
+                  "status" : 404,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "There was a problem processing your request.",
+                  "status" : 500,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "There was a problem processing your request."
+          }
+        },
+        "security" : [
+          {
+            "bearerToken" : [ ]
+          }
+        ],
+        "summary" : "Retrieves the energy metrics of a community: its production and how it was used.",
+        "tags" : [
+          "Communities"
+        ]
+      }
+    },
+    "/api/v1/communities/{communityId}/energy-series/daily" : {
+      "get" : {
+        "description" : "For each day of the requested period, the self-consumption and surplus of every\n**enabled** supply of the community with data in it, whatever the membership status\nof its owner, added up. Only community totals are reported: no figure, identifier or\ncode of a single supply or member. Each energy figure sums the unrounded figures and\nis rounded once, to 3 decimals, on the result.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Every day is emitted:**\nA bucket is returned for every local day of the community's time zone that overlaps\nthe period, in chronological order, whether or not any supply has data that day. A\nday the period starts or ends inside counts only its part inside the period.\n\n**Completeness:**\n`supplyCount` is the number of enabled supplies of the community, the same in every\nbucket, and `suppliesWithData` how many of them have data in the day. A day with\n`suppliesWithData` below `supplyCount` is incomplete.\n\n**Gaps and measured zeros:**\nA supply has data on a day when its hourly records carrying self-consumed\nenergy, zero included, cover at least 90% of the day's hours inside the period, the\nsame threshold a month is published by. Only those supplies are added up. A day in\nwhich no supply has data has `null` energy figures and a `suppliesWithData` of 0,\nnever zeros; a day whose supplies with data carry no energy is a measured zero, `0`.\n\nReadable by any active member of the community, whatever their role. A platform\nadmin who is not a member is answered 403, and every other caller who may not read\nit 404.\n",
+        "operationId" : "getCommunityDailyEnergySeries",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "communityId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "Start of the period, inclusive.",
+            "in" : "query",
+            "name" : "startDate",
+            "required" : true,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "End of the period, exclusive.",
+            "in" : "query",
+            "name" : "endDate",
+            "required" : true,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/CommunityDailyEnergyBucketResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "Daily energy series retrieved successfully"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The request contains invalid data.",
+                  "status" : 400,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The request contains invalid data."
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "You are not authorized to make this request.",
+                  "status" : 401,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request."
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Not authorized" : {
+                    "description" : "Not authorized",
+                    "value" : {
+                      "message" : "You are not authorized to make this request.",
+                      "status" : 403,
+                      "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Password change required" : {
+                    "description" : "Password change required",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "USER_PASSWORD_CHANGE_REQUIRED",
+                          "message" : "You must change your password before you can continue.",
+                          "params" : null
+                        }
+                      ],
+                      "message" : "You must change your password before you can continue.",
+                      "status" : 403,
+                      "timestamp" : "2026-10-06T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request, or your password must be changed first (`USER_PASSWORD_CHANGE_REQUIRED`): while `mustChangePassword` is true on `GET /api/v1/users/current`, every request other than reading the current user, changing the password and logging out is refused."
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The requested data can not be found. Please check you are authorised or this content exists.",
+                  "status" : 404,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "There was a problem processing your request.",
+                  "status" : 500,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "There was a problem processing your request."
+          }
+        },
+        "security" : [
+          {
+            "bearerToken" : [ ]
+          }
+        ],
+        "summary" : "Retrieves the energy of a community, added up per day.",
+        "tags" : [
+          "Communities"
+        ]
+      }
+    },
+    "/api/v1/communities/{communityId}/energy-series/hourly" : {
+      "get" : {
+        "description" : "For each hour of the requested period, the self-consumption and surplus of every\n**enabled** supply of the community with data in it, whatever the membership status\nof its owner, added up. Only community totals are reported: no figure, identifier or\ncode of a single supply or member. Each energy figure sums the unrounded figures and\nis rounded once, to 3 decimals, on the result.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Maximum length:** on this operation the limit of rule 5 is **31 calendar days**\ninstead of 24 calendar months: `endDate` must be no later than 31 calendar days after\n`startDate`, counted in the period's time zone on the bounds as requested\n(`ENERGY_METRICS_PERIOD_TOO_LONG`, with `params` `{\"amount\": \"31\", \"unit\": \"DAYS\"}`).\n\n**Every hour is emitted:**\nA bucket is returned for every whole hour that starts inside the period, in\nchronological order, whether or not any supply has data that hour: 24 for a whole\nlocal day of the community's time zone, 23 on the day the clocks go forward and 25\non the day they go back. `startsAt` is the instant the hour starts at, with the\noffset in force in the community's time zone, and is unique within the series;\n`date` and `time` are the local date and time the hour starts at, which two\nconsecutive hours share on the day the clocks go back.\n\n**Completeness:**\n`supplyCount` is the number of enabled supplies of the community, the same in every\nbucket, and `suppliesWithData` how many of them have data in the hour. A hour with\n`suppliesWithData` below `supplyCount` is incomplete.\n\n**Gaps and measured zeros:**\nA supply has data in an hour when its record of that hour carries\nself-consumed energy, zero included; surplus alone does not count. An hour in which\nno supply has data has `null` energy figures and a `suppliesWithData` of 0, never\nzeros; an hour whose supplies with data carry no energy is a measured zero, `0`.\n\nReadable by any active member of the community, whatever their role. A platform\nadmin who is not a member is answered 403, and every other caller who may not read\nit 404.\n",
+        "operationId" : "getCommunityHourlyEnergySeries",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "communityId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "Start of the period, inclusive.",
+            "in" : "query",
+            "name" : "startDate",
+            "required" : true,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "End of the period, exclusive.",
+            "in" : "query",
+            "name" : "endDate",
+            "required" : true,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/CommunityHourlyEnergyBucketResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "Hourly energy series retrieved successfully"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The request contains invalid data.",
+                  "status" : 400,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The request contains invalid data."
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "You are not authorized to make this request.",
+                  "status" : 401,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request."
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Not authorized" : {
+                    "description" : "Not authorized",
+                    "value" : {
+                      "message" : "You are not authorized to make this request.",
+                      "status" : 403,
+                      "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Password change required" : {
+                    "description" : "Password change required",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "USER_PASSWORD_CHANGE_REQUIRED",
+                          "message" : "You must change your password before you can continue.",
+                          "params" : null
+                        }
+                      ],
+                      "message" : "You must change your password before you can continue.",
+                      "status" : 403,
+                      "timestamp" : "2026-10-06T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request, or your password must be changed first (`USER_PASSWORD_CHANGE_REQUIRED`): while `mustChangePassword` is true on `GET /api/v1/users/current`, every request other than reading the current user, changing the password and logging out is refused."
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The requested data can not be found. Please check you are authorised or this content exists.",
+                  "status" : 404,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "There was a problem processing your request.",
+                  "status" : 500,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "There was a problem processing your request."
+          }
+        },
+        "security" : [
+          {
+            "bearerToken" : [ ]
+          }
+        ],
+        "summary" : "Retrieves the energy of a community, added up per hour.",
+        "tags" : [
+          "Communities"
+        ]
+      }
+    },
+    "/api/v1/communities/{communityId}/energy-series/monthly" : {
+      "get" : {
+        "description" : "For each month of the requested period, the self-consumption and surplus of every\n**enabled** supply of the community with data in it, whatever the membership status\nof its owner, added up. Only community totals are reported: no figure, identifier or\ncode of a single supply or member. Each energy figure sums the unrounded figures and\nis rounded once, to 3 decimals, on the result.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Every month is emitted:**\nA bucket is returned for every month whose local midnight on day 1 falls inside the\nperiod, in chronological order, whether or not any supply has data that month. A\nmonth the period ends inside counts only its part inside the period. The figures are\ntotalled from the hourly records, not from the monthly pre-aggregates.\n\n**Completeness:**\n`supplyCount` is the number of enabled supplies of the community, the same in every\nbucket, and `suppliesWithData` how many of them have data in the month. A month with\n`suppliesWithData` below `supplyCount` is incomplete.\n\n**Gaps and measured zeros:**\nA supply has data in a month when its hourly records carrying self-consumed\nenergy, zero included, cover at least 90% of the month's hours inside the period,\nthe same threshold the community energy metrics count `suppliesWithData` by, so the\ntwo agree for the same month. Only those supplies are added up. A month in which no\nsupply has data has `null` energy figures and a `suppliesWithData` of 0, never zeros;\na month whose supplies with data carry no energy is a measured zero, `0`.\n\nReadable by any active member of the community, whatever their role. A platform\nadmin who is not a member is answered 403, and every other caller who may not read\nit 404.\n",
+        "operationId" : "getCommunityMonthlyEnergySeries",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "communityId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "Start of the period, inclusive.",
+            "in" : "query",
+            "name" : "startDate",
+            "required" : true,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "End of the period, exclusive.",
+            "in" : "query",
+            "name" : "endDate",
+            "required" : true,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/CommunityMonthlyEnergyBucketResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "Monthly energy series retrieved successfully"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The request contains invalid data.",
+                  "status" : 400,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The request contains invalid data."
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "You are not authorized to make this request.",
+                  "status" : 401,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request."
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Not authorized" : {
+                    "description" : "Not authorized",
+                    "value" : {
+                      "message" : "You are not authorized to make this request.",
+                      "status" : 403,
+                      "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Password change required" : {
+                    "description" : "Password change required",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "USER_PASSWORD_CHANGE_REQUIRED",
+                          "message" : "You must change your password before you can continue.",
+                          "params" : null
+                        }
+                      ],
+                      "message" : "You must change your password before you can continue.",
+                      "status" : 403,
+                      "timestamp" : "2026-10-06T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request, or your password must be changed first (`USER_PASSWORD_CHANGE_REQUIRED`): while `mustChangePassword` is true on `GET /api/v1/users/current`, every request other than reading the current user, changing the password and logging out is refused."
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The requested data can not be found. Please check you are authorised or this content exists.",
+                  "status" : 404,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "There was a problem processing your request.",
+                  "status" : 500,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "There was a problem processing your request."
+          }
+        },
+        "security" : [
+          {
+            "bearerToken" : [ ]
+          }
+        ],
+        "summary" : "Retrieves the energy of a community, added up per month.",
         "tags" : [
           "Communities"
         ]
@@ -13773,7 +15062,7 @@
     },
     "/api/v1/communities/{communityId}/supplies/datadis/sync" : {
       "post" : {
-        "description" : "This endpoint enables users to synchronize the active supplies of the community identified by the\npath `communityId`, retrieving the information from datadis.\n\nProper authentication, through an authentication token, is required for secure access to this\nendpoint.\n**Required: Community Admin of the community. Returns 404 if the community does not exist or the\ncaller is not a member of it, or 403 if the caller is a member but not one of its admins.**\n\nA successful request returns an HTTP status code of 200.\n\nIn cases of errors, the server responds with an appropriate error status code accompanied by a\ndescriptive message to guide users in resolving any issues.\n",
+        "description" : "This endpoint enables users to synchronize the active supplies of the community identified by the\npath `communityId`, retrieving the information from datadis.\n\nProper authentication, through an authentication token, is required for secure access to this\nendpoint.\n**Required: Community Admin of the community. Returns 404 if the community does not exist or the\ncaller is not a member of it, or 403 if the caller is a member but not one of its admins.**\n\nA successful request returns an HTTP status code of 200.\n\nThe server responds with `409` when the community has no Datadis configuration, or it is\ndisabled; Datadis is not called.\n\nIn cases of errors, the server responds with an appropriate error status code accompanied by a\ndescriptive message to guide users in resolving any issues.\n",
         "operationId" : "syncDatadisSupplies",
         "parameters" : [
           {
@@ -13868,6 +15157,22 @@
               }
             },
             "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "409" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "Datadis integration is disabled. Enable it via POST /api/v1/communities/{communityId}/config/datadis/enable before triggering this operation.",
+                  "status" : 409,
+                  "timestamp" : "2026-11-09T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "The community has no Datadis configuration, or it is disabled."
           },
           "500" : {
             "content" : {
@@ -15276,6 +16581,742 @@
           }
         ],
         "summary" : "Updates plant information",
+        "tags" : [
+          "Plants"
+        ]
+      }
+    },
+    "/api/v1/plants/{plantId}/energy-metrics" : {
+      "get" : {
+        "description" : "Aggregates the distributor's hourly records of the plant's own supply over one period.\nNo code or identifier of that supply is reported.\n\n- `energy.productionKWh`: what the plant produced, as reported by the distributor for\n  the plant's own supply: the energy the plant exported to the grid. Totalled from the\n  hourly records, not from the monthly pre-aggregates. An hour without a record adds\n  nothing; an hour stored as 0, such as at night, is a measured zero.\n- `coverage.hoursWithData` and `coverage.expectedHours`: how many hourly records were\n  found in the period, zeros included, and how many hours the period spans.\n\nA figure nothing was stored for is `null`, never `0`: a period without any production\nrecord has null production.\n\n**Period:**\nThe period is resolved in exactly one of three ways, and the resolved bounds are\nalways reported in `period`, also when the caller supplied them, with an end after\nthe current hour clipped as described under **Period checks**.\n\n- `startDate` and `endDate`: an explicit period. They must be supplied together, and\n  a `startDate` that is not before the `endDate` is a bad request.\n- `period=LATEST_PRODUCTION_DAY`: the latest complete local day, in the community's\n  time zone, with production: the latest day whose stored hourly records cover all\n  its hours (23, 24 or 25 on the days the clocks change). The search goes backwards\n  through the 24 months before the current day; the current day is never a\n  candidate, even when all its hours are stored. When no day in the search window is\n  complete, no period is resolved. Combining it with `startDate` or `endDate` is a\n  bad request.\n- Neither: from the earliest production record stored for the plant to the end of the\n  hour of the latest.\n\nWhen no period can be resolved, the response is still successful, with null period\nbounds, null production and no hour.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Required: the caller can manage the plant** (the plant's `canManage` capability):\nan active community admin of the plant's community. A member of that community who is\nnot an admin is answered 403, and every other caller, a platform admin who is not a\nmember included, 404.\n",
+        "operationId" : "getPlantEnergyMetrics",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "plantId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "Start of an explicit period, inclusive. Requires endDate.",
+            "in" : "query",
+            "name" : "startDate",
+            "required" : false,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "End of an explicit period, exclusive. Requires startDate.",
+            "in" : "query",
+            "name" : "endDate",
+            "required" : false,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "A period the server resolves by itself. Cannot be combined with startDate or endDate.",
+            "in" : "query",
+            "name" : "period",
+            "required" : false,
+            "schema" : {
+              "enum" : [
+                "LATEST_PRODUCTION_DAY"
+              ],
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlantEnergyMetricsResponse"
+                }
+              }
+            },
+            "description" : "Energy metrics retrieved successfully"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The request contains invalid data.",
+                  "status" : 400,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The request contains invalid data."
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "You are not authorized to make this request.",
+                  "status" : 401,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request."
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Not authorized" : {
+                    "description" : "Not authorized",
+                    "value" : {
+                      "message" : "You are not authorized to make this request.",
+                      "status" : 403,
+                      "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Password change required" : {
+                    "description" : "Password change required",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "USER_PASSWORD_CHANGE_REQUIRED",
+                          "message" : "You must change your password before you can continue.",
+                          "params" : null
+                        }
+                      ],
+                      "message" : "You must change your password before you can continue.",
+                      "status" : 403,
+                      "timestamp" : "2026-10-06T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request, or your password must be changed first (`USER_PASSWORD_CHANGE_REQUIRED`): while `mustChangePassword` is true on `GET /api/v1/users/current`, every request other than reading the current user, changing the password and logging out is refused."
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The requested data can not be found. Please check you are authorised or this content exists.",
+                  "status" : 404,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "There was a problem processing your request.",
+                  "status" : 500,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "There was a problem processing your request."
+          }
+        },
+        "security" : [
+          {
+            "bearerToken" : [ ]
+          }
+        ],
+        "summary" : "Retrieves the energy metrics of a plant: its production as reported by the distributor.",
+        "tags" : [
+          "Plants"
+        ]
+      }
+    },
+    "/api/v1/plants/{plantId}/energy-series/daily" : {
+      "get" : {
+        "description" : "For each day of the requested period, what the plant produced, as reported by the\ndistributor for the plant's own supply: the energy the plant exported to the grid, its\nhourly records added up. No code or identifier of that supply is reported. Each\nfigure sums the unrounded records and is rounded once, to 3 decimals, on the result.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Every day is emitted:**\nA bucket is returned for every local day of the community's time zone that overlaps\nthe period, in chronological order, whether or not the plant has a record that day. A\nday the period starts or ends inside counts only its part inside the period.\n\n**Completeness:**\n`expectedHours` is the number of the day's hours inside the period, and\n`hoursWithData` how many of them have a stored record. A day with `hoursWithData`\nbelow `expectedHours` is incomplete.\n\n**Gaps and measured zeros:**\nA day without any stored record has `null` production and an `hoursWithData` of 0,\nnever a zero; an hour stored as 0, such as at night, is a measured zero, `0`, and\ncounts as a record.\n\n**Required: the caller can manage the plant** (the plant's `canManage` capability):\nan active community admin of the plant's community. A member of that community who is\nnot an admin is answered 403, and every other caller, a platform admin who is not a\nmember included, 404.\n",
+        "operationId" : "getPlantDailyEnergySeries",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "plantId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "Start of the period, inclusive.",
+            "in" : "query",
+            "name" : "startDate",
+            "required" : true,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "End of the period, exclusive.",
+            "in" : "query",
+            "name" : "endDate",
+            "required" : true,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/PlantDailyEnergyBucketResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "Daily energy series retrieved successfully"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The request contains invalid data.",
+                  "status" : 400,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The request contains invalid data."
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "You are not authorized to make this request.",
+                  "status" : 401,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request."
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Not authorized" : {
+                    "description" : "Not authorized",
+                    "value" : {
+                      "message" : "You are not authorized to make this request.",
+                      "status" : 403,
+                      "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Password change required" : {
+                    "description" : "Password change required",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "USER_PASSWORD_CHANGE_REQUIRED",
+                          "message" : "You must change your password before you can continue.",
+                          "params" : null
+                        }
+                      ],
+                      "message" : "You must change your password before you can continue.",
+                      "status" : 403,
+                      "timestamp" : "2026-10-06T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request, or your password must be changed first (`USER_PASSWORD_CHANGE_REQUIRED`): while `mustChangePassword` is true on `GET /api/v1/users/current`, every request other than reading the current user, changing the password and logging out is refused."
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The requested data can not be found. Please check you are authorised or this content exists.",
+                  "status" : 404,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "There was a problem processing your request.",
+                  "status" : 500,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "There was a problem processing your request."
+          }
+        },
+        "security" : [
+          {
+            "bearerToken" : [ ]
+          }
+        ],
+        "summary" : "Retrieves the production of a plant as reported by the distributor, per day.",
+        "tags" : [
+          "Plants"
+        ]
+      }
+    },
+    "/api/v1/plants/{plantId}/energy-series/hourly" : {
+      "get" : {
+        "description" : "For each hour of the requested period, what the plant produced, as reported by the\ndistributor for the plant's own supply: the energy the plant exported to the grid, its\nhourly records added up. No code or identifier of that supply is reported. Each\nfigure sums the unrounded records and is rounded once, to 3 decimals, on the result.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Maximum length:** on this operation the limit of rule 5 is **31 calendar days**\ninstead of 24 calendar months: `endDate` must be no later than 31 calendar days after\n`startDate`, counted in the period's time zone on the bounds as requested\n(`ENERGY_METRICS_PERIOD_TOO_LONG`, with `params` `{\"amount\": \"31\", \"unit\": \"DAYS\"}`).\n\n**Every hour is emitted:**\nA bucket is returned for every whole hour that starts inside the period, in\nchronological order, whether or not the plant has a record that hour: 24 for a whole\nlocal day of the community's time zone, 23 on the day the clocks go forward and 25\non the day they go back. `startsAt` is the instant the hour starts at, with the\noffset in force in the community's time zone, and is unique within the series;\n`date` and `time` are the local date and time the hour starts at, which two\nconsecutive hours share on the day the clocks go back.\n\n**Completeness:**\n`expectedHours` is the number of the hour's hours inside the period, and\n`hoursWithData` how many of them have a stored record. A hour with `hoursWithData`\nbelow `expectedHours` is incomplete.\n\n**Gaps and measured zeros:**\nA hour without any stored record has `null` production and an `hoursWithData` of 0,\nnever a zero; an hour stored as 0, such as at night, is a measured zero, `0`, and\ncounts as a record.\n\n**Required: the caller can manage the plant** (the plant's `canManage` capability):\nan active community admin of the plant's community. A member of that community who is\nnot an admin is answered 403, and every other caller, a platform admin who is not a\nmember included, 404.\n",
+        "operationId" : "getPlantHourlyEnergySeries",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "plantId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "Start of the period, inclusive.",
+            "in" : "query",
+            "name" : "startDate",
+            "required" : true,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "End of the period, exclusive.",
+            "in" : "query",
+            "name" : "endDate",
+            "required" : true,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/PlantHourlyEnergyBucketResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "Hourly energy series retrieved successfully"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The request contains invalid data.",
+                  "status" : 400,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The request contains invalid data."
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "You are not authorized to make this request.",
+                  "status" : 401,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request."
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Not authorized" : {
+                    "description" : "Not authorized",
+                    "value" : {
+                      "message" : "You are not authorized to make this request.",
+                      "status" : 403,
+                      "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Password change required" : {
+                    "description" : "Password change required",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "USER_PASSWORD_CHANGE_REQUIRED",
+                          "message" : "You must change your password before you can continue.",
+                          "params" : null
+                        }
+                      ],
+                      "message" : "You must change your password before you can continue.",
+                      "status" : 403,
+                      "timestamp" : "2026-10-06T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request, or your password must be changed first (`USER_PASSWORD_CHANGE_REQUIRED`): while `mustChangePassword` is true on `GET /api/v1/users/current`, every request other than reading the current user, changing the password and logging out is refused."
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The requested data can not be found. Please check you are authorised or this content exists.",
+                  "status" : 404,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "There was a problem processing your request.",
+                  "status" : 500,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "There was a problem processing your request."
+          }
+        },
+        "security" : [
+          {
+            "bearerToken" : [ ]
+          }
+        ],
+        "summary" : "Retrieves the production of a plant as reported by the distributor, per hour.",
+        "tags" : [
+          "Plants"
+        ]
+      }
+    },
+    "/api/v1/plants/{plantId}/energy-series/monthly" : {
+      "get" : {
+        "description" : "For each month of the requested period, what the plant produced, as reported by the\ndistributor for the plant's own supply: the energy the plant exported to the grid, its\nhourly records added up. No code or identifier of that supply is reported. Each\nfigure sums the unrounded records and is rounded once, to 3 decimals, on the result.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Every month is emitted:**\nA bucket is returned for every month whose local midnight on day 1 falls inside the\nperiod, in chronological order, whether or not the plant has a record that month. A\nmonth the period ends inside counts only its part inside the period. The figures are\ntotalled from the hourly records, not from the monthly pre-aggregates.\n\n**Completeness:**\n`expectedHours` is the number of the month's hours inside the period, and\n`hoursWithData` how many of them have a stored record. A month with `hoursWithData`\nbelow `expectedHours` is incomplete.\n\n**Gaps and measured zeros:**\nA month without any stored record has `null` production and an `hoursWithData` of 0,\nnever a zero; an hour stored as 0, such as at night, is a measured zero, `0`, and\ncounts as a record.\n\n**Required: the caller can manage the plant** (the plant's `canManage` capability):\nan active community admin of the plant's community. A member of that community who is\nnot an admin is answered 403, and every other caller, a platform admin who is not a\nmember included, 404.\n",
+        "operationId" : "getPlantMonthlyEnergySeries",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "plantId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "Start of the period, inclusive.",
+            "in" : "query",
+            "name" : "startDate",
+            "required" : true,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          },
+          {
+            "description" : "End of the period, exclusive.",
+            "in" : "query",
+            "name" : "endDate",
+            "required" : true,
+            "schema" : {
+              "format" : "date-time",
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/PlantMonthlyEnergyBucketResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "Monthly energy series retrieved successfully"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The request contains invalid data.",
+                  "status" : 400,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The request contains invalid data."
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "You are not authorized to make this request.",
+                  "status" : 401,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request."
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Not authorized" : {
+                    "description" : "Not authorized",
+                    "value" : {
+                      "message" : "You are not authorized to make this request.",
+                      "status" : 403,
+                      "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Password change required" : {
+                    "description" : "Password change required",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "USER_PASSWORD_CHANGE_REQUIRED",
+                          "message" : "You must change your password before you can continue.",
+                          "params" : null
+                        }
+                      ],
+                      "message" : "You must change your password before you can continue.",
+                      "status" : 403,
+                      "timestamp" : "2026-10-06T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request, or your password must be changed first (`USER_PASSWORD_CHANGE_REQUIRED`): while `mustChangePassword` is true on `GET /api/v1/users/current`, every request other than reading the current user, changing the password and logging out is refused."
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The requested data can not be found. Please check you are authorised or this content exists.",
+                  "status" : 404,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "There was a problem processing your request.",
+                  "status" : 500,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "There was a problem processing your request."
+          }
+        },
+        "security" : [
+          {
+            "bearerToken" : [ ]
+          }
+        ],
+        "summary" : "Retrieves the production of a plant as reported by the distributor, per month.",
+        "tags" : [
+          "Plants"
+        ]
+      }
+    },
+    "/api/v1/plants/{plantId}/inverter-production/today" : {
+      "get" : {
+        "description" : "Derives today's energy and a power curve from the real-time snapshots the plant's Huawei\ninverter reports about every 5 minutes. \"Today\" is the current local day in the community's\ntime zone. No station code, provider code or credential of the integration is reported.\n\nThis is inverter data: the gross output the inverter measures. It may differ from the\ndistributor's figures, which measure the energy exported at the connection point, and it is\nnever summed with the energy metrics or energy series figures.\n\n- `status`: `NOT_AVAILABLE` when the plant has no Huawei configuration or it is disabled,\n  `NO_DATA_TODAY` when it is enabled but no snapshot of today is stored, and `AVAILABLE`\n  otherwise. Every other field is `null` unless the status is `AVAILABLE`.\n- `todayEnergyKWh`: the latest inverter day counter of today. The counter resets at local\n  midnight, but a snapshot taken at the boundary can still carry the previous day's total:\n  the leading run of today's snapshots equal to the previous day's last value, when that is\n  greater than 0, is carry-over and counts as 0 kWh. The run ends at the first different\n  value. When every snapshot of today is carry-over, today's energy is 0.\n- `powerCurve`: one point per pair of consecutive snapshots of today, at the later one: the\n  energy counted between them divided by their real time apart, never negative. An interval\n  longer than 15 minutes is a gap: its point is `null`, and nothing is interpolated across\n  it. A single missing snapshot, about 10 minutes, is averaged.\n- `lastUpdatedAt`: when the latest snapshot of today was taken.\n- `stale`: whether that snapshot is more than 60 minutes old.\n\nEnergy and power are rounded to 3 decimals, after computing.\n\n**Required: the caller can manage the plant** (the plant's `canManage` capability):\nan active community admin of the plant's community. A member of that community who is\nnot an admin is answered 403, and every other caller, a platform admin who is not a\nmember included, 404.\n",
+        "operationId" : "getPlantInverterProductionToday",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "plantId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlantInverterProductionTodayResponse"
+                }
+              }
+            },
+            "description" : "Today's inverter production retrieved successfully"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The request contains invalid data.",
+                  "status" : 400,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The request contains invalid data."
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "You are not authorized to make this request.",
+                  "status" : 401,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request."
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Not authorized" : {
+                    "description" : "Not authorized",
+                    "value" : {
+                      "message" : "You are not authorized to make this request.",
+                      "status" : 403,
+                      "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Password change required" : {
+                    "description" : "Password change required",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "USER_PASSWORD_CHANGE_REQUIRED",
+                          "message" : "You must change your password before you can continue.",
+                          "params" : null
+                        }
+                      ],
+                      "message" : "You must change your password before you can continue.",
+                      "status" : 403,
+                      "timestamp" : "2026-10-06T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request, or your password must be changed first (`USER_PASSWORD_CHANGE_REQUIRED`): while `mustChangePassword` is true on `GET /api/v1/users/current`, every request other than reading the current user, changing the password and logging out is refused."
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The requested data can not be found. Please check you are authorised or this content exists.",
+                  "status" : 404,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "There was a problem processing your request.",
+                  "status" : 500,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "There was a problem processing your request."
+          }
+        },
+        "security" : [
+          {
+            "bearerToken" : [ ]
+          }
+        ],
+        "summary" : "Retrieves today's production of a plant as reported by its inverter.",
         "tags" : [
           "Plants"
         ]

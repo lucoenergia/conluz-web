@@ -26,8 +26,16 @@ import type {
 
 import type {
   CommunityContactResponse,
+  CommunityDailyEnergyBucketResponse,
+  CommunityEnergyMetricsResponse,
+  CommunityHourlyEnergyBucketResponse,
+  CommunityMonthlyEnergyBucketResponse,
   CommunityResponse,
   CreateCommunityBody,
+  GetCommunityDailyEnergySeriesParams,
+  GetCommunityEnergyMetricsParams,
+  GetCommunityHourlyEnergySeriesParams,
+  GetCommunityMonthlyEnergySeriesParams,
   RestError,
   SetCommunityContactBody,
   UpdateCommunityBody
@@ -693,3 +701,682 @@ export const useEnableCommunity = <TError = ErrorType<RestError>,
       > => {
       return useMutation(getEnableCommunityMutationOptions(options), queryClient);
     }
+    /**
+ * Aggregates the distributor's records of the whole community over one period. Only
+ * community totals are reported: no figure, identifier or code of a single supply or
+ * member.
+ *
+ * - `energy.productionKWh`: what every plant of the community produced, as reported for
+ *   the plant's own supply.
+ * - `energy.selfConsumptionKWh` and `energy.surplusKWh`: summed over every **enabled**
+ *   supply of the community, whatever the membership status of its owner. A plant's own
+ *   supply counts with its self-consumption; its surplus is stored as 0, since it is
+ *   reported as production.
+ * - `selfConsumptionRatio` and `surplusRatio`: the shares of the assigned energy that
+ *   was used in the community and that went to the grid, on a 0-1 scale, computed
+ *   **once** from the summed self-consumption and surplus, so they add up to 1. Both
+ *   are `null` when both figures are zero or unknown, never `0`.
+ * - `installedPowerKWp`: the installed power of every plant of the community.
+ * - `surplusIncome.amountEur`: an **estimate** of what `energy.surplusKWh` earned at
+ *   OMIE day-ahead prices, the Spanish system's marginal price. Each hour's surplus is
+ *   priced at the mean of the prices stored for that hour (four quarter-hour prices, or a
+ *   single hourly one), summed unrounded and rounded once to cents. Market prices may be
+ *   zero or **negative** and are applied as they are, so the amount may be negative. No
+ *   taxes, fees, deviation costs or retailer margins are included.
+ * - `surplusIncome.unpricedSurplusKWh`: the surplus of the hours without a stored price,
+ *   which add nothing to the amount. Both are `null` exactly when `energy.surplusKWh` is.
+ * - `co2Avoided.amountKg`: an **estimate** of the CO₂ that `energy.productionKWh`
+ *   avoided, in kg CO₂e: what the same electricity would have emitted had it been bought
+ *   from a retailer without guarantees of origin, using the MITECO "Mix sin GdO" factors,
+ *   **not** the average grid mix. Each calendar year of the period, in the community's
+ *   time zone, uses its own factor, or the latest earlier one when its own is not
+ *   published yet; the products are summed unrounded and rounded once to 3 decimals.
+ * - `co2Avoided.factorYears`: the years of the factors applied, in ascending order. Both
+ *   are `null` when `energy.productionKWh` is, or when a year with production is earlier
+ *   than every available factor.
+ * - `plants`: every plant of the community with its installed power, its production
+ *   and its share of the community's production.
+ *
+ * A figure nothing was stored for is `null`, never `0`: a plant without any production
+ * record in the period has null production and share, and so do the energy totals
+ * when nothing was stored for any plant or supply.
+ *
+ * **Period:**
+ * The period is resolved in exactly one of three ways, and the resolved bounds are
+ * always reported in `period`, also when the caller supplied them, with an end after
+ * the current hour clipped as described under **Period checks**.
+ *
+ * - `startDate` and `endDate`: an explicit period. They must be supplied together, and
+ *   a `startDate` that is not before the `endDate` is a bad request.
+ * - `period=LATEST_PUBLISHED_MONTH`: the most recent complete calendar month, in the
+ *   community's time zone, that the distributor has published for any supply of the
+ *   community, exactly as a membership's latest published month is resolved over the
+ *   member's supplies. An hourly record is published when it carries self-consumed
+ *   energy, zero included, and a month is published for a supply when at least
+ *   90% of the hours it could have published carry it. The search goes backwards
+ *   through the 24 complete months before the current one; the current month is never
+ *   a candidate. When no month in the search window is published, no period is
+ *   resolved. Combining it with `startDate` or `endDate` is a bad request.
+ * - Neither: from the earliest record stored for any supply of the community to the end
+ *   of the hour of the latest.
+ *
+ * When no period can be resolved, the response is still successful, with null period
+ * bounds, null figures and ratios, no supply with data, and every plant listed with
+ * its installed power alone.
+ *
+ * **Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
+ * included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
+ * next period. A calendar day runs from `00:00` of that day to `00:00` of the following
+ * day, and a calendar month from `00:00` of its first day to `00:00` of the first day of
+ * the next month, each bound with the offset in force at that instant -- for example
+ * `2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in
+ * Europe/Madrid.
+ *
+ * **Period checks:** a requested period is checked in this order, and the first rule it
+ * breaks is answered 400 with that rule's code:
+ *
+ * 1. `period` is not combined with `startDate` or `endDate`, on the operations that accept
+ *    `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).
+ * 2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).
+ *    On the operations where both are required, a missing one is a bad request before any
+ *    of these checks.
+ * 3. `startDate` is strictly before `endDate`: equal bounds make an empty period
+ *    (`ENERGY_METRICS_PERIOD_START_AFTER_END`).
+ * 4. `startDate` is before the start of the current hour, read in the period's time zone
+ *    (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
+ * 5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
+ *    period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+ *    The refusal states the limit in `params`: `amount`, a whole number written as a
+ *    string, and `unit`, `MONTHS` or `DAYS` -- here `{"amount": "24", "unit": "MONTHS"}`.
+ *
+ * A period that passes them and ends after the start of the current hour is then clipped
+ * to end there, before any data is read: no hour that has not fully happened is read or
+ * counted as expected. Energy metrics report the clipped end in `period`, and a series
+ * emits no bucket starting at or after it.
+ *
+ * **Coverage:**
+ * `coverage.supplyCount` is the number of enabled supplies of the community, and
+ * `coverage.suppliesWithData` how many of them have data for the period: their hourly
+ * records carrying self-consumed energy cover at least 90% of the hours the period
+ * spans, the same threshold a month is published by.
+ *
+ * Readable by any active member of the community, whatever their role. A platform
+ * admin who is not a member is answered 403, and every other caller who may not read
+ * it 404.
+ * @summary Retrieves the energy metrics of a community: its production and how it was used.
+ */
+export const getCommunityEnergyMetrics = (
+    communityId: string,
+    params?: GetCommunityEnergyMetricsParams,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<CommunityEnergyMetricsResponse>(
+      {url: `/api/v1/communities/${communityId}/energy-metrics`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+
+
+
+
+export const getGetCommunityEnergyMetricsQueryKey = (communityId: string,
+    params?: GetCommunityEnergyMetricsParams,) => {
+    return [
+    `/api/v1/communities/${communityId}/energy-metrics`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetCommunityEnergyMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getCommunityEnergyMetrics>>, TError = ErrorType<RestError>>(communityId: string,
+    params?: GetCommunityEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityEnergyMetrics>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCommunityEnergyMetricsQueryKey(communityId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCommunityEnergyMetrics>>> = ({ signal }) => getCommunityEnergyMetrics(communityId,params, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: communityId !== null && communityId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCommunityEnergyMetrics>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCommunityEnergyMetricsQueryResult = NonNullable<Awaited<ReturnType<typeof getCommunityEnergyMetrics>>>
+export type GetCommunityEnergyMetricsQueryError = ErrorType<RestError>
+
+
+export function useGetCommunityEnergyMetrics<TData = Awaited<ReturnType<typeof getCommunityEnergyMetrics>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params: undefined |  GetCommunityEnergyMetricsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityEnergyMetrics>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCommunityEnergyMetrics>>,
+          TError,
+          Awaited<ReturnType<typeof getCommunityEnergyMetrics>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCommunityEnergyMetrics<TData = Awaited<ReturnType<typeof getCommunityEnergyMetrics>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params?: GetCommunityEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityEnergyMetrics>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCommunityEnergyMetrics>>,
+          TError,
+          Awaited<ReturnType<typeof getCommunityEnergyMetrics>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCommunityEnergyMetrics<TData = Awaited<ReturnType<typeof getCommunityEnergyMetrics>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params?: GetCommunityEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityEnergyMetrics>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the energy metrics of a community: its production and how it was used.
+ */
+
+export function useGetCommunityEnergyMetrics<TData = Awaited<ReturnType<typeof getCommunityEnergyMetrics>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params?: GetCommunityEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityEnergyMetrics>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCommunityEnergyMetricsQueryOptions(communityId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * For each day of the requested period, the self-consumption and surplus of every
+ * **enabled** supply of the community with data in it, whatever the membership status
+ * of its owner, added up. Only community totals are reported: no figure, identifier or
+ * code of a single supply or member. Each energy figure sums the unrounded figures and
+ * is rounded once, to 3 decimals, on the result.
+ *
+ * **Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
+ * included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
+ * next period. A calendar day runs from `00:00` of that day to `00:00` of the following
+ * day, and a calendar month from `00:00` of its first day to `00:00` of the first day of
+ * the next month, each bound with the offset in force at that instant -- for example
+ * `2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in
+ * Europe/Madrid.
+ *
+ * **Period checks:** a requested period is checked in this order, and the first rule it
+ * breaks is answered 400 with that rule's code:
+ *
+ * 1. `period` is not combined with `startDate` or `endDate`, on the operations that accept
+ *    `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).
+ * 2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).
+ *    On the operations where both are required, a missing one is a bad request before any
+ *    of these checks.
+ * 3. `startDate` is strictly before `endDate`: equal bounds make an empty period
+ *    (`ENERGY_METRICS_PERIOD_START_AFTER_END`).
+ * 4. `startDate` is before the start of the current hour, read in the period's time zone
+ *    (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
+ * 5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
+ *    period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+ *    The refusal states the limit in `params`: `amount`, a whole number written as a
+ *    string, and `unit`, `MONTHS` or `DAYS` -- here `{"amount": "24", "unit": "MONTHS"}`.
+ *
+ * A period that passes them and ends after the start of the current hour is then clipped
+ * to end there, before any data is read: no hour that has not fully happened is read or
+ * counted as expected. Energy metrics report the clipped end in `period`, and a series
+ * emits no bucket starting at or after it.
+ *
+ * **Every day is emitted:**
+ * A bucket is returned for every local day of the community's time zone that overlaps
+ * the period, in chronological order, whether or not any supply has data that day. A
+ * day the period starts or ends inside counts only its part inside the period.
+ *
+ * **Completeness:**
+ * `supplyCount` is the number of enabled supplies of the community, the same in every
+ * bucket, and `suppliesWithData` how many of them have data in the day. A day with
+ * `suppliesWithData` below `supplyCount` is incomplete.
+ *
+ * **Gaps and measured zeros:**
+ * A supply has data on a day when its hourly records carrying self-consumed
+ * energy, zero included, cover at least 90% of the day's hours inside the period, the
+ * same threshold a month is published by. Only those supplies are added up. A day in
+ * which no supply has data has `null` energy figures and a `suppliesWithData` of 0,
+ * never zeros; a day whose supplies with data carry no energy is a measured zero, `0`.
+ *
+ * Readable by any active member of the community, whatever their role. A platform
+ * admin who is not a member is answered 403, and every other caller who may not read
+ * it 404.
+ * @summary Retrieves the energy of a community, added up per day.
+ */
+export const getCommunityDailyEnergySeries = (
+    communityId: string,
+    params: GetCommunityDailyEnergySeriesParams,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<CommunityDailyEnergyBucketResponse[]>(
+      {url: `/api/v1/communities/${communityId}/energy-series/daily`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+
+
+
+
+export const getGetCommunityDailyEnergySeriesQueryKey = (communityId: string,
+    params?: GetCommunityDailyEnergySeriesParams,) => {
+    return [
+    `/api/v1/communities/${communityId}/energy-series/daily`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetCommunityDailyEnergySeriesQueryOptions = <TData = Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>, TError = ErrorType<RestError>>(communityId: string,
+    params: GetCommunityDailyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCommunityDailyEnergySeriesQueryKey(communityId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>> = ({ signal }) => getCommunityDailyEnergySeries(communityId,params, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: communityId !== null && communityId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCommunityDailyEnergySeriesQueryResult = NonNullable<Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>>
+export type GetCommunityDailyEnergySeriesQueryError = ErrorType<RestError>
+
+
+export function useGetCommunityDailyEnergySeries<TData = Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params: GetCommunityDailyEnergySeriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>,
+          TError,
+          Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCommunityDailyEnergySeries<TData = Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params: GetCommunityDailyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>,
+          TError,
+          Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCommunityDailyEnergySeries<TData = Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params: GetCommunityDailyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the energy of a community, added up per day.
+ */
+
+export function useGetCommunityDailyEnergySeries<TData = Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params: GetCommunityDailyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityDailyEnergySeries>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCommunityDailyEnergySeriesQueryOptions(communityId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * For each hour of the requested period, the self-consumption and surplus of every
+ * **enabled** supply of the community with data in it, whatever the membership status
+ * of its owner, added up. Only community totals are reported: no figure, identifier or
+ * code of a single supply or member. Each energy figure sums the unrounded figures and
+ * is rounded once, to 3 decimals, on the result.
+ *
+ * **Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
+ * included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
+ * next period. A calendar day runs from `00:00` of that day to `00:00` of the following
+ * day, and a calendar month from `00:00` of its first day to `00:00` of the first day of
+ * the next month, each bound with the offset in force at that instant -- for example
+ * `2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in
+ * Europe/Madrid.
+ *
+ * **Period checks:** a requested period is checked in this order, and the first rule it
+ * breaks is answered 400 with that rule's code:
+ *
+ * 1. `period` is not combined with `startDate` or `endDate`, on the operations that accept
+ *    `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).
+ * 2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).
+ *    On the operations where both are required, a missing one is a bad request before any
+ *    of these checks.
+ * 3. `startDate` is strictly before `endDate`: equal bounds make an empty period
+ *    (`ENERGY_METRICS_PERIOD_START_AFTER_END`).
+ * 4. `startDate` is before the start of the current hour, read in the period's time zone
+ *    (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
+ * 5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
+ *    period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+ *    The refusal states the limit in `params`: `amount`, a whole number written as a
+ *    string, and `unit`, `MONTHS` or `DAYS` -- here `{"amount": "24", "unit": "MONTHS"}`.
+ *
+ * A period that passes them and ends after the start of the current hour is then clipped
+ * to end there, before any data is read: no hour that has not fully happened is read or
+ * counted as expected. Energy metrics report the clipped end in `period`, and a series
+ * emits no bucket starting at or after it.
+ *
+ * **Maximum length:** on this operation the limit of rule 5 is **31 calendar days**
+ * instead of 24 calendar months: `endDate` must be no later than 31 calendar days after
+ * `startDate`, counted in the period's time zone on the bounds as requested
+ * (`ENERGY_METRICS_PERIOD_TOO_LONG`, with `params` `{"amount": "31", "unit": "DAYS"}`).
+ *
+ * **Every hour is emitted:**
+ * A bucket is returned for every whole hour that starts inside the period, in
+ * chronological order, whether or not any supply has data that hour: 24 for a whole
+ * local day of the community's time zone, 23 on the day the clocks go forward and 25
+ * on the day they go back. `startsAt` is the instant the hour starts at, with the
+ * offset in force in the community's time zone, and is unique within the series;
+ * `date` and `time` are the local date and time the hour starts at, which two
+ * consecutive hours share on the day the clocks go back.
+ *
+ * **Completeness:**
+ * `supplyCount` is the number of enabled supplies of the community, the same in every
+ * bucket, and `suppliesWithData` how many of them have data in the hour. A hour with
+ * `suppliesWithData` below `supplyCount` is incomplete.
+ *
+ * **Gaps and measured zeros:**
+ * A supply has data in an hour when its record of that hour carries
+ * self-consumed energy, zero included; surplus alone does not count. An hour in which
+ * no supply has data has `null` energy figures and a `suppliesWithData` of 0, never
+ * zeros; an hour whose supplies with data carry no energy is a measured zero, `0`.
+ *
+ * Readable by any active member of the community, whatever their role. A platform
+ * admin who is not a member is answered 403, and every other caller who may not read
+ * it 404.
+ * @summary Retrieves the energy of a community, added up per hour.
+ */
+export const getCommunityHourlyEnergySeries = (
+    communityId: string,
+    params: GetCommunityHourlyEnergySeriesParams,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<CommunityHourlyEnergyBucketResponse[]>(
+      {url: `/api/v1/communities/${communityId}/energy-series/hourly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+
+
+
+
+export const getGetCommunityHourlyEnergySeriesQueryKey = (communityId: string,
+    params?: GetCommunityHourlyEnergySeriesParams,) => {
+    return [
+    `/api/v1/communities/${communityId}/energy-series/hourly`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetCommunityHourlyEnergySeriesQueryOptions = <TData = Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>, TError = ErrorType<RestError>>(communityId: string,
+    params: GetCommunityHourlyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCommunityHourlyEnergySeriesQueryKey(communityId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>> = ({ signal }) => getCommunityHourlyEnergySeries(communityId,params, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: communityId !== null && communityId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCommunityHourlyEnergySeriesQueryResult = NonNullable<Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>>
+export type GetCommunityHourlyEnergySeriesQueryError = ErrorType<RestError>
+
+
+export function useGetCommunityHourlyEnergySeries<TData = Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params: GetCommunityHourlyEnergySeriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>,
+          TError,
+          Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCommunityHourlyEnergySeries<TData = Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params: GetCommunityHourlyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>,
+          TError,
+          Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCommunityHourlyEnergySeries<TData = Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params: GetCommunityHourlyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the energy of a community, added up per hour.
+ */
+
+export function useGetCommunityHourlyEnergySeries<TData = Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params: GetCommunityHourlyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityHourlyEnergySeries>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCommunityHourlyEnergySeriesQueryOptions(communityId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * For each month of the requested period, the self-consumption and surplus of every
+ * **enabled** supply of the community with data in it, whatever the membership status
+ * of its owner, added up. Only community totals are reported: no figure, identifier or
+ * code of a single supply or member. Each energy figure sums the unrounded figures and
+ * is rounded once, to 3 decimals, on the result.
+ *
+ * **Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
+ * included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
+ * next period. A calendar day runs from `00:00` of that day to `00:00` of the following
+ * day, and a calendar month from `00:00` of its first day to `00:00` of the first day of
+ * the next month, each bound with the offset in force at that instant -- for example
+ * `2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in
+ * Europe/Madrid.
+ *
+ * **Period checks:** a requested period is checked in this order, and the first rule it
+ * breaks is answered 400 with that rule's code:
+ *
+ * 1. `period` is not combined with `startDate` or `endDate`, on the operations that accept
+ *    `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).
+ * 2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).
+ *    On the operations where both are required, a missing one is a bad request before any
+ *    of these checks.
+ * 3. `startDate` is strictly before `endDate`: equal bounds make an empty period
+ *    (`ENERGY_METRICS_PERIOD_START_AFTER_END`).
+ * 4. `startDate` is before the start of the current hour, read in the period's time zone
+ *    (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
+ * 5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
+ *    period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+ *    The refusal states the limit in `params`: `amount`, a whole number written as a
+ *    string, and `unit`, `MONTHS` or `DAYS` -- here `{"amount": "24", "unit": "MONTHS"}`.
+ *
+ * A period that passes them and ends after the start of the current hour is then clipped
+ * to end there, before any data is read: no hour that has not fully happened is read or
+ * counted as expected. Energy metrics report the clipped end in `period`, and a series
+ * emits no bucket starting at or after it.
+ *
+ * **Every month is emitted:**
+ * A bucket is returned for every month whose local midnight on day 1 falls inside the
+ * period, in chronological order, whether or not any supply has data that month. A
+ * month the period ends inside counts only its part inside the period. The figures are
+ * totalled from the hourly records, not from the monthly pre-aggregates.
+ *
+ * **Completeness:**
+ * `supplyCount` is the number of enabled supplies of the community, the same in every
+ * bucket, and `suppliesWithData` how many of them have data in the month. A month with
+ * `suppliesWithData` below `supplyCount` is incomplete.
+ *
+ * **Gaps and measured zeros:**
+ * A supply has data in a month when its hourly records carrying self-consumed
+ * energy, zero included, cover at least 90% of the month's hours inside the period,
+ * the same threshold the community energy metrics count `suppliesWithData` by, so the
+ * two agree for the same month. Only those supplies are added up. A month in which no
+ * supply has data has `null` energy figures and a `suppliesWithData` of 0, never zeros;
+ * a month whose supplies with data carry no energy is a measured zero, `0`.
+ *
+ * Readable by any active member of the community, whatever their role. A platform
+ * admin who is not a member is answered 403, and every other caller who may not read
+ * it 404.
+ * @summary Retrieves the energy of a community, added up per month.
+ */
+export const getCommunityMonthlyEnergySeries = (
+    communityId: string,
+    params: GetCommunityMonthlyEnergySeriesParams,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<CommunityMonthlyEnergyBucketResponse[]>(
+      {url: `/api/v1/communities/${communityId}/energy-series/monthly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+
+
+
+
+export const getGetCommunityMonthlyEnergySeriesQueryKey = (communityId: string,
+    params?: GetCommunityMonthlyEnergySeriesParams,) => {
+    return [
+    `/api/v1/communities/${communityId}/energy-series/monthly`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetCommunityMonthlyEnergySeriesQueryOptions = <TData = Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>, TError = ErrorType<RestError>>(communityId: string,
+    params: GetCommunityMonthlyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCommunityMonthlyEnergySeriesQueryKey(communityId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>> = ({ signal }) => getCommunityMonthlyEnergySeries(communityId,params, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: communityId !== null && communityId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCommunityMonthlyEnergySeriesQueryResult = NonNullable<Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>>
+export type GetCommunityMonthlyEnergySeriesQueryError = ErrorType<RestError>
+
+
+export function useGetCommunityMonthlyEnergySeries<TData = Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params: GetCommunityMonthlyEnergySeriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>,
+          TError,
+          Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCommunityMonthlyEnergySeries<TData = Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params: GetCommunityMonthlyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>,
+          TError,
+          Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCommunityMonthlyEnergySeries<TData = Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params: GetCommunityMonthlyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the energy of a community, added up per month.
+ */
+
+export function useGetCommunityMonthlyEnergySeries<TData = Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>, TError = ErrorType<RestError>>(
+ communityId: string,
+    params: GetCommunityMonthlyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCommunityMonthlyEnergySeries>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCommunityMonthlyEnergySeriesQueryOptions(communityId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+

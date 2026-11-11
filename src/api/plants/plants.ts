@@ -27,7 +27,16 @@ import type {
 import type {
   CreatePlantBody,
   GetAllPlantsParams,
+  GetPlantDailyEnergySeriesParams,
+  GetPlantEnergyMetricsParams,
+  GetPlantHourlyEnergySeriesParams,
+  GetPlantMonthlyEnergySeriesParams,
   PagedResultPlantResponse,
+  PlantDailyEnergyBucketResponse,
+  PlantEnergyMetricsResponse,
+  PlantHourlyEnergyBucketResponse,
+  PlantInverterProductionTodayResponse,
+  PlantMonthlyEnergyBucketResponse,
   PlantResponse,
   RestError,
   UpdatePlantBody
@@ -495,3 +504,763 @@ export const useUpdatePlant = <TError = ErrorType<RestError>,
       > => {
       return useMutation(getUpdatePlantMutationOptions(options), queryClient);
     }
+    /**
+ * Aggregates the distributor's hourly records of the plant's own supply over one period.
+ * No code or identifier of that supply is reported.
+ *
+ * - `energy.productionKWh`: what the plant produced, as reported by the distributor for
+ *   the plant's own supply: the energy the plant exported to the grid. Totalled from the
+ *   hourly records, not from the monthly pre-aggregates. An hour without a record adds
+ *   nothing; an hour stored as 0, such as at night, is a measured zero.
+ * - `coverage.hoursWithData` and `coverage.expectedHours`: how many hourly records were
+ *   found in the period, zeros included, and how many hours the period spans.
+ *
+ * A figure nothing was stored for is `null`, never `0`: a period without any production
+ * record has null production.
+ *
+ * **Period:**
+ * The period is resolved in exactly one of three ways, and the resolved bounds are
+ * always reported in `period`, also when the caller supplied them, with an end after
+ * the current hour clipped as described under **Period checks**.
+ *
+ * - `startDate` and `endDate`: an explicit period. They must be supplied together, and
+ *   a `startDate` that is not before the `endDate` is a bad request.
+ * - `period=LATEST_PRODUCTION_DAY`: the latest complete local day, in the community's
+ *   time zone, with production: the latest day whose stored hourly records cover all
+ *   its hours (23, 24 or 25 on the days the clocks change). The search goes backwards
+ *   through the 24 months before the current day; the current day is never a
+ *   candidate, even when all its hours are stored. When no day in the search window is
+ *   complete, no period is resolved. Combining it with `startDate` or `endDate` is a
+ *   bad request.
+ * - Neither: from the earliest production record stored for the plant to the end of the
+ *   hour of the latest.
+ *
+ * When no period can be resolved, the response is still successful, with null period
+ * bounds, null production and no hour.
+ *
+ * **Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
+ * included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
+ * next period. A calendar day runs from `00:00` of that day to `00:00` of the following
+ * day, and a calendar month from `00:00` of its first day to `00:00` of the first day of
+ * the next month, each bound with the offset in force at that instant -- for example
+ * `2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in
+ * Europe/Madrid.
+ *
+ * **Period checks:** a requested period is checked in this order, and the first rule it
+ * breaks is answered 400 with that rule's code:
+ *
+ * 1. `period` is not combined with `startDate` or `endDate`, on the operations that accept
+ *    `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).
+ * 2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).
+ *    On the operations where both are required, a missing one is a bad request before any
+ *    of these checks.
+ * 3. `startDate` is strictly before `endDate`: equal bounds make an empty period
+ *    (`ENERGY_METRICS_PERIOD_START_AFTER_END`).
+ * 4. `startDate` is before the start of the current hour, read in the period's time zone
+ *    (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
+ * 5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
+ *    period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+ *    The refusal states the limit in `params`: `amount`, a whole number written as a
+ *    string, and `unit`, `MONTHS` or `DAYS` -- here `{"amount": "24", "unit": "MONTHS"}`.
+ *
+ * A period that passes them and ends after the start of the current hour is then clipped
+ * to end there, before any data is read: no hour that has not fully happened is read or
+ * counted as expected. Energy metrics report the clipped end in `period`, and a series
+ * emits no bucket starting at or after it.
+ *
+ * **Required: the caller can manage the plant** (the plant's `canManage` capability):
+ * an active community admin of the plant's community. A member of that community who is
+ * not an admin is answered 403, and every other caller, a platform admin who is not a
+ * member included, 404.
+ * @summary Retrieves the energy metrics of a plant: its production as reported by the distributor.
+ */
+export const getPlantEnergyMetrics = (
+    plantId: string,
+    params?: GetPlantEnergyMetricsParams,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlantEnergyMetricsResponse>(
+      {url: `/api/v1/plants/${plantId}/energy-metrics`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+
+
+
+
+export const getGetPlantEnergyMetricsQueryKey = (plantId: string,
+    params?: GetPlantEnergyMetricsParams,) => {
+    return [
+    `/api/v1/plants/${plantId}/energy-metrics`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPlantEnergyMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getPlantEnergyMetrics>>, TError = ErrorType<RestError>>(plantId: string,
+    params?: GetPlantEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantEnergyMetrics>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlantEnergyMetricsQueryKey(plantId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlantEnergyMetrics>>> = ({ signal }) => getPlantEnergyMetrics(plantId,params, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: plantId !== null && plantId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlantEnergyMetrics>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPlantEnergyMetricsQueryResult = NonNullable<Awaited<ReturnType<typeof getPlantEnergyMetrics>>>
+export type GetPlantEnergyMetricsQueryError = ErrorType<RestError>
+
+
+export function useGetPlantEnergyMetrics<TData = Awaited<ReturnType<typeof getPlantEnergyMetrics>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: undefined |  GetPlantEnergyMetricsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantEnergyMetrics>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantEnergyMetrics>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantEnergyMetrics>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantEnergyMetrics<TData = Awaited<ReturnType<typeof getPlantEnergyMetrics>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params?: GetPlantEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantEnergyMetrics>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantEnergyMetrics>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantEnergyMetrics>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantEnergyMetrics<TData = Awaited<ReturnType<typeof getPlantEnergyMetrics>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params?: GetPlantEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantEnergyMetrics>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the energy metrics of a plant: its production as reported by the distributor.
+ */
+
+export function useGetPlantEnergyMetrics<TData = Awaited<ReturnType<typeof getPlantEnergyMetrics>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params?: GetPlantEnergyMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantEnergyMetrics>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPlantEnergyMetricsQueryOptions(plantId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * For each day of the requested period, what the plant produced, as reported by the
+ * distributor for the plant's own supply: the energy the plant exported to the grid, its
+ * hourly records added up. No code or identifier of that supply is reported. Each
+ * figure sums the unrounded records and is rounded once, to 3 decimals, on the result.
+ *
+ * **Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
+ * included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
+ * next period. A calendar day runs from `00:00` of that day to `00:00` of the following
+ * day, and a calendar month from `00:00` of its first day to `00:00` of the first day of
+ * the next month, each bound with the offset in force at that instant -- for example
+ * `2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in
+ * Europe/Madrid.
+ *
+ * **Period checks:** a requested period is checked in this order, and the first rule it
+ * breaks is answered 400 with that rule's code:
+ *
+ * 1. `period` is not combined with `startDate` or `endDate`, on the operations that accept
+ *    `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).
+ * 2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).
+ *    On the operations where both are required, a missing one is a bad request before any
+ *    of these checks.
+ * 3. `startDate` is strictly before `endDate`: equal bounds make an empty period
+ *    (`ENERGY_METRICS_PERIOD_START_AFTER_END`).
+ * 4. `startDate` is before the start of the current hour, read in the period's time zone
+ *    (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
+ * 5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
+ *    period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+ *    The refusal states the limit in `params`: `amount`, a whole number written as a
+ *    string, and `unit`, `MONTHS` or `DAYS` -- here `{"amount": "24", "unit": "MONTHS"}`.
+ *
+ * A period that passes them and ends after the start of the current hour is then clipped
+ * to end there, before any data is read: no hour that has not fully happened is read or
+ * counted as expected. Energy metrics report the clipped end in `period`, and a series
+ * emits no bucket starting at or after it.
+ *
+ * **Every day is emitted:**
+ * A bucket is returned for every local day of the community's time zone that overlaps
+ * the period, in chronological order, whether or not the plant has a record that day. A
+ * day the period starts or ends inside counts only its part inside the period.
+ *
+ * **Completeness:**
+ * `expectedHours` is the number of the day's hours inside the period, and
+ * `hoursWithData` how many of them have a stored record. A day with `hoursWithData`
+ * below `expectedHours` is incomplete.
+ *
+ * **Gaps and measured zeros:**
+ * A day without any stored record has `null` production and an `hoursWithData` of 0,
+ * never a zero; an hour stored as 0, such as at night, is a measured zero, `0`, and
+ * counts as a record.
+ *
+ * **Required: the caller can manage the plant** (the plant's `canManage` capability):
+ * an active community admin of the plant's community. A member of that community who is
+ * not an admin is answered 403, and every other caller, a platform admin who is not a
+ * member included, 404.
+ * @summary Retrieves the production of a plant as reported by the distributor, per day.
+ */
+export const getPlantDailyEnergySeries = (
+    plantId: string,
+    params: GetPlantDailyEnergySeriesParams,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlantDailyEnergyBucketResponse[]>(
+      {url: `/api/v1/plants/${plantId}/energy-series/daily`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+
+
+
+
+export const getGetPlantDailyEnergySeriesQueryKey = (plantId: string,
+    params?: GetPlantDailyEnergySeriesParams,) => {
+    return [
+    `/api/v1/plants/${plantId}/energy-series/daily`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPlantDailyEnergySeriesQueryOptions = <TData = Awaited<ReturnType<typeof getPlantDailyEnergySeries>>, TError = ErrorType<RestError>>(plantId: string,
+    params: GetPlantDailyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantDailyEnergySeries>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlantDailyEnergySeriesQueryKey(plantId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlantDailyEnergySeries>>> = ({ signal }) => getPlantDailyEnergySeries(plantId,params, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: plantId !== null && plantId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlantDailyEnergySeries>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPlantDailyEnergySeriesQueryResult = NonNullable<Awaited<ReturnType<typeof getPlantDailyEnergySeries>>>
+export type GetPlantDailyEnergySeriesQueryError = ErrorType<RestError>
+
+
+export function useGetPlantDailyEnergySeries<TData = Awaited<ReturnType<typeof getPlantDailyEnergySeries>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: GetPlantDailyEnergySeriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantDailyEnergySeries>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantDailyEnergySeries>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantDailyEnergySeries>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantDailyEnergySeries<TData = Awaited<ReturnType<typeof getPlantDailyEnergySeries>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: GetPlantDailyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantDailyEnergySeries>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantDailyEnergySeries>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantDailyEnergySeries>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantDailyEnergySeries<TData = Awaited<ReturnType<typeof getPlantDailyEnergySeries>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: GetPlantDailyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantDailyEnergySeries>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the production of a plant as reported by the distributor, per day.
+ */
+
+export function useGetPlantDailyEnergySeries<TData = Awaited<ReturnType<typeof getPlantDailyEnergySeries>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: GetPlantDailyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantDailyEnergySeries>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPlantDailyEnergySeriesQueryOptions(plantId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * For each hour of the requested period, what the plant produced, as reported by the
+ * distributor for the plant's own supply: the energy the plant exported to the grid, its
+ * hourly records added up. No code or identifier of that supply is reported. Each
+ * figure sums the unrounded records and is rounded once, to 3 decimals, on the result.
+ *
+ * **Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
+ * included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
+ * next period. A calendar day runs from `00:00` of that day to `00:00` of the following
+ * day, and a calendar month from `00:00` of its first day to `00:00` of the first day of
+ * the next month, each bound with the offset in force at that instant -- for example
+ * `2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in
+ * Europe/Madrid.
+ *
+ * **Period checks:** a requested period is checked in this order, and the first rule it
+ * breaks is answered 400 with that rule's code:
+ *
+ * 1. `period` is not combined with `startDate` or `endDate`, on the operations that accept
+ *    `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).
+ * 2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).
+ *    On the operations where both are required, a missing one is a bad request before any
+ *    of these checks.
+ * 3. `startDate` is strictly before `endDate`: equal bounds make an empty period
+ *    (`ENERGY_METRICS_PERIOD_START_AFTER_END`).
+ * 4. `startDate` is before the start of the current hour, read in the period's time zone
+ *    (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
+ * 5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
+ *    period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+ *    The refusal states the limit in `params`: `amount`, a whole number written as a
+ *    string, and `unit`, `MONTHS` or `DAYS` -- here `{"amount": "24", "unit": "MONTHS"}`.
+ *
+ * A period that passes them and ends after the start of the current hour is then clipped
+ * to end there, before any data is read: no hour that has not fully happened is read or
+ * counted as expected. Energy metrics report the clipped end in `period`, and a series
+ * emits no bucket starting at or after it.
+ *
+ * **Maximum length:** on this operation the limit of rule 5 is **31 calendar days**
+ * instead of 24 calendar months: `endDate` must be no later than 31 calendar days after
+ * `startDate`, counted in the period's time zone on the bounds as requested
+ * (`ENERGY_METRICS_PERIOD_TOO_LONG`, with `params` `{"amount": "31", "unit": "DAYS"}`).
+ *
+ * **Every hour is emitted:**
+ * A bucket is returned for every whole hour that starts inside the period, in
+ * chronological order, whether or not the plant has a record that hour: 24 for a whole
+ * local day of the community's time zone, 23 on the day the clocks go forward and 25
+ * on the day they go back. `startsAt` is the instant the hour starts at, with the
+ * offset in force in the community's time zone, and is unique within the series;
+ * `date` and `time` are the local date and time the hour starts at, which two
+ * consecutive hours share on the day the clocks go back.
+ *
+ * **Completeness:**
+ * `expectedHours` is the number of the hour's hours inside the period, and
+ * `hoursWithData` how many of them have a stored record. A hour with `hoursWithData`
+ * below `expectedHours` is incomplete.
+ *
+ * **Gaps and measured zeros:**
+ * A hour without any stored record has `null` production and an `hoursWithData` of 0,
+ * never a zero; an hour stored as 0, such as at night, is a measured zero, `0`, and
+ * counts as a record.
+ *
+ * **Required: the caller can manage the plant** (the plant's `canManage` capability):
+ * an active community admin of the plant's community. A member of that community who is
+ * not an admin is answered 403, and every other caller, a platform admin who is not a
+ * member included, 404.
+ * @summary Retrieves the production of a plant as reported by the distributor, per hour.
+ */
+export const getPlantHourlyEnergySeries = (
+    plantId: string,
+    params: GetPlantHourlyEnergySeriesParams,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlantHourlyEnergyBucketResponse[]>(
+      {url: `/api/v1/plants/${plantId}/energy-series/hourly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+
+
+
+
+export const getGetPlantHourlyEnergySeriesQueryKey = (plantId: string,
+    params?: GetPlantHourlyEnergySeriesParams,) => {
+    return [
+    `/api/v1/plants/${plantId}/energy-series/hourly`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPlantHourlyEnergySeriesQueryOptions = <TData = Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>, TError = ErrorType<RestError>>(plantId: string,
+    params: GetPlantHourlyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlantHourlyEnergySeriesQueryKey(plantId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>> = ({ signal }) => getPlantHourlyEnergySeries(plantId,params, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: plantId !== null && plantId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPlantHourlyEnergySeriesQueryResult = NonNullable<Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>>
+export type GetPlantHourlyEnergySeriesQueryError = ErrorType<RestError>
+
+
+export function useGetPlantHourlyEnergySeries<TData = Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: GetPlantHourlyEnergySeriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantHourlyEnergySeries<TData = Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: GetPlantHourlyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantHourlyEnergySeries<TData = Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: GetPlantHourlyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the production of a plant as reported by the distributor, per hour.
+ */
+
+export function useGetPlantHourlyEnergySeries<TData = Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: GetPlantHourlyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantHourlyEnergySeries>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPlantHourlyEnergySeriesQueryOptions(plantId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * For each month of the requested period, what the plant produced, as reported by the
+ * distributor for the plant's own supply: the energy the plant exported to the grid, its
+ * hourly records added up. No code or identifier of that supply is reported. Each
+ * figure sums the unrounded records and is rounded once, to 3 decimals, on the result.
+ *
+ * **Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
+ * included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
+ * next period. A calendar day runs from `00:00` of that day to `00:00` of the following
+ * day, and a calendar month from `00:00` of its first day to `00:00` of the first day of
+ * the next month, each bound with the offset in force at that instant -- for example
+ * `2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in
+ * Europe/Madrid.
+ *
+ * **Period checks:** a requested period is checked in this order, and the first rule it
+ * breaks is answered 400 with that rule's code:
+ *
+ * 1. `period` is not combined with `startDate` or `endDate`, on the operations that accept
+ *    `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).
+ * 2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).
+ *    On the operations where both are required, a missing one is a bad request before any
+ *    of these checks.
+ * 3. `startDate` is strictly before `endDate`: equal bounds make an empty period
+ *    (`ENERGY_METRICS_PERIOD_START_AFTER_END`).
+ * 4. `startDate` is before the start of the current hour, read in the period's time zone
+ *    (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).
+ * 5. `endDate` is no later than 24 calendar months after `startDate`, counted in the
+ *    period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).
+ *    The refusal states the limit in `params`: `amount`, a whole number written as a
+ *    string, and `unit`, `MONTHS` or `DAYS` -- here `{"amount": "24", "unit": "MONTHS"}`.
+ *
+ * A period that passes them and ends after the start of the current hour is then clipped
+ * to end there, before any data is read: no hour that has not fully happened is read or
+ * counted as expected. Energy metrics report the clipped end in `period`, and a series
+ * emits no bucket starting at or after it.
+ *
+ * **Every month is emitted:**
+ * A bucket is returned for every month whose local midnight on day 1 falls inside the
+ * period, in chronological order, whether or not the plant has a record that month. A
+ * month the period ends inside counts only its part inside the period. The figures are
+ * totalled from the hourly records, not from the monthly pre-aggregates.
+ *
+ * **Completeness:**
+ * `expectedHours` is the number of the month's hours inside the period, and
+ * `hoursWithData` how many of them have a stored record. A month with `hoursWithData`
+ * below `expectedHours` is incomplete.
+ *
+ * **Gaps and measured zeros:**
+ * A month without any stored record has `null` production and an `hoursWithData` of 0,
+ * never a zero; an hour stored as 0, such as at night, is a measured zero, `0`, and
+ * counts as a record.
+ *
+ * **Required: the caller can manage the plant** (the plant's `canManage` capability):
+ * an active community admin of the plant's community. A member of that community who is
+ * not an admin is answered 403, and every other caller, a platform admin who is not a
+ * member included, 404.
+ * @summary Retrieves the production of a plant as reported by the distributor, per month.
+ */
+export const getPlantMonthlyEnergySeries = (
+    plantId: string,
+    params: GetPlantMonthlyEnergySeriesParams,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlantMonthlyEnergyBucketResponse[]>(
+      {url: `/api/v1/plants/${plantId}/energy-series/monthly`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+
+
+
+
+export const getGetPlantMonthlyEnergySeriesQueryKey = (plantId: string,
+    params?: GetPlantMonthlyEnergySeriesParams,) => {
+    return [
+    `/api/v1/plants/${plantId}/energy-series/monthly`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPlantMonthlyEnergySeriesQueryOptions = <TData = Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>, TError = ErrorType<RestError>>(plantId: string,
+    params: GetPlantMonthlyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlantMonthlyEnergySeriesQueryKey(plantId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>> = ({ signal }) => getPlantMonthlyEnergySeries(plantId,params, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: plantId !== null && plantId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPlantMonthlyEnergySeriesQueryResult = NonNullable<Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>>
+export type GetPlantMonthlyEnergySeriesQueryError = ErrorType<RestError>
+
+
+export function useGetPlantMonthlyEnergySeries<TData = Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: GetPlantMonthlyEnergySeriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantMonthlyEnergySeries<TData = Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: GetPlantMonthlyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantMonthlyEnergySeries<TData = Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: GetPlantMonthlyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves the production of a plant as reported by the distributor, per month.
+ */
+
+export function useGetPlantMonthlyEnergySeries<TData = Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: GetPlantMonthlyEnergySeriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantMonthlyEnergySeries>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPlantMonthlyEnergySeriesQueryOptions(plantId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * Derives today's energy and a power curve from the real-time snapshots the plant's Huawei
+ * inverter reports about every 5 minutes. "Today" is the current local day in the community's
+ * time zone. No station code, provider code or credential of the integration is reported.
+ *
+ * This is inverter data: the gross output the inverter measures. It may differ from the
+ * distributor's figures, which measure the energy exported at the connection point, and it is
+ * never summed with the energy metrics or energy series figures.
+ *
+ * - `status`: `NOT_AVAILABLE` when the plant has no Huawei configuration or it is disabled,
+ *   `NO_DATA_TODAY` when it is enabled but no snapshot of today is stored, and `AVAILABLE`
+ *   otherwise. Every other field is `null` unless the status is `AVAILABLE`.
+ * - `todayEnergyKWh`: the latest inverter day counter of today. The counter resets at local
+ *   midnight, but a snapshot taken at the boundary can still carry the previous day's total:
+ *   the leading run of today's snapshots equal to the previous day's last value, when that is
+ *   greater than 0, is carry-over and counts as 0 kWh. The run ends at the first different
+ *   value. When every snapshot of today is carry-over, today's energy is 0.
+ * - `powerCurve`: one point per pair of consecutive snapshots of today, at the later one: the
+ *   energy counted between them divided by their real time apart, never negative. An interval
+ *   longer than 15 minutes is a gap: its point is `null`, and nothing is interpolated across
+ *   it. A single missing snapshot, about 10 minutes, is averaged.
+ * - `lastUpdatedAt`: when the latest snapshot of today was taken.
+ * - `stale`: whether that snapshot is more than 60 minutes old.
+ *
+ * Energy and power are rounded to 3 decimals, after computing.
+ *
+ * **Required: the caller can manage the plant** (the plant's `canManage` capability):
+ * an active community admin of the plant's community. A member of that community who is
+ * not an admin is answered 403, and every other caller, a platform admin who is not a
+ * member included, 404.
+ * @summary Retrieves today's production of a plant as reported by its inverter.
+ */
+export const getPlantInverterProductionToday = (
+    plantId: string,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlantInverterProductionTodayResponse>(
+      {url: `/api/v1/plants/${plantId}/inverter-production/today`, method: 'GET', signal
+    },
+      );
+    }
+
+
+
+
+export const getGetPlantInverterProductionTodayQueryKey = (plantId: string,) => {
+    return [
+    `/api/v1/plants/${plantId}/inverter-production/today`
+    ] as const;
+    }
+
+
+export const getGetPlantInverterProductionTodayQueryOptions = <TData = Awaited<ReturnType<typeof getPlantInverterProductionToday>>, TError = ErrorType<RestError>>(plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantInverterProductionToday>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlantInverterProductionTodayQueryKey(plantId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlantInverterProductionToday>>> = ({ signal }) => getPlantInverterProductionToday(plantId, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: plantId !== null && plantId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlantInverterProductionToday>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPlantInverterProductionTodayQueryResult = NonNullable<Awaited<ReturnType<typeof getPlantInverterProductionToday>>>
+export type GetPlantInverterProductionTodayQueryError = ErrorType<RestError>
+
+
+export function useGetPlantInverterProductionToday<TData = Awaited<ReturnType<typeof getPlantInverterProductionToday>>, TError = ErrorType<RestError>>(
+ plantId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantInverterProductionToday>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantInverterProductionToday>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantInverterProductionToday>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantInverterProductionToday<TData = Awaited<ReturnType<typeof getPlantInverterProductionToday>>, TError = ErrorType<RestError>>(
+ plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantInverterProductionToday>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantInverterProductionToday>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantInverterProductionToday>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantInverterProductionToday<TData = Awaited<ReturnType<typeof getPlantInverterProductionToday>>, TError = ErrorType<RestError>>(
+ plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantInverterProductionToday>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Retrieves today's production of a plant as reported by its inverter.
+ */
+
+export function useGetPlantInverterProductionToday<TData = Awaited<ReturnType<typeof getPlantInverterProductionToday>>, TError = ErrorType<RestError>>(
+ plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantInverterProductionToday>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPlantInverterProductionTodayQueryOptions(plantId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+

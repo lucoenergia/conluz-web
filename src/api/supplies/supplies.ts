@@ -192,6 +192,9 @@ export function useGetAllSupplies<TData = Awaited<ReturnType<typeof getAllSuppli
  *
  * A successful request returns an HTTP status code of 200.
  *
+ * The server responds with `409` when the community has no Datadis configuration, or it is
+ * disabled; Datadis is not called.
+ *
  * In cases of errors, the server responds with an appropriate error status code accompanied by a
  * descriptive message to guide users in resolving any issues.
  * @summary Synchronize supplies retrieving the information from datadis.
