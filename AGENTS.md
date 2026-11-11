@@ -14,8 +14,9 @@ qualification, ask which one is meant.
 fixtures that carry it.
 
 - Never write "socio", "socia", "socios" or "socias".
-- Never use "persona" or "personas" for a member. "Persona" is allowed only when the subject is an
-  admin or an admin-invitee account ("esta persona", #310), or in the idiom "en persona".
+- Never use "persona" or "personas" for a member. "Persona" is allowed only when it refers to user
+  accounts ("personas distintas", counting distinct users) or to admins and admin invitees ("esta
+  persona", #310), and in the idiom "en persona".
 - "Persona física", "persona jurídica" and their plurals are legal terms and are allowed.
 - Why: a member may be a natural person, a company or a local entity. "Socio" is a legal term for a
   partner of an association or cooperative, and does not fit a collective self-consumption scheme
