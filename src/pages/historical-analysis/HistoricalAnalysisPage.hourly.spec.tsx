@@ -59,18 +59,20 @@ import {
 } from "../../api/memberships/memberships";
 import { HistoricalAnalysisPage } from "./HistoricalAnalysisPage";
 import {
-  COMMUNITY_ID,
   HOME,
+  hoursOf,
+  membershipGapHour,
+  membershipHour,
+  supplyGapHour,
+  supplyHour,
+} from "../../components/evolution/consumptionSeries.testData";
+import {
+  COMMUNITY_ID,
   SEPTEMBER_2026,
   derivedMembershipFigures,
   derivedSupplyFigures,
-  hoursOf,
   member,
-  membershipGapHour,
-  membershipHour,
   membershipLatest,
-  supplyGapHour,
-  supplyHour,
   supplyLatest,
 } from "./historicalAnalysis.testData";
 

@@ -12,7 +12,8 @@ import { plantSupplyNotice } from "../../components/EnergyFigures/periodUsage";
 import { outcomeFromResource } from "../../hooks/permissions";
 import { colors } from "../../theme/tokens";
 import { HISTORICAL_ANALYSIS_PATH, SUPPLY_ID_PARAM } from "../../utils/routes";
-import { resolvePeriod, type CalendarMonth } from "../historical-analysis/historicalPeriod";
+import { LATEST, monthAnchor, resolvePeriod, type CalendarMonth } from "../../components/period/historicalPeriod";
+import { MEMBER_PRESETS, memberPublicationText } from "../historical-analysis/memberPeriod";
 import { useSupplyLatestMonth } from "./useSupplyLatestMonth";
 
 const TITLE = "Último mes publicado";
@@ -66,11 +67,11 @@ const LatestMonth: FC<{ supply: SupplyResponse; anchor: CalendarMonth; metrics: 
   anchor,
   metrics,
 }) => {
-  const resolution = resolvePeriod(anchor, { kind: "latest" });
+  const resolution = resolvePeriod(monthAnchor(anchor), { kind: LATEST.value }, MEMBER_PRESETS);
   const plant = supply.plant;
   return (
     <>
-      {resolution.status === "ok" && <PeriodHeader anchor={anchor} resolution={resolution} />}
+      {resolution.status === "ok" && <PeriodHeader anchor={monthAnchor(anchor)} resolution={resolution} publication={memberPublicationText} />}
       {plant && <NeutralNotice>{plantSupplyNotice(supply.name ?? supply.code, plant.name)}</NeutralNotice>}
       <PeriodUsageCard metrics={metrics} />
       {/* Stated from the response's own coverage, never inferred from the figures. */}

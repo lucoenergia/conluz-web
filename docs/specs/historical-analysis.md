@@ -8,7 +8,7 @@
 | **Roles** | A caller who may read the active community (`canRead`): members and community admins |
 | **Domain rules** | EPR-001, EPR-003, EPR-004 (lucoenergia/conluz#409); EPR-005 (lucoenergia/conluz#545, #546); SEM-001 (lucoenergia/conluz#408); SEM-002, SEM-003, SEM-004, ENM-006, ENM-007, ENM-008 (lucoenergia/conluz#411); MCS-001, MCS-002 (lucoenergia/conluz#410); SCS-001 (lucoenergia/conluz#545); MCS-003 (lucoenergia/conluz#546); ADR-0005 in lucoenergia/conluz |
 | **Design reference** | Claude Design round 2 copy deck; round 3 copy deck for the period (#248); the member consumption analysis design, option A, for the evolution charts (#250) and the data table and CSV (#251); its round 3, for the mobile charts and the paired terms (#361) |
-| **Last reviewed against code** | #385 |
+| **Last reviewed against code** | #401 |
 
 Scope: the page shell, its menu entry and its supply selector (#247), the period: its anchor,
 selector, custom range picker, header and query string (#248), the period's card and totals
@@ -18,7 +18,7 @@ including an admin who owns no supplies (#385);
 the mobile charts and the terms paired across the charts, the table and the CSV (#361); a single
 day shown hour by hour (#378).
 All of them read the period through `useHistoricalPeriod`
-(`src/pages/historical-analysis/HistoricalPeriodContext.tsx`).
+(`src/components/period/HistoricalPeriodContext.tsx`).
 
 ## Purpose
 
@@ -602,4 +602,4 @@ here too, and opens another member's supply from its detail page, one at a time.
 | Exception | Reason | Expires when | Source |
 | --- | --- | --- | --- |
 | Disabled supplies are hidden from the selector | What a disabled supply means is not decided yet | The disabled-supply decision is made | #247 |
-| Below `sm`, each energy row of the evolution card shows `consumptionKWh`, computed in the client as `selfConsumptionKWh + gridImportKWh` of the same bucket (`consumptionSeries.ts` `slotOf`, shown by `EvolutionRows.tsx`, UI-HIS-025) | Departs from UI-HIS-010, under which the client never computes a sum shown as text. Accepted because it adds two fields of one bucket, for one slot, never across buckets or periods. Since each field is rounded to 3 decimals, it can differ from a server total by at most 0.001 kWh. A backend field would add a column to the five consumption bucket schemas behind the six series operations for this one figure | A series bucket carries a server-computed consumption total, or another client needs that total | #378 |
+| Below `sm`, each energy row of the evolution card shows `consumptionKWh`, computed in the client as `selfConsumptionKWh + gridImportKWh` of the same bucket (`evolutionSeries.ts` `slotOf`, read as `consumptionKWh` by `consumptionSeries.ts`, shown by `EvolutionRows.tsx`, UI-HIS-025) | Departs from UI-HIS-010, under which the client never computes a sum shown as text. Accepted because it adds two fields of one bucket, for one slot, never across buckets or periods. Since each field is rounded to 3 decimals, it can differ from a server total by at most 0.001 kWh. A backend field would add a column to the five consumption bucket schemas behind the six series operations for this one figure | A series bucket carries a server-computed consumption total, or another client needs that total | #378 |

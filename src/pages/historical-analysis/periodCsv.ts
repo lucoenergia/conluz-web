@@ -1,9 +1,9 @@
 import type { EstimatedPriceResponse, SupplyResponse } from "../../api/models";
 import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 import { estimatedPriceText } from "../../components/EnergyFigures/estimatedPriceText";
-import type { SlotView } from "./consumptionSeries";
-import { formatDayParam, lastDayOf, type Granularity } from "./historicalPeriod";
-import { slotStateText } from "./slotStateText";
+import type { SlotView } from "../../components/evolution/consumptionSeries";
+import { formatDayParam, lastDayOf, type Granularity } from "../../components/period/historicalPeriod";
+import { slotStateText } from "../../components/evolution/slotStateText";
 
 export const CSV_MIME_TYPE = "text/csv;charset=utf-8";
 

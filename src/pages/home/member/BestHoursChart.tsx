@@ -3,7 +3,7 @@ import Chart from "react-apexcharts";
 import type { ApexOptions } from "apexcharts";
 import { formatAverageKilowattHours } from "../../../utils/formatEnergyFigures";
 import { colors, shadows } from "../../../theme/tokens";
-import { ChartScrollArea } from "./ChartScrollArea";
+import { ChartScrollArea } from "../../../components/evolution/ChartScrollArea";
 import type { HourlyProfileView } from "./hourlyProfile";
 
 /** Wide enough for 24 labelled pairs of bars: narrower screens scroll the chart, never squeeze its axis. */

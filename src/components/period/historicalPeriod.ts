@@ -1,13 +1,14 @@
 import { formatCalendarMonth } from "../../utils/formatEnergyFigures";
 import { APP_TIME_ZONE } from "../../utils/formatCalendarDate";
-import { wallTimeAt, zonedIso } from "../home/member/monthBounds";
+import { wallTimeAt, zonedIso } from "../../utils/zonedTime";
 
 /**
  * The periods of the historical analysis page (#248, ADR-0005 in
  * lucoenergia/conluz).
  *
- * Every period is anchored to the latest published month the server resolved
- * for the selected scope, and built from calendar values (year, month, day) in
+ * Every period is anchored to the latest published period the server resolved
+ * for the selected scope (a calendar month, or a calendar day), and built from
+ * calendar values (year, month, day) in
  * the app's time zone. Nothing here reads the device clock or the device's
  * time zone: the same anchor and selection give the same bounds wherever and
  * whenever they are resolved.
@@ -28,7 +29,14 @@ export interface CalendarDay extends CalendarMonth {
   day: number;
 }
 
-export type PresetKind = "latest" | "year" | "last12";
+/**
+ * The latest published period of the selected scope, as the server resolved
+ * it: a calendar month, or a calendar day. No period ends after it.
+ */
+export type Anchor = { kind: "month"; month: CalendarMonth } | { kind: "day"; day: CalendarDay };
+
+/** A preset's query value. Each page offers its own list of presets (`PresetDefinition`). */
+export type PresetKind = "latest" | "year" | "last12" | "last7" | "last30";
 
 /** What the caller picked. A custom range's days are both included, as the user reads them. */
 export type PeriodSelection = { kind: PresetKind } | { kind: "custom"; from: CalendarDay; to: CalendarDay };
@@ -70,7 +78,7 @@ export type PeriodResolution =
     }
   /** More than MAX_MONTHS after snapping. */
   | { status: "tooLong"; pickedDays: number }
-  /** A custom range that ends after the anchor month, or runs backwards. */
+  /** A custom range that ends after the anchor or runs backwards, or a preset the page does not offer for this anchor. */
   | { status: "unpickable" };
 
 /** A custom range of this many calendar days is shown hour by hour (#378). */
@@ -131,6 +139,21 @@ export function lastDayOf({ year, month }: CalendarMonth): CalendarDay {
 }
 
 const firstDayOf = ({ year, month }: CalendarMonth): CalendarDay => ({ year, month, day: 1 });
+
+export const monthAnchor = (month: CalendarMonth): Anchor => ({ kind: "month", month });
+
+export const dayAnchor = (day: CalendarDay): Anchor => ({ kind: "day", day });
+
+/** The last calendar day an anchor covers: a month's last day, or the day itself. No period ends after it. */
+export function anchorEnd(anchor: Anchor): CalendarDay {
+  return anchor.kind === "month" ? lastDayOf(anchor.month) : anchor.day;
+}
+
+/** The calendar month an anchor falls in. */
+export function anchorMonth(anchor: Anchor): CalendarMonth {
+  const { year, month } = anchorEnd(anchor);
+  return { year, month };
+}
 
 /** 00:00 of a calendar day in the app's time zone. */
 function startOfDay(day: CalendarDay): string {
@@ -236,15 +259,20 @@ function granularityOf(pickedDays: number, hourlyAllowed: boolean): Granularity 
  * month by month, so the totals and the monthly buckets cover the same period
  * (ADR-0005). The cap applies to the snapped period, which is what gets
  * requested.
+ *
+ * Widening never moves the end past the anchor's last day (`end`): under a
+ * month anchor the last month is whole anyway; under a day anchor it ends at
+ * that day, and its bucket is partial.
  */
-function resolveRange(from: CalendarDay, to: CalendarDay, hourlyAllowed = false): PeriodResolution {
+function resolveRange(from: CalendarDay, to: CalendarDay, end: CalendarDay, hourlyAllowed = false): PeriodResolution {
   const pickedDays = calendarDayCount(from, to);
   const granularity = granularityOf(pickedDays, hourlyAllowed);
   const months = monthIndex(to) - monthIndex(from) + 1;
   if (granularity === "monthly" && months > MAX_MONTHS) return { status: "tooLong", pickedDays };
 
   const first = granularity === "monthly" ? firstDayOf(from) : from;
-  const last = granularity === "monthly" ? lastDayOf(to) : to;
+  const monthEnd = lastDayOf(to);
+  const last = granularity !== "monthly" ? to : compareDays(monthEnd, end) <= 0 ? monthEnd : end;
   const { label, title } = describe(first, last, granularity);
   const moved = compareDays(first, from) !== 0 || compareDays(last, to) !== 0;
 
@@ -259,25 +287,27 @@ function resolveRange(from: CalendarDay, to: CalendarDay, hourlyAllowed = false)
   };
 }
 
-/** The period a selection stands for, given the latest published month of the selected scope. */
-export function resolvePeriod(anchor: CalendarMonth, selection: PeriodSelection): PeriodResolution {
-  const anchorEnd = lastDayOf(anchor);
+/**
+ * A custom range against the anchor: both days included, picked by the user.
+ * One that runs backwards or ends after the anchor cannot be requested.
+ */
+export function resolveCustomRange(anchor: Anchor, from: CalendarDay, to: CalendarDay): PeriodResolution {
+  const end = anchorEnd(anchor);
+  if (compareDays(from, to) > 0 || compareDays(to, end) > 0) return { status: "unpickable" };
+  return resolveRange(from, to, end, true);
+}
 
-  switch (selection.kind) {
-    case "latest":
-      return resolveRange(firstDayOf(anchor), anchorEnd);
-    case "year":
-      // "Año {año}": the anchor's own year, from January to the anchor month. It
-      // never assumes which year today is, so it needs no clock.
-      return resolveRange({ year: anchor.year, month: 1, day: 1 }, anchorEnd);
-    case "last12":
-      return resolveRange(firstDayOf(addMonths(anchor, -11)), anchorEnd);
-    case "custom":
-      if (compareDays(selection.from, selection.to) > 0 || compareDays(selection.to, anchorEnd) > 0) {
-        return { status: "unpickable" };
-      }
-      return resolveRange(selection.from, selection.to, true);
-  }
+/**
+ * The period a selection stands for, given the anchor of the selected scope
+ * and the presets the page offers. A preset the list leaves out, or one that
+ * does not take this kind of anchor, cannot be requested.
+ */
+export function resolvePeriod(anchor: Anchor, selection: PeriodSelection, presets: readonly PresetDefinition[]): PeriodResolution {
+  if (selection.kind === "custom") return resolveCustomRange(anchor, selection.from, selection.to);
+  const preset = offeredPresets(presets, anchor).find(({ value }) => value === selection.kind);
+  if (!preset) return { status: "unpickable" };
+  const { from, to } = preset.range(anchor);
+  return resolveRange(from, to, anchorEnd(anchor));
 }
 
 /** "62 días: se mostrará por días.", what the range picker says before it is applied. */
@@ -289,37 +319,119 @@ export function rangeResultText(resolution: PeriodResolution): string | null {
   return `${days}: se mostrará por meses, de ${monthRangePhrase(resolution.firstDay, resolution.lastDay)}.`;
 }
 
-/** "Año 2026", the name of the year preset: the anchor's year. */
+// ─── Presets ─────────────────────────────────────────────────────────────────
+
+/** A period a page offers by name, derived from the anchor alone. */
+export interface PresetDefinition {
+  /** Its value in the query string: ?period={value}. Unique within a page's list. */
+  value: PresetKind;
+  name: (anchor: Anchor) => string;
+  /** The kinds of anchor it derives a period from. A page offers it only against one of them. */
+  accepts: readonly Anchor["kind"][];
+  /** Its first and last calendar day, both included. */
+  range: (anchor: Anchor) => { from: CalendarDay; to: CalendarDay };
+  /** How it is offered, when its period's label and granularity would not say it: see `presetSummary`. */
+  summary?: (anchor: Anchor, resolution: Extract<PeriodResolution, { status: "ok" }>) => string;
+}
+
+/** The presets of a list that take this kind of anchor, in the list's order: the ones a page offers. */
+export function offeredPresets(presets: readonly PresetDefinition[], anchor: Anchor): PresetDefinition[] {
+  return presets.filter(({ accepts }) => accepts.includes(anchor.kind));
+}
+
+/** "Año 2026", the name of the year preset: the year of the anchor's month or day. */
 export const yearPresetName = (anchor: CalendarMonth) => `Año ${anchor.year}`;
+
+/** "Último mes publicado": the anchor month. */
+export const LATEST: PresetDefinition = {
+  value: "latest",
+  name: () => "Último mes publicado",
+  accepts: ["month"],
+  range: (anchor) => ({ from: firstDayOf(anchorMonth(anchor)), to: anchorEnd(anchor) }),
+};
+
+/**
+ * "Año {año}": the anchor's own year, from January to the anchor month. It
+ * never assumes which year today is, so it needs no clock. Its name carries
+ * the year, so its summary names only the months: "De enero a septiembre · por meses".
+ */
+export const YEAR: PresetDefinition = {
+  value: "year",
+  name: (anchor) => yearPresetName(anchorEnd(anchor)),
+  accepts: ["month"],
+  range: (anchor) => ({ from: { year: anchorEnd(anchor).year, month: 1, day: 1 }, to: anchorEnd(anchor) }),
+  summary: (anchor, resolution) => {
+    const month = anchorMonth(anchor);
+    const months = month.month === 1 ? capitalise(monthName(month)) : `De enero a ${monthName(month)}`;
+    return `${months} · ${GRANULARITY_PHRASE[resolution.period.granularity]}`;
+  },
+};
+
+/** "Últimos 12 meses": the anchor month and the eleven before it. */
+export const LAST_12: PresetDefinition = {
+  value: "last12",
+  name: () => "Últimos 12 meses",
+  accepts: ["month"],
+  range: (anchor) => ({ from: firstDayOf(addMonths(anchorMonth(anchor), -11)), to: anchorEnd(anchor) }),
+};
+
+/** "Últimos 7 días": the anchor day and the six before it. */
+export const LAST_7: PresetDefinition = {
+  value: "last7",
+  name: () => "Últimos 7 días",
+  accepts: ["day"],
+  range: (anchor) => ({ from: addDays(anchorEnd(anchor), -6), to: anchorEnd(anchor) }),
+};
+
+/** "Últimos 30 días": the anchor day and the 29 before it. */
+export const LAST_30: PresetDefinition = {
+  value: "last30",
+  name: () => "Últimos 30 días",
+  accepts: ["day"],
+  range: (anchor) => ({ from: addDays(anchorEnd(anchor), -29), to: anchorEnd(anchor) }),
+};
+
+/**
+ * "Año {año}" under a day anchor: the anchor's own year, from 1 January to the
+ * anchor day. Its query value is the month anchor's year preset's: a page
+ * offers one or the other, never both.
+ */
+export const DAY_YEAR: PresetDefinition = {
+  value: "year",
+  name: (anchor) => yearPresetName(anchorEnd(anchor)),
+  accepts: ["day"],
+  range: (anchor) => ({ from: { year: anchorEnd(anchor).year, month: 1, day: 1 }, to: anchorEnd(anchor) }),
+};
 
 /**
  * How a preset is offered: the period it resolves to and its granularity.
- * "Septiembre de 2026 · por días"; for "Año {año}", whose name carries the
- * year, "De enero a septiembre · por meses".
+ * "Septiembre de 2026 · por días", unless the preset says it its own way.
  */
-export function presetSummary(anchor: CalendarMonth, kind: PresetKind): string {
-  const resolution = resolvePeriod(anchor, { kind });
+export function presetSummary(anchor: Anchor, preset: PresetDefinition): string {
+  const resolution = resolvePeriod(anchor, { kind: preset.value }, [preset]);
   if (resolution.status !== "ok") return "";
-  const granularity = GRANULARITY_PHRASE[resolution.period.granularity];
-  if (kind !== "year") return `${resolution.period.label} · ${granularity}`;
-  const months = anchor.month === 1 ? capitalise(monthName(anchor)) : `De enero a ${monthName(anchor)}`;
-  return `${months} · ${granularity}`;
+  if (preset.summary) return preset.summary(anchor, resolution);
+  return `${resolution.period.label} · ${GRANULARITY_PHRASE[resolution.period.granularity]}`;
 }
 
 // ─── Anchor changes ──────────────────────────────────────────────────────────
 
 /**
  * A selection made against one anchor, met by another (or arriving in a link).
- * A custom range ending after the anchor month is clamped to its last day; one
- * that starts after it would be empty, so it falls back to the latest
- * published month. `adjusted` says the user must be told.
+ * A custom range ending after the anchor is clamped to its last day; one that
+ * starts after it would be empty, so it falls back to the page's default
+ * preset. `adjusted` says the user must be told.
  */
-export function clampToAnchor(selection: PeriodSelection, anchor: CalendarMonth): { selection: PeriodSelection; adjusted: boolean } {
+export function clampToAnchor(
+  selection: PeriodSelection,
+  anchor: Anchor,
+  defaultPreset: PresetDefinition,
+): { selection: PeriodSelection; adjusted: boolean } {
   if (selection.kind !== "custom") return { selection, adjusted: false };
-  const anchorEnd = lastDayOf(anchor);
-  if (compareDays(selection.to, anchorEnd) <= 0) return { selection, adjusted: false };
-  if (compareDays(selection.from, anchorEnd) > 0) return { selection: { kind: "latest" }, adjusted: true };
-  return { selection: { kind: "custom", from: selection.from, to: anchorEnd }, adjusted: true };
+  const end = anchorEnd(anchor);
+  if (compareDays(selection.to, end) <= 0) return { selection, adjusted: false };
+  if (compareDays(selection.from, end) > 0) return { selection: { kind: defaultPreset.value }, adjusted: true };
+  return { selection: { kind: "custom", from: selection.from, to: end }, adjusted: true };
 }
 
 // ─── Query string ────────────────────────────────────────────────────────────
@@ -327,8 +439,6 @@ export function clampToAnchor(selection: PeriodSelection, anchor: CalendarMonth)
 export const PERIOD_PARAM = "period";
 export const FROM_PARAM = "from";
 export const TO_PARAM = "to";
-
-const PRESETS: readonly PresetKind[] = ["latest", "year", "last12"];
 
 /** "2026-07-01". */
 export const formatDayParam = ({ year, month, day }: CalendarDay) => `${year}-${pad(month)}-${pad(day)}`;
@@ -344,13 +454,18 @@ export function parseDayParam(value: string | null): CalendarDay | null {
 
 /**
  * The selection in the query string, or null when it is not one. No `period`
- * is the default, "Último mes publicado".
+ * is the page's default preset; a preset the page's list leaves out is none.
  */
-export function parseSelection(params: URLSearchParams): PeriodSelection | null {
+export function parseSelection(
+  params: URLSearchParams,
+  presets: readonly PresetDefinition[],
+  defaultPreset: PresetDefinition,
+): PeriodSelection | null {
   const kind = params.get(PERIOD_PARAM);
-  if (kind === null) return params.has(FROM_PARAM) || params.has(TO_PARAM) ? null : { kind: "latest" };
-  if ((PRESETS as readonly string[]).includes(kind)) {
-    return params.has(FROM_PARAM) || params.has(TO_PARAM) ? null : { kind: kind as PresetKind };
+  if (kind === null) return params.has(FROM_PARAM) || params.has(TO_PARAM) ? null : { kind: defaultPreset.value };
+  const preset = presets.find(({ value }) => value === kind);
+  if (preset) {
+    return params.has(FROM_PARAM) || params.has(TO_PARAM) ? null : { kind: preset.value };
   }
   if (kind !== "custom") return null;
   const from = parseDayParam(params.get(FROM_PARAM));
@@ -383,23 +498,27 @@ export function sameSelection(a: PeriodSelection, b: PeriodSelection): boolean {
  * anchor -- on arrival from a link, after a community switch, or when the
  * selected supply changes the anchor; the rule is the same every time.
  *
- * - Not a selection at all (an unknown period, a date that does not exist, a
- *   range running backwards): the default, silently.
- * - A custom range past the anchor month: clamped to it, or the default when
+ * - Not a selection at all (an unknown period, a preset the page does not
+ *   offer, a date that does not exist, a range running backwards): the
+ *   page's default preset, silently.
+ * - A custom range past the anchor: clamped to it, or the default when
  *   nothing would be left, and the user is told (`adjusted`).
- * - A range that still cannot be requested (over the cap): the default, silently.
+ * - A selection that still cannot be requested (over the cap, or a preset
+ *   that does not take this kind of anchor): the default, silently.
  *
  * `rewrite` says the query string no longer holds what is shown.
  */
 export function settleSelection(
   parsed: PeriodSelection | null,
-  anchor: CalendarMonth,
+  anchor: Anchor,
+  presets: readonly PresetDefinition[],
+  defaultPreset: PresetDefinition,
 ): { selection: PeriodSelection; adjusted: boolean; rewrite: boolean } {
-  const latest: PeriodSelection = { kind: "latest" };
-  if (!parsed) return { selection: latest, adjusted: false, rewrite: true };
+  const fallback: PeriodSelection = { kind: defaultPreset.value };
+  if (!parsed) return { selection: fallback, adjusted: false, rewrite: true };
 
-  const clamped = clampToAnchor(parsed, anchor);
-  const status = resolvePeriod(anchor, clamped.selection).status;
-  const selection = status === "tooLong" || status === "unpickable" ? latest : clamped.selection;
+  const clamped = clampToAnchor(parsed, anchor, defaultPreset);
+  const status = resolvePeriod(anchor, clamped.selection, presets).status;
+  const selection = status === "tooLong" || status === "unpickable" ? fallback : clamped.selection;
   return { selection, adjusted: clamped.adjusted, rewrite: !sameSelection(selection, parsed) };
 }

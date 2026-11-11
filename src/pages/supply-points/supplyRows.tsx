@@ -56,8 +56,9 @@ const retiredChip = () => <Chip component="span" size="small" label="Dado de baj
 /**
  * The supply a plant of the community produces onto, named after that plant
  * (UI-SUP-012). The supply says so itself (`plant`), so no other read is
- * needed. Violet is production's colour, not an alert: the supply is a
- * plant's, not a consumer in trouble.
+ * needed. Violet marks it as a plant's, not an alert: the supply is not a
+ * consumer in trouble. It is not the production figures' colour, which is
+ * ENERGY_COLORS.assigned.
  */
 const plantMark = (plantName: string) => (
   <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, color: colors.accent.violet }}>

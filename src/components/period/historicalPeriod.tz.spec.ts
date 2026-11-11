@@ -1,6 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { expectDeviceTimeZone } from "../../test/deviceTimeZone";
-import { anchorFromPeriodStart, resolvePeriod, type CalendarDay, type PeriodSelection } from "./historicalPeriod";
+import {
+  anchorFromPeriodStart,
+  LAST_12,
+  LATEST,
+  monthAnchor,
+  resolvePeriod,
+  YEAR,
+  type CalendarDay,
+  type PeriodSelection,
+} from "./historicalPeriod";
+
+/** The presets of "Mi consumo y ahorro". */
+const PRESETS = [LATEST, YEAR, LAST_12];
 
 // Runs in the `app-time-zone` Vitest project: the device is in New York, so a
 // bound built in the device's zone instead of Europe/Madrid would carry New
@@ -72,7 +84,7 @@ describe("UI-HIS-005 AC5 -- every period is bounded in Madrid, from the anchor a
       { startDate: "2026-09-01T00:00:00+02:00", endDate: "2026-10-01T00:00:00+02:00", granularity: "daily" },
     ],
   ])("UI-HIS-005 AC5 -- %s gives the Madrid bounds", (_, anchor, selection, expected) => {
-    const resolution = resolvePeriod(anchor, selection);
+    const resolution = resolvePeriod(monthAnchor(anchor), selection, PRESETS);
     expect(resolution.status === "ok" && resolution.period).toMatchObject(expected);
   });
 
@@ -81,7 +93,7 @@ describe("UI-HIS-005 AC5 -- every period is bounded in Madrid, from the anchor a
     ["January 2027", { year: 2027, month: 1 }, { startDate: "2027-01-01T00:00:00+01:00", endDate: "2027-02-01T00:00:00+01:00", granularity: "daily" }],
     ["February 2027", { year: 2027, month: 2 }, { startDate: "2027-01-01T00:00:00+01:00", endDate: "2027-03-01T00:00:00+01:00", granularity: "daily" }],
   ])("UI-HIS-005 AC5 -- anchor %s: the year preset is the anchor's year, whatever year the device says it is", (_, anchor, expected) => {
-    const resolution = resolvePeriod(anchor, { kind: "year" });
+    const resolution = resolvePeriod(monthAnchor(anchor), { kind: "year" }, PRESETS);
     expect(resolution.status === "ok" && resolution.period).toMatchObject(expected);
   });
 });

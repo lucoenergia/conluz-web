@@ -29,7 +29,8 @@ vi.mock(import("../../context/logged-user.context"), async (importOriginal) => (
 
 import { createAppQueryClient } from "../../queryClient";
 import { useSelectedSupply } from "./useSelectedSupply";
-import { COMMUNITY_ID, HOME, OWNER_ID } from "./historicalAnalysis.testData";
+import { HOME } from "../../components/evolution/consumptionSeries.testData";
+import { COMMUNITY_ID, OWNER_ID } from "./historicalAnalysis.testData";
 
 const MISSING_ID = "missing-supply";
 const SUPPLY_URL = `/api/v1/supplies/${MISSING_ID}`;

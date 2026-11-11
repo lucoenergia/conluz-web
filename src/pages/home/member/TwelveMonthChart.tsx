@@ -3,7 +3,7 @@ import Chart from "react-apexcharts";
 import type { ApexOptions } from "apexcharts";
 import { formatEuros, formatKilowattHours } from "../../../utils/formatEnergyFigures";
 import { colors, shadows } from "../../../theme/tokens";
-import { ChartScrollArea } from "./ChartScrollArea";
+import { ChartScrollArea } from "../../../components/evolution/ChartScrollArea";
 import { ENERGY_COLORS, SAVINGS_COLOR } from "../../../components/EnergyFigures/energyColors";
 import type { MonthlySeriesView, MonthView } from "./monthlySeries";
 

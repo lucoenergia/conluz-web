@@ -59,21 +59,23 @@ import {
 import { formatEuros } from "../../utils/formatEnergyFigures";
 import { HistoricalAnalysisPage } from "./HistoricalAnalysisPage";
 import {
-  COMMUNITY_ID,
   HOME,
+  membershipDay,
+  membershipMonth,
+  membershipPartialDay,
+  supplyBucket,
+  supplyGapDay,
+  supplyMeasuredZeroDay,
+} from "../../components/evolution/consumptionSeries.testData";
+import {
+  COMMUNITY_ID,
   PLANT_SUPPLY,
   SEPTEMBER_2026,
   derivedMembershipFigures,
   derivedSupplyFigures,
   member,
-  membershipDay,
   membershipLatest,
-  membershipMonth,
-  membershipPartialDay,
-  supplyBucket,
-  supplyGapDay,
   supplyLatest,
-  supplyMeasuredZeroDay,
 } from "./historicalAnalysis.testData";
 
 const DAILY_TITLE = "Tu energía día a día";

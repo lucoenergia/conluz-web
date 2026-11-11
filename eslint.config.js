@@ -201,7 +201,7 @@ const COMMUNITY_SCOPE_WRAPPERS = [
   "src/pages/home/management/usePlantSharingAgreements.ts",
   // Driven by a supply from useOwnSupplies, narrowed to the active community,
   // and remounted by the keyed Outlet when the community changes.
-  "src/pages/historical-analysis/useHistoricalAnchor.ts",
+  "src/pages/historical-analysis/useMemberAnchorQuery.ts",
   // Driven by the same selected supply, under the same keyed Outlet.
   "src/pages/historical-analysis/usePeriodEnergyMetrics.ts",
   // Driven by the same selected supply, under the same keyed Outlet (#250).
@@ -318,8 +318,8 @@ const OVERLAY_PRIMITIVE_ALLOWLIST = [
   "src/components/Menu/SideMenu.tsx", // permanent: the navigation drawer, not an overlay flow
   "src/components/CoefficientHistoryDrawer/CoefficientHistoryDrawer.tsx", // permanent: a read-only side panel, a documented exception
   "src/pages/historical-analysis/SupplySelector.tsx", // permanent: a picker, not a flow
-  "src/pages/historical-analysis/PeriodSelector.tsx", // permanent: a picker, not a flow
-  "src/pages/historical-analysis/CustomRangePicker.tsx", // permanent: a picker, not a flow
+  "src/components/period/PeriodSelector.tsx", // permanent: a picker, not a flow
+  "src/components/period/CustomRangePicker.tsx", // permanent: a picker, not a flow
 ];
 
 export default tseslint.config([

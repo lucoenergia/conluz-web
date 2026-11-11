@@ -1,5 +1,4 @@
 import type { ApexOptions } from "apexcharts";
-import type { MembershipHourlyConsumptionBucketResponse, SupplyConsumptionBucketResponse } from "../../api/models";
 import {
   formatCalendarDay,
   formatCalendarMonth,
@@ -22,10 +21,13 @@ import {
   type CalendarDay,
   type Granularity,
   type HistoricalPeriod,
-} from "./historicalPeriod";
-import { slotStateText } from "./slotStateText";
-import { localIsoAt, wallTimeAt } from "../home/member/monthBounds";
-import type { ConsumptionSeries } from "./usePeriodConsumptionSeries";
+} from "../period/historicalPeriod";
+import { localIsoAt, wallTimeAt } from "../../utils/zonedTime";
+
+// The evolution charts of a period, for any series (#250, #401): the axis,
+// each slot's state, the markers and the words about the whole period. A
+// series definition says what a bucket holds and how it marks its states; an
+// adapter per kind of bucket supplies one (consumptionSeries.ts).
 
 /**
  * What a slot of the axis stands for. When several signals coincide, the
@@ -34,11 +36,34 @@ import type { ConsumptionSeries } from "./usePeriodConsumptionSeries";
 export type SlotState =
   /** Nothing stored: no figure exists, and none may be drawn as 0. */
   | { kind: "gap" }
-  /** Some of the member's supplies stored nothing: the figures add up only those that did. */
+  /** Only part of what makes up the slot reported: its figures add up only that part. */
   | { kind: "partial"; reported: number; total: number }
-  /** Stored, and every energy figure measured 0. */
+  /** Stored, and every segment measured 0. */
   | { kind: "measuredZero" }
   | { kind: "complete" };
+
+/** What a bucket says about its own state, before its figures are read: a gap, a partial slot, or nothing to report. */
+export type SlotSignal = { kind: "gap" } | { kind: "partial"; reported: number; total: number } | null;
+
+/**
+ * A bucket that counts the supplies it adds up (#401): a gap when none
+ * reported, partial when only some did.
+ */
+export function supplyCountSignal({ suppliesWithData, supplyCount }: { suppliesWithData: number; supplyCount: number }): SlotSignal {
+  if (suppliesWithData === 0) return { kind: "gap" };
+  if (suppliesWithData < supplyCount) return { kind: "partial", reported: suppliesWithData, total: supplyCount };
+  return null;
+}
+
+/**
+ * A bucket that counts the hours it adds up (#401): a gap when no hour has
+ * data, partial when only some do.
+ */
+export function hoursSignal({ hoursWithData, expectedHours }: { hoursWithData: number; expectedHours: number }): SlotSignal {
+  if (hoursWithData === 0) return { kind: "gap" };
+  if (hoursWithData < expectedHours) return { kind: "partial", reported: hoursWithData, total: expectedHours };
+  return null;
+}
 
 /** The hour an hourly slot stands for (#378). */
 export interface SlotHour {
@@ -50,7 +75,66 @@ export interface SlotHour {
   repeated: boolean;
 }
 
-export interface SlotView {
+/** One part of a bar. Segments sharing a group stack into one bar; different groups stand side by side. */
+export interface SegmentDefinition<K extends string> {
+  key: K;
+  /** The home term the legend, the tooltip and the rows name it by. */
+  label: string;
+  /** Its colour token. */
+  color: string;
+  group: string;
+  /** The technical term carried, muted, after the label (UI-HIS-027). */
+  technicalTerm?: string;
+}
+
+/** The savings chart of a series: one amount in euros per slot. */
+export interface SavingsDefinition<B> {
+  label: string;
+  color: string;
+  read: (bucket: B) => number;
+  /** The amount is a measured 0, drawn as a dot. Decided apart from the energy's measured zero. */
+  isZero: (bucket: B) => boolean;
+}
+
+/** How the charts draw a series: its segments, in order, and its savings, if it has any. */
+export interface SeriesLook<K extends string> {
+  segments: readonly SegmentDefinition<K>[];
+  savings?: { label: string; color: string };
+}
+
+/** A series: what its buckets hold, where each sits on the axis, and how each marks its state. */
+export interface SeriesDefinition<B, K extends string> extends SeriesLook<K> {
+  /**
+   * The key of the slot a bucket belongs to, as the axis writes it (a day's or
+   * a month's `date`, an hour's `hourKey`), and its segments' figures. A
+   * bucket whose key is null matches no slot.
+   */
+  read: (bucket: B) => { timeKey: string | null; values: Record<K, number> };
+  signal: (bucket: B) => SlotSignal;
+  /** Without it, no savings are read or drawn, and no price is asked for. */
+  savings?: SavingsDefinition<B>;
+}
+
+/** The words of a series' evolution charts, in its page's voice. */
+export interface EvolutionCopy {
+  title: Readonly<Record<Granularity, string>>;
+  /** The legend over the energy chart: a heading per group of segments, by key. */
+  legendGroups: readonly { heading: string; segments: readonly string[] }[];
+  /** What the bars are, on each layout. */
+  caption: { wide: string; narrow: string };
+  /** Below sm, the heading of the energy rows' figure column. */
+  rowHeader: string;
+  /** Below sm, the energy rows' list name: "Tu energía por día". */
+  rowsLabel: (unit: string) => string;
+  /** Below sm, the savings rows' list name. */
+  savingsRowsLabel: (unit: string) => string;
+  /** A slot's state in words: the tooltip's status line. */
+  stateText: (state: SlotState, granularity: Granularity) => string;
+  /** Where some slots are partial: "En el 3 de julio de 2026 solo hay datos de 1 de tus 2 puntos." */
+  partialNotice: (part: { where: string; reported: number; total: number }) => string;
+}
+
+export interface EvolutionSlot<K extends string> {
   /**
    * The chart's category, unique on the axis. A day or a month: its first day
    * written as a bucket's `date`, "2026/07/01". An hour: its `startsAt`.
@@ -72,24 +156,22 @@ export interface SlotView {
   /** A daily row that closes a week of the axis: a separator follows it. */
   endsWeek: boolean;
   state: SlotState;
-  /** What the charts plot: null on a gap, never 0. */
-  selfConsumptionKWh: number | null;
-  gridImportKWh: number | null;
-  surplusKWh: number | null;
-  savingsEur: number | null;
-  /**
-   * Below sm, the row's consumption figure: community energy plus grid energy,
-   * the bar the chart draws, since a bucket carries no total (UI-HIS-025).
-   * Null on a gap.
-   */
-  consumptionKWh: number | null;
   /** The state in words, the tooltip's status line. */
   stateText: string;
+  /** What the charts plot, by segment: null on a gap, never 0. */
+  values: Record<K, number | null>;
   /** The figures in words, for the tooltip; null on a gap, which has none. */
-  selfConsumptionText: string | null;
-  gridImportText: string | null;
-  surplusText: string | null;
+  texts: Record<K, string | null>;
+  /**
+   * Below sm, the row's figure: the first group's segments added up, the bar
+   * the chart draws, since a bucket carries no total (UI-HIS-025). Null on a gap.
+   */
+  total: number | null;
+  /** Null on a gap, and on every slot of a series without savings. */
+  savingsEur: number | null;
   savingsText: string | null;
+  /** The savings are a measured 0. */
+  savingsZero: boolean;
 }
 
 export interface ChartSeries {
@@ -99,11 +181,12 @@ export interface ChartSeries {
   data: (number | null)[];
 }
 
-export interface ConsumptionSeriesView {
+export interface EvolutionView<K extends string> {
   granularity: Granularity;
-  slots: SlotView[];
+  slots: EvolutionSlot<K>[];
   categories: string[];
   energySeries: ChartSeries[];
+  /** Empty for a series without savings. */
   savingsSeries: ChartSeries[];
   energyAnnotations: ApexOptions["annotations"];
   savingsAnnotations: ApexOptions["annotations"];
@@ -111,7 +194,7 @@ export interface ConsumptionSeriesView {
   coverageText: string;
   /** One date range per run of consecutive gaps, or null without gaps. */
   gapsNotice: string | null;
-  /** Membership only: which slots miss supplies, or null when none does. */
+  /** Which slots are partial, or null when none is. */
   partialNotice: string | null;
   /** Wide enough that every slot keeps its width: a narrower screen scrolls the chart. */
   minChartWidth: number;
@@ -119,26 +202,8 @@ export interface ConsumptionSeriesView {
   rowScale: { energyKWh: number; savingsEur: number };
 }
 
-export const SELF_CONSUMPTION_SERIES = "De la comunidad";
-export const GRID_IMPORT_SERIES = "De la red";
-export const SURPLUS_SERIES = "Se fue a la red";
-export const SAVINGS_SERIES = "Ahorro estimado";
-
-/**
- * The technical term a home term carries after it, in muted type, wherever
- * the page pairs them (UI-HIS-027). A technical term never appears alone.
- */
-export const TECHNICAL_TERM: Readonly<Partial<Record<string, string>>> = {
-  [SELF_CONSUMPTION_SERIES]: "autoconsumo",
-  [SURPLUS_SERIES]: "excedentes",
-};
-
-/** The stack the consumption bar is made of, and the separate bar beside it. */
-export const CONSUMPTION_GROUP = "consumption";
-export const ASSIGNED_UNUSED_GROUP = "assignedUnused";
 const SAVINGS_GROUP = "savings";
 
-export { COMPLETE_TEXT } from "./slotStateText";
 /** Both hours the clock shows twice on the October change day carry it. */
 export const REPEATED_HOUR_NOTE = "(hora repetida por el cambio de hora)";
 export const MEASURED_ZERO_KWH_TEXT = "0,0 kWh (medido)";
@@ -220,87 +285,29 @@ export function hourAxisOf(period: HistoricalPeriod): AxisSlot[] {
   });
 }
 
+/**
+ * The key an hourly bucket is matched to its hour by: the instant it starts,
+ * as the axis writes it, never its `date` and `time`, which two hours share on
+ * the day the clocks go back. One that names no instant matches no hour.
+ */
+export function hourKey(startsAt: string): string | null {
+  const instant = Date.parse(startsAt);
+  return Number.isNaN(instant) ? null : localIsoAt(instant);
+}
+
 /** The axis of a period. A day or a month is keyed as its bucket is, by `date`; an hour by its instant. */
 function axisSlotsOf(period: HistoricalPeriod): AxisSlot[] {
   if (period.granularity === "hourly") return hourAxisOf(period);
   return axisOf(period).map((day) => ({ key: formatDayKey(day), day, hour: null }));
 }
 
-/** One series' bucket reduced to what decides a slot. */
-interface BucketReading {
-  /** No record stored. */
-  isGap: boolean;
-  partial: { reported: number; total: number } | null;
-  selfConsumptionKWh: number;
-  gridImportKWh: number;
-  surplusKWh: number;
-  savingsEur: number;
-}
-
-/**
- * How each series marks its states (#250, #378):
- * - membership: a gap is `savingsEur: null`; partial is `suppliesWithData < supplyCount`;
- * - supply: a gap is `obtainMethod: null`, whose zeros and 0.00 € are placeholders, not readings.
- *
- * A day or a month is keyed by its `date` string, never parsed as an
- * instant. An hour is keyed by its `startsAt` instant, never by `date` and
- * `time`, which two hours share on the day the clocks go back.
- */
-function readingsOf(series: ConsumptionSeries): Map<string, BucketReading> {
-  switch (series.kind) {
-    case "membershipHourly":
-      return new Map(series.buckets.flatMap((bucket) => hourEntry(bucket, membershipReading(bucket))));
-    case "membershipDaily":
-    case "membershipMonthly":
-      return new Map(series.buckets.map((bucket) => [bucket.date, membershipReading(bucket)]));
-    case "supplyHourly":
-      return new Map(series.buckets.flatMap((bucket) => hourEntry(bucket, supplyReading(bucket))));
-    case "supplyDaily":
-    case "supplyMonthly":
-      return new Map(series.buckets.map((bucket) => [bucket.date, supplyReading(bucket)]));
-  }
-}
-
-/** An hourly bucket under the key of the hour it starts: its instant, as the axis writes it. One that names no instant matches no hour. */
-function hourEntry(bucket: { startsAt: string }, reading: BucketReading): [string, BucketReading][] {
-  const instant = Date.parse(bucket.startsAt);
-  return Number.isNaN(instant) ? [] : [[localIsoAt(instant), reading]];
-}
-
-type MembershipBucket = Pick<
-  MembershipHourlyConsumptionBucketResponse,
-  "savingsEur" | "suppliesWithData" | "supplyCount" | "selfConsumptionKWh" | "gridImportKWh" | "surplusKWh"
->;
-
-function membershipReading(bucket: MembershipBucket): BucketReading {
-  return {
-    isGap: bucket.savingsEur === null,
-    partial: bucket.suppliesWithData < bucket.supplyCount ? { reported: bucket.suppliesWithData, total: bucket.supplyCount } : null,
-    selfConsumptionKWh: bucket.selfConsumptionKWh,
-    gridImportKWh: bucket.gridImportKWh,
-    surplusKWh: bucket.surplusKWh,
-    savingsEur: bucket.savingsEur ?? 0,
-  };
-}
-
-type SupplyBucket = Pick<SupplyConsumptionBucketResponse, "obtainMethod" | "selfConsumptionKWh" | "gridImportKWh" | "surplusKWh" | "savingsEur">;
-
-function supplyReading(bucket: SupplyBucket): BucketReading {
-  return {
-    isGap: bucket.obtainMethod === null,
-    partial: null,
-    selfConsumptionKWh: bucket.selfConsumptionKWh,
-    gridImportKWh: bucket.gridImportKWh,
-    surplusKWh: bucket.surplusKWh,
-    savingsEur: bucket.savingsEur,
-  };
-}
-
 /** gap > partial > measuredZero > complete. A slot the series omits is a gap. */
-function stateOf(reading: BucketReading | undefined): SlotState {
-  if (!reading || reading.isGap) return { kind: "gap" };
-  if (reading.partial) return { kind: "partial", ...reading.partial };
-  if (reading.selfConsumptionKWh === 0 && reading.gridImportKWh === 0 && reading.surplusKWh === 0) return { kind: "measuredZero" };
+function stateOf<B, K extends string>(bucket: B | undefined, definition: SeriesDefinition<B, K>): SlotState {
+  if (bucket === undefined) return { kind: "gap" };
+  const signal = definition.signal(bucket);
+  if (signal) return signal;
+  const { values } = definition.read(bucket);
+  if (definition.segments.every(({ key }) => values[key] === 0)) return { kind: "measuredZero" };
   return { kind: "complete" };
 }
 
@@ -349,9 +356,30 @@ function nameOf({ key, hour }: AxisSlot, granularity: Granularity): string {
   return granularity === "daily" ? formatCalendarDay(key) : capitalise(formatCalendarMonth(key));
 }
 
-function slotOf(slot: AxisSlot, index: number, reading: BucketReading | undefined, granularity: Granularity, step: number): SlotView {
+/** The segments of each group, groups in the order their first segment comes. */
+export function groupsOf<K extends string>(segments: readonly SegmentDefinition<K>[]): SegmentDefinition<K>[][] {
+  const groups = new Map<string, SegmentDefinition<K>[]>();
+  for (const segment of segments) groups.set(segment.group, [...(groups.get(segment.group) ?? []), segment]);
+  return [...groups.values()];
+}
+
+/** A group's segments added up on a slot, or null on a gap. */
+export function groupSum<K extends string>(slot: EvolutionSlot<K>, group: readonly SegmentDefinition<K>[]): number | null {
+  if (slot.state.kind === "gap") return null;
+  return group.reduce((sum, { key }) => sum + (slot.values[key] ?? 0), 0);
+}
+
+function slotOf<B, K extends string>(
+  slot: AxisSlot,
+  index: number,
+  bucket: B | undefined,
+  definition: SeriesDefinition<B, K>,
+  copy: Pick<EvolutionCopy, "stateText">,
+  granularity: Granularity,
+  step: number,
+): EvolutionSlot<K> {
   const { key, day, hour } = slot;
-  const state = stateOf(reading);
+  const state = stateOf(bucket, definition);
   const base = {
     key,
     day,
@@ -363,33 +391,24 @@ function slotOf(slot: AxisSlot, index: number, reading: BucketReading | undefine
     startsMonthOrYear: granularity === "daily" ? day.day === 1 : granularity === "monthly" && day.month === 1,
     endsWeek: granularity === "daily" && (index + 1) % 7 === 0,
     state,
-    stateText: slotStateText(state, granularity).long,
+    stateText: copy.stateText(state, granularity),
   };
-  if (state.kind === "gap" || !reading) {
-    return {
-      ...base,
-      selfConsumptionKWh: null,
-      gridImportKWh: null,
-      surplusKWh: null,
-      savingsEur: null,
-      consumptionKWh: null,
-      selfConsumptionText: null,
-      gridImportText: null,
-      surplusText: null,
-      savingsText: null,
-    };
+  const byKey = <T>(value: (key: K) => T) => Object.fromEntries(definition.segments.map((segment) => [segment.key, value(segment.key)])) as Record<K, T>;
+  if (state.kind === "gap" || bucket === undefined) {
+    return { ...base, values: byKey(() => null), texts: byKey(() => null), total: null, savingsEur: null, savingsText: null, savingsZero: false };
   }
+  const { values } = definition.read(bucket);
+  const [firstGroup] = groupsOf(definition.segments);
+  const { savings } = definition;
+  const savingsEur = savings ? savings.read(bucket) : null;
   return {
     ...base,
-    selfConsumptionKWh: reading.selfConsumptionKWh,
-    gridImportKWh: reading.gridImportKWh,
-    surplusKWh: reading.surplusKWh,
-    savingsEur: reading.savingsEur,
-    consumptionKWh: reading.selfConsumptionKWh + reading.gridImportKWh,
-    selfConsumptionText: kilowattHoursText(reading.selfConsumptionKWh),
-    gridImportText: kilowattHoursText(reading.gridImportKWh),
-    surplusText: kilowattHoursText(reading.surplusKWh),
-    savingsText: eurosText(reading.savingsEur),
+    values: byKey((segment) => values[segment]),
+    texts: byKey((segment) => kilowattHoursText(values[segment])),
+    total: firstGroup.reduce((sum, { key: segment }) => sum + values[segment], 0),
+    savingsEur,
+    savingsText: savingsEur === null ? null : eurosText(savingsEur),
+    savingsZero: !!savings && savings.isZero(bucket),
   };
 }
 
@@ -399,17 +418,17 @@ type Annotations = NonNullable<ApexOptions["annotations"]>;
 type PointAnnotation = NonNullable<Annotations["points"]>[number];
 
 /** A hollow ring on the baseline: nothing was stored. */
-function gapMarker(slot: SlotView): PointAnnotation {
+function gapMarker(slot: { key: string }): PointAnnotation {
   return { x: slot.key, y: 0, marker: { size: 5, fillColor: colors.background.paper, strokeColor: colors.text.muted, strokeWidth: 2 } };
 }
 
 /** A solid dot on the baseline: measured, and zero. */
-function zeroMarker(slot: SlotView): PointAnnotation {
+function zeroMarker(slot: { key: string }): PointAnnotation {
   return { x: slot.key, y: 0, marker: { size: 4, fillColor: colors.text.primary, strokeColor: colors.text.primary, strokeWidth: 0 } };
 }
 
-/** An asterisk above the bar: some supplies are missing from it. */
-function partialMarker(slot: SlotView, top: number): PointAnnotation {
+/** An asterisk above the bar: part of the slot is missing from it. */
+function partialMarker(slot: { key: string }, top: number): PointAnnotation {
   return {
     x: slot.key,
     y: top,
@@ -428,7 +447,11 @@ function partialMarker(slot: SlotView, top: number): PointAnnotation {
  * the key under the charts. `top` is where a partial slot's bar ends: bar
  * geometry, never a figure shown.
  */
-function annotationsFor(slots: SlotView[], isZero: (slot: SlotView) => boolean, top: (slot: SlotView) => number): ApexOptions["annotations"] {
+function annotationsFor<S extends { key: string; state: SlotState }>(
+  slots: S[],
+  isZero: (slot: S) => boolean,
+  top: (slot: S) => number,
+): ApexOptions["annotations"] {
   return {
     points: slots.flatMap((slot) => {
       if (slot.state.kind === "gap") return [gapMarker(slot)];
@@ -442,14 +465,16 @@ function annotationsFor(slots: SlotView[], isZero: (slot: SlotView) => boolean, 
 
 // ─── Words about the whole period ────────────────────────────────────────────
 
+type Run<S> = [S, S];
+
 /** Consecutive slots that satisfy `belongs`, as [first, last] pairs. */
-function runsOf(slots: SlotView[], belongs: (slot: SlotView) => boolean): [SlotView, SlotView][] {
-  const runs: [SlotView, SlotView][] = [];
-  let start: SlotView | null = null;
+function runsOf<S>(slots: S[], belongs: (slot: S) => boolean): Run<S>[] {
+  const runs: Run<S>[] = [];
+  let start: S | null = null;
   slots.forEach((slot, index) => {
     if (belongs(slot) && start === null) start = slot;
     const next = slots[index + 1];
-    if (start !== null && (!next || !belongs(next))) {
+    if (start !== null && (next === undefined || !belongs(next))) {
       runs.push([start, slot]);
       start = null;
     }
@@ -460,8 +485,10 @@ function runsOf(slots: SlotView[], belongs: (slot: SlotView) => boolean): [SlotV
 const joinPhrases = (phrases: string[]) =>
   phrases.length <= 1 ? (phrases[0] ?? "") : `${phrases.slice(0, -1).join(", ")} y ${phrases[phrases.length - 1]}`;
 
+type PhraseSlot = { day: CalendarDay; hour: SlotHour | null };
+
 /** "del 14 al 16 de julio de 2026", "de febrero a marzo de 2026", "de julio de 2026", "de 14:00 a 16:00". */
-function gapRangePhrase([first, last]: [SlotView, SlotView], granularity: Granularity): string {
+function gapRangePhrase([first, last]: Run<PhraseSlot>, granularity: Granularity): string {
   if (first.hour && last.hour) return hourRangeText(first.hour, last.hour);
   if (granularity === "daily") return compareDays(first.day, last.day) === 0 ? `del ${dayName(first.day)}` : `del ${dayRangePhrase(first.day, last.day)}`;
   return compareDays(first.day, last.day) === 0 ? `de ${monthYearName(first.day)}` : `de ${monthRangePhrase(first.day, last.day)}`;
@@ -471,14 +498,16 @@ function gapRangePhrase([first, last]: [SlotView, SlotView], granularity: Granul
  * "el 3 de julio de 2026", "los días del 14 al 16 de julio de 2026", "julio de 2026",
  * "los meses de febrero a marzo de 2026", "la hora de 14:00 a 15:00", "las horas de 14:00 a 16:00".
  */
-function partialRangePhrase([first, last]: [SlotView, SlotView], granularity: Granularity): string {
+function partialRangePhrase([first, last]: Run<PhraseSlot>, granularity: Granularity): string {
   if (first.hour && last.hour) return `${first === last ? "la hora" : "las horas"} ${hourRangeText(first.hour, last.hour)}`;
   const single = compareDays(first.day, last.day) === 0;
   if (granularity === "daily") return single ? `el ${dayName(first.day)}` : `los días del ${dayRangePhrase(first.day, last.day)}`;
   return single ? monthYearName(first.day) : `los meses de ${monthRangePhrase(first.day, last.day)}`;
 }
 
-function gapsNoticeOf(slots: SlotView[], granularity: Granularity): string | null {
+type StatedSlot = PhraseSlot & { state: SlotState };
+
+function gapsNoticeOf(slots: StatedSlot[], granularity: Granularity): string | null {
   const runs = runsOf(slots, (slot) => slot.state.kind === "gap");
   if (runs.length === 0) return null;
   const ranges = joinPhrases(runs.map((run) => gapRangePhrase(run, granularity)));
@@ -486,25 +515,25 @@ function gapsNoticeOf(slots: SlotView[], granularity: Granularity): string | nul
   return `Faltan datos ${ranges}. Los totales suman solo ${unit.the} ${unit.many} con datos.`;
 }
 
-/** One sentence per count of reporting supplies, so each names its own "{n} de tus {total}". */
-function partialNoticeOf(slots: SlotView[], granularity: Granularity): string | null {
+/** One sentence per count of what reported, so each names its own "{n} de {total}". */
+function partialNoticeOf(slots: StatedSlot[], granularity: Granularity, partialNotice: EvolutionCopy["partialNotice"]): string | null {
   const counts = new Map<string, { reported: number; total: number }>();
   for (const slot of slots) if (slot.state.kind === "partial") counts.set(`${slot.state.reported}/${slot.state.total}`, slot.state);
   if (counts.size === 0) return null;
   return [...counts.entries()]
     .map(([id, { reported, total }]) => {
-      const isThisCount = (slot: SlotView) => slot.state.kind === "partial" && `${slot.state.reported}/${slot.state.total}` === id;
+      const isThisCount = (slot: StatedSlot) => slot.state.kind === "partial" && `${slot.state.reported}/${slot.state.total}` === id;
       const runs = runsOf(slots, isThisCount);
       const several = slots.filter(isThisCount).length > 1;
       const unit = UNIT[granularity];
       const marked = several ? `${unit.those} ${unit.many} se marcan como parciales.` : `${unit.thatOne} ${unit.one} se marca como parcial.`;
       const where = joinPhrases(runs.map((run) => partialRangePhrase(run, granularity)));
-      return `En ${where} solo hay datos de ${reported} de tus ${total} puntos. ${marked}`;
+      return `${partialNotice({ where, reported, total })} ${marked}`;
     })
     .join(" ");
 }
 
-function coverageTextOf(slots: SlotView[], period: HistoricalPeriod): string {
+function coverageTextOf(slots: StatedSlot[], period: HistoricalPeriod): string {
   const unit = UNIT[period.granularity];
   const withData = slots.filter((slot) => slot.state.kind !== "gap").length;
   const gaps = slots.length - withData;
@@ -516,64 +545,69 @@ function coverageTextOf(slots: SlotView[], period: HistoricalPeriod): string {
 }
 
 /**
- * The evolution charts of the period (#250), every decision about what is
+ * The evolution charts of a period (#250, #401), every decision about what is
  * drawn made here: the axis, which slot is a gap, a partial or a measured
  * zero, and the words for each. The charts render this view and compute
  * nothing of their own.
  *
  * The axis comes from the period, not from the buckets: a slot the series
- * omits (the supply monthly series leaves out a month with nothing stored) is
- * still on it, as a gap. A day's or a month's bucket is matched to its slot
- * by its `date` string, never parsed as an instant; an hour's by its
- * `startsAt` instant, never by `date` and `time` (#378).
+ * omits is still on it, as a gap. A bucket is matched to its slot by the key
+ * the definition reads from it: a day's or a month's `date` string, never
+ * parsed as an instant; an hour's `startsAt` instant (#378).
  *
  * Every figure is a bucket's own, but one: below sm, a row states the slot's
- * consumption, its community energy plus its grid energy, which no bucket
- * carries (UI-HIS-025). What the client also counts is slots by state (the
- * coverage line, the notices), the clock's hours on an hourly axis, to find
- * the one shown twice, where a partial slot's bar ends, to place its marker,
- * and where each row scale ends.
+ * first group added up, which no bucket carries (UI-HIS-025). What the client
+ * also counts is slots by state (the coverage line, the notices), the clock's
+ * hours on an hourly axis, to find the one shown twice, where a partial slot's
+ * bar ends, to place its marker, and where each row scale ends.
  *
  * A slot's state follows the first signal that applies:
- * gap > partial > measuredZero > complete. A day no supply reported is a gap
- * even if the series wrote zeros or other values for it; a partial day whose
- * figures are all zero is partial, since the zeros cover only part of the
- * member's supplies.
+ * gap > partial > measuredZero > complete. A slot the definition signals as a
+ * gap is one even if its bucket holds zeros or other values; a partial slot
+ * whose figures are all zero is partial, since the zeros cover only part of it.
  */
-export function toConsumptionSeriesView(period: HistoricalPeriod, series: ConsumptionSeries): ConsumptionSeriesView {
+export function toEvolutionView<B, K extends string>(
+  period: HistoricalPeriod,
+  definition: SeriesDefinition<B, K>,
+  buckets: readonly B[],
+  copy: Pick<EvolutionCopy, "stateText" | "partialNotice">,
+): EvolutionView<K> {
   const { granularity } = period;
-  const readings = readingsOf(series);
+  const byKey = new Map(
+    buckets.flatMap((bucket) => {
+      const { timeKey } = definition.read(bucket);
+      return timeKey === null ? [] : [[timeKey, bucket] as const];
+    }),
+  );
   const step = Math.max(1, Math.ceil(LABEL_WIDTH[granularity] / SLOT_WIDTH[granularity]));
-  const slots = axisSlotsOf(period).map((slot, index) => slotOf(slot, index, readings.get(slot.key), granularity, step));
-  const isMembership = series.kind === "membershipHourly" || series.kind === "membershipDaily" || series.kind === "membershipMonthly";
+  const slots = axisSlotsOf(period).map((slot, index) => slotOf(slot, index, byKey.get(slot.key), definition, copy, granularity, step));
+  const groups = groupsOf(definition.segments);
 
   return {
     granularity,
     slots,
     categories: slots.map((slot) => slot.key),
-    energySeries: [
-      { name: SELF_CONSUMPTION_SERIES, group: CONSUMPTION_GROUP, data: slots.map((slot) => slot.selfConsumptionKWh) },
-      { name: GRID_IMPORT_SERIES, group: CONSUMPTION_GROUP, data: slots.map((slot) => slot.gridImportKWh) },
-      { name: SURPLUS_SERIES, group: ASSIGNED_UNUSED_GROUP, data: slots.map((slot) => slot.surplusKWh) },
-    ],
-    savingsSeries: [{ name: SAVINGS_SERIES, group: SAVINGS_GROUP, data: slots.map((slot) => slot.savingsEur) }],
+    energySeries: definition.segments.map(({ key, label, group }) => ({ name: label, group, data: slots.map((slot) => slot.values[key]) })),
+    savingsSeries: definition.savings ? [{ name: definition.savings.label, group: SAVINGS_GROUP, data: slots.map((slot) => slot.savingsEur) }] : [],
     energyAnnotations: annotationsFor(
       slots,
       (slot) => slot.state.kind === "measuredZero",
-      (slot) => (slot.selfConsumptionKWh ?? 0) + (slot.gridImportKWh ?? 0),
+      (slot) => groupSum(slot, groups[0]) ?? 0,
     ),
-    savingsAnnotations: annotationsFor(
-      slots,
-      (slot) => slot.savingsEur === 0,
-      (slot) => slot.savingsEur ?? 0,
-    ),
+    savingsAnnotations: definition.savings
+      ? annotationsFor(
+          slots,
+          (slot) => slot.savingsZero,
+          (slot) => slot.savingsEur ?? 0,
+        )
+      : undefined,
     coverageText: coverageTextOf(slots, period),
     gapsNotice: gapsNoticeOf(slots, granularity),
-    partialNotice: isMembership ? partialNoticeOf(slots, granularity) : null,
+    partialNotice: partialNoticeOf(slots, granularity, copy.partialNotice),
     minChartWidth: slots.length * SLOT_WIDTH[granularity],
-    // One scale per chart: the energy rows' two bars share it (UI-HIS-025).
+    // One scale per chart: the energy rows' bars share it (UI-HIS-025).
     rowScale: {
-      energyKWh: scaleEnd(Math.max(0, ...slots.map((slot) => Math.max(slot.consumptionKWh ?? 0, slot.surplusKWh ?? 0)))),
+      energyKWh: scaleEnd(Math.max(0, ...slots.map((slot) => Math.max(...groups.map((group) => groupSum(slot, group) ?? 0))))),
       savingsEur: scaleEnd(Math.max(0, ...slots.map((slot) => slot.savingsEur ?? 0))),
     },
   };

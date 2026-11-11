@@ -127,7 +127,7 @@ export const colors = {
   // figure or a glyph without a second check. The semantic hues' `vivid` tones
   // remain the right choice for a series mark that only needs the 3:1 bar.
   accent: {
-    violet: "#8050e8", // production figures — 4.96:1
+    violet: "#8050e8", // the plant supply's mark (UI-SUP-012) — 4.96:1; production figures use ENERGY_COLORS.assigned
     blue:   "#286cdb", // consumption figures — 4.93:1
     cyan:   "#0078ac", // integration provider marks — 4.90:1
     // Dark tones for marks that sit beside a lighter mark and must differ from

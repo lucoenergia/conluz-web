@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { SupplyResponse } from "../../api/models";
-import { toConsumptionSeriesView } from "./consumptionSeries";
-import type { HistoricalPeriod } from "./historicalPeriod";
+import { toConsumptionSeriesView } from "../../components/evolution/consumptionSeries";
+import type { HistoricalPeriod } from "../../components/period/historicalPeriod";
 import { CSV_MIME_TYPE, csvDecimal, csvField, periodCsv, periodCsvFileName } from "./periodCsv";
-import { slotStateText } from "./slotStateText";
+import { slotStateText } from "../../components/evolution/slotStateText";
 import {
   HOME,
   hoursOf,
@@ -18,7 +18,7 @@ import {
   supplyBucket,
   supplyGapDay,
   supplyMeasuredZeroDay,
-} from "./historicalAnalysis.testData";
+} from "../../components/evolution/consumptionSeries.testData";
 
 const period = (startDate: string, endDate: string, granularity: HistoricalPeriod["granularity"]): HistoricalPeriod => ({
   startDate,

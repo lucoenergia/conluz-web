@@ -1,5 +1,5 @@
-import type { SlotState } from "./consumptionSeries";
-import type { Granularity } from "./historicalPeriod";
+import type { SlotState } from "./evolutionSeries";
+import type { Granularity } from "../period/historicalPeriod";
 
 /** The tooltip's status line of a complete slot, and of a measured zero, whose figures say "medido". */
 export const COMPLETE_TEXT = "Datos completos.";

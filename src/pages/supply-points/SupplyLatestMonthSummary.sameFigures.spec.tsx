@@ -57,7 +57,8 @@ import { getCommunityById, useGetCommunityById } from "../../api/communities/com
 import { useSupplyInActiveCommunity } from "./useSupplyInActiveCommunity";
 import { SupplyDetailPage } from "./SupplyDetailPage";
 import { HistoricalAnalysisPage } from "../historical-analysis/HistoricalAnalysisPage";
-import { AUGUST_2026, COMMUNITY_ID, HOME, derivedSupplyFigures, member } from "../historical-analysis/historicalAnalysis.testData";
+import { HOME } from "../../components/evolution/consumptionSeries.testData";
+import { AUGUST_2026, COMMUNITY_ID, derivedSupplyFigures, member } from "../historical-analysis/historicalAnalysis.testData";
 
 /** The caller's own supply, which opens its figures to them. */
 const SUPPLY: SupplyResponse = { ...HOME, capabilities: buildSupplyCapabilities({ canRead: true }) };
