@@ -7,6 +7,7 @@ import {
 import {
   mockAllApiRoutes,
   mockHuaweiConfigRoutes,
+  mockPlantProductionRoutes,
   mockPlantDetailRoutes,
 } from "./routes";
 import {
@@ -83,8 +84,10 @@ export async function openPlantDetail(
   page: Page,
   currentUser = FIXED_COMMUNITY_ADMIN_USER,
   huawei: Omit<Parameters<typeof mockHuaweiConfigRoutes>[1], "currentUser"> = {},
+  production: Omit<Parameters<typeof mockPlantProductionRoutes>[1], "currentUser"> = {},
+  search = "",
 ) {
-  // The chart date filter defaults to today.
+  // "Hoy, según el inversor" draws its "Ahora" mark at the browser's now.
   await freezeClock(page);
   await injectAuthToken(page);
   await seedActiveCommunity(page, currentUser.id);
@@ -94,8 +97,10 @@ export async function openPlantDetail(
   // reads the Huawei configuration (#192). Without this route the read would
   // fall to mockPlantDetailRoutes and come back as the plant itself.
   await mockHuaweiConfigRoutes(page, { ...huawei, currentUser });
+  // The production sections (#406), registered after mockPlantDetailRoutes for the same reason.
+  await mockPlantProductionRoutes(page, { ...production, currentUser });
 
-  await page.goto(`/plants/${FIXED_PLANT_ID}`);
+  await page.goto(`/plants/${FIXED_PLANT_ID}${search}`);
   await expect(page.getByRole("heading", { level: 1, name: FIXED_PLANT.name })).toBeVisible();
   await stabilizePage(page);
 }

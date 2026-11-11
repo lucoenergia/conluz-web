@@ -17,6 +17,11 @@ import type {
   MemberRecordResponse,
   MembershipResponse,
   PartitionCoefficientResponse,
+  PlantDailyEnergyBucketResponse,
+  PlantEnergyMetricsResponse,
+  PlantInverterPowerPointResponse,
+  PlantInverterProductionTodayResponse,
+  PlantMonthlyEnergyBucketResponse,
   PlantResponse,
   PlatformAdminResponse,
   PlatformCapabilitiesResponse,
@@ -1872,3 +1877,144 @@ export const COMMUNITY_DAILY_SERIES_GAPS: CommunityDailyEnergyBucketResponse[] =
   if (["2026/08/15", "2026/08/16"].includes(bucket.date)) return { ...bucket, suppliesWithData: 12 };
   return bucket;
 });
+
+// ---------------------------------------------------------------------------
+// The plant's production (#406): the distributor's, by period, and today's
+// from the inverter. "Today" is FIXED_NOW's day in Madrid, 15 September 2026
+// (+02:00), and FIXED_NOW is 14:00 there: where the "Ahora" mark sits.
+// ---------------------------------------------------------------------------
+
+/** The plant's latest complete production day: 13 September 2026. */
+export const FIXED_PLANT_PRODUCTION_DAY: PlantEnergyMetricsResponse = {
+  period: { startDate: "2026-09-13T00:00:00+02:00", endDate: "2026-09-14T00:00:00+02:00" },
+  energy: { productionKWh: 312.4 },
+  coverage: { hoursWithData: 24, expectedHours: 24 },
+};
+
+/** A plant the distributor has published no production day for yet. */
+export const NO_PLANT_PRODUCTION_DAY: PlantEnergyMetricsResponse = {
+  period: { startDate: null, endDate: null },
+  energy: { productionKWh: null },
+  coverage: { hoursWithData: 0, expectedHours: 0 },
+};
+
+const plantDay = (date: string, productionKWh: number | null, hoursWithData = 24): PlantDailyEnergyBucketResponse => ({
+  date,
+  time: "00:00",
+  productionKWh,
+  hoursWithData,
+  expectedHours: 24,
+});
+
+/** "Últimos 7 días" against 13 September, every day complete. */
+export const FIXED_PLANT_DAYS: PlantDailyEnergyBucketResponse[] = [
+  plantDay("2026/09/07", 298.6),
+  plantDay("2026/09/08", 315.2),
+  plantDay("2026/09/09", 287.9),
+  plantDay("2026/09/10", 241.3),
+  plantDay("2026/09/11", 305.7),
+  plantDay("2026/09/12", 322.1),
+  plantDay("2026/09/13", 312.4),
+];
+
+/** The same week with two gaps, two partial days and a measured zero. */
+export const FIXED_PLANT_DAYS_WITH_GAPS: PlantDailyEnergyBucketResponse[] = [
+  plantDay("2026/09/07", 298.6),
+  plantDay("2026/09/08", null, 0),
+  plantDay("2026/09/09", null, 0),
+  plantDay("2026/09/10", 131.8, 12),
+  plantDay("2026/09/11", 0),
+  plantDay("2026/09/12", 160.4, 14),
+  plantDay("2026/09/13", 312.4),
+];
+
+const plantMonth = (date: string, productionKWh: number, hoursWithData: number, expectedHours = hoursWithData): PlantMonthlyEnergyBucketResponse => ({
+  date,
+  time: "00:00",
+  productionKWh,
+  hoursWithData,
+  expectedHours,
+});
+
+/** "Año 2026" against 13 September: monthly, September ending on the 13th, and partial. */
+export const FIXED_PLANT_MONTHS: PlantMonthlyEnergyBucketResponse[] = [
+  plantMonth("2026/01/01", 3_120.5, 744),
+  plantMonth("2026/02/01", 4_210.8, 672),
+  plantMonth("2026/03/01", 6_480.2, 743),
+  plantMonth("2026/04/01", 7_905.6, 720),
+  plantMonth("2026/05/01", 9_310.4, 744),
+  plantMonth("2026/06/01", 9_870.1, 720),
+  plantMonth("2026/07/01", 10_120.7, 744),
+  plantMonth("2026/08/01", 9_402.3, 744),
+  plantMonth("2026/09/01", 3_588.9, 300, 312),
+];
+
+/** Metrics over a period, from the days or months it covers. */
+export function plantPeriodMetrics(buckets: { productionKWh: number | null; hoursWithData: number; expectedHours: number }[]): PlantEnergyMetricsResponse {
+  const measured = buckets.filter(({ productionKWh }) => productionKWh !== null);
+  return {
+    period: { startDate: null, endDate: null },
+    energy: { productionKWh: measured.length ? Math.round(measured.reduce((sum, { productionKWh }) => sum + productionKWh!, 0) * 1000) / 1000 : null },
+    coverage: {
+      hoursWithData: buckets.reduce((sum, { hoursWithData }) => sum + hoursWithData, 0),
+      expectedHours: buckets.reduce((sum, { expectedHours }) => sum + expectedHours, 0),
+    },
+  };
+}
+
+/** A point every 5 minutes from `from` to `to` ("HH:mm" on 15 September, +02:00), its power from `power`. */
+function inverterPoints(from: string, to: string, power: (minute: number) => number | null): PlantInverterPowerPointResponse[] {
+  const minuteOf = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+  const pad = (value: number) => String(value).padStart(2, "0");
+  const points: PlantInverterPowerPointResponse[] = [];
+  for (let minute = minuteOf(from); minute <= minuteOf(to); minute += 5) {
+    points.push({ endsAt: `2026-09-15T${pad(Math.floor(minute / 60))}:${pad(minute % 60)}:00+02:00`, powerKW: power(minute) });
+  }
+  return points;
+}
+
+/** A clear-sky morning, rising from sunrise (07:30) towards solar noon (14:15). */
+const morning = (minute: number) => Math.round(45 * Math.sin((Math.PI * (minute - 450)) / (1230 - 450)) * 1000) / 1000;
+
+export const FIXED_INVERTER_TODAY: PlantInverterProductionTodayResponse = {
+  status: "AVAILABLE",
+  todayEnergyKWh: 162.8,
+  powerCurve: inverterPoints("07:35", "13:55", morning),
+  lastUpdatedAt: "2026-09-15T13:55:00+02:00",
+  stale: false,
+};
+
+/** Producing, with the snapshots missing from 10:20 to 11:05. */
+export const FIXED_INVERTER_TODAY_WITH_GAP: PlantInverterProductionTodayResponse = {
+  ...FIXED_INVERTER_TODAY,
+  powerCurve: [
+    ...inverterPoints("07:35", "10:20", morning),
+    { endsAt: "2026-09-15T10:50:00+02:00", powerKW: null },
+    { endsAt: "2026-09-15T11:05:00+02:00", powerKW: null },
+    ...inverterPoints("11:10", "13:55", morning),
+  ],
+};
+
+/** Snapshots arrive, all at zero: not producing yet. */
+export const FIXED_INVERTER_NOT_STARTED: PlantInverterProductionTodayResponse = {
+  ...FIXED_INVERTER_TODAY,
+  todayEnergyKWh: 0,
+  powerCurve: inverterPoints("07:00", "13:55", () => 0),
+};
+
+/** The latest snapshot at 10:15, more than an hour before 14:00. */
+export const FIXED_INVERTER_STALE: PlantInverterProductionTodayResponse = {
+  ...FIXED_INVERTER_TODAY,
+  todayEnergyKWh: 61.2,
+  powerCurve: inverterPoints("07:35", "10:15", morning),
+  lastUpdatedAt: "2026-09-15T10:15:00+02:00",
+  stale: true,
+};
+
+export const FIXED_INVERTER_NO_DATA_TODAY: PlantInverterProductionTodayResponse = {
+  status: "NO_DATA_TODAY",
+  todayEnergyKWh: null,
+  powerCurve: null,
+  lastUpdatedAt: null,
+  stale: null,
+};
