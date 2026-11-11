@@ -31,8 +31,6 @@ export { FilterChipsBar } from "../../src/components/FilterChips/FilterChipsBar"
 export { DropdownSelector } from "../../src/components/Forms/DropdownSelector";
 export { PasswordInput } from "../../src/components/Forms/PasswordInput";
 export { PasswordPolicyHint } from "../../src/components/Forms/PasswordPolicyHint";
-export { GraphBar } from "../../src/components/Graph/GraphBar";
-export { LoadingGraphCard } from "../../src/components/Graph/LoadingGraphCard";
 export { Logo } from "../../src/components/Header/Logo";
 export { LabeledIcon } from "../../src/components/LabeledIcon/LabeledIcon";
 export { ListTable, ListTableHeaderText } from "../../src/components/ListTable/ListTable";
