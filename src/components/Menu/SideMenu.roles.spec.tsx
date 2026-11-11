@@ -42,8 +42,8 @@ describe("SideMenu visibility", () => {
     shows("Inicio");
     shows("Mi consumo y ahorro");
     shows("Energía de la comunidad");
-    shows("Plantas");
     shows("Puntos de suministro");
+    hides("Plantas");
     hides("Miembros");
     hides("Integraciones");
     hides("Comunidades");
@@ -53,6 +53,7 @@ describe("SideMenu visibility", () => {
   test("a community admin also sees the community-management entries, but no platform ones", () => {
     setup(menuFor(COMMUNITY_ADMIN));
     shows("Inicio");
+    shows("Plantas");
     shows("Miembros");
     shows("Integraciones");
     hides("Comunidades");
@@ -76,8 +77,18 @@ describe("SideMenu visibility", () => {
     setup(menuFor(MEMBER));
     const entries = within(screen.getByRole("list", { name: "Comunidad" })).getAllByRole("link");
 
-    expect(entries.map((entry) => entry.textContent)).toEqual(["Inicio", "Mi consumo y ahorro", "Energía de la comunidad", "Plantas", "Puntos de suministro"]);
+    expect(entries.map((entry) => entry.textContent)).toEqual(["Inicio", "Mi consumo y ahorro", "Energía de la comunidad", "Puntos de suministro"]);
     expect(entries[1]).toHaveAttribute("href", "/historical-analysis");
+  });
+
+  test("UI-PLT-010 AC1 offers Plantas only with the community's canManage, leading to /plants", () => {
+    setup(menuFor(MEMBER));
+    hides("Plantas");
+  });
+
+  test("UI-PLT-010 AC1 offers Plantas to a community admin, leading to /plants", () => {
+    setup(menuFor(COMMUNITY_ADMIN));
+    expect(screen.getByRole("link", { name: "Plantas" })).toHaveAttribute("href", "/plants");
   });
 
   test("UI-CAN-001 offers Energía de la comunidad with the community's canRead, right after Mi consumo y ahorro", () => {

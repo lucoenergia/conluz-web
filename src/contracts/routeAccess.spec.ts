@@ -57,8 +57,11 @@ const ROUTE_ACCESS: Record<string, Access> = {
   "/supply-points": { require: { scope: "community", capability: "canRead" } },
   "/supply-points/:supplyPointId": { require: { scope: "community", capability: "canRead" } },
 
-  "/plants": { require: { scope: "community", capability: "canRead" } },
-  "/plants/:plantId": { require: { scope: "community", capability: "canRead" } },
+  // The plant section is operational: members see each plant's totals on the
+  // community energy page instead (#406). The agreement routes keep their own
+  // canListSharingAgreements guard, inside the plant's canManage.
+  "/plants": { require: { scope: "community", capability: "canManage" } },
+  "/plants/:plantId": { require: { scope: "plant", capability: "canManage" } },
   "/plants/:plantId/sharing-agreements": {
     require: { scope: "plant", capability: "canListSharingAgreements" },
   },

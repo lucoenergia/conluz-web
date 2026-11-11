@@ -12,6 +12,8 @@ import {
   buildCommunity,
   buildCommunityAdmin,
   buildCommunityCapabilities,
+  buildPlant,
+  buildPlantCapabilities,
   buildCurrentUser,
   buildPlatformAdmin,
   buildPlatformCapabilities,
@@ -297,10 +299,12 @@ describe("the removed users pages", () => {
 });
 
 /**
- * The guard on the supply-points and production subtrees asks the active
- * community's canRead, which a member and a community admin hold. Their
- * screens' own data is not served here: what is under test is that the guard
- * lets them through, so the requests the pages send are taken, not asserted.
+ * The guard on the supply-points subtree asks the active community's canRead,
+ * which a member and a community admin hold; the plant section asks the
+ * community's canManage, and a plant's own canManage, which only an admin holds
+ * (#406). Their screens' own data is not served here: what is under test is
+ * whether the guard lets them through, so the requests the pages send are
+ * taken, not asserted.
  */
 describe("a member of the community", () => {
   const MEMBER_VIEW = buildCommunity({
@@ -308,18 +312,29 @@ describe("a member of the community", () => {
     name: COMMUNITY_NAME,
     capabilities: buildCommunityCapabilities({ canRead: true, canListPlants: true, canListSupplies: true }),
   });
+  const ADMIN_VIEW = buildCommunity({
+    id: COMMUNITY_ID,
+    name: COMMUNITY_NAME,
+    capabilities: buildCommunityCapabilities({ canRead: true, canManage: true, canListPlants: true, canListSupplies: true }),
+  });
+  const callerAs = (role: CommunityRole) =>
+    buildCurrentUser({ id: "u-ana", fullName: "Ana Sánchez", memberships: { [COMMUNITY_ID]: role } });
+  const plantServedTo = (canManage: boolean) =>
+    buildPlant({
+      id: "plant-1",
+      community: { id: COMMUNITY_ID },
+      capabilities: buildPlantCapabilities({ canRead: true, canManage, canListSharingAgreements: canManage }),
+    });
 
   it.each([
-    ["a member", CommunityRole.COMMUNITY_MEMBER],
-    ["a community admin", CommunityRole.COMMUNITY_ADMIN],
-  ])("still reaches the supplies and the plants as %s", async (_, role) => {
-    const caller = buildCurrentUser({ id: "u-ana", fullName: "Ana Sánchez", memberships: { [COMMUNITY_ID]: role } });
-
-    for (const path of ["/supply-points", "/supply-points/supply-1", "/plants", "/plants/plant-1"]) {
+    ["a member", CommunityRole.COMMUNITY_MEMBER, MEMBER_VIEW],
+    ["a community admin", CommunityRole.COMMUNITY_ADMIN, ADMIN_VIEW],
+  ])("still reaches the supplies as %s", async (_, role, view) => {
+    for (const path of ["/supply-points", "/supply-points/supply-1"]) {
       const router = routeRequests([
-        { method: "GET", url: "/api/v1/users/current", respond: () => caller },
-        { method: "GET", url: "/api/v1/communities", respond: () => [MEMBER_VIEW] },
-        { method: "GET", url: `/api/v1/communities/${COMMUNITY_ID}`, respond: () => MEMBER_VIEW },
+        { method: "GET", url: "/api/v1/users/current", respond: () => callerAs(role) },
+        { method: "GET", url: "/api/v1/communities", respond: () => [view] },
+        { method: "GET", url: `/api/v1/communities/${COMMUNITY_ID}`, respond: () => view },
       ]);
       mockCustomInstance.mockImplementation(router.handle);
       const { unmount } = renderAppAt(path);
@@ -332,4 +347,45 @@ describe("a member of the community", () => {
       router.takeUnmatched();
     }
   });
+
+  it.each(["/plants", "/plants/plant-1", "/plants/plant-1/sharing-agreements"])(
+    "UI-PLT-010 AC1 sends a member away from %s, and reads no plant",
+    async (path) => {
+      const router = routeRequests([
+        { method: "GET", url: "/api/v1/users/current", respond: () => callerAs(CommunityRole.COMMUNITY_MEMBER) },
+        { method: "GET", url: "/api/v1/communities", respond: () => [MEMBER_VIEW] },
+        { method: "GET", url: `/api/v1/communities/${COMMUNITY_ID}`, respond: () => MEMBER_VIEW },
+        { method: "GET", url: "/api/v1/plants/plant-1", respond: () => plantServedTo(false) },
+      ]);
+      mockCustomInstance.mockImplementation(router.handle);
+      renderAppAt(path);
+
+      await waitFor(() => expect(currentPath()).not.toBe(path));
+      await settle();
+      expect(currentPath()).not.toMatch(/^\/plants/);
+      expect(router.requests.some(({ url }) => /\/plants(\/|$|\?)/.test(url ?? ""))).toBe(false);
+      router.takeUnmatched();
+    },
+  );
+
+  it.each(["/plants", "/plants/plant-1", "/plants/plant-1/sharing-agreements"])(
+    "UI-PLT-010 AC1 lets a community admin open %s",
+    async (path) => {
+      const router = routeRequests([
+        { method: "GET", url: "/api/v1/users/current", respond: () => callerAs(CommunityRole.COMMUNITY_ADMIN) },
+        { method: "GET", url: "/api/v1/communities", respond: () => [ADMIN_VIEW] },
+        { method: "GET", url: `/api/v1/communities/${COMMUNITY_ID}`, respond: () => ADMIN_VIEW },
+        { method: "GET", url: "/api/v1/plants/plant-1", respond: () => plantServedTo(true) },
+      ]);
+      mockCustomInstance.mockImplementation(router.handle);
+      const { unmount } = renderAppAt(path);
+
+      await waitFor(() => expect(router.requests.some(isMemberData)).toBe(true));
+      await settle();
+      expect(currentPath()).toBe(path);
+
+      unmount();
+      router.takeUnmatched();
+    },
+  );
 });

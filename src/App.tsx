@@ -127,11 +127,15 @@ function App() {
           </Route>
           <Route
             path="plants"
-            element={<CapabilityRoute require={{ scope: "community", capability: "canRead" }}><Outlet /></CapabilityRoute>}
+            element={<CapabilityRoute require={{ scope: "community", capability: "canManage" }}><Outlet /></CapabilityRoute>}
           >
-            {/* Creating and editing a plant open over the list (#373). */}
+            {/* Creating and editing a plant open over the list (#373). The
+                plant section is for the community's admins only (#406). */}
             <Route index element={<PlantsPage />}></Route>
-            <Route path=":plantId">
+            <Route
+              path=":plantId"
+              element={<CapabilityRoute require={{ scope: "plant", capability: "canManage" }}><Outlet /></CapabilityRoute>}
+            >
               <Route index element={<PlantDetailPage />} />
               <Route
                 path="sharing-agreements"

@@ -9,6 +9,8 @@ import {
   buildCommunity,
   buildCommunityCapabilities,
   buildMemberRecord,
+  buildPlant,
+  buildPlantCapabilities,
   buildSupply,
   buildSupplyCapabilities,
 } from "../../test/fixtures";
@@ -38,12 +40,15 @@ vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
   useGetSupplyMonthlyConsumption: vi.fn(),
   useGetSupplyYearlyConsumption: vi.fn(),
 }));
+// The plant the tag links to is read for its own canManage (#406).
+vi.mock(import("../production/usePlantInActiveCommunity"), () => ({ usePlantInActiveCommunity: vi.fn() }));
 vi.mock(import("../../api/communities/communities"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetCommunityById: vi.fn(),
 }));
 
 import { useSupplyInActiveCommunity } from "./useSupplyInActiveCommunity";
+import { usePlantInActiveCommunity } from "../production/usePlantInActiveCommunity";
 import {
   getSupplyEnergyMetrics,
   useGetSupplyDailyConsumption,
@@ -91,8 +96,18 @@ function supplyWith(overrides: Partial<SupplyResponse> = {}, capabilities: Parti
 
 type Metrics = ReturnType<typeof useGetSupplyEnergyMetrics>;
 
-function render(supply: SupplyResponse, metrics: Metrics, { communityCanRead = true } = {}) {
+function render(supply: SupplyResponse, metrics: Metrics, { communityCanRead = true, plantCanManage = false } = {}) {
   vi.mocked(useSupplyInActiveCommunity).mockReturnValue({ supply, isLoading: false, isNotFound: false, error: null, refetch: vi.fn() });
+  vi.mocked(usePlantInActiveCommunity).mockImplementation((plantId) => ({
+    plant:
+      plantId === ""
+        ? undefined
+        : buildPlant({ id: plantId, capabilities: buildPlantCapabilities({ canRead: true, canManage: plantCanManage }) }),
+    isLoading: false,
+    isNotFound: false,
+    error: null,
+    refetch: vi.fn(),
+  }));
   vi.mocked(useGetSupplyEnergyMetrics).mockImplementation((_id, _params, options) =>
     options?.query?.enabled === false ? query.disabled() : metrics,
   );
@@ -236,8 +251,8 @@ describe("UI-SUP-012 the detail header tags a plant's own supply (#252)", () => 
   const plantSupply = () => supplyWith({ plant: { id: "plant-1", name: "Planta Polideportivo" } });
   const figures = () => published(derivedSupplyFigures(plantSupply(), { period: AUGUST_2026 }));
 
-  it("UI-SUP-012 AC4 links the Punto de planta tag to its plant when the active community lets the caller open plants", () => {
-    render(plantSupply(), figures(), { communityCanRead: true });
+  it("UI-SUP-012 UI-PLT-010 AC3 links the Punto de planta tag to its plant for a caller with the plant's canManage, as an admin", () => {
+    render(plantSupply(), figures(), { plantCanManage: true });
 
     expect(screen.getByRole("link", { name: "Punto de planta: ver la planta Planta Polideportivo" })).toHaveAttribute(
       "href",
@@ -245,15 +260,15 @@ describe("UI-SUP-012 the detail header tags a plant's own supply (#252)", () => 
     );
   });
 
-  it("UI-SUP-012 AC4 shows the tag as plain text when the active community does not", () => {
-    render(plantSupply(), figures(), { communityCanRead: false });
+  it("UI-SUP-012 UI-PLT-010 AC3 shows the tag as plain text for a member, whom the plant refuses canManage", () => {
+    render(plantSupply(), figures(), { communityCanRead: true, plantCanManage: false });
 
     expect(screen.queryByRole("link", { name: /^Punto de planta/ })).not.toBeInTheDocument();
     expect(screen.getAllByText("Punto de planta").length).toBeGreaterThan(0);
   });
 
   it("UI-SUP-012 AC4 does not tag a supply without a plant reference, whatever its name", () => {
-    render(supplyWith({ name: "Punto de planta", plant: null }), figures(), { communityCanRead: true });
+    render(supplyWith({ name: "Punto de planta", plant: null }), figures(), { plantCanManage: true });
 
     expect(screen.queryByRole("link", { name: /^Punto de planta/ })).not.toBeInTheDocument();
     // Structural: the tag is a Chip with no role, and the supply's own name is the same text.

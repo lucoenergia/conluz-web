@@ -7,16 +7,16 @@ import type { QueryClient } from "@tanstack/react-query";
 import App from "../../App";
 import { CommunityRole } from "../../hooks/permissions";
 import { createAppQueryClient } from "../../queryClient";
-import { apiError } from "../../test/apiError";
-import { buildCommunity, buildCommunityCapabilities, buildCurrentUser } from "../../test/fixtures";
+import { buildCurrentUser } from "../../test/fixtures";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { routeRequests } from "../../test/requestRouter";
 
 /**
  * The plant create and edit pages are gone (#373): both forms open over the
  * plant list, and no redirect is kept, since a redirect route would itself
- * end in new or edit (UI-OVL-008). An old link lands where the route table
- * puts it, against the real App.tsx.
+ * end in new or edit (UI-OVL-008). Since #406 the section lives under /plants,
+ * so every /production link is an unknown path. An old link lands where the
+ * route table puts it, against the real App.tsx.
  *
  * Tier 2: what the route table renders includes what its pages send, so the
  * production query client (minus retries) and the generated hooks run, and
@@ -37,12 +37,6 @@ const ADMIN = buildCurrentUser({
   fullName: "Ana Admin",
   memberships: { [COMMUNITY_ID]: CommunityRole.COMMUNITY_ADMIN },
 });
-const COMMUNITY = buildCommunity({
-  id: COMMUNITY_ID,
-  name: "Sol Común",
-  capabilities: buildCommunityCapabilities({ canRead: true, canManage: true }),
-});
-
 const PathOutput: FC = () => <output aria-label="path">{useLocation().pathname}</output>;
 
 /** The production client and handlers, minus retries, so a failure is final at once. */
@@ -96,42 +90,34 @@ describe("an old plant edit link", () => {
     const router = routeRequests(token ? [{ method: "GET", url: "/api/v1/users/current", respond: () => ADMIN }] : []);
     mockCustomInstance.mockImplementation(router.handle);
 
-    renderAppAt("/plants/plant-1/edit", token);
+    renderAppAt("/production/plant-1/edit", token);
 
     expect(await screen.findByRole("heading", { level: 1, name: "Esta página no existe" })).toBeInTheDocument();
     await settle();
     expectNoPlantForm();
-    expect(currentPath()).toBe("/plants/plant-1/edit");
+    expect(currentPath()).toBe("/production/plant-1/edit");
     // Not read as the detail page of a plant called "plant-1".
     expect(router.requests.some((r) => r.url?.startsWith("/api/v1/plants/"))).toBe(false);
   });
 });
 
-// "new" sits where a plant id would, so the route table reads it as one: the
-// detail page asks for it, and says it does not exist. Accepted in #373, as
-// for supplies in #372; a route of its own to catch it would end in new
-// (UI-OVL-008).
-describe("an old plant create link", () => {
-  it("shows the plant detail page's not-found state, and no form", async () => {
-    const router = routeRequests([
-      { method: "GET", url: "/api/v1/users/current", respond: () => ADMIN },
-      { method: "GET", url: "/api/v1/communities", respond: () => [COMMUNITY] },
-      { method: "GET", url: `/api/v1/communities/${COMMUNITY_ID}`, respond: () => COMMUNITY },
-      {
-        method: "GET",
-        url: "/api/v1/plants/new",
-        respond: () => {
-          throw apiError(404);
-        },
-      },
-    ]);
-    mockCustomInstance.mockImplementation(router.handle);
+// The plant section moved from /production to /plants with no redirect
+// (#406): every old link, the create one included, is an unknown path now.
+describe("the retired /production paths", () => {
+  it.each(["/production", "/production/plant-1", "/production/new", "/production/plant-1/sharing-agreements"])(
+    "UI-PLT-010 AC2 renders the not-found page at %s, and reads no plant",
+    async (url) => {
+      const router = routeRequests([{ method: "GET", url: "/api/v1/users/current", respond: () => ADMIN }]);
+      mockCustomInstance.mockImplementation(router.handle);
 
-    renderAppAt("/plants/new", "a-token");
+      renderAppAt(url, "a-token");
 
-    expect(await screen.findByRole("heading", { name: "Planta no encontrada" })).toBeInTheDocument();
-    await settle();
-    expectNoPlantForm();
-    expect(currentPath()).toBe("/plants/new");
-  });
+      expect(await screen.findByRole("heading", { level: 1, name: "Esta página no existe" })).toBeInTheDocument();
+      await settle();
+      expectNoPlantForm();
+      expect(currentPath()).toBe(url);
+      expect(router.requests.some((r) => /\/plants(\/|$|\?)/.test(r.url ?? ""))).toBe(false);
+      router.takeUnmatched();
+    },
+  );
 });

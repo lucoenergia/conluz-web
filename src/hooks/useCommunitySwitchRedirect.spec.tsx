@@ -87,6 +87,13 @@ describe("useCommunitySwitchRedirect", () => {
     expectLocation("/plants");
   });
 
+  it("UI-PLT-010 AC4 sends a switch on a plant's detail to /plants", () => {
+    const { rerenderWith } = renderAt("/plants/plant-a", "community-a");
+    rerenderWith("community-b");
+
+    expectLocation("/plants");
+  });
+
   it("redirects to the supplies list when the community changes under a supply route", () => {
     const { rerenderWith } = renderAt("/supply-points/supply-a", "community-a");
     rerenderWith("community-b");

@@ -18,13 +18,10 @@ import {
 } from "./fixtures";
 
 /**
- * Production as a community admin: the list layout, and the two plant forms
- * that open over it.
- *
- * production-member.spec.ts covers the same list for a member, which is where
- * the absence of create and of the card menus is proven. The admin list had no
- * mainRegion capture at all -- only the full-page chrome canaries passed
- * through it.
+ * The plant list as a community admin, the only caller who reaches it (#406):
+ * the list layout, and the two plant forms that open over it. The admin list
+ * had no mainRegion capture at all -- only the full-page chrome canaries
+ * passed through it.
  */
 
 test.describe("Visual baselines", () => {
