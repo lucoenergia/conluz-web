@@ -2,6 +2,8 @@ import type { Page, Route } from "@playwright/test";
 import type {
   CommunityAdminResponse,
   CommunityCapabilitiesResponse,
+  CommunityDailyEnergyBucketResponse,
+  CommunityEnergyMetricsResponse,
   GetDatadisConfigResponse,
   MembershipDailyConsumptionBucketResponse,
   MembershipEnergyMetricsResponse,
@@ -232,6 +234,28 @@ export async function mockHistoricalMembership(
   },
 ) {
   await mockMemberHome(page, currentUser, { metrics: anchor, previousMetrics: period, daily, monthly });
+}
+
+/**
+ * The fixed community's energy reads on the community energy page (#403):
+ * `anchor` answers the latest-published-month request, `period` the request
+ * by the selected period's explicit bounds, and `daily` the daily series.
+ * Every member may read them (CEM-007). Call it after mockAllApiRoutes, so
+ * these win.
+ */
+export async function mockCommunityEnergy(
+  page: Page,
+  { anchor, period, daily }: { anchor: CommunityEnergyMetricsResponse; period: CommunityEnergyMetricsResponse; daily: CommunityDailyEnergyBucketResponse[] },
+) {
+  const json = (body: unknown) => ({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
+  await page.route(
+    (url) => url.pathname.endsWith(`/api/v1/communities/${FIXED_COMMUNITY_ID}/energy-metrics`),
+    (route) => route.fulfill(json(new URL(route.request().url()).searchParams.has("startDate") ? period : anchor)),
+  );
+  await page.route(
+    (url) => url.pathname.endsWith(`/api/v1/communities/${FIXED_COMMUNITY_ID}/energy-series/daily`),
+    (route) => route.fulfill(json(daily)),
+  );
 }
 
 /**

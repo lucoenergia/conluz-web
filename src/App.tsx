@@ -40,6 +40,7 @@ const NoCommunityPage = lazyPage(() => import("./pages/no-community/NoCommunityP
 const MemberHomePage = lazyPage(() => import("./pages/home/MemberHomePage"), "MemberHomePage");
 const CommunityManagementPage = lazyPage(() => import("./pages/home/CommunityManagementPage"), "CommunityManagementPage");
 const HistoricalAnalysisPage = lazyPage(() => import("./pages/historical-analysis/HistoricalAnalysisPage"), "HistoricalAnalysisPage");
+const CommunityAnalysisPage = lazyPage(() => import("./pages/community-analysis/CommunityAnalysisPage"), "CommunityAnalysisPage");
 
 const SupplyPointsPage = lazyPage(() => import("./pages/supply-points/SupplyPointsPage"), "SupplyPointsPage");
 const SupplyDetailPage = lazyPage(() => import("./pages/supply-points/SupplyDetailPage"), "SupplyDetailPage");
@@ -103,6 +104,11 @@ function App() {
           <Route
             path="historical-analysis"
             element={<CapabilityRoute require={{ scope: "community", capability: "canRead" }}><HistoricalAnalysisPage /></CapabilityRoute>}
+          />
+          {/* The community's own energy over time, for every member (#403). */}
+          <Route
+            path="community-analysis"
+            element={<CapabilityRoute require={{ scope: "community", capability: "canRead" }}><CommunityAnalysisPage /></CapabilityRoute>}
           />
           {/*
             Supplies and plants are a community's operational data, so every

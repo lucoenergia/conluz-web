@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatKilowatts } from "./formatKilowatts";
+import { formatKilowatts, formatKilowattsPeak } from "./formatKilowatts";
 
 describe("formatKilowatts", () => {
   it("shows a whole amount without decimals", () => {
@@ -21,5 +21,13 @@ describe("formatKilowatts", () => {
 
   it("matches the mock-up: 7.5% of a 100 kW agreement is 7,5 kW", () => {
     expect(formatKilowatts(0.075 * 100)).toBe("7,5 kW");
+  });
+});
+
+describe("formatKilowattsPeak (#403)", () => {
+  it("writes peak power as formatKilowatts writes kW, with the kWp unit", () => {
+    expect(formatKilowattsPeak(60)).toBe("60 kWp");
+    expect(formatKilowattsPeak(112.5)).toBe("112,5 kWp");
+    expect(formatKilowattsPeak(37.567)).toBe("37,57 kWp");
   });
 });

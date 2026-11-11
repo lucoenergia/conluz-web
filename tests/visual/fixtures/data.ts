@@ -1,6 +1,8 @@
 import type {
   CommunityAdminResponse,
   CommunityContactResponse,
+  CommunityDailyEnergyBucketResponse,
+  CommunityEnergyMetricsResponse,
   GetDatadisConfigResponse,
   GetHuaweiConfigResponse,
   GetShellyConfigResponse,
@@ -1786,3 +1788,87 @@ export const FIXED_PLATFORM_ADMINS: PlatformAdminResponse[] = [
  * the backend's alphabet, fixed so the code dialog's capture is stable.
  */
 export const FIXED_PLATFORM_ADMIN_CONFIRMATION_CODE = "K7Q2M9XZ";
+
+// ---------------------------------------------------------------------------
+// Community energy (#403): the community's metrics and daily series for the
+// reference month, August 2026, as GET /communities/{id}/energy-metrics and
+// GET /communities/{id}/energy-series/daily answer them. No figure is derived
+// from another here: the page shows each as the server sends it.
+// ---------------------------------------------------------------------------
+
+/** August 2026, complete: three plants, every supply with data, every hour priced. */
+export const COMMUNITY_ENERGY_METRICS: CommunityEnergyMetricsResponse = {
+  period: REFERENCE_AUGUST_2026,
+  energy: { productionKWh: 14582.6, selfConsumptionKWh: 8457.9, surplusKWh: 6124.7 },
+  selfConsumptionRatio: 0.58,
+  surplusRatio: 0.42,
+  installedPowerKWp: 112.5,
+  coverage: { supplyCount: 14, suppliesWithData: 14 },
+  plants: [
+    { plant: { id: "plant-pabellon", name: "Planta Pabellón" }, installedPowerKWp: 60, productionKWh: 7776.5, productionShare: 0.5333 },
+    { plant: { id: "plant-escuelas", name: "Planta Escuelas" }, installedPowerKWp: 37.5, productionKWh: 4861.9, productionShare: 0.3334 },
+    { plant: { id: "plant-lavadero", name: "Planta Lavadero" }, installedPowerKWp: 15, productionKWh: 1944.2, productionShare: 0.1333 },
+  ],
+  surplusIncome: { amountEur: 367.12, unpricedSurplusKWh: 0 },
+  co2Avoided: { amountKg: 1570.4, factorYears: [2025] },
+};
+
+/** No month resolves: the community has nothing published yet. */
+export const COMMUNITY_ENERGY_METRICS_NO_MONTH: CommunityEnergyMetricsResponse = {
+  period: { startDate: null, endDate: null },
+  energy: { productionKWh: null, selfConsumptionKWh: null, surplusKWh: null },
+  selfConsumptionRatio: null,
+  surplusRatio: null,
+  installedPowerKWp: 112.5,
+  coverage: { supplyCount: 14, suppliesWithData: 0 },
+  plants: COMMUNITY_ENERGY_METRICS.plants.map((plant) => ({ ...plant, productionKWh: null, productionShare: null })),
+  surplusIncome: { amountEur: null, unpricedSurplusKWh: null },
+  co2Avoided: { amountKg: null, factorYears: null },
+};
+
+/** Twelve of the fourteen supplies have data, and part of the exported energy has no market price. */
+export const COMMUNITY_ENERGY_METRICS_INCOMPLETE: CommunityEnergyMetricsResponse = {
+  ...COMMUNITY_ENERGY_METRICS,
+  energy: { productionKWh: 14582.6, selfConsumptionKWh: 7874.6, surplusKWh: 6708 },
+  selfConsumptionRatio: 0.54,
+  surplusRatio: 0.46,
+  coverage: { supplyCount: 14, suppliesWithData: 12 },
+  surplusIncome: { amountEur: 352.4, unpricedSurplusKWh: 1.5 },
+};
+
+/** A community whose supplies share energy but which has no plant of its own yet. */
+export const COMMUNITY_ENERGY_METRICS_NO_PLANTS: CommunityEnergyMetricsResponse = {
+  ...COMMUNITY_ENERGY_METRICS,
+  energy: { productionKWh: null, selfConsumptionKWh: 8457.9, surplusKWh: 6124.7 },
+  installedPowerKWp: 0,
+  plants: [],
+  co2Avoided: { amountKg: null, factorYears: null },
+};
+
+/** The community's days from `firstDay`, every supply reporting. Dates step in UTC, like memberDailySeries. */
+export function communityDailySeries(firstDay: string, days: number): CommunityDailyEnergyBucketResponse[] {
+  const [year, month, day] = firstDay.split("/").map(Number);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return Array.from({ length: days }, (_, index) => {
+    const date = new Date(Date.UTC(year, month - 1, day + index));
+    return {
+      date: `${date.getUTCFullYear()}/${pad(date.getUTCMonth() + 1)}/${pad(date.getUTCDate())}`,
+      time: "00:00",
+      selfConsumptionKWh: Math.round((240 + (index % 5) * 18.5) * 1000) / 1000,
+      surplusKWh: Math.round((170 + (index % 3) * 22.25) * 1000) / 1000,
+      supplyCount: 14,
+      suppliesWithData: 14,
+    };
+  });
+}
+
+export const COMMUNITY_DAILY_SERIES: CommunityDailyEnergyBucketResponse[] = communityDailySeries("2026/08/01", 31);
+
+/** August 2026 with no data from the 12th to the 14th, and the 15th and 16th partial (12 of 14 supplies). */
+export const COMMUNITY_DAILY_SERIES_GAPS: CommunityDailyEnergyBucketResponse[] = COMMUNITY_DAILY_SERIES.map((bucket) => {
+  if (["2026/08/12", "2026/08/13", "2026/08/14"].includes(bucket.date)) {
+    return { ...bucket, selfConsumptionKWh: null, surplusKWh: null, suppliesWithData: 0 };
+  }
+  if (["2026/08/15", "2026/08/16"].includes(bucket.date)) return { ...bucket, suppliesWithData: 12 };
+  return bucket;
+});

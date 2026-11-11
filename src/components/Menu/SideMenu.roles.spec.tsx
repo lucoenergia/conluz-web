@@ -41,6 +41,7 @@ describe("SideMenu visibility", () => {
     setup(menuFor(MEMBER));
     shows("Inicio");
     shows("Mi consumo y ahorro");
+    shows("Energía de la comunidad");
     shows("Producción");
     shows("Puntos de suministro");
     hides("Miembros");
@@ -66,6 +67,7 @@ describe("SideMenu visibility", () => {
     shows("Administradores de plataforma");
     hides("Inicio");
     hides("Mi consumo y ahorro");
+    hides("Energía de la comunidad");
     hides("Miembros");
     hides("Integraciones");
   });
@@ -74,8 +76,22 @@ describe("SideMenu visibility", () => {
     setup(menuFor(MEMBER));
     const entries = within(screen.getByRole("list", { name: "Comunidad" })).getAllByRole("link");
 
-    expect(entries.map((entry) => entry.textContent)).toEqual(["Inicio", "Mi consumo y ahorro", "Producción", "Puntos de suministro"]);
+    expect(entries.map((entry) => entry.textContent)).toEqual(["Inicio", "Mi consumo y ahorro", "Energía de la comunidad", "Producción", "Puntos de suministro"]);
     expect(entries[1]).toHaveAttribute("href", "/historical-analysis");
+  });
+
+  test("UI-CAN-001 offers Energía de la comunidad with the community's canRead, right after Mi consumo y ahorro", () => {
+    setup(menuFor(MEMBER));
+    const entries = within(screen.getByRole("list", { name: "Comunidad" })).getAllByRole("link");
+    const labels = entries.map((entry) => entry.textContent);
+
+    expect(labels.indexOf("Energía de la comunidad")).toBe(labels.indexOf("Mi consumo y ahorro") + 1);
+    expect(screen.getByRole("link", { name: "Energía de la comunidad" })).toHaveAttribute("href", "/community-analysis");
+  });
+
+  test("UI-CAN-001 does not offer Energía de la comunidad without the community's canRead", () => {
+    setup(menuFor(PLATFORM_ADMIN));
+    hides("Energía de la comunidad");
   });
 
   test("UI-HIS-004 names the supplies entry Puntos de suministro, not Consumo", () => {

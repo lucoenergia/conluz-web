@@ -8,3 +8,13 @@ export function formatKilowatts(value: number): string {
 
   return `${formatted} kW`;
 }
+
+/**
+ * Spanish-locale peak power in kWp, the installed power of a plant, written as
+ * formatKilowatts writes kW: "112,5 kWp", "60 kWp" (#403).
+ */
+export function formatKilowattsPeak(value: number): string {
+  const formatted = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 }).format(value);
+
+  return `${formatted} kWp`;
+}

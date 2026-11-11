@@ -61,6 +61,22 @@ export function formatAverageKilowattHours(value: number): string {
   return formatted;
 }
 
+/** From this mass on, in kg, a mass is written in tonnes. */
+const KILOGRAMS_PER_TONNE = 1000;
+
+/**
+ * Spanish-locale mass, such as the CO₂ a community avoided (#403): whole
+ * kilograms below a tonne, and tonnes with at most one decimal from a tonne
+ * on -- "850 kg", "1,2 t". A mass that rounds to a whole tonne is written in
+ * tonnes, so 999,6 kg reads "1 t", never "1000 kg".
+ */
+export function formatMass(kilograms: number): string {
+  if (Math.abs(Math.round(kilograms)) < KILOGRAMS_PER_TONNE) {
+    return `${new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 }).format(kilograms)} kg`;
+  }
+  return `${new Intl.NumberFormat("es-ES", { maximumFractionDigits: 1 }).format(kilograms / KILOGRAMS_PER_TONNE)} t`;
+}
+
 /**
  * The month of a local calendar date as the API writes it ("2026/08/01"), read
  * from the date itself rather than as an instant: it names a day in the

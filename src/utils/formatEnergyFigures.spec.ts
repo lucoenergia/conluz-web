@@ -9,6 +9,7 @@ import {
   formatHourOfDay,
   formatKilowattHourAmount,
   formatKilowattHours,
+  formatMass,
   formatMonth,
   formatShortDay,
   formatShortMonth,
@@ -145,5 +146,24 @@ describe("formatHourOfDay (#201)", () => {
   it("writes the hour of the local day", () => {
     expect(formatHourOfDay(0)).toBe("0 h");
     expect(formatHourOfDay(23)).toBe("23 h");
+  });
+});
+
+describe("formatMass (#403)", () => {
+  it("writes a mass below a tonne in whole kilograms", () => {
+    expect(formatMass(850)).toBe("850 kg");
+    expect(formatMass(850.4)).toBe("850 kg");
+    expect(formatMass(0)).toBe("0 kg");
+  });
+
+  it("writes a mass from a tonne on in tonnes, with at most one decimal comma", () => {
+    expect(formatMass(1234.5)).toBe("1,2 t");
+    expect(formatMass(1000)).toBe("1 t");
+    expect(formatMass(15_750)).toBe("15,8 t");
+  });
+
+  it("writes a mass that rounds to a whole tonne in tonnes", () => {
+    expect(formatMass(999.6)).toBe("1 t");
+    expect(formatMass(999.4)).toBe("999 kg");
   });
 });
