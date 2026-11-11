@@ -33,7 +33,7 @@ const OPERATOR_CONTACT = "/api/v1/operator-contact";
 
 const MEMBER = buildCurrentUser({
   id: "user-1",
-  fullName: "Ana Socia",
+  fullName: "Ana Sánchez",
   memberships: { [COMMUNITY_ID]: CommunityRole.COMMUNITY_MEMBER },
 });
 

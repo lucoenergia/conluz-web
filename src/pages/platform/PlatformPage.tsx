@@ -84,7 +84,7 @@ export const PlatformPage: FC = () => {
     },
     {
       key: "members",
-      label: "Socios",
+      label: "Miembros",
       value: kpis.members,
       sublabel: "membresías (suma por comunidad)",
     },
@@ -247,7 +247,7 @@ export const PlatformPage: FC = () => {
                   </TableCell>
                   <TableCell align="center">
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "secondary.main" }}>
-                      Socios
+                      Miembros
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
@@ -308,7 +308,7 @@ export const PlatformPage: FC = () => {
                     {community.name}
                   </Typography>
                   <Typography variant="caption" sx={{ color: colors.text.secondary }}>
-                    {community.memberCount ?? 0} socios · {community.supplyPointCount ?? 0} suministros
+                    {community.memberCount ?? 0} miembros · {community.supplyPointCount ?? 0} suministros
                   </Typography>
                 </Box>
                 <CommunityStatusChip status={deriveStatus(community)} />

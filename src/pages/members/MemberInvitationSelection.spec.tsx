@@ -209,7 +209,7 @@ describe("the confirmation", () => {
     await u.click(screen.getByRole("button", { name: "Enviar invitación (3)" }));
 
     const dialog = await screen.findByRole("dialog", { name: DIALOG_NAME });
-    expect(within(dialog).getByText("Recibirán un email estas 3 personas:")).toBeInTheDocument();
+    expect(within(dialog).getByText("Recibirán un email estos 3 miembros:")).toBeInTheDocument();
     expect(itemsOf(within(dialog).getByRole("list", { name: "Primera invitación" }))).toEqual([
       "Nadia Nueva",
       "Bruno Blanco",
@@ -302,8 +302,8 @@ describe("the result", () => {
 
     expect(await within(dialog).findByText("Primeras invitaciones enviadas: 1.", VISIBLE)).toBeInTheDocument();
     expect(within(dialog).getByText("Invitaciones reenviadas: 1.", VISIBLE)).toBeInTheDocument();
-    expect(within(dialog).getByText("No se ha podido enviar a 5 personas:")).toBeInTheDocument();
-    expect(itemsOf(within(dialog).getByRole("list", { name: "Personas a las que no se ha enviado" }))).toEqual([
+    expect(within(dialog).getByText("No se ha podido enviar a 5 miembros:")).toBeInTheDocument();
+    expect(itemsOf(within(dialog).getByRole("list", { name: "Miembros a los que no se ha enviado" }))).toEqual([
       "Gema Ida: Ya no forma parte de esta comunidad.",
       "Alba Aceptada: Este miembro ya ha aceptado la invitación.",
       "Sergio Suspendido: Este miembro está suspendido, así que no se le puede invitar.",
@@ -311,7 +311,7 @@ describe("the result", () => {
       "Lola Límite: Has alcanzado el límite de reenvíos para este miembro. Podrás volver a reenviar la invitación dentro de 21 horas.",
     ]);
     expect(region).toHaveTextContent(
-      "Primeras invitaciones enviadas: 1. Invitaciones reenviadas: 1. No se ha podido enviar a 5 personas.",
+      "Primeras invitaciones enviadas: 1. Invitaciones reenviadas: 1. No se ha podido enviar a 5 miembros.",
     );
 
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetMembershipsQueryKey(COMMUNITY_ID) });

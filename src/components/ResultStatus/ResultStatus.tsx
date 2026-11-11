@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 
 /** Both forms, because Spanish plurals are not suffix-derivable:
- *  `comunidad` → `comunidades`, but `socio` → `socios`. */
+ *  `comunidad` → `comunidades`, but `miembro` → `miembros`. */
 export interface ResultNoun {
   one: string;
   other: string;

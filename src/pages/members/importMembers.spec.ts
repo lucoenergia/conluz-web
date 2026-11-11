@@ -46,9 +46,9 @@ describe("why a row was not registered (#284)", () => {
     ["fullName", "REQUIRED", {}, "Nombre completo: es obligatorio."],
     ["personalId", "NOT_EMPTY_ONCE_NORMALISED", {}, "DNI/NIE/NIF: solo tiene espacios, puntos o guiones."],
     ["personalId", "INVALID_PERSONAL_ID", {}, "DNI/NIE/NIF: no es un DNI, NIE o NIF válido."],
-    ["memberNumber", "MIN", { min: "0" }, "Número de socio: tiene que ser 0 o mayor."],
+    ["memberNumber", "MIN", { min: "0" }, "Número de miembro: tiene que ser 0 o mayor."],
     ["contactEmail", "EMAIL", {}, "Email de contacto: no es un email válido."],
-    ["memberNumber", "NOT_AN_INTEGER", {}, "Número de socio: tiene que ser un número entero."],
+    ["memberNumber", "NOT_AN_INTEGER", {}, "Número de miembro: tiene que ser un número entero."],
   ] as const)("UI-MBR-023 words %s %s in Spanish", (column, constraint, params, text) => {
     expect(constraintText(error(column, constraint, params))).toBe(text);
   });
@@ -73,7 +73,7 @@ describe("why a row was not registered (#284)", () => {
     );
 
     expect(reason).toBe(
-      "Nombre completo: es obligatorio. Número de socio: tiene que ser un número entero. Email de contacto: no es un email válido.",
+      "Nombre completo: es obligatorio. Número de miembro: tiene que ser un número entero. Email de contacto: no es un email válido.",
     );
   });
 

@@ -96,11 +96,11 @@ export const SendInvitationsDialog: FC<SendInvitationsDialogProps> = ({
   const resent = results?.filter((r) => r.outcome === SendInvitationResultResponseOutcome.RESENT).length ?? 0;
   const refused = results?.filter((r) => r.outcome === SendInvitationResultResponseOutcome.REFUSED) ?? [];
   const nameOf = (userId: string) =>
-    recipients.find((recipient) => recipient.userId === userId)?.fullName ?? "Una persona de la selección";
+    recipients.find((recipient) => recipient.userId === userId)?.fullName ?? "Un miembro de la selección";
 
   const sentText = `Primeras invitaciones enviadas: ${sent}.`;
   const resentText = `Invitaciones reenviadas: ${resent}.`;
-  const refusedCount = `No se ha podido enviar a ${refused.length} ${pluralize(refused.length, "persona", "personas")}`;
+  const refusedCount = `No se ha podido enviar a ${refused.length} ${pluralize(refused.length, "miembro", "miembros")}`;
 
   return (
     <AppModal
@@ -138,7 +138,7 @@ export const SendInvitationsDialog: FC<SendInvitationsDialogProps> = ({
               <Typography variant="body2" sx={{ fontWeight: 600 }}>
                 {refusedCount}:
               </Typography>
-              <Box component="ul" aria-label="Personas a las que no se ha enviado" sx={{ m: 0, pl: 2.5 }}>
+              <Box component="ul" aria-label="Miembros a los que no se ha enviado" sx={{ m: 0, pl: 2.5 }}>
                 {refused.map((result) => (
                   <Typography key={result.user.id} component="li" variant="body2">
                     <strong>{nameOf(result.user.id)}</strong>: {invitationResultReason(result)}
@@ -151,7 +151,7 @@ export const SendInvitationsDialog: FC<SendInvitationsDialogProps> = ({
       ) : (
         <>
           <Typography variant="body2">
-            {count === 1 ? "Recibirá un email esta persona:" : `Recibirán un email estas ${count} personas:`}
+            {count === 1 ? "Recibirá un email este miembro:" : `Recibirán un email estos ${count} miembros:`}
           </Typography>
           {firstInvitations.length > 0 && <RecipientGroup title="Primera invitación" recipients={firstInvitations} />}
           {resends.length > 0 && <RecipientGroup title="Reenvío" recipients={resends} />}

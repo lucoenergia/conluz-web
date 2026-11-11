@@ -74,11 +74,10 @@ describe("ProfilePage role label", () => {
     expect(screen.getByText("Administrador de comunidad")).toBeInTheDocument();
   });
 
-  // Was "Socio" here and "Miembro" in the profile menu, for the same role.
-  // "Miembro" is the app's word for the role -- the members page, the users
-  // page and the menu all use it -- while "Socio" counts people (`Socio #7`
-  // just below this chip, the "Socios" totals on the platform and community
-  // pages). Both screens now render whichever the module reports.
+  // This chip and the profile menu once named the same role differently.
+  // "Miembro" is the app's word for a member (#400) -- the members page, the
+  // users page and the menu all use it. Both screens now render whichever the
+  // module reports.
   it("names a plain member Miembro", () => {
     mockRoleLabel = "Miembro";
     setup();
@@ -100,11 +99,11 @@ describe("ProfilePage role label", () => {
  *
  * The screen saves through PUT /users/profile, which acts on the caller, takes
  * no id and is open to any authenticated caller -- so these tests are mostly
- * about who it does NOT ask. Every persona's record grants nothing, because
+ * about who it does NOT ask. Every caller's record grants nothing, because
  * nothing on this page may consult a capability.
  */
 describe("ProfilePage save", () => {
-  const PERSONAS: [string, CurrentUserResponse][] = [
+  const CALLERS: [string, CurrentUserResponse][] = [
     [
       "a plain member",
       buildCurrentUser({
@@ -147,7 +146,7 @@ describe("ProfilePage save", () => {
     await userEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
   };
 
-  it.each(PERSONAS)("saves through the profile endpoint for %s", async (_name, user) => {
+  it.each(CALLERS)("saves through the profile endpoint for %s", async (_name, user) => {
     await save(user);
 
     await waitFor(() => expect(mockSaveProfile).toHaveBeenCalledTimes(1));
@@ -228,8 +227,20 @@ describe("ProfilePage identity fields", () => {
   it("shows the member number once, as the chip", () => {
     renderWithProviders(<ProfilePage />);
 
-    expect(screen.getByText("Socio #7")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Número de socio")).not.toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Número de miembro 7" })).toHaveTextContent("Nº 7");
+    expect(screen.queryByRole("textbox", { name: /número de miembro/i })).not.toBeInTheDocument();
+  });
+
+  // "º" is the masculine ordinal indicator (U+00BA), not the degree sign
+  // (U+00B0) it looks like. Code points, so a look-alike cannot pass.
+  it("UI-PRF-003 abbreviates número with the ordinal indicator, not the degree sign", () => {
+    renderWithProviders(<ProfilePage />);
+
+    const codePoints = [...(screen.getByRole("img", { name: "Número de miembro 7" }).textContent ?? "")].map(
+      (character) => character.codePointAt(0),
+    );
+    expect(codePoints).toEqual([0x4e, 0xba, 0x20, 0x37]);
+    expect(codePoints).not.toContain(0xb0);
   });
 
   it("UI-PRF-003 shows no member-number chip for an account without a number", () => {
@@ -239,7 +250,8 @@ describe("ProfilePage identity fields", () => {
     );
     renderWithProviders(<ProfilePage />);
 
-    expect(screen.queryByText(/^Socio #/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: /^Número de miembro/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Nº /)).not.toBeInTheDocument();
     // Only the number's chip goes; the role chip beside it stays.
     expect(screen.getByText("Miembro")).toBeInTheDocument();
   });
@@ -250,6 +262,6 @@ describe("ProfilePage identity fields", () => {
     );
     renderWithProviders(<ProfilePage />);
 
-    expect(screen.getByText("Socio #0")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Número de miembro 0" })).toHaveTextContent("Nº 0");
   });
 });

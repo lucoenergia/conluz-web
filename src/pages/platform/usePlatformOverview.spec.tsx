@@ -72,7 +72,7 @@ describe("computeOverview", () => {
     expect(kpis.communitiesWithUsers).toBe(2);
     expect(kpis.communitiesWithoutUsers).toBe(1);
     expect(kpis.supplyPoints).toBe(10);
-    // Socios = Σ memberCount (memberships), not distinct people.
+    // Miembros = Σ memberCount (memberships), not distinct people.
     expect(kpis.members).toBe(12);
   });
 

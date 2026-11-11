@@ -785,7 +785,7 @@ describe("MembersPage", () => {
       Array.from({ length: count }, (_, index) =>
         buildMembership({
           id: `m${index + 1}`,
-          fullName: `Socio ${String(index + 1).padStart(2, "0")}`,
+          fullName: `Miembro ${String(index + 1).padStart(2, "0")}`,
           user: { id: `u${index + 1}` },
         }),
       );
@@ -820,8 +820,8 @@ describe("MembersPage", () => {
       setup({ memberships: many(26) });
 
       expect(screen.getAllByRole("row")).toHaveLength(26);
-      expect(screen.getByText("Socio 25")).toBeInTheDocument();
-      expect(screen.queryByText("Socio 26")).not.toBeInTheDocument();
+      expect(screen.getByText("Miembro 25")).toBeInTheDocument();
+      expect(screen.queryByText("Miembro 26")).not.toBeInTheDocument();
       expect(screen.getByRole("navigation", { name: "Páginas de miembros" })).toBeInTheDocument();
       expect(screen.getByText("1–25 de 26 miembros")).toBeInTheDocument();
     });

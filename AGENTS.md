@@ -10,6 +10,23 @@ source of truth for agent rules; tool-specific entry points such as `CLAUDE.md` 
 Vitest or Playwright file. Never write "spec" alone; if an instruction says "spec" without
 qualification, ask which one is meant.
 
+**Community members are "miembros"** in all user-facing copy, and in the code, comments, tests and
+fixtures that carry it.
+
+- Never write "socio", "socia", "socios" or "socias".
+- Never use "persona" or "personas" for a member. "Persona" is allowed only when it refers to user
+  accounts ("personas distintas", counting distinct users) or to admins and admin invitees ("esta
+  persona", #310), and in the idiom "en persona".
+- "Persona física", "persona jurídica" and their plurals are legal terms and are allowed.
+- Why: a member may be a natural person, a company or a local entity. "Socio" is a legal term for a
+  partner of an association or cooperative, and does not fit a collective self-consumption scheme
+  with no legal entity behind it (#400).
+
+`src/contracts/memberTerminology.spec.ts` enforces the rule over `src/` (except `src/api/`) and
+`.design-sync/`. Its `ALLOW_LIST` holds the justified exceptions, each with the file, the exact line
+and a reason. Agents MUST NOT add an entry without explicit maintainer approval, and every new entry
+MUST be declared in the PR description.
+
 ## Where the detail lives
 
 This file holds the rules that apply to every task. Task-specific depth lives in skills — plain

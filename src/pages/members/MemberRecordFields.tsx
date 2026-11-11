@@ -56,7 +56,7 @@ export function MemberRecordFields<F extends RecordField>({
       {shown("fullName") && <TextField label="Nombre completo" {...fieldProps("fullName")} />}
       {shown("memberNumber") && (
         <TextField
-          label="Número de socio"
+          label="Número de miembro"
           {...fieldProps("memberNumber")}
           slotProps={{ htmlInput: { inputMode: "numeric", readOnly } }}
         />

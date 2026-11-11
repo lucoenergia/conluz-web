@@ -249,7 +249,7 @@ describe("importing a file", () => {
     expect(await within(dialog).findByText(/Se ha registrado 1 miembro\./, VISIBLE)).toHaveTextContent("2 filas tienen errores.");
     expect(region).toHaveTextContent("Se ha registrado 1 miembro. 2 filas tienen errores.");
     expect(failedRows(dialog)).toEqual([
-      "Línea 3: Nombre completo: es obligatorio. Número de socio: tiene que ser un número entero.",
+      "Línea 3: Nombre completo: es obligatorio. Número de miembro: tiene que ser un número entero.",
       "Línea 4: Ya es miembro de la comunidad.",
     ]);
     expect(within(dialog).queryByText(/TEST-SERVER-MESSAGE/)).not.toBeInTheDocument();
