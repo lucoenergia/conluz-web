@@ -38,6 +38,7 @@ vi.mock(import("../../api/production/production"), async (importOriginal) => ({
 vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetPlantEnergyMetrics: vi.fn(),
+  useGetPlantInverterProductionToday: vi.fn(),
 }));
 vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -46,7 +47,7 @@ vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (import
 
 import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
 import { getHuaweiConfig, useGetHuaweiConfig } from "../../api/production/production";
-import { useGetPlantEnergyMetrics } from "../../api/plants/plants";
+import { useGetPlantEnergyMetrics, useGetPlantInverterProductionToday } from "../../api/plants/plants";
 import { getSharingAgreements, useGetSharingAgreements } from "../../api/sharing-agreements/sharing-agreements";
 import { PlantDetailPage } from "./PlantDetailPage";
 
@@ -112,6 +113,7 @@ function setup({
   );
   vi.mocked(useGetSharingAgreements).mockReturnValue(query.success<typeof getSharingAgreements>(agreements));
   vi.mocked(useGetPlantEnergyMetrics).mockReturnValue(query.loading());
+  vi.mocked(useGetPlantInverterProductionToday).mockReturnValue(query.loading());
 
   return renderWithProviders(
     <Routes>

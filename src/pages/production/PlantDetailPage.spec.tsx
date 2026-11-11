@@ -6,7 +6,7 @@ import { Route, Routes } from "react-router";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { query } from "../../test/queryState";
 import { buildPlant, buildPlantCapabilities, buildSupplyReference } from "../../test/fixtures";
-import type { PlantCapabilitiesResponse } from "../../api/models";
+import type { PlantCapabilitiesResponse, PlantInverterProductionTodayResponse } from "../../api/models";
 
 vi.mock(import("./usePlantInActiveCommunity"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -21,6 +21,7 @@ vi.mock(import("../../api/production/production"), async (importOriginal) => ({
 vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetPlantEnergyMetrics: vi.fn(),
+  useGetPlantInverterProductionToday: vi.fn(),
 }));
 vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -29,15 +30,22 @@ vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (import
 
 import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
 import { useGetHuaweiConfig } from "../../api/production/production";
-import { useGetPlantEnergyMetrics } from "../../api/plants/plants";
+import {
+  getPlantInverterProductionToday,
+  useGetPlantEnergyMetrics,
+  useGetPlantInverterProductionToday,
+} from "../../api/plants/plants";
+import { available } from "./plantDetail/inverterToday.testData";
 import { getSharingAgreements, useGetSharingAgreements } from "../../api/sharing-agreements/sharing-agreements";
 import { PlantDetailPage } from "./PlantDetailPage";
 
 const COMMUNITY_ID = "community-a";
 const PLANT_ID = "plant-1";
 
-function setup(options: Partial<PlantCapabilitiesResponse> & { isNotFound?: boolean } = {}) {
-  const { isNotFound = false, ...capabilities } = options;
+function setup(
+  options: Partial<PlantCapabilitiesResponse> & { isNotFound?: boolean; inverter?: PlantInverterProductionTodayResponse } = {},
+) {
+  const { isNotFound = false, inverter, ...capabilities } = options;
 
   vi.mocked(usePlantInActiveCommunity).mockReturnValue({
     plant: isNotFound
@@ -58,6 +66,9 @@ function setup(options: Partial<PlantCapabilitiesResponse> & { isNotFound?: bool
   });
   // The production sections have specs of their own; here they only have to stay quiet.
   vi.mocked(useGetPlantEnergyMetrics).mockReturnValue(query.loading());
+  vi.mocked(useGetPlantInverterProductionToday).mockReturnValue(
+    inverter ? query.success<typeof getPlantInverterProductionToday>(inverter) : query.loading(),
+  );
   // The integrations section has its own spec; here it only has to stay quiet.
   vi.mocked(useGetHuaweiConfig).mockReturnValue(query.loading());
   vi.mocked(useGetSharingAgreements).mockReturnValue(query.success<typeof getSharingAgreements>([]));
@@ -97,6 +108,17 @@ describe("PlantDetailPage", () => {
     expect(screen.getByRole("heading", { name: "Planta Norte" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Más opciones de la planta" })).not.toBeInTheDocument();
     expect(screen.queryByRole("menuitem")).not.toBeInTheDocument();
+  });
+
+  it("shows its sections in the design's order: summary, today, the period, agreements and integrations (#406)", () => {
+    setup({ canManage: true, canListSharingAgreements: true, inverter: available() });
+
+    // The page's own sections, not the regions inside them (the Huawei card).
+    const names = screen
+      .getAllByRole("region")
+      .filter((region) => !region.parentElement?.closest("section, [role='region']"))
+      .map((region) => region.getAttribute("aria-label") ?? document.getElementById(region.getAttribute("aria-labelledby") ?? "")?.textContent);
+    expect(names).toEqual(["En esta planta", "Hoy, según el inversor", "Producción por periodo", "Acuerdos de reparto", "Integraciones"]);
   });
 
   it("links the supply for a caller the plant says may read it", async () => {

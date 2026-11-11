@@ -14,6 +14,7 @@ import { PlantNextStep } from "./plantDetail/PlantNextStep";
 import { PlantAgreementsSection } from "./plantDetail/PlantAgreementsSection";
 import { usePlantIntegrationStatus } from "./plantDetail/usePlantIntegrationStatus";
 import { PlantPeriodProduction } from "./plantDetail/PlantPeriodProduction";
+import { PlantInverterToday } from "./plantDetail/PlantInverterToday";
 import { PLANT_DEFAULT_PRESET, PLANT_PRESETS, plantClampNotice } from "./plantDetail/plantPeriod";
 import { readDayAnchor, usePlantAnchorQuery } from "./plantDetail/usePlantAnchorQuery";
 import { useHistoricalAnchor } from "../../components/period/useHistoricalAnchor";
@@ -137,6 +138,14 @@ export const PlantDetailPage: FC = () => {
       <Box sx={{ ...sxStyles.pageContainer, "&:empty": { display: "none" } }}>
         <PlantSummary plant={plant} integrationStatus={integrationStatus} />
       </Box>
+
+      {/* Today's inverter production, apart from the distributor's: only for a
+          plant with an enabled inverter integration (UI-PLT-012). */}
+      {plant && (
+        <Box sx={{ ...sxStyles.pageContainer, "&:empty": { display: "none" } }}>
+          <PlantInverterToday plantId={plant.id} />
+        </Box>
+      )}
 
       {plant && (
         <Box sx={sxStyles.pageContainer}>

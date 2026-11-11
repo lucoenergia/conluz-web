@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import {
   getGetAllPlantsQueryKey,
   getGetPlantByIdQueryKey,
+  getGetPlantInverterProductionTodayQueryKey,
   useDeletePlant,
   useUpdatePlant,
 } from "../../api/plants/plants";
@@ -171,6 +172,20 @@ describe("usePlantActions", () => {
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetHuaweiConfigQueryKey(PLANT_ID) });
   });
 
+  it.each(["configureHuawei", "enableHuawei", "disableHuawei"] as const)(
+    "UI-PLT-012 reads today's inverter production back after %s, since its availability follows the configuration",
+    async (action) => {
+      const { result, queryClient } = render(plantWith({ canManage: true }));
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      const run = result.current.actions[action]?.run as ((body?: typeof HUAWEI_CONFIG_BODY) => Promise<unknown>) | undefined;
+      await expect(run?.(HUAWEI_CONFIG_BODY)).resolves.toEqual({ ok: true });
+
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetPlantInverterProductionTodayQueryKey(PLANT_ID) });
+      expect(invalidateQueries).not.toHaveBeenCalledWith({ queryKey: getGetPlantInverterProductionTodayQueryKey("another-plant") });
+    },
+  );
+
   // The refusal itself, not false: the screen shows HUAWEI_CONFIG_PASSWORD_REQUIRED
   // on the password field, so it needs the error to read the code from (#192).
   it("hands back a refused Huawei write's error and leaves the cache alone", async () => {
@@ -237,9 +252,12 @@ describe("usePlantActions", () => {
       await result.current.actions.enableHuawei?.run();
       await result.current.actions.disableHuawei?.run();
 
+      // Its configuration, and today's inverter production that follows it (UI-PLT-012): this plant's only.
       expect(invalidateQueries.mock.calls).toEqual([
         [{ queryKey: getGetHuaweiConfigQueryKey(PLANT_ID) }],
+        [{ queryKey: getGetPlantInverterProductionTodayQueryKey(PLANT_ID) }],
         [{ queryKey: getGetHuaweiConfigQueryKey(PLANT_ID) }],
+        [{ queryKey: getGetPlantInverterProductionTodayQueryKey(PLANT_ID) }],
       ]);
     });
 

@@ -11,7 +11,7 @@ import { routeRequests, type RequestConfig } from "../../test/requestRouter";
 import { apiError } from "../../test/apiError";
 import { buildCommunity, buildPlant, buildPlantCapabilities, buildSupplyReference } from "../../test/fixtures";
 import { VISIBLE } from "../../test/visibleText";
-import type { PlantEnergyMetricsResponse } from "../../api/models";
+import type { PlantEnergyMetricsResponse, PlantInverterProductionTodayResponse } from "../../api/models";
 
 /**
  * Editing and deleting a plant from its own detail (UI-PLT-014): both open from
@@ -73,6 +73,14 @@ const NO_PRODUCTION_DAY: PlantEnergyMetricsResponse = {
   coverage: { hoursWithData: 0, expectedHours: 0 },
 };
 
+const NOT_AVAILABLE: PlantInverterProductionTodayResponse = {
+  status: "NOT_AVAILABLE",
+  todayEnergyKWh: null,
+  powerCurve: null,
+  lastUpdatedAt: null,
+  stale: null,
+};
+
 const page = <T,>(items: T[]) => ({ items, size: items.length, totalElements: items.length, totalPages: 1, number: 0 });
 
 function renderDetail(onDelete: () => unknown) {
@@ -89,6 +97,7 @@ function renderDetail(onDelete: () => unknown) {
     },
     { method: "GET", url: new RegExp(`^${PLANT_URL}/sharing-agreements`), respond: () => [] },
     { method: "GET", url: `${PLANT_URL}/energy-metrics`, respond: () => NO_PRODUCTION_DAY },
+    { method: "GET", url: `${PLANT_URL}/inverter-production/today`, respond: () => NOT_AVAILABLE },
     // The edit form's supply selector.
     { method: "GET", url: `/api/v1/communities/${COMMUNITY_ID}/supplies`, respond: () => page([]) },
     { method: "DELETE", url: PLANT_URL, respond: onDelete },

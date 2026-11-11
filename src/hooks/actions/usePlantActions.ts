@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   getGetAllPlantsQueryKey,
   getGetPlantByIdQueryKey,
+  getGetPlantInverterProductionTodayQueryKey,
   useDeletePlant,
   useUpdatePlant,
 } from "../../api/plants/plants";
@@ -108,11 +109,14 @@ export function usePlantActions(): PlantActions {
       const manageAgreements = outcomeFromResource(capabilities, "canManageSharingAgreements");
 
       // Only this plant's configuration is read back: another plant's is not
-      // touched by a write to this one (#192).
+      // touched by a write to this one (#192). Today's inverter production is
+      // read back with it: whether it is available follows the configuration
+      // (UI-PLT-012).
       const writeHuawei = async (call: () => Promise<unknown>): Promise<HuaweiWriteResult> => {
         try {
           await call();
           queryClient.invalidateQueries({ queryKey: getGetHuaweiConfigQueryKey(plantId) });
+          queryClient.invalidateQueries({ queryKey: getGetPlantInverterProductionTodayQueryKey(plantId) });
           return { ok: true };
         } catch (error) {
           return { error };

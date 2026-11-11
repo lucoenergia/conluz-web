@@ -28,6 +28,7 @@ vi.mock(import("../usePlantInActiveCommunity"), async (importOriginal) => ({
 vi.mock(import("../../../api/plants/plants"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetPlantEnergyMetrics: vi.fn(),
+  useGetPlantInverterProductionToday: vi.fn(),
   useGetPlantHourlyEnergySeries: vi.fn(),
   useGetPlantDailyEnergySeries: vi.fn(),
   useGetPlantMonthlyEnergySeries: vi.fn(),
@@ -55,6 +56,7 @@ import {
   useGetPlantDailyEnergySeries,
   useGetPlantEnergyMetrics,
   useGetPlantHourlyEnergySeries,
+  useGetPlantInverterProductionToday,
   useGetPlantMonthlyEnergySeries,
 } from "../../../api/plants/plants";
 import {
@@ -135,6 +137,8 @@ function serve() {
       (enabled(options) ? query.success<typeof getPlantMonthlyEnergySeries>(monthly) : query.disabled()) as ReturnType<typeof useGetPlantMonthlyEnergySeries>,
   );
   vi.mocked(useGetHuaweiConfig).mockReturnValue(query.loading());
+  // Today's inverter block has a spec of its own; here it only has to stay quiet.
+  vi.mocked(useGetPlantInverterProductionToday).mockReturnValue(query.loading());
   vi.mocked(useGetSharingAgreements).mockReturnValue(query.success<typeof getSharingAgreements>([]));
 }
 
