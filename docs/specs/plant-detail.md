@@ -4,19 +4,19 @@
 | --- | --- |
 | **Prefix** | `UI-PLT` |
 | **Status** | Active |
-| **Routes** | `/production/:plantId`; `/production` for the plant deletion (UI-PLT-008, UI-PLT-009) |
-| **Roles** | Any member of the plant's community (the plant's `canRead`). Agreements: a caller with the plant's `canListSharingAgreements`. Integration and "Siguiente paso": a caller with the plant's `canManage` |
+| **Routes** | `/plants/:plantId`; `/plants` for the plant deletion (UI-PLT-008, UI-PLT-009, UI-PLT-014) |
+| **Roles** | Community admin only: the plant's `canManage` (UI-PLT-010). Agreements: also the plant's `canListSharingAgreements` |
 | **Domain rules** | `lucoenergia/conluz`: PLT-001 (UI-PLT-008) |
-| **Design reference** | Claude Design canvas "Conluz · Detalle de planta"; visual language of the member home ("Tu energía") |
-| **Last reviewed against code** | #349 |
+| **Design reference** | Claude Design canvas "Conluz · Energía de la comunidad y detalle de planta", revision 5: artboards `Planta-Movil`, `Planta-Escritorio`, `Planta-Estados`, `Planta-Hoy-Estados`, `CompHoy`, `CompPeriodo`, `CompGrafico` |
+| **Last reviewed against code** | #406 |
 
 ## Purpose
 
-Show a plant's own production, and tell whoever may act on the plant what state its sharing
-agreements and its Huawei integration are in, without scrolling past the production block on a
-phone.
+Show a community admin what a plant produced: today, according to its inverter, and over a period,
+as the distributor measured it. Tell them what state its sharing agreements and its Huawei
+integration are in, without scrolling past the production blocks on a phone.
 
-This document covers only the rules #260 introduced. The integrations section keeps the rules in
+This document covers only the rules #260, #290, #311, #349 and #406 introduced. The integrations section keeps the rules in
 [`integrations.md`](integrations.md) (UI-INT-005 to UI-INT-010), and the figures and chart labels
 keep those in [`formatting.md`](formatting.md).
 
@@ -24,7 +24,8 @@ keep those in [`formatting.md`](formatting.md).
 
 ### UI-PLT-001 — Production is the plant's own
 
-- **Status:** Active
+- **Status:** Removed in #406 (the detail no longer reads the community production operations with
+  `supplyId`; its production comes from the plant's own operations, UI-PLT-011 and UI-PLT-012)
 - **Rule:**
   - Every production request of the plant detail MUST carry the plant's `supply.id` as `supplyId`:
     the requests for the selected period and those for the period before it alike.
@@ -48,12 +49,12 @@ keep those in [`formatting.md`](formatting.md).
   - The screen MUST NOT read the plant's agreements without `canListSharingAgreements`, nor its
     Huawei configuration without `canManage`.
   - The "En esta planta" summary MUST NOT render when it has no rows.
-- **Rationale:** Members and community admins share this screen. Listing agreements needs admin
-  rights, and reading the configuration needs what writing it needs (UI-INT-006), so for a member
-  both reads are guaranteed to fail; a block or a read that can only fail must not exist. A summary
-  with no rows would be an empty card.
+- **Rationale:** The screen is for the plant's community admins (UI-PLT-010), but each block still
+  follows the capability the plant reports for it rather than the route's: listing agreements and
+  reading the configuration are capabilities of their own, and a block or a read that can only fail
+  must not exist. A summary with no rows would be an empty card.
 - **Implements:** n/a
-- **Source:** #260
+- **Source:** #260, #406
 
 ### UI-PLT-003 — The summary states each section's status and leads to it
 
@@ -98,7 +99,8 @@ keep those in [`formatting.md`](formatting.md).
 
 ### UI-PLT-005 — A period without production shows an empty state, not a zero
 
-- **Status:** Active
+- **Status:** Removed in #406 (the chart it described is gone; gaps, partial buckets, measured zeros
+  and a plant with no production yet are UI-PLT-011's)
 - **Rule:**
   - When no row of the selected period carries a `power` value (no rows, or rows without one), the
     screen MUST show an empty state, and MUST NOT show a zero figure or an empty chart. A row whose
@@ -126,7 +128,7 @@ keep those in [`formatting.md`](formatting.md).
 
 ### UI-PLT-007 — The chart subtitle is localised text
 
-- **Status:** Active
+- **Status:** Removed in #406 (the chart and its period control are gone)
 - **Rule:** The production chart's subtitle MUST be Spanish text naming what each bar stands for
   ("Producción por hora", "por día", "por mes", "por año"), never a raw time-range value.
 - **Rationale:** The raw value (`Rango: hour`) leaked an internal enum into the Spanish UI.
@@ -165,13 +167,97 @@ keep those in [`formatting.md`](formatting.md).
   starts with "Planta" readable.
 - **Source:** #311, #349
 
+### UI-PLT-010 — The plant section lives under `/plants`, for community admins only
+
+- **Status:** Active
+- **Rule:** The plant section MUST live under `/plants` and MUST be reachable only by a community
+  admin. A plant link elsewhere MUST render as plain text for a caller without plant `canManage`.
+  `/production` paths MUST NOT redirect.
+  - The plant list requires the community's `canManage`; a plant's detail and its agreements, the
+    plant's `canManage`. The agreement routes keep their own `canListSharingAgreements` inside it.
+  - The menu entry "Plantas" requires the community's `canManage`, as the list does.
+  - A community switch on a plant's detail goes to `/plants`.
+- **Rationale:** The plant view is operational. Members see plant totals on the community page.
+- **Implements:** n/a
+- **Source:** #406
+
+### UI-PLT-011 — "Producción por periodo" shows the distributor's production, anchored to the latest production day
+
+- **Status:** Active
+- **Rule:** "Producción por periodo" MUST show the plant's distributor production, anchored at the
+  latest complete production day, with the presets `LAST_7`, `LAST_30`, `DAY_YEAR` and a custom
+  range. It MUST mark gaps, partial buckets and measured zeros from `hoursWithData` /
+  `expectedHours`. Under a day anchor every range MUST be labelled by days, and the publication
+  sentence MUST name the anchor day without promising a fixed delay.
+  - The default preset is `LAST_7`. The period total comes from the plant's metrics for the resolved
+    period; a null total reads "Sin datos", never a zero.
+  - With no production day yet, the section MUST show a neutral notice ("Todavía no hay datos de la
+    distribuidora para esta planta") and no selector.
+  - No request is made before the plant is known, and none bound to a period before the period is.
+- **Rationale:** It is the energy the plant exported, as the distributor measured it. A whole-month
+  label would promise data the period does not hold.
+- **Implements:** n/a
+- **Source:** #406
+
+### UI-PLT-012 — "Hoy, según el inversor" shows today's inverter production, and keeps it current
+
+- **Status:** Active
+- **Rule:** "Hoy, según el inversor" MUST render only when the inverter status is not
+  `NOT_AVAILABLE`. It MUST draw the power curve with gaps broken and nothing after now, MUST state
+  the stale and no-data states in words, and MUST refetch every 5 minutes while the document is
+  visible, pausing while it is hidden.
+  - The curve runs over the local day on the instant line, from today's midnight to tomorrow's in
+    the app's time zone, so a day the clocks change lasts 23 or 25 hours; its "Ahora" mark is at
+    now, and a gap is covered by a "Sin datos" band.
+  - The block also refetches when the page regains focus, and after a change to the plant's Huawei
+    configuration.
+- **Rationale:** Inverter data is separate from, and may differ from, the distributor's. Without
+  refetching, its update time and stale state freeze.
+- **Implements:** n/a
+- **Source:** #406
+
+### UI-PLT-013 — Production is gold, and gold is never text
+
+- **Status:** Active
+- **Rule:** Production on the plant detail MUST use `ENERGY_COLORS.assigned`. `marks.gold` MUST
+  NOT be used for text.
+  - Figures stay in the text colour, with a gold swatch beside them; the "Ahora" mark uses
+    `brand.main`.
+- **Rationale:** One colour per metric across pages.
+- **Implements:** n/a
+- **Source:** #406
+
+### UI-PLT-014 — Editing and deleting a plant open from its detail's menu
+
+- **Status:** Active
+- **Rule:**
+  - The detail's header MUST offer "Editar planta" and "Eliminar planta" in its menu, each only when
+    the plant grants that action; with neither, there is no menu.
+  - "Editar planta" MUST open the plant form over the detail, and return focus to the menu's button
+    when it closes.
+  - Once a plant deleted from its detail is gone (deleted now, or already, a `404`), the screen MUST
+    go to `/plants`, replacing the detail's history entry. A refused deletion stays on the detail and
+    says why (UI-PLT-008).
+- **Rationale:** An admin looking at a plant should not have to go back to the list to change it.
+  The menu follows the supply detail's. A deleted plant leaves nothing to show, and a back that
+  landed on it would show a plant that is gone.
+- **Implements:** n/a
+- **Source:** #406
+
 ## States
 
 | State | Rendered | Actions available |
 | --- | --- | --- |
-| Loading (production) | A placeholder card in place of the figure and chart | Period control |
-| Empty period | An empty state, no figure, no chart (UI-PLT-005) | Period control; "Ir a integraciones" for an admin whose integration needs a step |
+| Inverter not available (no enabled Huawei configuration) | No "Hoy, según el inversor" block (UI-PLT-012) | — |
+| No inverter data today | "Sin datos del inversor hoy", no figure, no chart | — |
+| Inverter producing | Today's energy, the power curve, "Actualizado a las HH:mm" | — |
+| Inverter not producing yet | Today's energy at 0, the curve flat at 0, "Todavía no ha empezado a producir hoy" | — |
+| Inverter stale | A neutral note saying nothing new arrived for more than an hour; no "Actualizado" line | — |
+| Inverter day with a gap | The line broken under a "Sin datos" band, and a note naming the stretch | — |
+| Inverter read failed | The block's error | Retry |
+| No production day from the distributor | A neutral notice, no selector (UI-PLT-011) | — |
+| Period loading | Placeholders in place of the total and the chart | Period selector |
+| Period total or series read failed | That part's error | Retry; period selector |
 | Integration not configured or disabled (normal) | Neutral status in the summary, "Siguiente paso" at the top | The summary row and the card's action, both scroll to the integrations section |
 | Configuration read failed (not `404`) | No integration status, no "Siguiente paso"; the integrations section shows its error (UI-INT-007) | Retry in the integrations section |
 | Agreements read failed | No agreements status; the section shows an error | Retry |
-| Production read failed | The generic error feedback; no figure, no chart, no empty state | Period control |

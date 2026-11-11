@@ -8,7 +8,7 @@
 | **Roles** | Any member of the active community reads them. Deleting: a caller to whom the supply reports `canDelete`. Creating and importing, and seeing each supply's owner in the list: a caller to whom the active community reports `canManage`. Editing: a caller to whom the supply reports `canEdit`. The supply's figures and "Ver análisis completo": a caller to whom the supply reports `canRead` |
 | **Domain rules** | `lucoenergia/conluz`: SUP-001, SUP-002, SUP-004, SUP-005, SUP-006, SUP-007, MEM-026, EPR-003, SEM-001 (lucoenergia/conluz#408) |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `FilterChipsBar` (the list; its shared rules are `record-lists.md`); the detail page's latest published month reuses `src/components/EnergyFigures/` (`PeriodHeader`, `PeriodUsageCard`, `PeriodTotals`), as the historical analysis page does |
-| **Last reviewed against code** | #372 |
+| **Last reviewed against code** | #406 |
 
 ## Purpose
 
@@ -227,14 +227,15 @@ This document covers only the rules #290, #302, #324, #339, #348, #252, #388 and
 - **Rule:** A supply that a plant of the active community produces onto MUST be marked "Punto de la
   planta <plant name>", without alert colours. The mark MUST come from the supply's own `plant`. On
   the supply detail header, the mark MUST be the tag "Punto de planta". It MUST link to the plant's
-  detail when the active community reports `canRead`. Otherwise it MUST be plain text.
+  detail when the plant reports `canManage`. Otherwise, or while that is not known, it MUST be plain
+  text.
 - **Rationale:** A plant's supply is not a consumer, and the reader must not mistake it for one. The
-  supply names its plant itself, so the mark needs no second read: the plants listing would need a
-  capability a member does not hold, and could fail on its own. The plant reference carries no
-  capabilities, and a plant opens to whoever may read its community, so the tag links on the active
-  community's `canRead`, the requirement of the plant's route.
+  supply names its plant itself, so the mark needs no read of the plant listing, which needs a
+  capability a member does not hold. A plant's detail opens only to whoever may manage that plant
+  (UI-PLT-010), and the plant reference carries no capabilities, so the tag reads the plant itself
+  for its `canManage`: the same read, and the same answer, as the plant's route guard.
 - **Implements:** SUP-004
-- **Source:** #348; changed in #252 (the detail header's tag)
+- **Source:** #348; changed in #252 (the detail header's tag) and #406 (the link follows the plant's `canManage`)
 
 ### UI-SUP-013 — A disabled supply is "Dado de baja", and status is never coloured as a failure
 

@@ -4,11 +4,11 @@
 | --- | --- |
 | **Prefix** | `UI-FMT` |
 | **Status** | Active |
-| **Routes** | Every route that shows a figure with a unit, a date or a time chart: `/`, `/production`, `/production/:plantId`, `/supply-points`, `/supply-points/:supplyPointId`, `/historical-analysis`, and the sharing agreement screens |
+| **Routes** | Every route that shows a figure with a unit, a date or a time chart: `/`, `/plants`, `/plants/:plantId`, `/supply-points`, `/supply-points/:supplyPointId`, `/historical-analysis`, and the sharing agreement screens |
 | **Roles** | Every signed-in caller |
 | **Domain rules** | n/a |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #361 |
+| **Last reviewed against code** | #406 |
 
 ## Purpose
 

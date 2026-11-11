@@ -4,11 +4,11 @@
 | --- | --- |
 | **Prefix** | `UI-PLS` |
 | **Status** | Active |
-| **Routes** | `/production`; creating and editing a plant open in the shared overlay over the list |
-| **Roles** | Any member of the active community reads the list. A row's menu offers what the plant's own capabilities grant: editing and deleting with `canManage`, its sharing agreements with `canListSharingAgreements`. Creating a plant: a caller to whom the active community reports `canCreatePlants` |
+| **Routes** | `/plants`; creating and editing a plant open in the shared overlay over the list |
+| **Roles** | A community admin (the active community's `canManage`, UI-PLT-010) reads the list. A row's menu offers what the plant's own capabilities grant: editing and deleting with `canManage`, its sharing agreements with `canListSharingAgreements`. Creating a plant: a caller to whom the active community reports `canCreatePlants` |
 | **Domain rules** | n/a |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `ListPagination` (the list; its shared rules are `record-lists.md`); the plant form is on `AppModal` (`overlays.md`) |
-| **Last reviewed against code** | #373 |
+| **Last reviewed against code** | #406 |
 
 <!-- Domain rules are cited by ID; the prefix registry in lucoenergia/conluz → docs/specs/README.md maps each prefix to its file. -->
 

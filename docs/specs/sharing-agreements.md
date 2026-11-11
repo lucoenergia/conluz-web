@@ -4,11 +4,11 @@
 | --- | --- |
 | **Prefix** | `UI-AGR` |
 | **Status** | Active |
-| **Routes** | `/production/:plantId/sharing-agreements`, `/production/:plantId/sharing-agreements/:sharingAgreementId` |
+| **Routes** | `/plants/:plantId/sharing-agreements`, `/plants/:plantId/sharing-agreements/:sharingAgreementId` |
 | **Roles** | A caller with the plant's `canListSharingAgreements`. Authoring and lifecycle actions: the capabilities each agreement and coefficient carries |
 | **Domain rules** | n/a |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `ListPagination` (the list; its shared rules are `record-lists.md`) |
-| **Last reviewed against code** | #369 |
+| **Last reviewed against code** | #406 |
 
 Scope: the rules introduced in #277 for sharing-agreement states migrated from visual tests to
 Vitest, the rules #350 introduced for the list's rows and for how a status is shown, and the

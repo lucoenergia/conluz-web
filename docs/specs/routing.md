@@ -8,13 +8,14 @@
 | **Roles** | Every caller, with or without a session |
 | **Domain rules** | n/a |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #234 |
+| **Last reviewed against code** | #406 |
 
 ## Purpose
 
 Tell someone who followed an old link or mistyped an address that the page does not exist, and
 give them one way back into the app. The subject is what the router does with a path it does not
-know, not the screens it does know.
+know, not the screens it does know. Old links include the plant section's `/production` paths, which
+moved to `/plants` with no redirect (#406, UI-PLT-010).
 
 ## Rules
 
