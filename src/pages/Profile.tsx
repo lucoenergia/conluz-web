@@ -23,7 +23,7 @@ export const ProfilePage: FC = () => {
   const roleLabel = useActiveCommunityRoleLabel();
   // Accounts created by member registration have no global number: the member
   // number lives on each community's member record (lucoenergia/conluz#392).
-  // No number means no chip, rather than "Miembro #0"; a real 0 still shows.
+  // No number means no chip, rather than "Nº 0"; a real 0 still shows.
   const hasMemberNumber = currentUser?.number != null;
 
   // Only what PUT /users/profile accepts. Name, DNI and member number identify
@@ -172,7 +172,11 @@ export const ProfilePage: FC = () => {
                   {hasMemberNumber && (
                     <Chip
                       icon={<BadgeIcon />}
-                      label={`Miembro #${currentUser.number}`}
+                      label={`Nº ${currentUser.number}`}
+                      // "Nº 7" alone reads as "ene, siete": an image role
+                      // lets the whole chip be read by its name instead.
+                      role="img"
+                      aria-label={`Número de miembro ${currentUser.number}`}
                       sx={(theme) => ({
                         fontSize: fontSizes.md,
                         fontWeight: 600,

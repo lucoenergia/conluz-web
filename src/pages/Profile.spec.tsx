@@ -227,8 +227,20 @@ describe("ProfilePage identity fields", () => {
   it("shows the member number once, as the chip", () => {
     renderWithProviders(<ProfilePage />);
 
-    expect(screen.getByText("Miembro #7")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Número de miembro")).not.toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Número de miembro 7" })).toHaveTextContent("Nº 7");
+    expect(screen.queryByRole("textbox", { name: /número de miembro/i })).not.toBeInTheDocument();
+  });
+
+  // "º" is the masculine ordinal indicator (U+00BA), not the degree sign
+  // (U+00B0) it looks like. Code points, so a look-alike cannot pass.
+  it("UI-PRF-003 abbreviates número with the ordinal indicator, not the degree sign", () => {
+    renderWithProviders(<ProfilePage />);
+
+    const codePoints = [...(screen.getByRole("img", { name: "Número de miembro 7" }).textContent ?? "")].map(
+      (character) => character.codePointAt(0),
+    );
+    expect(codePoints).toEqual([0x4e, 0xba, 0x20, 0x37]);
+    expect(codePoints).not.toContain(0xb0);
   });
 
   it("UI-PRF-003 shows no member-number chip for an account without a number", () => {
@@ -238,7 +250,8 @@ describe("ProfilePage identity fields", () => {
     );
     renderWithProviders(<ProfilePage />);
 
-    expect(screen.queryByText(/^Miembro #/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: /^Número de miembro/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Nº /)).not.toBeInTheDocument();
     // Only the number's chip goes; the role chip beside it stays.
     expect(screen.getByText("Miembro")).toBeInTheDocument();
   });
@@ -249,6 +262,6 @@ describe("ProfilePage identity fields", () => {
     );
     renderWithProviders(<ProfilePage />);
 
-    expect(screen.getByText("Miembro #0")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Número de miembro 0" })).toHaveTextContent("Nº 0");
   });
 });
