@@ -16,11 +16,11 @@ vi.mock(import("./usePlantInActiveCommunity"), async (importOriginal) => ({
 vi.mock("react-apexcharts", () => ({ default: () => null }));
 vi.mock(import("../../api/production/production"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useGetHourlyProduction: vi.fn(),
-  useGetDailyProduction: vi.fn(),
-  useGetMonthlyProduction: vi.fn(),
-  useGetYearlyProduction: vi.fn(),
   useGetHuaweiConfig: vi.fn(),
+}));
+vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetPlantEnergyMetrics: vi.fn(),
 }));
 vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -28,14 +28,8 @@ vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (import
 }));
 
 import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
-import {
-  getHourlyProduction,
-  useGetDailyProduction,
-  useGetHourlyProduction,
-  useGetHuaweiConfig,
-  useGetMonthlyProduction,
-  useGetYearlyProduction,
-} from "../../api/production/production";
+import { useGetHuaweiConfig } from "../../api/production/production";
+import { useGetPlantEnergyMetrics } from "../../api/plants/plants";
 import { getSharingAgreements, useGetSharingAgreements } from "../../api/sharing-agreements/sharing-agreements";
 import { PlantDetailPage } from "./PlantDetailPage";
 
@@ -62,14 +56,8 @@ function setup(options: Partial<PlantCapabilitiesResponse> & { isNotFound?: bool
     error: null,
     refetch: vi.fn(),
   });
-  for (const hook of [
-    useGetHourlyProduction,
-    useGetDailyProduction,
-    useGetMonthlyProduction,
-    useGetYearlyProduction,
-  ]) {
-    vi.mocked(hook).mockReturnValue(query.success<typeof getHourlyProduction>([]));
-  }
+  // The production sections have specs of their own; here they only have to stay quiet.
+  vi.mocked(useGetPlantEnergyMetrics).mockReturnValue(query.loading());
   // The integrations section has its own spec; here it only has to stay quiet.
   vi.mocked(useGetHuaweiConfig).mockReturnValue(query.loading());
   vi.mocked(useGetSharingAgreements).mockReturnValue(query.success<typeof getSharingAgreements>([]));

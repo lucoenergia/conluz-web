@@ -1,3 +1,4 @@
+import BarChartRoundedIcon from "@mui/icons-material/BarChartRounded";
 import PieChartOutlineRoundedIcon from "@mui/icons-material/PieChartOutlineRounded";
 import PowerRoundedIcon from "@mui/icons-material/PowerRounded";
 
@@ -7,3 +8,4 @@ import PowerRoundedIcon from "@mui/icons-material/PowerRounded";
  */
 export const AGREEMENTS_ICON = PieChartOutlineRoundedIcon;
 export const INTEGRATIONS_ICON = PowerRoundedIcon;
+export const PERIOD_PRODUCTION_ICON = BarChartRoundedIcon;

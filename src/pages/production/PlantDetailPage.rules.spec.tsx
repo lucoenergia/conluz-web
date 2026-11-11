@@ -18,7 +18,6 @@ import {
   type GetHuaweiConfigResponse,
   type PlantCapabilitiesResponse,
   type PlantResponse,
-  type ProductionByTime,
   type SharingAgreementResponse,
 } from "../../api/models";
 
@@ -33,11 +32,12 @@ vi.mock(import("./usePlantInActiveCommunity"), async (importOriginal) => ({
 }));
 vi.mock(import("../../api/production/production"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useGetHourlyProduction: vi.fn(),
-  useGetDailyProduction: vi.fn(),
-  useGetMonthlyProduction: vi.fn(),
-  useGetYearlyProduction: vi.fn(),
   useGetHuaweiConfig: vi.fn(),
+}));
+// The plant's production sections have specs of their own; here they only have to stay quiet.
+vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetPlantEnergyMetrics: vi.fn(),
 }));
 vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -45,24 +45,14 @@ vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (import
 }));
 
 import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
-import {
-  getHourlyProduction,
-  getHuaweiConfig,
-  useGetDailyProduction,
-  useGetHourlyProduction,
-  useGetHuaweiConfig,
-  useGetMonthlyProduction,
-  useGetYearlyProduction,
-} from "../../api/production/production";
+import { getHuaweiConfig, useGetHuaweiConfig } from "../../api/production/production";
+import { useGetPlantEnergyMetrics } from "../../api/plants/plants";
 import { getSharingAgreements, useGetSharingAgreements } from "../../api/sharing-agreements/sharing-agreements";
 import { PlantDetailPage } from "./PlantDetailPage";
 
 const COMMUNITY_ID = "community-a";
-const PRODUCTION_HOOKS = [useGetHourlyProduction, useGetDailyProduction, useGetMonthlyProduction, useGetYearlyProduction];
 
-/** Two plants of one community, each backed by a supply of its own. */
 const PLANT_A = { id: "plant-a", supplyId: "supply-a" };
-const PLANT_B = { id: "plant-b", supplyId: "supply-b" };
 
 const ADMIN: Partial<PlantCapabilitiesResponse> = { canManage: true, canListSharingAgreements: true };
 const MEMBER: Partial<PlantCapabilitiesResponse> = {};
@@ -81,7 +71,6 @@ interface SetupOptions {
   capabilities?: Partial<PlantCapabilitiesResponse>;
   config?: ConfigRead;
   agreements?: SharingAgreementResponse[];
-  production?: ProductionByTime[] | "failed" | "loading";
   /** The plant not known yet, as on first load. */
   plantPending?: boolean;
 }
@@ -101,7 +90,6 @@ function setup({
   capabilities = ADMIN,
   config = "enabled",
   agreements = [],
-  production = [{ time: "2026-08-01T10:00:00Z", power: 4.5 }],
   plantPending = false,
 }: SetupOptions = {}) {
   vi.mocked(usePlantInActiveCommunity).mockReturnValue({
@@ -111,15 +99,6 @@ function setup({
     error: null,
     refetch: vi.fn(),
   });
-  for (const hook of PRODUCTION_HOOKS) {
-    vi.mocked(hook).mockReturnValue(
-      production === "failed"
-        ? query.error(apiError(500))
-        : production === "loading"
-          ? query.loading()
-          : query.success<typeof getHourlyProduction>(production),
-    );
-  }
   vi.mocked(useGetHuaweiConfig).mockReturnValue(
     config === "enabled"
       ? query.success<typeof getHuaweiConfig>(ENABLED)
@@ -132,6 +111,7 @@ function setup({
             : query.loading(),
   );
   vi.mocked(useGetSharingAgreements).mockReturnValue(query.success<typeof getSharingAgreements>(agreements));
+  vi.mocked(useGetPlantEnergyMetrics).mockReturnValue(query.loading());
 
   return renderWithProviders(
     <Routes>
@@ -146,17 +126,6 @@ const agreement = (id: string, name: string, status: SharingAgreementResponse["s
 
 const summary = () => screen.queryByRole("region", { name: "En esta planta" });
 const nextStep = () => screen.queryByRole("region", { name: "Siguiente paso" });
-
-/** Every production request the page set up, current and previous period, as [params, enabled]. */
-function productionRequests() {
-  return PRODUCTION_HOOKS.flatMap((hook) =>
-    vi.mocked(hook).mock.calls.map(([communityId, params, options]) => ({
-      communityId,
-      supplyId: params.supplyId,
-      enabled: options?.query?.enabled !== false,
-    })),
-  );
-}
 
 /**
  * The declarations emotion wrote for an element's own class. MUI puts them in
@@ -187,50 +156,11 @@ beforeEach(() => {
 });
 
 describe("PlantDetailPage rules (#260)", () => {
-  describe("production of the plant", () => {
-    it.each([PLANT_A, PLANT_B])(
-      "UI-PLT-001 every production request of $id carries its own supply, current and previous period",
-      (plant) => {
-        setup({ plant });
-
-        // The day view, as last rendered: the hourly request for the period
-        // and the one for the period before, both enabled.
-        const [current, previous] = vi.mocked(useGetHourlyProduction).mock.calls.slice(-2);
-        expect(current[1].supplyId).toBe(plant.supplyId);
-        expect(previous[1].supplyId).toBe(plant.supplyId);
-        expect([current[2]?.query?.enabled, previous[2]?.query?.enabled]).toEqual([true, true]);
-        expect(previous[1].endDate < current[1].startDate).toBe(true);
-        for (const request of productionRequests()) {
-          expect(request).toMatchObject({ communityId: COMMUNITY_ID, supplyId: plant.supplyId });
-        }
-      },
-    );
-
-    it("UI-PLT-001 requests no production before the plant, and so its supply, is known", () => {
-      setup({ plantPending: true });
-
-      expect(productionRequests().filter((request) => request.enabled)).toEqual([]);
-    });
-
-    it("UI-PLT-001 keeps the supply on the requests of every other period", async () => {
-      const user = userEvent.setup();
-      setup({ plant: PLANT_B });
-
-      for (const label of ["Mes", "Año", "Total", "Fechas"]) {
-        await user.click(screen.getByRole("button", { name: label }));
-      }
-
-      const enabled = productionRequests().filter((request) => request.enabled);
-      expect(enabled.length).toBeGreaterThan(2);
-      expect(enabled.every((request) => request.supplyId === PLANT_B.supplyId)).toBe(true);
-    });
-  });
-
   describe("blocks by capability", () => {
     it("UI-PLT-002 a member sees no summary, agreements, integrations or next step, and neither read is issued", () => {
       setup({ capabilities: MEMBER, config: "not-found" });
 
-      expect(screen.getByRole("heading", { name: "Producción" })).toBeVisible();
+      expect(screen.getByRole("heading", { name: "Producción por periodo" })).toBeVisible();
       expect(summary()).not.toBeInTheDocument();
       expect(nextStep()).not.toBeInTheDocument();
       expect(screen.queryByRole("heading", { name: "Acuerdos de reparto" })).not.toBeInTheDocument();
@@ -395,59 +325,6 @@ describe("PlantDetailPage rules (#260)", () => {
     });
   });
 
-  describe("a period without production", () => {
-    it.each<[string, ProductionByTime[]]>([
-      ["no rows", []],
-      ["rows without a power", [{ time: "2026-08-01T10:00:00Z" }, { time: "2026-08-01T11:00:00Z" }]],
-    ])("UI-PLT-005 shows an empty state, and no zero figure or chart, for %s", (_, production) => {
-      setup({ production });
-
-      expect(screen.getByText("No hay datos de producción para este periodo")).toBeVisible();
-      expect(screen.queryByText(/^0(,0+)? kWh$/)).not.toBeInTheDocument();
-      expect(chart).not.toHaveBeenCalled();
-    });
-
-    it("UI-PLT-005 shows a measured zero as a figure, not as an empty period", () => {
-      setup({ production: [{ time: "2026-08-01T10:00:00Z", power: 0 }] });
-
-      expect(screen.queryByText("No hay datos de producción para este periodo")).not.toBeInTheDocument();
-      expect(chart).toHaveBeenCalled();
-    });
-
-    it.each<[ConfigRead, string]>([
-      ["not-found", "La integración con Huawei de esta planta no está configurada."],
-      ["disabled", "La integración con Huawei de esta planta está desactivada."],
-    ])("UI-PLT-005 points a caller who may manage the plant to an integration read as %s", (config, text) => {
-      setup({ config, production: [] });
-
-      expect(screen.getByText(text)).toBeVisible();
-      expect(screen.getByRole("button", { name: "Ir a integraciones" })).toBeVisible();
-    });
-
-    it("UI-PLT-005 says nothing about configuration to a member", () => {
-      setup({ capabilities: MEMBER, config: "not-found", production: [] });
-
-      const main = document.body;
-      expect(screen.getByText("No hay datos de producción para este periodo")).toBeVisible();
-      expect(main).not.toHaveTextContent(/integraci|configura/i);
-    });
-
-    it("UI-PLT-005 an error is not an empty period", () => {
-      setup({ production: "failed" });
-
-      expect(screen.queryByText("No hay datos de producción para este periodo")).not.toBeInTheDocument();
-      expect(screen.queryByText(/Todavía no llegan datos/)).not.toBeInTheDocument();
-      expect(chart).not.toHaveBeenCalled();
-    });
-
-    it("UI-PLT-005 loading is not an empty period", () => {
-      setup({ production: "loading" });
-
-      expect(screen.queryByText("No hay datos de producción para este periodo")).not.toBeInTheDocument();
-      expect(screen.queryByText(/Todavía no llegan datos/)).not.toBeInTheDocument();
-    });
-  });
-
   describe("neutral setup states", () => {
     it.each<[ConfigRead, string]>([
       ["not-found", "Sin configurar"],
@@ -461,23 +338,6 @@ describe("PlantDetailPage rules (#260)", () => {
       const alertTones = [colors.error.main, colors.error.surface, colors.error.vivid, colors.warning.main, colors.warning.surface];
       expect(alertTones).not.toContain(declared.color);
       expect(alertTones).not.toContain(declared["background-color"]);
-    });
-  });
-
-  describe("the chart subtitle", () => {
-    it.each([
-      ["Día", "Producción por hora"],
-      ["Mes", "Producción por día"],
-      ["Año", "Producción por mes"],
-      ["Total", "Producción por año"],
-    ])("UI-PLT-007 the %s period is subtitled in Spanish as %s", async (label, subtitle) => {
-      const user = userEvent.setup();
-      setup();
-
-      await user.click(screen.getByRole("button", { name: label }));
-
-      expect(screen.getByRole("heading", { name: subtitle })).toBeVisible();
-      expect(document.body).not.toHaveTextContent(/Rango|\b(hour|day|month|year)\b/);
     });
   });
 });

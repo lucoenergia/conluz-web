@@ -11,6 +11,7 @@ import { routeRequests, type RequestConfig } from "../../test/requestRouter";
 import { apiError } from "../../test/apiError";
 import { buildCommunity, buildPlant, buildPlantCapabilities, buildSupplyReference } from "../../test/fixtures";
 import { VISIBLE } from "../../test/visibleText";
+import type { PlantEnergyMetricsResponse } from "../../api/models";
 
 /**
  * Editing and deleting a plant from its own detail (UI-PLT-014): both open from
@@ -65,6 +66,13 @@ const PLANT = buildPlant({
   capabilities: buildPlantCapabilities({ canRead: true, canManage: true }),
 });
 
+/** No production day yet: the period section shows its notice, and asks nothing more. */
+const NO_PRODUCTION_DAY: PlantEnergyMetricsResponse = {
+  period: { startDate: null, endDate: null },
+  energy: { productionKWh: null },
+  coverage: { hoursWithData: 0, expectedHours: 0 },
+};
+
 const page = <T,>(items: T[]) => ({ items, size: items.length, totalElements: items.length, totalPages: 1, number: 0 });
 
 function renderDetail(onDelete: () => unknown) {
@@ -80,8 +88,7 @@ function renderDetail(onDelete: () => unknown) {
       },
     },
     { method: "GET", url: new RegExp(`^${PLANT_URL}/sharing-agreements`), respond: () => [] },
-    { method: "GET", url: new RegExp(`^${PLANT_URL}/(energy-metrics|energy-series|inverter-production)`), respond: () => [] },
-    { method: "GET", url: new RegExp(`^/api/v1/communities/${COMMUNITY_ID}/production/`), respond: () => [] },
+    { method: "GET", url: `${PLANT_URL}/energy-metrics`, respond: () => NO_PRODUCTION_DAY },
     // The edit form's supply selector.
     { method: "GET", url: `/api/v1/communities/${COMMUNITY_ID}/supplies`, respond: () => page([]) },
     { method: "DELETE", url: PLANT_URL, respond: onDelete },
