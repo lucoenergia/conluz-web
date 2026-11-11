@@ -28,6 +28,7 @@ import {
   type CredentialsField,
 } from "../../utils/integrationCredentials";
 import { DISABLED_TEXT, incompleteText, isNotFound } from "../../utils/integrationStatus";
+import { isShellyEnabled } from "../../utils/featureFlags";
 import { ActionStatus } from "../../components/ActionStatus";
 
 /**
@@ -158,9 +159,12 @@ export const IntegrationsPage: FC = () => {
   // through a confirmation that names the community.
   const [pendingSaveId, setPendingSaveId] = useState<string | null>(null);
 
+  // Shelly is hidden unless the build enables it (UI-INT-015): no card, and no
+  // read of its configuration either.
+  const shellyEnabled = isShellyEnabled();
   const { data: shellyConfig, isLoading: shellyLoading } = useGetShellyConfig(
     activeCommunityId ?? "",
-    { query: { enabled: !!activeCommunityId, staleTime: CONFIG_STALE_TIME } },
+    { query: { enabled: !!activeCommunityId && shellyEnabled, staleTime: CONFIG_STALE_TIME } },
   );
   const {
     data: datadisConfig,
@@ -290,6 +294,7 @@ export const IntegrationsPage: FC = () => {
   };
 
   const cards = PROVIDERS.flatMap((provider) => {
+    if (provider.id === "shelly" && !shellyEnabled) return [];
     const save = saves[provider.id];
     return save ? [{ provider, save }] : [];
   });

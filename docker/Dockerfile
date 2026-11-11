@@ -15,6 +15,13 @@ ARG CONLUZ_API_URL="CONLUZ_API_URL"
 ARG APP_VERSION=dev
 ENV CONLUZ_APP_VERSION=$APP_VERSION
 
+# Shelly in the UI (#406), off unless built with
+# --build-arg CONLUZ_SHELLY_ENABLED=true. Inlined into the bundle by Vite at
+# build time, like CONLUZ_APP_VERSION: setting it on the running container
+# changes nothing, and docker/env.sh would rewrite any literal
+# "CONLUZ_SHELLY_ENABLED" left in the assets.
+ARG CONLUZ_SHELLY_ENABLED=false
+
 RUN npm run build
 
 FROM nginx:stable-alpine-slim AS production

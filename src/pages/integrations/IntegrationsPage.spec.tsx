@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
@@ -84,6 +84,10 @@ const card = (name: string) => screen.queryByRole("heading", { name });
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // The page as it was before Shelly went behind its flag (UI-INT-015): every
+  // spec below runs with the flag on, and proves that UI unchanged. The flag's
+  // own cases are at the end.
+  vi.stubEnv("CONLUZ_SHELLY_ENABLED", "true");
   vi.mocked(useGetDatadisConfig).mockReturnValue(
     // A stored password, so saving with the field empty is valid: the default
     // is the configured community, and the specs that need none override it.
@@ -101,6 +105,10 @@ beforeEach(() => {
   mockDisableDatadis.mockResolvedValue(undefined);
   vi.mocked(useEnableDatadisConfig).mockReturnValue(mutation.idle({ mutateAsync: mockEnableDatadis }));
   vi.mocked(useDisableDatadisConfig).mockReturnValue(mutation.idle({ mutateAsync: mockDisableDatadis }));
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 describe("IntegrationsPage", () => {
@@ -642,5 +650,35 @@ describe("the other integrations", () => {
 
     await waitFor(() => expect(mockConfigureShelly).toHaveBeenCalledTimes(1));
     expect(mockConfigureShelly.mock.calls[0][0]).toEqual({ communityId: COMMUNITY_ID, data: { enabled: false } });
+  });
+});
+
+describe("UI-INT-015 Shelly behind CONLUZ_SHELLY_ENABLED", () => {
+  const shellyReads = () =>
+    vi.mocked(useGetShellyConfig).mock.calls.filter(([, options]) => options?.query?.enabled !== false);
+
+  it.each([
+    ["unset", undefined],
+    ["set to false", "false"],
+    ["set to anything but true", "TRUE"],
+  ])("UI-INT-015 AC17 with the flag %s shows no Shelly card, and reads no Shelly configuration", (_, value) => {
+    vi.stubEnv("CONLUZ_SHELLY_ENABLED", value);
+    setup({ community: { canManage: true } });
+
+    expect(card("Datadis")).toBeInTheDocument();
+    expect(card("Shelly")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Shelly/)).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Guardar" })).toHaveLength(1);
+    expect(screen.getByText("1 de 1 integraciones activas")).toBeInTheDocument();
+    expect(shellyReads()).toHaveLength(0);
+  });
+
+  it("UI-INT-015 AC17 with the flag set to true shows the Shelly card as before, and reads its configuration", () => {
+    vi.stubEnv("CONLUZ_SHELLY_ENABLED", "true");
+    setup({ community: { canManage: true } });
+
+    expect(card("Shelly")).toBeInTheDocument();
+    expect(screen.getByText("1 de 2 integraciones activas")).toBeInTheDocument();
+    expect(shellyReads().length).toBeGreaterThan(0);
   });
 });
