@@ -76,6 +76,8 @@ const ROUTE_ACCESS: Record<string, Access> = {
   // The caller's own supplies in the active community (#247). An admin sees
   // only their own here too; the page scopes its listing to the community.
   "/historical-analysis": { require: { scope: "community", capability: "canRead" } },
+  // The community's own energy (#403): every member may read it.
+  "/community-analysis": { require: { scope: "community", capability: "canRead" } },
 
   "/communities": { require: { scope: "platform", capability: "canAdministerPlatform" } },
   // The community named in the URL as well: its admins are managed by the
