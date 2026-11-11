@@ -33,7 +33,7 @@ vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (import
 }));
 
 const PLANT_ID = "plant-42";
-const LIST = `/production/${PLANT_ID}/sharing-agreements`;
+const LIST = `/plants/${PLANT_ID}/sharing-agreements`;
 
 const data = (): SharingAgreementsData => ({
   agreements: [
@@ -83,8 +83,8 @@ describe("UI-OVL-004 creating a sharing agreement", () => {
     renderWithProviders(
       <Routes>
         <Route path="/start" element={<h1>Inicio</h1>} />
-        <Route path="/production/:plantId/sharing-agreements" element={<SharingAgreementsPage />} />
-        <Route path="/production/:plantId/sharing-agreements/:agreementId" element={<h1>Detalle del acuerdo</h1>} />
+        <Route path="/plants/:plantId/sharing-agreements" element={<SharingAgreementsPage />} />
+        <Route path="/plants/:plantId/sharing-agreements/:agreementId" element={<h1>Detalle del acuerdo</h1>} />
       </Routes>,
       { browserHistory: true, activeCommunityId: "TEST-COMMUNITY-ID" },
     );

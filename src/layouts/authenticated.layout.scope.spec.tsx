@@ -65,7 +65,7 @@ function renderAt(route: string) {
         <Route index element={<p>Página de inicio</p>} />
         {/* Where a community member lands from "/", as in App.tsx. */}
         <Route path="home" element={<p>Inicio de la comunidad</p>} />
-        <Route path="production" element={<p>Página de producción</p>} />
+        <Route path="plants" element={<p>Página de producción</p>} />
         <Route path="platform-admins" element={<p>Página de administradores de plataforma</p>} />
         <Route path="profile" element={<p>Página de perfil</p>} />
         <Route path="no-community" element={<p>Sin comunidad</p>} />
@@ -109,7 +109,7 @@ afterEach(() => setViewportWidth(originalWidth));
 describe("AuthenticatedLayout — the page scope is stated exactly once (AC4)", () => {
   test("AC1: desktop with the menu open states the community in the menu header and renders no strip", () => {
     setViewportWidth(1440);
-    renderAt("/production");
+    renderAt("/plants");
 
     const surfaces = screen.getAllByRole("region", SCOPE);
     expect(surfaces).toHaveLength(1);
@@ -121,7 +121,7 @@ describe("AuthenticatedLayout — the page scope is stated exactly once (AC4)", 
   test("AC2: closing the menu moves the statement to a strip under the app bar, with the switch control", async () => {
     const user = userEvent.setup();
     setViewportWidth(1440);
-    renderAt("/production");
+    renderAt("/plants");
 
     await user.click(screen.getByRole("button", { name: "menu" }));
 

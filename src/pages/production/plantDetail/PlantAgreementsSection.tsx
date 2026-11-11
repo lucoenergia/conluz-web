@@ -20,7 +20,7 @@ const AgreementLink: FC<{ plantId: string; agreement: SharingAgreementResponse }
   <Box component="li">
     <Link
       component={RouterLink}
-      to={`/production/${plantId}/sharing-agreements/${agreement.id}`}
+      to={`/plants/${plantId}/sharing-agreements/${agreement.id}`}
       underline="none"
       sx={{
         display: "flex",
@@ -79,7 +79,7 @@ export const PlantAgreementsSection: FC<{ plant: PlantResponse }> = ({ plant }) 
       )}
       <Link
         component={RouterLink}
-        to={`/production/${plant.id}/sharing-agreements`}
+        to={`/plants/${plant.id}/sharing-agreements`}
         sx={{ mt: 2, alignSelf: "flex-start", display: "inline-flex", alignItems: "center", minHeight: 44, fontWeight: 600 }}
       >
         Ver todos los acuerdos

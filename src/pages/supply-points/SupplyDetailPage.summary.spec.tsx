@@ -241,7 +241,7 @@ describe("UI-SUP-012 the detail header tags a plant's own supply (#252)", () => 
 
     expect(screen.getByRole("link", { name: "Punto de planta: ver la planta Planta Polideportivo" })).toHaveAttribute(
       "href",
-      "/production/plant-1",
+      "/plants/plant-1",
     );
   });
 

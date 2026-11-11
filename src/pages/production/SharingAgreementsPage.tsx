@@ -113,7 +113,7 @@ export const SharingAgreementsPage: FC = () => {
     // correct (the list, showing the new agreement) instead of a route
     // containing the literal string "undefined".
     if (response.id) {
-      navigate(`/production/${plantId}/sharing-agreements/${response.id}`);
+      navigate(`/plants/${plantId}/sharing-agreements/${response.id}`);
     }
   };
 
@@ -141,8 +141,8 @@ export const SharingAgreementsPage: FC = () => {
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
-            { label: "Producción", href: "/production" },
-            { label: "Planta", href: `/production/${plantId}` },
+            { label: "Plantas", href: "/plants" },
+            { label: "Planta", href: `/plants/${plantId}` },
             { label: "Acuerdos de reparto", href: "#" },
           ]}
         />

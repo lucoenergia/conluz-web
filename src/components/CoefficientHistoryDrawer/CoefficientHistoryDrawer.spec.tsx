@@ -199,7 +199,7 @@ describe("CoefficientHistoryDrawer — reachable from every agreement status", (
 
     expect(await screen.findByRole("link", { name: "Reparto 2023" })).toHaveAttribute(
       "href",
-      `/production/${PLANT_ID}/sharing-agreements/sa-2023`,
+      `/plants/${PLANT_ID}/sharing-agreements/sa-2023`,
     );
   });
 

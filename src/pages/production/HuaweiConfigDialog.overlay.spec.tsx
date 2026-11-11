@@ -66,9 +66,9 @@ const plant = buildPlant({ id: PLANT_ID, capabilities: buildPlantCapabilities({ 
 async function renderSection() {
   renderWithProviders(
     <Routes>
-      <Route path="/production/:plantId" element={<PlantIntegrationsSection plant={plant} />} />
+      <Route path="/plants/:plantId" element={<PlantIntegrationsSection plant={plant} />} />
     </Routes>,
-    { route: `/production/${PLANT_ID}` },
+    { route: `/plants/${PLANT_ID}` },
   );
   await screen.findByRole("button", { name: /^(Configurar|Editar)$/ });
 }
@@ -216,11 +216,11 @@ describe.each(["create", "edit"] as const)("UI-OVL-003 the Huawei configuration 
 describe("UI-OVL-004 back closes the Huawei configuration, not the plant detail page", () => {
   async function renderRouted() {
     window.history.replaceState(null, "", "/start");
-    window.history.pushState(null, "", `/production/${PLANT_ID}`);
+    window.history.pushState(null, "", `/plants/${PLANT_ID}`);
     renderWithProviders(
       <Routes>
         <Route path="/start" element={<p>Inicio</p>} />
-        <Route path="/production/:plantId" element={<PlantIntegrationsSection plant={plant} />} />
+        <Route path="/plants/:plantId" element={<PlantIntegrationsSection plant={plant} />} />
       </Routes>,
       { browserHistory: true },
     );
@@ -236,7 +236,7 @@ describe("UI-OVL-004 back closes the Huawei configuration, not the plant detail 
     await pressBack();
 
     await waitFor(() => expect(screen.queryByRole("dialog", { hidden: true })).not.toBeInTheDocument());
-    expect(window.location.pathname).toBe(`/production/${PLANT_ID}`);
+    expect(window.location.pathname).toBe(`/plants/${PLANT_ID}`);
     expect(screen.getByRole("region", { name: "Huawei" })).toBeInTheDocument();
     expect(hasOverlayEntry()).toBe(false);
   });
@@ -249,7 +249,7 @@ describe("UI-OVL-004 back closes the Huawei configuration, not the plant detail 
 
     await u.click(within(dialog).getByRole("button", { name: "Cancelar" }));
     await act(() => overlayHistorySettled());
-    expect(window.location.pathname).toBe(`/production/${PLANT_ID}`);
+    expect(window.location.pathname).toBe(`/plants/${PLANT_ID}`);
     expect(hasOverlayEntry()).toBe(false);
 
     await pressBack();

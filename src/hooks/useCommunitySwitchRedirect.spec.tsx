@@ -42,8 +42,8 @@ const Harness: FC = () => {
 };
 
 function expectLocation(expected: string): void {
-  // Exact, not toHaveTextContent: that matches substrings, so "/production"
-  // would happily pass while still sitting on "/production/plant-a".
+  // Exact, not toHaveTextContent: that matches substrings, so "/plants"
+  // would happily pass while still sitting on "/plants/plant-a".
   expect(screen.getByTestId("location").textContent).toBe(expected);
 }
 
@@ -64,27 +64,27 @@ function renderAt(initialEntry: string, communityId: string | null): { rerenderW
 
 describe("useCommunitySwitchRedirect", () => {
   it("does not redirect on mount, even standing on a foreign-looking entity route", () => {
-    renderAt("/production/plant-a/sharing-agreements/agreement-1", "community-a");
+    renderAt("/plants/plant-a/sharing-agreements/agreement-1", "community-a");
 
     expect(screen.getByTestId("page")).toBeInTheDocument();
-    expectLocation("/production/plant-a/sharing-agreements/agreement-1");
+    expectLocation("/plants/plant-a/sharing-agreements/agreement-1");
   });
 
   // The provider starts at null and resolves the persisted / single-membership
   // community in an effect. Treating that as a switch would bounce every deep
   // link back to the section index on first load.
   it("does not redirect when the provider resolves the community from null on first load", () => {
-    const { rerenderWith } = renderAt("/production/plant-a", null);
+    const { rerenderWith } = renderAt("/plants/plant-a", null);
     rerenderWith("community-a");
 
-    expectLocation("/production/plant-a");
+    expectLocation("/plants/plant-a");
   });
 
   it("redirects to the plants list when the community changes under a plant route", () => {
-    const { rerenderWith } = renderAt("/production/plant-a/sharing-agreements/agreement-1", "community-a");
+    const { rerenderWith } = renderAt("/plants/plant-a/sharing-agreements/agreement-1", "community-a");
     rerenderWith("community-b");
 
-    expectLocation("/production");
+    expectLocation("/plants");
   });
 
   it("redirects to the supplies list when the community changes under a supply route", () => {
@@ -97,10 +97,10 @@ describe("useCommunitySwitchRedirect", () => {
   // Losing the active community (a persisted id that is no longer a membership)
   // strands the user on the same foreign entity as a switch does.
   it("redirects when the community changes to null", () => {
-    const { rerenderWith } = renderAt("/production/plant-a", "community-a");
+    const { rerenderWith } = renderAt("/plants/plant-a", "community-a");
     rerenderWith(null);
 
-    expectLocation("/production");
+    expectLocation("/plants");
   });
 
   it("stays put when the route is community-agnostic", () => {
@@ -111,11 +111,11 @@ describe("useCommunitySwitchRedirect", () => {
   });
 
   it("clears the pending redirect once it has landed, so the page mounts again", () => {
-    const { rerenderWith } = renderAt("/production/plant-a", "community-a");
+    const { rerenderWith } = renderAt("/plants/plant-a", "community-a");
     rerenderWith("community-b");
 
     expect(screen.getByTestId("page")).toBeInTheDocument();
-    expectLocation("/production");
+    expectLocation("/plants");
   });
 
   it("redirects again on a second switch", () => {
@@ -142,7 +142,7 @@ describe("useCommunitySwitchRedirect when the previous community was lost (#237)
 
   it("UI-ENT-007 sends a page about one of its plants to the landing, not to the plants list", () => {
     memberOnlyOf("community-a", "community-b");
-    const { rerenderWith } = renderAt("/production/plant-a/sharing-agreements", "community-a");
+    const { rerenderWith } = renderAt("/plants/plant-a/sharing-agreements", "community-a");
 
     memberOnlyOf("community-b");
     rerenderWith("community-b");

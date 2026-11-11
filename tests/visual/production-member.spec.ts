@@ -33,8 +33,8 @@ test.describe("Visual baselines", () => {
     await mockAllApiRoutes(page, FIXED_MEMBER_USER);
     await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS, FIXED_MEMBER_USER);
 
-    await page.goto("/production");
-    await expect(page.getByRole("heading", { level: 1, name: "Producción" })).toBeVisible();
+    await page.goto("/plants");
+    await expect(page.getByRole("heading", { level: 1, name: "Plantas" })).toBeVisible();
     await stabilizePage(page);
 
     // Layout subject: the main region, with the app bar hidden (see mainRegion).

@@ -7,7 +7,7 @@
  * chrome itself: a change to the header or the menu should fail here, once
  * per viewport, rather than in every page baseline.
  *
- * The page is /production as a community admin: an authenticated page the
+ * The page is /plants as a community admin: an authenticated page the
  * fixtures already serve, and the role whose menu carries the most sections.
  */
 
@@ -50,7 +50,7 @@ async function openProductionAsCommunityAdmin(page: Page) {
   await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
   await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
 
-  await page.goto("/production");
+  await page.goto("/plants");
   // Rendered content first, then stabilize: networkidle alone can fire while
   // the lazy route is still behind its Suspense fallback.
   // The plant's name link: its row's title in the stacked list and its name

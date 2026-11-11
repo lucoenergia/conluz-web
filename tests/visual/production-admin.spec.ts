@@ -34,7 +34,7 @@ test.describe("Visual baselines", () => {
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockPlantDetailRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
 
-    await page.goto("/production");
+    await page.goto("/plants");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     // The subject is the empty list: a fixture that starts serving plants
     // fails here rather than becoming a plausible baseline.
@@ -57,7 +57,7 @@ test.describe("Visual baselines", () => {
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockPlantDetailRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
 
-    await page.goto("/production");
+    await page.goto("/plants");
     await page.getByRole("button", { name: "Nueva Planta" }).click();
     const dialog = page.getByRole("dialog", { name: /^Crear planta en / });
     // The action has been handed out: a capture of a form that cannot submit would look plausible.
@@ -99,7 +99,7 @@ test.describe("Visual baselines", () => {
         }),
     );
 
-    await page.goto("/production");
+    await page.goto("/plants");
     await page.getByRole("button", { name: `Más acciones para ${FIXED_PLANT.name}` }).click();
     await page.getByRole("menuitem", { name: "Editar" }).click();
     const dialog = page.getByRole("dialog", { name: "Editar planta" });

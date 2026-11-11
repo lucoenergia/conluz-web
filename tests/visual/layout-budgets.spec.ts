@@ -133,13 +133,13 @@ test.describe("Visual baselines", () => {
    */
   const LIST_PAGES: { name: string; open: (page: Page) => Promise<void> }[] = [
     {
-      name: "/production",
+      name: "/plants",
       open: async (page) => {
         await injectAuthToken(page);
         await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
         await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
         await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
-        await page.goto("/production");
+        await page.goto("/plants");
         await stabilizePage(page);
       },
     },
@@ -237,14 +237,14 @@ test.describe("Visual baselines", () => {
    * counters, the shortest header of the eight, and the one whose old version
    * spent three rows on a single column of stats.
    */
-  test("AC2: the /production list header is at most 140px at 390px", async ({ page }, testInfo) => {
+  test("AC2: the /plants list header is at most 140px at 390px", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "mobile", "The 140px budget is specified against a 390px viewport.");
 
     await LIST_PAGES[0].open(page);
 
     const box = await page.getByTestId("list-header").boundingBox();
     testInfo.annotations.push({ type: "production list header height", description: `${box?.height}px` });
-    console.log(`AC2 /production list header height: ${box?.height}px`);
+    console.log(`AC2 /plants list header height: ${box?.height}px`);
     expect(box?.height).toBeLessThanOrEqual(140);
   });
 
@@ -912,7 +912,7 @@ test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side me
       },
     },
     {
-      name: "/production",
+      name: "/plants",
       // The CAU, the power and the connection date have columns of their own;
       // the inverter sits under the name, so the name keeps room to be read.
       minNameWidth: 180,
@@ -929,14 +929,14 @@ test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side me
               body: JSON.stringify({ ...PAGED_PLANTS, items: longPlants, totalElements: longPlants.length }),
             }),
         );
-        await page.goto("/production");
+        await page.goto("/plants");
         // The long rows, not the shared fixture: a budget over the wrong rows proves nothing.
         await expect(page.getByRole("link", { name: longPlants[0].name })).toBeVisible();
         await expect(page.getByText("Sin fecha de conexión")).toBeVisible();
       },
     },
     {
-      name: "/production/:plantId/sharing-agreements",
+      name: "/plants/:plantId/sharing-agreements",
       // The status, the power and the date have columns of their own; the file
       // and the notes sit under the name, so the name keeps room to be read.
       minNameWidth: 180,
@@ -944,7 +944,7 @@ test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side me
         await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
         await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
         await mockSharingAgreementsPlantRoutes(page, longAgreements);
-        await page.goto(`/production/${FIXED_PLANT_ID}/sharing-agreements`);
+        await page.goto(`/plants/${FIXED_PLANT_ID}/sharing-agreements`);
         // The long rows, not the shared fixture: a budget over the wrong rows proves nothing.
         await expect(page.getByRole("link", { name: longAgreements[0].name })).toBeVisible();
         await expect(page.getByText("Sin fichero").first()).toBeVisible();

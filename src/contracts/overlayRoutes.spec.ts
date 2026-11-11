@@ -48,7 +48,7 @@ describe("UI-OVL-008 no route for a create or edit flow", () => {
 
   it("UI-OVL-008 tells a create or edit path from a list or a detail path", () => {
     expect(
-      ["/things/new", "/things/:thingId/edit", "/news", "/members", "/production/:plantId"].map(
+      ["/things/new", "/things/:thingId/edit", "/news", "/members", "/plants/:plantId"].map(
         isCreateOrEditPath,
       ),
     ).toEqual([true, true, false, false, false]);

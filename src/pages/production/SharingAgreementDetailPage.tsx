@@ -109,7 +109,7 @@ export const SharingAgreementDetailPage: FC = () => {
     if (!remove) return;
     const success = await remove.run();
     // Replacing this page: one back must not land on an agreement that is gone.
-    if (success) navigate(`/production/${plantId}/sharing-agreements`, { replace: true });
+    if (success) navigate(`/plants/${plantId}/sharing-agreements`, { replace: true });
   };
 
   /**
@@ -160,9 +160,9 @@ export const SharingAgreementDetailPage: FC = () => {
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
-            { label: "Producción", href: "/production" },
-            { label: plant?.name || "Planta", href: `/production/${plantId}` },
-            { label: "Acuerdos de Reparto", href: `/production/${plantId}/sharing-agreements` },
+            { label: "Plantas", href: "/plants" },
+            { label: plant?.name || "Planta", href: `/plants/${plantId}` },
+            { label: "Acuerdos de Reparto", href: `/plants/${plantId}/sharing-agreements` },
             { label: agreement?.name || "Detalle", href: "#" },
           ]}
         />

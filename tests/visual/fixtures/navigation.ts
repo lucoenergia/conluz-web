@@ -19,7 +19,7 @@ import {
 import { waitForPageSettled } from "./test";
 
 export async function navigateToSharingAgreements(page: Page) {
-  await page.goto("/production");
+  await page.goto("/plants");
 
   // Waited for BEFORE stabilizing, not after. `stabilizePage` settles on
   // `networkidle`, which is not a "the app has rendered" signal: every page is
@@ -95,7 +95,7 @@ export async function openPlantDetail(
   // fall to mockPlantDetailRoutes and come back as the plant itself.
   await mockHuaweiConfigRoutes(page, { ...huawei, currentUser });
 
-  await page.goto(`/production/${FIXED_PLANT_ID}`);
+  await page.goto(`/plants/${FIXED_PLANT_ID}`);
   await expect(page.getByRole("heading", { level: 1, name: FIXED_PLANT.name })).toBeVisible();
   await stabilizePage(page);
 }

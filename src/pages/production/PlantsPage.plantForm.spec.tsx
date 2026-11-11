@@ -173,11 +173,11 @@ function serve({ community = ADMIN_COMMUNITY, plants: initial = [NORTE, SUR], pl
 /** The list on the real address bar, arrived at from "/start". */
 async function renderPage() {
   window.history.replaceState(null, "", "/start");
-  window.history.pushState(null, "", "/production");
+  window.history.pushState(null, "", "/plants");
   const rendered = renderWithProviders(
     <Routes>
       <Route path="/start" element={<p>Inicio</p>} />
-      <Route path="/production" element={<PlantsPage />} />
+      <Route path="/plants" element={<PlantsPage />} />
     </Routes>,
     { browserHistory: true, activeCommunityId: COMMUNITY_ID },
   );
@@ -248,7 +248,7 @@ describe("UI-PLS-004 the plant forms open over the plant list", () => {
 
     const dialog = await openCreate(u);
 
-    expect(window.location.pathname).toBe("/production");
+    expect(window.location.pathname).toBe("/plants");
     expect(field(dialog, "Código de proveedor")).toHaveValue("");
     expect(field(dialog, "Nombre")).toHaveValue("");
     // The list is still there, under the overlay.
@@ -258,13 +258,13 @@ describe("UI-PLS-004 the plant forms open over the plant list", () => {
   it("UI-PLS-004 the empty list's Crear Planta opens the create form", async () => {
     const u = userEvent.setup();
     serve({ plants: [] });
-    window.history.replaceState(null, "", "/production");
+    window.history.replaceState(null, "", "/plants");
     renderWithProviders(<PlantsPage />, { browserHistory: true, activeCommunityId: COMMUNITY_ID });
 
     await u.click(await screen.findByRole("button", { name: "Crear Planta" }));
 
     expect(await screen.findByRole("dialog", { name: CREATE_TITLE })).toBeInTheDocument();
-    expect(window.location.pathname).toBe("/production");
+    expect(window.location.pathname).toBe("/plants");
   });
 
   it("UI-PLS-004 Editar on a row opens the edit form with that plant's values, not another row's", async () => {
@@ -274,7 +274,7 @@ describe("UI-PLS-004 the plant forms open over the plant list", () => {
 
     const dialog = await openEdit(u, "Planta Sur");
 
-    expect(window.location.pathname).toBe("/production");
+    expect(window.location.pathname).toBe("/plants");
     expect(field(dialog, "Código de proveedor")).toHaveValue("NE=2");
     expect(field(dialog, "CAU")).toHaveValue("CAU-2");
     expect(field(dialog, "Nombre")).toHaveValue("Planta Sur");
@@ -313,7 +313,7 @@ describe("UI-PLS-004 the plant forms open over the plant list", () => {
     await dialogGone();
     expect(await screen.findByText("Planta Este")).toBeInTheDocument();
     expect(requestsTo(router, "POST", "/api/v1/plants")).toHaveLength(1);
-    expect(window.location.pathname).toBe("/production");
+    expect(window.location.pathname).toBe("/plants");
   });
 
   it("UI-PLS-004 offers neither form to a caller without the capabilities", async () => {
@@ -335,7 +335,7 @@ describe("UI-PLS-004 the plant forms open over the plant list", () => {
 
   it("UI-PLS-004 the empty list offers no Crear Planta to a caller who may not create plants", async () => {
     serve({ community: MEMBER_COMMUNITY, plants: [] });
-    window.history.replaceState(null, "", "/production");
+    window.history.replaceState(null, "", "/plants");
     renderWithProviders(<PlantsPage />, { browserHistory: true, activeCommunityId: COMMUNITY_ID });
 
     expect(await screen.findByText("Todavía no hay ninguna planta de producción en esta comunidad.")).toBeInTheDocument();
@@ -409,7 +409,7 @@ describe("UI-OVL-002 a plant form holding its save stays open", () => {
       await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
       const writes = router.requests.filter((r) => ["POST", "PUT"].includes((r.method ?? "").toUpperCase()));
       expect(writes).toHaveLength(1);
-      expect(window.location.pathname).toBe("/production");
+      expect(window.location.pathname).toBe("/plants");
     },
   );
 });
@@ -460,7 +460,7 @@ describe("UI-OVL-004 back closes a plant form, not the list", () => {
     await pressBack();
 
     await dialogGone();
-    expect(window.location.pathname).toBe("/production");
+    expect(window.location.pathname).toBe("/plants");
     expect(screen.getByText("Planta Norte")).toBeInTheDocument();
     expect(hasOverlayEntry()).toBe(false);
   });
@@ -474,7 +474,7 @@ describe("UI-OVL-004 back closes a plant form, not the list", () => {
     await u.click(within(dialog).getByRole("button", { name: "Cancelar" }));
     await dialogGone();
     await act(() => overlayHistorySettled());
-    expect(window.location.pathname).toBe("/production");
+    expect(window.location.pathname).toBe("/plants");
     expect(hasOverlayEntry()).toBe(false);
 
     await pressBack();

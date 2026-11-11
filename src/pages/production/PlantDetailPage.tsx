@@ -338,7 +338,7 @@ export const PlantDetailPage: FC = () => {
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
-            { label: "Producción", href: "/production" },
+            { label: "Plantas", href: "/plants" },
             { label: plant?.name || plantId, href: "#" },
           ]}
         />

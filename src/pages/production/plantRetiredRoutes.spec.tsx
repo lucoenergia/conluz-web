@@ -96,12 +96,12 @@ describe("an old plant edit link", () => {
     const router = routeRequests(token ? [{ method: "GET", url: "/api/v1/users/current", respond: () => ADMIN }] : []);
     mockCustomInstance.mockImplementation(router.handle);
 
-    renderAppAt("/production/plant-1/edit", token);
+    renderAppAt("/plants/plant-1/edit", token);
 
     expect(await screen.findByRole("heading", { level: 1, name: "Esta página no existe" })).toBeInTheDocument();
     await settle();
     expectNoPlantForm();
-    expect(currentPath()).toBe("/production/plant-1/edit");
+    expect(currentPath()).toBe("/plants/plant-1/edit");
     // Not read as the detail page of a plant called "plant-1".
     expect(router.requests.some((r) => r.url?.startsWith("/api/v1/plants/"))).toBe(false);
   });
@@ -127,11 +127,11 @@ describe("an old plant create link", () => {
     ]);
     mockCustomInstance.mockImplementation(router.handle);
 
-    renderAppAt("/production/new", "a-token");
+    renderAppAt("/plants/new", "a-token");
 
     expect(await screen.findByRole("heading", { name: "Planta no encontrada" })).toBeInTheDocument();
     await settle();
     expectNoPlantForm();
-    expect(currentPath()).toBe("/production/new");
+    expect(currentPath()).toBe("/plants/new");
   });
 });

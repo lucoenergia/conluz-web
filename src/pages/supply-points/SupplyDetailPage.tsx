@@ -40,10 +40,10 @@ export const SupplyDetailPage: FC = () => {
   // Each navigation here leaves the page as an overlay closes (UI-OVL-004).
   const navigate = useOverlayNavigate();
   // A plant opens to any reader of its community -- the same canRead the
-  // /production routes require -- and the plant reference carries no
+  // /plants routes require -- and the plant reference carries no
   // capabilities of its own, so the tag links on the community's answer.
   const canOpenPlants = useActiveCommunityCapabilities("canRead").state === "allowed";
-  const plantHref = canOpenPlants && supplyPoint?.plant ? `/production/${supplyPoint.plant.id}` : undefined;
+  const plantHref = canOpenPlants && supplyPoint?.plant ? `/plants/${supplyPoint.plant.id}` : undefined;
 
   useEffect(() => {
     if (supplyPointError)

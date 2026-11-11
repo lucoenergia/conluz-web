@@ -135,9 +135,9 @@ function setup({
 
   return renderWithProviders(
     <Routes>
-      <Route path="/production/:plantId" element={<PlantDetailPage />} />
+      <Route path="/plants/:plantId" element={<PlantDetailPage />} />
     </Routes>,
-    { route: `/production/${plant.id}`, activeCommunityId: COMMUNITY_ID },
+    { route: `/plants/${plant.id}`, activeCommunityId: COMMUNITY_ID },
   );
 }
 
@@ -335,9 +335,9 @@ describe("PlantDetailPage rules (#260)", () => {
       const section = screen.getByRole("region", { name: "Acuerdos de reparto" });
       const links = within(section).getAllByRole("link");
       expect(links.map((link) => link.getAttribute("href"))).toEqual([
-        `/production/${PLANT_A.id}/sharing-agreements/a-1`,
-        `/production/${PLANT_A.id}/sharing-agreements/a-3`,
-        `/production/${PLANT_A.id}/sharing-agreements`,
+        `/plants/${PLANT_A.id}/sharing-agreements/a-1`,
+        `/plants/${PLANT_A.id}/sharing-agreements/a-3`,
+        `/plants/${PLANT_A.id}/sharing-agreements`,
       ]);
       expect(links[0]).toHaveTextContent("Reparto 2026");
       expect(links[0]).toHaveTextContent("Vigente");

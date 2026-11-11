@@ -42,7 +42,7 @@ describe("SideMenu visibility", () => {
     shows("Inicio");
     shows("Mi consumo y ahorro");
     shows("Energía de la comunidad");
-    shows("Producción");
+    shows("Plantas");
     shows("Puntos de suministro");
     hides("Miembros");
     hides("Integraciones");
@@ -76,7 +76,7 @@ describe("SideMenu visibility", () => {
     setup(menuFor(MEMBER));
     const entries = within(screen.getByRole("list", { name: "Comunidad" })).getAllByRole("link");
 
-    expect(entries.map((entry) => entry.textContent)).toEqual(["Inicio", "Mi consumo y ahorro", "Energía de la comunidad", "Producción", "Puntos de suministro"]);
+    expect(entries.map((entry) => entry.textContent)).toEqual(["Inicio", "Mi consumo y ahorro", "Energía de la comunidad", "Plantas", "Puntos de suministro"]);
     expect(entries[1]).toHaveAttribute("href", "/historical-analysis");
   });
 
@@ -140,7 +140,7 @@ describe("SideMenu visibility", () => {
 
     expect(screen.getByText("Comunidad")).toBeVisible();
     expect(screen.getByText("Plataforma")).toBeVisible();
-    for (const label of ["Inicio", "Mi consumo y ahorro", "Producción", "Puntos de suministro", "Miembros", "Integraciones"]) {
+    for (const label of ["Inicio", "Mi consumo y ahorro", "Plantas", "Puntos de suministro", "Miembros", "Integraciones"]) {
       expect(within(community).getByText(label)).toBeInTheDocument();
     }
     for (const label of ["Comunidades", "Administradores de plataforma"]) {

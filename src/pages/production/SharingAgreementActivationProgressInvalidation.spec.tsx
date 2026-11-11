@@ -132,9 +132,9 @@ describe("Activating the last pending coefficient — the refetch hides the appl
     const user = userEvent.setup();
     renderWithProviders(
       <Routes>
-        <Route path="/production/:plantId/sharing-agreements/:sharingAgreementId" element={<SharingAgreementDetailPage />} />
+        <Route path="/plants/:plantId/sharing-agreements/:sharingAgreementId" element={<SharingAgreementDetailPage />} />
       </Routes>,
-      { route: `/production/${PLANT_ID}/sharing-agreements/${AGREEMENT_ID}`, activeCommunityId: COMMUNITY_ID },
+      { route: `/plants/${PLANT_ID}/sharing-agreements/${AGREEMENT_ID}`, activeCommunityId: COMMUNITY_ID },
     );
 
     // The closed row counts as applied: 2 of 3 before the activation.

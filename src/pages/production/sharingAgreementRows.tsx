@@ -37,7 +37,7 @@ export function offersSharingAgreementRowActions(
 }
 
 export const sharingAgreementHref = (plantId: string) => (agreement: SharingAgreementResponse) =>
-  `/production/${plantId}/sharing-agreements/${agreement.id}`;
+  `/plants/${plantId}/sharing-agreements/${agreement.id}`;
 
 /** The last edit, or the creation when it was never edited, as its label and its date. */
 const editedParts = (agreement: SharingAgreementResponse) =>

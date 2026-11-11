@@ -146,12 +146,12 @@ function setup(plantId = "plant-1", sharingAgreementId = "agreement-1") {
   renderWithProviders(
     <Routes>
       <Route
-        path="/production/:plantId/sharing-agreements/:sharingAgreementId"
+        path="/plants/:plantId/sharing-agreements/:sharingAgreementId"
         element={<SharingAgreementDetailPage />}
       />
     </Routes>,
     {
-      route: `/production/${plantId}/sharing-agreements/${sharingAgreementId}`,
+      route: `/plants/${plantId}/sharing-agreements/${sharingAgreementId}`,
       activeCommunityId: "TEST-COMMUNITY-ID",
     },
   );
@@ -430,7 +430,7 @@ describe("SharingAgreementDetailPage", () => {
     // The destination only: as the dialog closes, the navigation takes the
     // overlay's history entry (useOverlayNavigate), with the options that implies.
     expect(mockNavigate).toHaveBeenCalledTimes(1);
-    expect(mockNavigate.mock.calls[0][0]).toBe("/production/plant-1/sharing-agreements");
+    expect(mockNavigate.mock.calls[0][0]).toBe("/plants/plant-1/sharing-agreements");
   });
 
   test("does not navigate away when delete fails", async () => {

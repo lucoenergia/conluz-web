@@ -64,7 +64,7 @@ describe("resolvePageScope", () => {
   test("reads the route table (guards the parser itself)", () => {
     const paths = authenticatedPaths();
     expect(paths).toContain("/");
-    expect(paths).toContain("/production/sample-id/sharing-agreements/sample-id");
+    expect(paths).toContain("/plants/sample-id/sharing-agreements/sample-id");
     expect(paths).toContain("/communities/sample-id/admins");
     expect(paths).toContain("/contact");
     expect(paths).not.toContain("/login");
@@ -80,9 +80,9 @@ describe("resolvePageScope", () => {
     ["/home", "community"],
     ["/home/member", "community"],
     ["/home/management", "community"],
-    ["/production", "community"],
-    ["/production/p-1", "community"],
-    ["/production/p-1/sharing-agreements/a-1", "community"],
+    ["/plants", "community"],
+    ["/plants/p-1", "community"],
+    ["/plants/p-1/sharing-agreements/a-1", "community"],
     ["/supply-points", "community"],
     ["/supply-points/s-1", "community"],
     ["/members", "community"],

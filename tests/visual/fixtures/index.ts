@@ -39,7 +39,7 @@
  *                                /communities/:id/admins, /platform-admins
  *   FIXED_NO_COMMUNITY_USER    → /no-community (asserts the screen renders correctly)
  *
- * The sharing-agreement specs still navigate by clicking from /production rather
+ * The sharing-agreement specs still navigate by clicking from /plants rather
  * than by a cold page.goto. That is now a convenience, not a requirement:
  * CapabilityRoute waits for the capability answer, so a deep link lands.
  */

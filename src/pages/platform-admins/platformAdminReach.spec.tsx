@@ -249,9 +249,9 @@ describe("a platform admin with no membership", () => {
     // over this list (#372), so it is also the way into GET /supplies/{id}
     // and the community's memberships.
     ["the supplies, where a supply is created and edited", "/supply-points"],
-    ["the plants", "/production"],
+    ["the plants", "/plants"],
     // GET /plants/{id}
-    ["a plant", "/production/plant-1"],
+    ["a plant", "/plants/plant-1"],
   ])("UI-PAD-008 cannot open %s by URL, and is sent to the platform overview", async (_, url) => {
     const router = servePlatformAdmin();
     renderAppAt(url);
@@ -272,7 +272,7 @@ describe("a platform admin with no membership", () => {
     const platformSection = await screen.findByRole("list", { name: "Plataforma" });
     expect(platformSection).toHaveTextContent("Comunidades");
     expect(platformSection).toHaveTextContent("Administradores de plataforma");
-    for (const label of ["Usuarios", "Miembros", "Mi consumo y ahorro", "Puntos de suministro", "Producción", "Integraciones"]) {
+    for (const label of ["Usuarios", "Miembros", "Mi consumo y ahorro", "Puntos de suministro", "Plantas", "Integraciones"]) {
       expect(screen.queryByRole("link", { name: label })).not.toBeInTheDocument();
     }
   });
@@ -315,7 +315,7 @@ describe("a member of the community", () => {
   ])("still reaches the supplies and the plants as %s", async (_, role) => {
     const caller = buildCurrentUser({ id: "u-ana", fullName: "Ana Sánchez", memberships: { [COMMUNITY_ID]: role } });
 
-    for (const path of ["/supply-points", "/supply-points/supply-1", "/production", "/production/plant-1"]) {
+    for (const path of ["/supply-points", "/supply-points/supply-1", "/plants", "/plants/plant-1"]) {
       const router = routeRequests([
         { method: "GET", url: "/api/v1/users/current", respond: () => caller },
         { method: "GET", url: "/api/v1/communities", respond: () => [MEMBER_VIEW] },

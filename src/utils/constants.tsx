@@ -65,7 +65,7 @@ export const MENU_SECTIONS: MenuSection[] = [
       { to: "/home", id: "home", icon: HomeRoundedIcon, label: "Inicio", requires: COMMUNITY_READ },
       { to: "/historical-analysis", id: "historical-analysis", icon: InsightsRoundedIcon, label: "Mi consumo y ahorro", requires: COMMUNITY_READ },
       { to: "/community-analysis", id: "community-analysis", icon: GroupsRoundedIcon, label: "Energía de la comunidad", requires: COMMUNITY_READ },
-      { to: "/production", id: "production", icon: SolarPowerRoundedIcon, label: "Producción", requires: COMMUNITY_READ },
+      { to: "/plants", id: "plants", icon: SolarPowerRoundedIcon, label: "Plantas", requires: COMMUNITY_READ },
       { to: "/supply-points", id: "supply-points", icon: ElectricBoltRoundedIcon, label: "Puntos de suministro", requires: COMMUNITY_READ },
       { to: "/members", id: "members", icon: PeopleRoundedIcon, label: "Miembros", requires: { scope: "community", capability: "canManageMemberships" } },
       { to: "/integrations", id: "integrations", icon: ExtensionRoundedIcon, label: "Integraciones", requires: { scope: "community", capability: "canManage" } },

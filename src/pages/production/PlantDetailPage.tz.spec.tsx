@@ -70,9 +70,9 @@ function setup(series: {
 
   return renderWithProviders(
     <Routes>
-      <Route path="/production/:plantId" element={<PlantDetailPage />} />
+      <Route path="/plants/:plantId" element={<PlantDetailPage />} />
     </Routes>,
-    { route: `/production/${PLANT_ID}`, activeCommunityId: COMMUNITY_ID },
+    { route: `/plants/${PLANT_ID}`, activeCommunityId: COMMUNITY_ID },
   );
 }
 

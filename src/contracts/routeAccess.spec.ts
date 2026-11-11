@@ -57,12 +57,12 @@ const ROUTE_ACCESS: Record<string, Access> = {
   "/supply-points": { require: { scope: "community", capability: "canRead" } },
   "/supply-points/:supplyPointId": { require: { scope: "community", capability: "canRead" } },
 
-  "/production": { require: { scope: "community", capability: "canRead" } },
-  "/production/:plantId": { require: { scope: "community", capability: "canRead" } },
-  "/production/:plantId/sharing-agreements": {
+  "/plants": { require: { scope: "community", capability: "canRead" } },
+  "/plants/:plantId": { require: { scope: "community", capability: "canRead" } },
+  "/plants/:plantId/sharing-agreements": {
     require: { scope: "plant", capability: "canListSharingAgreements" },
   },
-  "/production/:plantId/sharing-agreements/:sharingAgreementId": {
+  "/plants/:plantId/sharing-agreements/:sharingAgreementId": {
     require: { scope: "plant", capability: "canListSharingAgreements" },
   },
 

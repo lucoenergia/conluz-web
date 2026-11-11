@@ -126,7 +126,7 @@ function App() {
             <Route path=":supplyPointId" element={<SupplyDetailPage />} />
           </Route>
           <Route
-            path="production"
+            path="plants"
             element={<CapabilityRoute require={{ scope: "community", capability: "canRead" }}><Outlet /></CapabilityRoute>}
           >
             {/* Creating and editing a plant open over the list (#373). */}

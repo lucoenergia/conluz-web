@@ -159,7 +159,7 @@ describe("SharingAgreementDetailHeader", () => {
 
       expect(screen.getByRole("link", { name: "21088 Luco de Jiloca" })).toHaveAttribute(
         "href",
-        "/production/plant-1",
+        "/plants/plant-1",
       );
     });
 
