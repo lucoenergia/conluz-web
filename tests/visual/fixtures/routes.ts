@@ -683,6 +683,18 @@ export async function mockPlantDetailRoutes(page: Page, currentUser?: { membersh
   );
 }
 
+const INVERTER_NOT_AVAILABLE: PlantInverterProductionTodayResponse = {
+  status: "NOT_AVAILABLE",
+  todayEnergyKWh: null,
+  powerCurve: null,
+  lastUpdatedAt: null,
+  stale: null,
+};
+
+/** Whether a served Huawei configuration is there and enabled; unset is mockHuaweiConfigRoutes' default, which is. */
+const huaweiEnabled = (config: HuaweiConfigFixture | null | undefined) =>
+  config === undefined ? FIXED_HUAWEI_CONFIG.enabled === true : config !== null && config.enabled === true;
+
 /**
  * The plant's production (#406): its latest production day, its metrics and
  * series by period, and today's inverter production. Registered AFTER
@@ -701,6 +713,8 @@ export async function mockPlantProductionRoutes(
     monthly?: PlantMonthlyEnergyBucketResponse[];
     hourly?: PlantHourlyEnergyBucketResponse[];
     inverter?: PlantInverterProductionTodayResponse;
+    /** The Huawei configuration served, as mockHuaweiConfigRoutes takes it: null is "not configured". */
+    huaweiConfig?: HuaweiConfigFixture | null;
     currentUser?: { memberships?: Record<string, string> };
   } = {},
 ) {
@@ -709,9 +723,11 @@ export async function mockPlantProductionRoutes(
     daily = FIXED_PLANT_DAYS,
     monthly = FIXED_PLANT_MONTHS,
     hourly = [],
-    inverter = FIXED_INVERTER_TODAY,
     currentUser,
   } = options;
+  // Today's inverter production follows the Huawei configuration served, as
+  // the backend's does: NOT_AVAILABLE unless an enabled configuration exists.
+  const inverter = options.inverter ?? (huaweiEnabled(options.huaweiConfig) ? FIXED_INVERTER_TODAY : INVERTER_NOT_AVAILABLE);
   const plant = asPlantCaller(FIXED_PLANT, currentUser);
   const base = `/api/v1/plants/${FIXED_PLANT_ID}`;
   const json = (route: Route, body: unknown) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });

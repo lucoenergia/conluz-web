@@ -83,8 +83,8 @@ export async function navigateToSharingAgreementDetail(page: Page, agreementName
 export async function openPlantDetail(
   page: Page,
   currentUser = FIXED_COMMUNITY_ADMIN_USER,
-  huawei: Omit<Parameters<typeof mockHuaweiConfigRoutes>[1], "currentUser"> = {},
-  production: Omit<Parameters<typeof mockPlantProductionRoutes>[1], "currentUser"> = {},
+  huawei: Omit<NonNullable<Parameters<typeof mockHuaweiConfigRoutes>[1]>, "currentUser"> = {},
+  production: Omit<NonNullable<Parameters<typeof mockPlantProductionRoutes>[1]>, "currentUser" | "huaweiConfig"> = {},
   search = "",
 ) {
   // "Hoy, según el inversor" draws its "Ahora" mark at the browser's now.
@@ -98,7 +98,7 @@ export async function openPlantDetail(
   // fall to mockPlantDetailRoutes and come back as the plant itself.
   await mockHuaweiConfigRoutes(page, { ...huawei, currentUser });
   // The production sections (#406), registered after mockPlantDetailRoutes for the same reason.
-  await mockPlantProductionRoutes(page, { ...production, currentUser });
+  await mockPlantProductionRoutes(page, { huaweiConfig: huawei.config, ...production, currentUser });
 
   await page.goto(`/plants/${FIXED_PLANT_ID}${search}`);
   await expect(page.getByRole("heading", { level: 1, name: FIXED_PLANT.name })).toBeVisible();
