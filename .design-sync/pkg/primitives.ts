@@ -122,6 +122,7 @@ import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import GroupAddOutlinedIcon from "@mui/icons-material/GroupAddOutlined";
 import GroupOffRoundedIcon from "@mui/icons-material/GroupOffRounded";
+import GroupsRoundedIcon from "@mui/icons-material/GroupsRounded";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import HeadsetMicIcon from "@mui/icons-material/HeadsetMic";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
@@ -322,6 +323,7 @@ export const Icons = {
   FilterList: FilterListIcon,
   GroupAddOutlined: GroupAddOutlinedIcon,
   GroupOffRounded: GroupOffRoundedIcon,
+  GroupsRounded: GroupsRoundedIcon,
   HandshakeOutlined: HandshakeOutlinedIcon,
   HeadsetMic: HeadsetMicIcon,
   HelpOutline: HelpOutlineIcon,
