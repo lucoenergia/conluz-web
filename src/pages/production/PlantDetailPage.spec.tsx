@@ -91,17 +91,24 @@ beforeEach(() => {
 });
 
 describe("PlantDetailPage", () => {
-  // The page offers no write on the plant itself: no edit, no delete. Those live
-  // on the card menu. The Huawei integration is the one exception, in its own
-  // section under the same canManage gate (PlantIntegrationsSection.spec). This
-  // case is what would fail if an edit or delete appeared here without a gate.
-  it("offers no action on the plant itself, to a caller who may manage it", () => {
+  // Edit and delete sit in the header's menu, under the plant's own canManage.
+  // The Huawei integration is the one other write, in its own section under the
+  // same gate (PlantIntegrationsSection.spec).
+  it("UI-PLT-014 offers Editar planta and Eliminar planta in the header's menu to a caller who may manage the plant", async () => {
+    const user = userEvent.setup();
     setup({ canManage: true, canListSharingAgreements: true });
 
+    await user.click(screen.getByRole("button", { name: "Más opciones de la planta" }));
+
+    expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual(["Editar planta", "Eliminar planta"]);
+  });
+
+  it("UI-PLT-014 shows no menu to a caller the plant refuses canManage", () => {
+    setup({ canManage: false, canListSharingAgreements: true });
+
     expect(screen.getByRole("heading", { name: "Planta Norte" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /Editar/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Eliminar/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /Acuerdos de Reparto/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Más opciones de la planta" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem")).not.toBeInTheDocument();
   });
 
   it("links the supply for a caller the plant says may read it", async () => {

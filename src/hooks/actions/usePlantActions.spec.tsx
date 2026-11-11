@@ -146,14 +146,16 @@ describe("usePlantActions", () => {
 
   // Invalidating a deleted plant would refetch it and 404 straight after a
   // successful delete, which is why the existing agreement delete removes too.
-  it("removes the deleted plant from the cache rather than invalidating it", async () => {
+  it("UI-PLT-014 removes the deleted plant from the cache rather than invalidating it, unless a screen still observes it", async () => {
     const { result, queryClient } = render(plantWith({ canManage: true }));
     const removeQueries = vi.spyOn(queryClient, "removeQueries");
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
     await expect(result.current.actions.remove?.run()).resolves.toEqual({ ok: true });
 
-    expect(removeQueries).toHaveBeenCalledWith({ queryKey: getGetPlantByIdQueryKey(PLANT_ID) });
+    // Only an inactive one: the plant's own detail, deleting it, still observes
+    // it until it navigates away, and would refetch a removed query into a 404.
+    expect(removeQueries).toHaveBeenCalledWith({ queryKey: getGetPlantByIdQueryKey(PLANT_ID), type: "inactive" });
     expect(invalidateQueries).not.toHaveBeenCalledWith({
       queryKey: getGetPlantByIdQueryKey(PLANT_ID),
     });

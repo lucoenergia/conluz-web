@@ -143,8 +143,10 @@ export function usePlantActions(): PlantActions {
                 // Removed, not invalidated: the plant no longer exists, so an
                 // invalidation-triggered refetch would 404 straight after a
                 // successful delete. Same reasoning as the agreement delete in
-                // useSharingAgreementMutations.
-                queryClient.removeQueries({ queryKey: getGetPlantByIdQueryKey(plantId) });
+                // useSharingAgreementMutations. Only an inactive one: the plant's
+                // own detail, deleting it, still observes it until it navigates
+                // away, and would refetch a removed query straight into that 404.
+                queryClient.removeQueries({ queryKey: getGetPlantByIdQueryKey(plantId), type: "inactive" });
                 invalidateList();
                 return { ok: true };
               } catch (error) {

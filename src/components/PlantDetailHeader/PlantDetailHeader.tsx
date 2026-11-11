@@ -1,13 +1,17 @@
-import type { FC } from "react";
-import { Link, Typography } from "@mui/material";
+import { useState, type FC, type MouseEvent } from "react";
+import { Box, IconButton, Link, MenuItem, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import type { PlantResponse } from "../../api/models";
 import { DetailHeader, type DetailFact, type DetailKeyFacts } from "../DetailHeader";
+import { MenuTemplate } from "../Menu/MenuTemplate";
 import { formatCalendarDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
-import { colors } from "../../theme/tokens";
+import { colors, radii } from "../../theme/tokens";
 import { formatKilowatts } from "../../utils/formatKilowatts";
 import { inverterProviderLabel } from "../../utils/inverterProviderLabel";
 import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
@@ -16,10 +20,73 @@ export interface PlantDetailHeaderProps {
   plant?: PlantResponse;
   isLoading?: boolean;
   error?: unknown;
+  /**
+   * Opens the plant's edit form, given the menu's button so focus can return
+   * to it. Given only when the caller may edit the plant (UI-PLT-014).
+   */
+  onEditRequest?: (opener: HTMLElement | null) => void;
+  /** Opens the deletion's confirmation. Given only when the caller may delete the plant. */
+  onDeleteRequest?: (opener: HTMLElement | null) => void;
 }
 
-export const PlantDetailHeader: FC<PlantDetailHeaderProps> = ({ plant, isLoading = false, error = null }) => {
+export const PlantDetailHeader: FC<PlantDetailHeaderProps> = ({
+  plant,
+  isLoading = false,
+  error = null,
+  onEditRequest,
+  onDeleteRequest,
+}) => {
   const supply = plant?.supply;
+  const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
+
+  const choose = (request: ((opener: HTMLElement | null) => void) | undefined) => () => {
+    const opener = anchorElement;
+    setAnchorElement(null);
+    request?.(opener);
+  };
+
+  // Without an action there is no menu at all: the button is a promise of something to do.
+  const menu = plant && (onEditRequest || onDeleteRequest) && (
+    <>
+      <IconButton
+        onClick={(event: MouseEvent<HTMLElement>) => setAnchorElement(event.currentTarget)}
+        aria-label="Más opciones de la planta"
+        sx={{
+          color: colors.text.secondary,
+          border: "1px solid",
+          borderColor: colors.divider,
+          borderRadius: radii.default,
+          bgcolor: colors.background.paper,
+          "&:hover": { backgroundColor: colors.background.surface },
+        }}
+      >
+        <MoreVertIcon />
+      </IconButton>
+      <MenuTemplate anchorElement={anchorElement} onClose={() => setAnchorElement(null)}>
+        <Box sx={{ py: 1 }}>
+          {onEditRequest && (
+            <MenuItem onClick={choose(onEditRequest)}>
+              <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: "primary.main", flexShrink: 0 }} />
+              <Typography variant="body2" sx={{ fontWeight: 500, textAlign: "left" }}>
+                Editar planta
+              </Typography>
+            </MenuItem>
+          )}
+          {onDeleteRequest && (
+            <MenuItem
+              onClick={choose(onDeleteRequest)}
+              sx={{ "&:hover": { backgroundColor: colors.background.errorFaint } }}
+            >
+              <DeleteOutlineIcon sx={{ mr: 2, fontSize: 20, color: "error.main", flexShrink: 0 }} />
+              <Typography variant="body2" sx={{ color: "error.main", fontWeight: 500, textAlign: "left" }}>
+                Eliminar planta
+              </Typography>
+            </MenuItem>
+          )}
+        </Box>
+      </MenuTemplate>
+    </>
+  );
 
   const keyFacts: DetailKeyFacts = [
     { label: "Potencia", value: plant?.totalPower ? formatKilowatts(plant.totalPower) : "-" },
@@ -95,6 +162,7 @@ export const PlantDetailHeader: FC<PlantDetailHeaderProps> = ({ plant, isLoading
       subtitleIcon={<LocationOnIcon />}
       keyFacts={keyFacts}
       details={details}
+      menu={menu || undefined}
       isLoading={isLoading}
       error={error}
     />

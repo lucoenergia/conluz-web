@@ -18,6 +18,11 @@ import { PlantNextStep } from "./plantDetail/PlantNextStep";
 import { PlantAgreementsSection } from "./plantDetail/PlantAgreementsSection";
 import { usePlantIntegrationStatus } from "./plantDetail/usePlantIntegrationStatus";
 import { PlantProductionSection } from "./plantDetail/PlantProductionSection";
+import { useOverlayNavigate } from "../../components/ResponsiveOverlay";
+import { useOverlayOpener } from "../../hooks/useOverlayOpener";
+import { usePlantActions } from "../../hooks/actions";
+import { PlantFormDialog } from "./PlantFormDialog";
+import { PlantDeletionDialog } from "./PlantDeletionDialog";
 import { productionSubtitle, type DatesGranularity, type ProductionPeriodKind } from "./plantDetail/productionSubtitle";
 
 export const PlantDetailPage: FC = () => {
@@ -97,6 +102,16 @@ export const PlantDetailPage: FC = () => {
   // whole community's.
   const supplyId = plant?.supply.id;
   const integrationStatus = usePlantIntegrationStatus(plant);
+  // Edit and delete open over the detail, from the header's menu (UI-PLT-014).
+  // Each dialog mounts only while the plant grants its action.
+  const { edit, remove } = usePlantActions().forPlant(plant).actions;
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  // The menu item that opened the form is gone by the time it closes, so focus
+  // returns to the menu's button.
+  const editOpener = useOverlayOpener(isEditOpen);
+  // Each navigation here leaves the page as an overlay closes (UI-OVL-004).
+  const navigate = useOverlayNavigate();
   const canQueryProduction = !!activeCommunityId && !!supplyId;
 
     // Fetch hourly production data when DAY filter is selected
@@ -350,8 +365,29 @@ export const PlantDetailPage: FC = () => {
           plant={plant}
           isLoading={plantLoading}
           error={plantError}
+          onEditRequest={
+            edit &&
+            ((opener) => {
+              editOpener.record(opener);
+              setIsEditOpen(true);
+            })
+          }
+          onDeleteRequest={remove && (() => setIsDeleteOpen(true))}
         />
       </Box>
+
+      {isEditOpen && edit && plant && (
+        <PlantFormDialog target={{ kind: "edit", plantId: plant.id }} onClose={() => setIsEditOpen(false)} />
+      )}
+
+      {/* Once the plant is gone -- deleted now, or already (a 404) -- there is
+          nothing left to show here, so the screen returns to the list. */}
+      <PlantDeletionDialog
+        plant={isDeleteOpen ? plant : undefined}
+        onClose={() => setIsDeleteOpen(false)}
+        // Replacing this page: one back must not land on a plant that is gone.
+        onGone={() => navigate("/plants", { replace: true })}
+      />
 
       {/* Only while the integration needs a step from someone who may manage it.
           Edge to edge on a phone, as the agreement's next step is. */}
