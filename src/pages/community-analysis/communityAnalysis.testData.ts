@@ -19,7 +19,7 @@ export const OTHER_COMMUNITY = buildCommunity({ id: OTHER_COMMUNITY_ID, name: "V
 
 /** An active member of both communities. */
 export const member = () =>
-  buildCurrentUser({ id: "member-ana", memberships: { [COMMUNITY_ID]: "COMMUNITY_MEMBER", [OTHER_COMMUNITY_ID]: "COMMUNITY_MEMBER" } });
+  buildCurrentUser({ id: "member-ana", fullName: "Ana Pérez Lago", memberships: { [COMMUNITY_ID]: "COMMUNITY_MEMBER", [OTHER_COMMUNITY_ID]: "COMMUNITY_MEMBER" } });
 
 /** A month's bounds as the server writes them for LATEST_PUBLISHED_MONTH. */
 export const SEPTEMBER_2026 = { startDate: "2026-09-01T00:00:00+02:00", endDate: "2026-10-01T00:00:00+02:00" };
