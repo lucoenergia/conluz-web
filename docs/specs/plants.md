@@ -171,10 +171,12 @@ the rules every records list shares are in [`record-lists.md`](record-lists.md).
 - **Status:** Active
 - **Rule:** The plant list's header MUST show the number of plants and MUST NOT show a power, nor a
   sum of the plants' peak or nominal powers.
-- **Rationale:** The header summed the single power each plant had. With two powers, a sum of each
-  does not fit the header's row of counters on a phone (its layout budget), and each row already
-  shows its plant's two powers (UI-PLS-001). A sum computed by the client would also stop being
-  right if the plant list became paginated: a total belongs to the backend.
+- **Rationale:** The header summed the single power each plant had. With two powers, the total was
+  removed because it does not fit the header's 390px layout budget: neither the full labels
+  ("Potencia pico", "Potencia nominal") nor the short ones ("Pico", "Nominal") fit beside the count
+  without clipping. Each row already shows its plant's two powers (UI-PLS-001). Revisit if the
+  header can show a power figure without clipping at 390px, or the backend returns a community power
+  total for the plant list.
 - **Implements:** n/a
 - **Source:** #407 (the count alone: maintainer decision)
 
