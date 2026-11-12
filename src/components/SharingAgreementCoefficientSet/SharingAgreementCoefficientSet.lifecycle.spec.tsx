@@ -452,7 +452,7 @@ describe("SharingAgreementCoefficientSet (nominal power)", () => {
   it("omits it when the agreement has none", () => {
     renderWithTheme({
       coefficients,
-      installedPowerKw: undefined,
+      nominalPowerKW: undefined,
       agreementStatus: SharingAgreementResponseStatus.PUBLISHED,
     });
 

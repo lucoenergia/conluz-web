@@ -200,7 +200,7 @@ describe("useSharingAgreementCoefficientActions", () => {
     mockMutateAsync.mockResolvedValue({ coefficients: [] });
     const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    const installedPowerKw = 48.4;
+    const nominalPowerKW = 48.4;
     // Only id/name are exercised by buildEditableRowFromSupply; the rest of each supply is builder defaults.
     const supplies = [
       buildSupply({ id: "s1", name: "A" }),
@@ -211,7 +211,7 @@ describe("useSharingAgreementCoefficientActions", () => {
     const kwText = ["1,5", "3,2", "1,0", "2,0"];
     const rows = supplies.map((supply, i) => {
       const empty = buildEditableRowFromSupply(supply);
-      return updateRowInput([empty], supply.id!, kwText[i], "kw", installedPowerKw)[0];
+      return updateRowInput([empty], supply.id!, kwText[i], "kw", nominalPowerKW)[0];
     });
 
     await result.current.actions.replace!.run(rows);
@@ -229,7 +229,7 @@ describe("useSharingAgreementCoefficientActions", () => {
     mockMutateAsync.mockResolvedValue({ coefficients: [] });
     const { result } = renderHookWithProviders(() => useSharingAgreementCoefficientActions("plant-1").forAgreement(MANAGEABLE_AGREEMENT));
 
-    const installedPowerKw = 45;
+    const nominalPowerKW = 45;
     const seeded = buildEditableRowsFromCoefficients(
       [
         { coefficientId: "c1", supply: { id: "s1", name: "A", code: "CUPS1" }, coefficient: 0.333333, ...PENDING_FIELDS },
@@ -237,11 +237,11 @@ describe("useSharingAgreementCoefficientActions", () => {
         { coefficientId: "c3", supply: { id: "s3", name: "C", code: "CUPS3" }, coefficient: 0.333334, ...PENDING_FIELDS },
       ],
       "percentage",
-      installedPowerKw,
+      nominalPowerKW,
     );
 
-    let rows = retextRowsForUnit(seeded, "kw", installedPowerKw);
-    rows = retextRowsForUnit(rows, "percentage", installedPowerKw);
+    let rows = retextRowsForUnit(seeded, "kw", nominalPowerKW);
+    rows = retextRowsForUnit(rows, "percentage", nominalPowerKW);
 
     await result.current.actions.replace!.run(rows);
 

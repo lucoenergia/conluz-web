@@ -40,7 +40,7 @@ describe("SharingAgreementCoefficientSet", () => {
     expect(screen.getAllByText("Nave Vacía").length).toBeGreaterThan(0);
   });
 
-  it("renders the assigned-power column, derived from coefficient x installedPowerKw", () => {
+  it("renders the assigned-power column, derived from coefficient x nominalPowerKW", () => {
     renderWithTheme({ coefficients });
     // Twice: the desktop column header and the mobile card list's own label,
     // one of which is hidden by a media query jsdom does not apply.
@@ -214,8 +214,8 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     expect(values).toContain("0,0000");
   });
 
-  it("falls back to percentage mode, with kW disabled, when the agreement has no installedPowerKw", () => {
-    renderWithTheme({ coefficients, installedPowerKw: undefined, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+  it("falls back to percentage mode, with kW disabled, when the agreement has no nominalPowerKW", () => {
+    renderWithTheme({ coefficients, nominalPowerKW: undefined, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
     fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
@@ -358,7 +358,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     expect(screen.getByText(/100 kW de 100 kW de potencia nominal/)).toBeInTheDocument();
   });
 
-  it("UI-AGR-003 kW mode shows the outstanding percentage gap, with the rounding caveat, when kW rounds to installedPowerKw but the coefficient sum isn't exactly 100%", () => {
+  it("UI-AGR-003 kW mode shows the outstanding percentage gap, with the rounding caveat, when kW rounds to nominalPowerKW but the coefficient sum isn't exactly 100%", () => {
     // Three rows summing to 999,999 units (short by one) but each row's kW,
     // rounded to 2dp, still totals to exactly the 60 kW installed.
     const rows: SharingAgreementPartitionCoefficientResponse[] = [
@@ -366,7 +366,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
       { coefficientId: "2", supply: { id: "s2", name: "B", code: "X2" }, coefficient: 0.333333, applicationState: PENDING, ...OPEN_UNCLOSED },
       { coefficientId: "3", supply: { id: "s3", name: "C", code: "X3" }, coefficient: 0.333333, applicationState: PENDING, ...OPEN_UNCLOSED },
     ];
-    renderWithTheme({ coefficients: rows, installedPowerKw: 60, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+    renderWithTheme({ coefficients: rows, nominalPowerKW: 60, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
     fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
@@ -377,7 +377,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     expect(screen.queryByText(/cuadra/i)).not.toBeInTheDocument();
   });
 
-  it("UI-AGR-003 kW mode states the excess, with the rounding caveat, when kW rounds to installedPowerKw but the coefficients sum to more than 100%", () => {
+  it("UI-AGR-003 kW mode states the excess, with the rounding caveat, when kW rounds to nominalPowerKW but the coefficients sum to more than 100%", () => {
     // Three rows summing to 1,000,002 units (two over) whose kW, rounded to
     // 2dp, still totals to exactly the 60 kW installed.
     const rows: SharingAgreementPartitionCoefficientResponse[] = [
@@ -385,7 +385,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
       { coefficientId: "2", supply: { id: "s2", name: "B", code: "X2" }, coefficient: 0.333334, applicationState: PENDING, ...OPEN_UNCLOSED },
       { coefficientId: "3", supply: { id: "s3", name: "C", code: "X3" }, coefficient: 0.333334, applicationState: PENDING, ...OPEN_UNCLOSED },
     ];
-    renderWithTheme({ coefficients: rows, installedPowerKw: 60, agreementStatus: SharingAgreementResponseStatus.DRAFT });
+    renderWithTheme({ coefficients: rows, nominalPowerKW: 60, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
     fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 

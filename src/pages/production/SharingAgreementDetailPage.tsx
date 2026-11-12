@@ -210,7 +210,7 @@ export const SharingAgreementDetailPage: FC = () => {
                 plantId={plantId}
                 agreement={agreement}
                 coefficients={coefficients}
-                installedPowerKw={agreement?.nominalPowerKW}
+                nominalPowerKW={agreement?.nominalPowerKW}
                 editRequestId={editCoefficientsRequestId}
                 onImportRequest={uploadFile && (() => setIsUploadDialogOpen(true))}
                 registerDatesRequestId={registerDatesRequestId}

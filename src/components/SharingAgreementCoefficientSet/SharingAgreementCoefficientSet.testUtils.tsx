@@ -93,7 +93,7 @@ beforeEach(() => {
     options?.query?.enabled ? query.success<typeof getPlantActivePartitionCoefficients>([]) : query.disabled(),
   );
   // An agreement a spec has not provided is a failed read, which renders as
-  // "Vigente —" rather than inventing an installed power.
+  // "Vigente —" rather than inventing an nominal power.
   vi.mocked(getSharingAgreementById).mockImplementation((_plantId, sharingAgreementId) =>
     Promise.reject(new Error(`No agreement fixture for ${sharingAgreementId}`)),
   );
@@ -184,7 +184,7 @@ export function setTree({ agreementStatus, ...props }: SetProps) {
     <SharingAgreementCoefficientSet
       plantId={PLANT_ID}
       agreement={buildSetAgreement(agreementStatus ? { status: agreementStatus } : {})}
-      installedPowerKw={100}
+      nominalPowerKW={100}
       {...props}
     />
   );

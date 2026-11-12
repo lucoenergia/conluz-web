@@ -185,7 +185,7 @@ describe("SharingAgreementDetailHeader", () => {
       expect(panel).toHaveTextContent("No disponible");
     });
 
-    // An agreement's name, notes and installed power can be corrected after
+    // An agreement's name, notes and nominal power can be corrected after
     // publication, so the record has to say when that happened and by whom.
     it("reports the last edit, with the editor's name rather than their id", async () => {
       const user = userEvent.setup();

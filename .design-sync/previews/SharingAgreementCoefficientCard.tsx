@@ -56,13 +56,13 @@ const supersededRows = [
 
 // A DRAFT compared against what is in force today.
 const draftRows = [
-  { row: coefficient({ coefficientId: "c21", supply: supplies.ferrer, coefficient: 0.25, currentCoefficient: { coefficient: 0.22, sharingAgreement: PUBLISHED_2025 } }), comparison: { kind: "inForce", coefficient: 0.22, power: { status: "success", installedPowerKw: 40 } } },
-  { row: coefficient({ coefficientId: "c22", supply: supplies.bar, coefficient: 0.2, currentCoefficient: { coefficient: 0.2, sharingAgreement: PUBLISHED_2025 } }), comparison: { kind: "inForce", coefficient: 0.2, power: { status: "success", installedPowerKw: 40 } } },
-  { row: coefficient({ coefficientId: "c23", supply: supplies.unnamed, coefficient: 0.175, currentCoefficient: { coefficient: 0.208333, sharingAgreement: PUBLISHED_2025 } }), comparison: { kind: "inForce", coefficient: 0.208333, power: { status: "success", installedPowerKw: 40 } } },
+  { row: coefficient({ coefficientId: "c21", supply: supplies.ferrer, coefficient: 0.25, currentCoefficient: { coefficient: 0.22, sharingAgreement: PUBLISHED_2025 } }), comparison: { kind: "inForce", coefficient: 0.22, power: { status: "success", nominalPowerKW: 40 } } },
+  { row: coefficient({ coefficientId: "c22", supply: supplies.bar, coefficient: 0.2, currentCoefficient: { coefficient: 0.2, sharingAgreement: PUBLISHED_2025 } }), comparison: { kind: "inForce", coefficient: 0.2, power: { status: "success", nominalPowerKW: 40 } } },
+  { row: coefficient({ coefficientId: "c23", supply: supplies.unnamed, coefficient: 0.175, currentCoefficient: { coefficient: 0.208333, sharingAgreement: PUBLISHED_2025 } }), comparison: { kind: "inForce", coefficient: 0.208333, power: { status: "success", nominalPowerKW: 40 } } },
   { row: coefficient({ coefficientId: "c24", supply: supplies.nou, coefficient: 0.375 }), comparison: { kind: "new" } },
 ];
 
-const INSTALLED_KW = 45.6;
+const NOMINAL_KW = 45.6;
 const noop = () => {};
 
 // The card is the phone layout of the coefficient set; the app swaps to it below `sm`.
@@ -74,7 +74,7 @@ export const PublishedApplying = () => (
       <SharingAgreementCoefficientCard
         key={row.coefficientId}
         coefficient={row}
-        installedPowerKw={INSTALLED_KW}
+        nominalPowerKW={NOMINAL_KW}
         showSelectionColumn
         selected={i === 2}
         onToggleSelected={noop}
@@ -92,7 +92,7 @@ export const DraftComparedWithInForce = () => (
       <SharingAgreementCoefficientCard
         key={row.coefficientId}
         coefficient={row}
-        installedPowerKw={INSTALLED_KW}
+        nominalPowerKW={NOMINAL_KW}
         isDraft
         showStateColumns={false}
         comparison={comparison as any}
@@ -110,7 +110,7 @@ export const DraftEditing = () => (
       <SharingAgreementCoefficientCard
         key={row.coefficientId}
         coefficient={row}
-        installedPowerKw={INSTALLED_KW}
+        nominalPowerKW={NOMINAL_KW}
         isDraft
         isEditing
         inputUnit="percentage"
@@ -132,7 +132,7 @@ export const SupersededClosed = () => (
       <SharingAgreementCoefficientCard
         key={row.coefficientId}
         coefficient={row}
-        installedPowerKw={40}
+        nominalPowerKW={40}
         showActionsColumn
         showHistoryAction
         onOpenActionsMenu={noop}

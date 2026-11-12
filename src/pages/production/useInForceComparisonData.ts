@@ -39,7 +39,7 @@ export function usePlantActiveCoefficients(plantId: string, enabled: boolean): P
 }
 
 /**
- * The installed power of each agreement an in-force coefficient comes from,
+ * The nominal power of each agreement an in-force coefficient comes from,
  * one GET per distinct agreement. The queries share their keys with
  * useGetSharingAgreementById, so an agreement already in the cache is not
  * fetched again. There are normally one or two.
@@ -62,7 +62,7 @@ export function useInForceAgreementPower(
       distinctIds.forEach((id, index) => {
         const result = results[index];
         if (result?.isError) power.set(id, { status: "error" });
-        else if (result?.data) power.set(id, { status: "success", installedPowerKw: result.data.nominalPowerKW });
+        else if (result?.data) power.set(id, { status: "success", nominalPowerKW: result.data.nominalPowerKW });
         else power.set(id, { status: "loading" });
       });
       return power as ReadonlyMap<string, InForceAgreementPower>;

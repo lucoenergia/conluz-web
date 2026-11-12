@@ -106,7 +106,7 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
     isPublished && coefficients !== undefined && coefficients.length > 0 && isInert;
 
   // `PUT /sharing-agreements/{id}` no longer requires DRAFT — name, notes and
-  // installed power can be corrected in any status. Deleting still requires it:
+  // nominal power can be corrected in any status. Deleting still requires it:
   // removing a published agreement would destroy the basis of past billing.
   //
   // A handler the caller was not given is undefined, so a menu with nothing in
@@ -160,7 +160,7 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
   ];
 
   /**
-   * Name, notes and installed power can be corrected after publication, so the
+   * Name, notes and nominal power can be corrected after publication, so the
    * header has to say when that last happened and by whom. Reference data, not
    * identity — it belongs in the disclosure next to the CAU, and it is mounted
    * only when there has actually been an edit: an "Última edición: -" row would

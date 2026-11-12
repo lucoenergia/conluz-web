@@ -621,7 +621,7 @@ export async function mockSharingAgreementsPlantRoutes(
 
   // The list, and the by-id GET of any agreement it holds or of the second
   // in-force agreement: a DRAFT reads the agreements its in-force coefficients
-  // come from, for their installed power. Sub-resources of the viewed
+  // come from, for their nominal power. Sub-resources of the viewed
   // agreement are served by mockSharingAgreementDetailRoutes, registered later.
   const byId = new Map(
     [...(agreements as { id: string }[]), SECOND_IN_FORCE_AGREEMENT].map((agreement) => [agreement.id, agreement]),

@@ -579,7 +579,7 @@ export const NO_FILE_DRAFT_AGREEMENT = { ...FIXED_SHARING_AGREEMENTS[1], file: n
 /**
  * A second agreement with coefficients in force, beside the published one in
  * the list. Two PUBLISHED agreements in force at once is the legitimate state
- * during a distributor activation transition. It has its own installed power
+ * during a distributor activation transition. It has its own nominal power
  * (60 kW, against 120,5 kW and the draft's 45 kW), so a power line computed
  * with the wrong agreement shows. Not part of FIXED_SHARING_AGREEMENTS, so the
  * list baselines are unaffected; its by-id GET is served by

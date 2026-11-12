@@ -18,7 +18,7 @@ import {
 import { computeSharingAgreementCoefficientSums, COEFFICIENT_SCALE, toIntegerUnits } from "./sharingAgreementCoefficientSums";
 import {
   FIXTURE_COEFFICIENTS,
-  FIXTURE_INSTALLED_POWER_KW,
+  FIXTURE_NOMINAL_POWER_KW,
   REPRODUCTION_ROW_NAME,
   REPRODUCTION_ROW_SUPPLY_ID,
   REPRODUCTION_ROW_UNITS,
@@ -63,7 +63,7 @@ describe("buildEditableRowsFromCoefficients", () => {
     expect(rows[0].inputText).toBe("0,0000");
   });
 
-  it("seeds kW-unit text derived from value * installedPowerKw, fixed at 2 decimals", () => {
+  it("seeds kW-unit text derived from value * nominalPowerKW, fixed at 2 decimals", () => {
     const rows = buildEditableRowsFromCoefficients(
       [{ coefficientId: "c1", supply: { id: "s1", name: "Vivienda A", code: "CUPS1" }, coefficient: 0.5, ...PENDING_FIELDS }],
       "kw",
@@ -133,11 +133,11 @@ describe("parseCoefficientInput", () => {
     expect(parseCoefficientInput("50", "percentage", undefined)).toBe(0.5);
   });
 
-  it("kw unit divides by installedPowerKw", () => {
+  it("kw unit divides by nominalPowerKW", () => {
     expect(parseCoefficientInput("30", "kw", 60)).toBe(0.5);
   });
 
-  it("kw unit returns NaN when installedPowerKw is missing or non-positive", () => {
+  it("kw unit returns NaN when nominalPowerKW is missing or non-positive", () => {
     expect(parseCoefficientInput("30", "kw", undefined)).toBeNaN();
     expect(parseCoefficientInput("30", "kw", 0)).toBeNaN();
   });
@@ -158,9 +158,9 @@ describe("parseCoefficientInput", () => {
     expect(Number.isInteger(value * COEFFICIENT_SCALE)).toBe(true);
   });
 
-  it("reproduction case: installedPowerKw 48,40 kW with rows of 1,50 / 3,20 / 1,00 / 2,00 kW all round to exact millionths", () => {
-    const installedPowerKw = 48.4;
-    const values = ["1,5", "3,2", "1,0", "2,0"].map((kw) => parseCoefficientInput(kw, "kw", installedPowerKw));
+  it("reproduction case: nominalPowerKW 48,40 kW with rows of 1,50 / 3,20 / 1,00 / 2,00 kW all round to exact millionths", () => {
+    const nominalPowerKW = 48.4;
+    const values = ["1,5", "3,2", "1,0", "2,0"].map((kw) => parseCoefficientInput(kw, "kw", nominalPowerKW));
     expect(values).toEqual([0.030992, 0.066116, 0.020661, 0.041322]);
     values.forEach((value) => expect(Number.isInteger(value * COEFFICIENT_SCALE)).toBe(true));
   });
@@ -230,7 +230,7 @@ describe("formatCoefficientForInput", () => {
     expect(formatCoefficientForInput(1.5 / 48.4, "percentage", undefined)).toBe("3,0992");
   });
 
-  it("kw unit multiplies by installedPowerKw and formats fixed at 2 decimals, padding whole numbers too", () => {
+  it("kw unit multiplies by nominalPowerKW and formats fixed at 2 decimals, padding whole numbers too", () => {
     expect(formatCoefficientForInput(1 / 3, "kw", 60)).toBe("20,00");
     expect(formatCoefficientForInput(0.5, "kw", 60)).toBe("30,00");
   });
@@ -240,7 +240,7 @@ describe("formatCoefficientForInput", () => {
     expect(formatCoefficientForInput(undefined, "kw", 100)).toBe("");
   });
 
-  it("kw unit formats as empty text when installedPowerKw is missing or non-positive", () => {
+  it("kw unit formats as empty text when nominalPowerKW is missing or non-positive", () => {
     expect(formatCoefficientForInput(0.5, "kw", undefined)).toBe("");
     expect(formatCoefficientForInput(0.5, "kw", 0)).toBe("");
   });
@@ -307,7 +307,7 @@ describe("updateRowInput", () => {
 
 describe("retextRowsForUnit — toggle invariance", () => {
   it("kW -> % -> kW -> % with no edits leaves every value unchanged and the sum exactly 1,000,000", () => {
-    const installedPowerKw = 45;
+    const nominalPowerKW = 45;
     // Exact 6-decimal coefficients summing to exactly 1,000,000 units.
     const original: EditableCoefficientRow[] = [
       { supplyId: "s1", coefficient: buildCoefficient(), value: 0.333333, inputText: "0,333333" },
@@ -318,10 +318,10 @@ describe("retextRowsForUnit — toggle invariance", () => {
       computeSharingAgreementCoefficientSums(rows.map((r) => ({ coefficient: r.value }))).fileSumUnits;
     expect(sumOf(original)).toBe(COEFFICIENT_SCALE);
 
-    let rows = retextRowsForUnit(original, "kw", installedPowerKw);
-    rows = retextRowsForUnit(rows, "percentage", installedPowerKw);
-    rows = retextRowsForUnit(rows, "kw", installedPowerKw);
-    rows = retextRowsForUnit(rows, "percentage", installedPowerKw);
+    let rows = retextRowsForUnit(original, "kw", nominalPowerKW);
+    rows = retextRowsForUnit(rows, "percentage", nominalPowerKW);
+    rows = retextRowsForUnit(rows, "kw", nominalPowerKW);
+    rows = retextRowsForUnit(rows, "percentage", nominalPowerKW);
 
     rows.forEach((row, i) => {
       expect(row.value).toBe(original[i].value);
@@ -361,9 +361,9 @@ describe("the 63 kW / 29-supply fixture", () => {
   // interval of coefficients, not a coefficient.
   it("displays the reproduction row as 1,94 kW, which re-derives to a DIFFERENT coefficient", () => {
     const original = REPRODUCTION_ROW_UNITS / COEFFICIENT_SCALE;
-    expect(formatCoefficientForInput(original, "kw", FIXTURE_INSTALLED_POWER_KW)).toBe("1,94");
+    expect(formatCoefficientForInput(original, "kw", FIXTURE_NOMINAL_POWER_KW)).toBe("1,94");
 
-    const reDerived = parseCoefficientInput("1,94", "kw", FIXTURE_INSTALLED_POWER_KW);
+    const reDerived = parseCoefficientInput("1,94", "kw", FIXTURE_NOMINAL_POWER_KW);
     expect(toIntegerUnits(reDerived)).toBe(30794);
     expect(toIntegerUnits(reDerived)).not.toBe(REPRODUCTION_ROW_UNITS);
   });
@@ -372,16 +372,16 @@ describe("the 63 kW / 29-supply fixture", () => {
   // decimals are exactly one millionth, so "%" round-trips and kW does not.
   it("displays it as 3,0770 % , which re-derives to the SAME coefficient", () => {
     const original = REPRODUCTION_ROW_UNITS / COEFFICIENT_SCALE;
-    expect(formatCoefficientForInput(original, "percentage", FIXTURE_INSTALLED_POWER_KW)).toBe("3,0770");
+    expect(formatCoefficientForInput(original, "percentage", FIXTURE_NOMINAL_POWER_KW)).toBe("3,0770");
 
-    const reDerived = parseCoefficientInput("3,0770", "percentage", FIXTURE_INSTALLED_POWER_KW);
+    const reDerived = parseCoefficientInput("3,0770", "percentage", FIXTURE_NOMINAL_POWER_KW);
     expect(toIntegerUnits(reDerived)).toBe(REPRODUCTION_ROW_UNITS);
   });
 });
 
 describe("updateRowInput — no-op guard", () => {
   const buildRows = (unit: CoefficientInputUnit) =>
-    buildEditableRowsFromCoefficients(FIXTURE_COEFFICIENTS, unit, FIXTURE_INSTALLED_POWER_KW);
+    buildEditableRowsFromCoefficients(FIXTURE_COEFFICIENTS, unit, FIXTURE_NOMINAL_POWER_KW);
 
   const unitsOf = (rows: EditableCoefficientRow[], supplyId: string) =>
     toIntegerUnits(rows.find((row) => row.supplyId === supplyId)!.value);
@@ -392,7 +392,7 @@ describe("updateRowInput — no-op guard", () => {
     const rows = buildRows("kw");
     expect(rows.find((row) => row.supplyId === REPRODUCTION_ROW_SUPPLY_ID)!.inputText).toBe("1,94");
 
-    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,94", "kw", FIXTURE_INSTALLED_POWER_KW);
+    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,94", "kw", FIXTURE_NOMINAL_POWER_KW);
 
     expect(unitsOf(next, REPRODUCTION_ROW_SUPPLY_ID)).toBe(REPRODUCTION_ROW_UNITS);
     expect(computeSharingAgreementCoefficientSums(next.map((row) => ({ coefficient: row.value }))).fileSumUnits).toBe(
@@ -408,7 +408,7 @@ describe("updateRowInput — no-op guard", () => {
     const rows = buildRows("percentage");
     expect(rows.find((row) => row.supplyId === REPRODUCTION_ROW_SUPPLY_ID)!.inputText).toBe("3,0770");
 
-    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "3,0770", "percentage", FIXTURE_INSTALLED_POWER_KW);
+    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "3,0770", "percentage", FIXTURE_NOMINAL_POWER_KW);
 
     expect(unitsOf(next, REPRODUCTION_ROW_SUPPLY_ID)).toBe(REPRODUCTION_ROW_UNITS);
   });
@@ -420,7 +420,7 @@ describe("updateRowInput — no-op guard", () => {
     const rows = buildRows("kw");
 
     for (const spelling of ["1.94", "01,94", " 1,94 "]) {
-      const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, spelling, "kw", FIXTURE_INSTALLED_POWER_KW);
+      const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, spelling, "kw", FIXTURE_NOMINAL_POWER_KW);
       expect(unitsOf(next, REPRODUCTION_ROW_SUPPLY_ID)).toBe(REPRODUCTION_ROW_UNITS);
       expect(next.find((row) => row.supplyId === REPRODUCTION_ROW_SUPPLY_ID)!.inputText).toBe(spelling);
     }
@@ -429,7 +429,7 @@ describe("updateRowInput — no-op guard", () => {
   it("stores the typed text verbatim even when the value is left untouched", () => {
     const rows = buildRows("percentage");
 
-    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "3,077", "percentage", FIXTURE_INSTALLED_POWER_KW);
+    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "3,077", "percentage", FIXTURE_NOMINAL_POWER_KW);
 
     expect(next.find((row) => row.supplyId === REPRODUCTION_ROW_SUPPLY_ID)!.inputText).toBe("3,077");
     expect(unitsOf(next, REPRODUCTION_ROW_SUPPLY_ID)).toBe(REPRODUCTION_ROW_UNITS);
@@ -440,7 +440,7 @@ describe("updateRowInput — no-op guard", () => {
   it("a genuinely different value still lands", () => {
     const rows = buildRows("kw");
 
-    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,90", "kw", FIXTURE_INSTALLED_POWER_KW);
+    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,90", "kw", FIXTURE_NOMINAL_POWER_KW);
 
     expect(unitsOf(next, REPRODUCTION_ROW_SUPPLY_ID)).toBe(30159);
   });
@@ -451,14 +451,14 @@ describe("updateRowInput — no-op guard", () => {
     const empty = buildEditableRowFromSupply(buildSupply({ id: "supply-new", name: "Nuevo", code: "ES999" }));
     expect(empty.value).toBeUndefined();
 
-    const next = updateRowInput([empty], "supply-new", "1,94", "kw", FIXTURE_INSTALLED_POWER_KW);
+    const next = updateRowInput([empty], "supply-new", "1,94", "kw", FIXTURE_NOMINAL_POWER_KW);
 
     expect(toIntegerUnits(next[0].value)).toBe(30794);
   });
 
-  // Same degenerate case from the other side: no installed power means kW
+  // Same degenerate case from the other side: no nominal power means kW
   // renders as "" for every value, which must not make every edit a no-op.
-  it("never fires in kW mode when installedPowerKw is missing", () => {
+  it("never fires in kW mode when nominalPowerKW is missing", () => {
     const rows = buildRows("kw");
 
     const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,94", "kw", undefined);
@@ -469,7 +469,7 @@ describe("updateRowInput — no-op guard", () => {
   it("clearing the field still empties the value, blocking save", () => {
     const rows = buildRows("kw");
 
-    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "", "kw", FIXTURE_INSTALLED_POWER_KW);
+    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "", "kw", FIXTURE_NOMINAL_POWER_KW);
 
     expect(next.find((row) => row.supplyId === REPRODUCTION_ROW_SUPPLY_ID)!.value).toBeUndefined();
   });
@@ -477,7 +477,7 @@ describe("updateRowInput — no-op guard", () => {
   it("leaves every other row untouched", () => {
     const rows = buildRows("kw");
 
-    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,94", "kw", FIXTURE_INSTALLED_POWER_KW);
+    const next = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,94", "kw", FIXTURE_NOMINAL_POWER_KW);
 
     expect(next.filter((row) => row.supplyId !== REPRODUCTION_ROW_SUPPLY_ID)).toEqual(
       rows.filter((row) => row.supplyId !== REPRODUCTION_ROW_SUPPLY_ID),
@@ -488,7 +488,7 @@ describe("updateRowInput — no-op guard", () => {
 describe("session snapshot and per-row revert", () => {
   const snapshot = buildCoefficientSnapshot(FIXTURE_COEFFICIENTS);
   const buildRows = (unit: CoefficientInputUnit) =>
-    buildEditableRowsFromCoefficients(FIXTURE_COEFFICIENTS, unit, FIXTURE_INSTALLED_POWER_KW);
+    buildEditableRowsFromCoefficients(FIXTURE_COEFFICIENTS, unit, FIXTURE_NOMINAL_POWER_KW);
   const rowFor = (rows: EditableCoefficientRow[], supplyId: string) => rows.find((row) => row.supplyId === supplyId)!;
   const sumOf = (rows: EditableCoefficientRow[]) =>
     computeSharingAgreementCoefficientSums(rows.map((row) => ({ coefficient: row.value }))).fileSumUnits;
@@ -504,7 +504,7 @@ describe("session snapshot and per-row revert", () => {
     const rows = buildRows("kw");
     expect(sumOf(rows)).toBe(COEFFICIENT_SCALE);
 
-    const edited = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,90", "kw", FIXTURE_INSTALLED_POWER_KW);
+    const edited = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,90", "kw", FIXTURE_NOMINAL_POWER_KW);
     expect(toIntegerUnits(rowFor(edited, REPRODUCTION_ROW_SUPPLY_ID).value)).toBe(30159);
     expect(sumOf(edited)).not.toBe(COEFFICIENT_SCALE);
 
@@ -513,7 +513,7 @@ describe("session snapshot and per-row revert", () => {
       REPRODUCTION_ROW_SUPPLY_ID,
       snapshot,
       "kw",
-      FIXTURE_INSTALLED_POWER_KW,
+      FIXTURE_NOMINAL_POWER_KW,
     );
 
     expect(toIntegerUnits(rowFor(reverted, REPRODUCTION_ROW_SUPPLY_ID).value)).toBe(REPRODUCTION_ROW_UNITS);
@@ -524,10 +524,10 @@ describe("session snapshot and per-row revert", () => {
   // text would restore the kW interval, landing on 30794 instead of 30770.
   it("does not route the restored value through the text-parsing path", () => {
     const rows = buildRows("kw");
-    const edited = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,90", "kw", FIXTURE_INSTALLED_POWER_KW);
+    const edited = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,90", "kw", FIXTURE_NOMINAL_POWER_KW);
 
-    const reverted = revertRowToSnapshot(edited, REPRODUCTION_ROW_SUPPLY_ID, snapshot, "kw", FIXTURE_INSTALLED_POWER_KW);
-    const viaText = parseCoefficientInput("1,94", "kw", FIXTURE_INSTALLED_POWER_KW);
+    const reverted = revertRowToSnapshot(edited, REPRODUCTION_ROW_SUPPLY_ID, snapshot, "kw", FIXTURE_NOMINAL_POWER_KW);
+    const viaText = parseCoefficientInput("1,94", "kw", FIXTURE_NOMINAL_POWER_KW);
 
     expect(toIntegerUnits(rowFor(reverted, REPRODUCTION_ROW_SUPPLY_ID).value)).toBe(REPRODUCTION_ROW_UNITS);
     expect(toIntegerUnits(viaText)).not.toBe(REPRODUCTION_ROW_UNITS);
@@ -540,9 +540,9 @@ describe("session snapshot and per-row revert", () => {
     ["percentage" as const, "3,0770"],
   ])("regenerates the displayed text in %s mode after a revert", (unit, expectedText) => {
     const rows = buildRows(unit);
-    const edited = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "0,5", unit, FIXTURE_INSTALLED_POWER_KW);
+    const edited = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "0,5", unit, FIXTURE_NOMINAL_POWER_KW);
 
-    const reverted = revertRowToSnapshot(edited, REPRODUCTION_ROW_SUPPLY_ID, snapshot, unit, FIXTURE_INSTALLED_POWER_KW);
+    const reverted = revertRowToSnapshot(edited, REPRODUCTION_ROW_SUPPLY_ID, snapshot, unit, FIXTURE_NOMINAL_POWER_KW);
 
     expect(rowFor(reverted, REPRODUCTION_ROW_SUPPLY_ID).inputText).toBe(expectedText);
     expect(toIntegerUnits(rowFor(reverted, REPRODUCTION_ROW_SUPPLY_ID).value)).toBe(REPRODUCTION_ROW_UNITS);
@@ -553,12 +553,12 @@ describe("session snapshot and per-row revert", () => {
     const targets = ["supply-02", REPRODUCTION_ROW_SUPPLY_ID, "supply-21", "supply-29"];
     let rows = buildRows("kw");
     for (const supplyId of targets) {
-      rows = updateRowInput(rows, supplyId, "2,50", "kw", FIXTURE_INSTALLED_POWER_KW);
+      rows = updateRowInput(rows, supplyId, "2,50", "kw", FIXTURE_NOMINAL_POWER_KW);
     }
     expect(sumOf(rows)).not.toBe(COEFFICIENT_SCALE);
 
     for (const supplyId of targets) {
-      rows = revertRowToSnapshot(rows, supplyId, snapshot, "kw", FIXTURE_INSTALLED_POWER_KW);
+      rows = revertRowToSnapshot(rows, supplyId, snapshot, "kw", FIXTURE_NOMINAL_POWER_KW);
     }
 
     expect(sumOf(rows)).toBe(COEFFICIENT_SCALE);
@@ -567,9 +567,9 @@ describe("session snapshot and per-row revert", () => {
 
   it("leaves every other row untouched when reverting one", () => {
     const rows = buildRows("kw");
-    const edited = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,90", "kw", FIXTURE_INSTALLED_POWER_KW);
+    const edited = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "1,90", "kw", FIXTURE_NOMINAL_POWER_KW);
 
-    const reverted = revertRowToSnapshot(edited, REPRODUCTION_ROW_SUPPLY_ID, snapshot, "kw", FIXTURE_INSTALLED_POWER_KW);
+    const reverted = revertRowToSnapshot(edited, REPRODUCTION_ROW_SUPPLY_ID, snapshot, "kw", FIXTURE_NOMINAL_POWER_KW);
 
     expect(reverted.filter((row) => row.supplyId !== REPRODUCTION_ROW_SUPPLY_ID)).toEqual(
       rows.filter((row) => row.supplyId !== REPRODUCTION_ROW_SUPPLY_ID),
@@ -579,14 +579,14 @@ describe("session snapshot and per-row revert", () => {
 
 describe("isRowRevertable", () => {
   const snapshot = buildCoefficientSnapshot(FIXTURE_COEFFICIENTS);
-  const rows = buildEditableRowsFromCoefficients(FIXTURE_COEFFICIENTS, "percentage", FIXTURE_INSTALLED_POWER_KW);
+  const rows = buildEditableRowsFromCoefficients(FIXTURE_COEFFICIENTS, "percentage", FIXTURE_NOMINAL_POWER_KW);
   const rowFor = (rs: EditableCoefficientRow[], supplyId: string) => rs.find((row) => row.supplyId === supplyId)!;
 
   // AC2
   it("is false for an untouched row and true once it differs", () => {
     expect(isRowRevertable(rowFor(rows, REPRODUCTION_ROW_SUPPLY_ID), snapshot)).toBe(false);
 
-    const edited = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "3,0000", "percentage", FIXTURE_INSTALLED_POWER_KW);
+    const edited = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "3,0000", "percentage", FIXTURE_NOMINAL_POWER_KW);
 
     expect(isRowRevertable(rowFor(edited, REPRODUCTION_ROW_SUPPLY_ID), snapshot)).toBe(true);
   });
@@ -594,8 +594,8 @@ describe("isRowRevertable", () => {
   // AC3 — a comparison of values, not a "touched" flag. Reachable by hand only
   // because the "%" round trip is exact.
   it("is false again for a row retyped by hand to its exact original value", () => {
-    const edited = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "3,0000", "percentage", FIXTURE_INSTALLED_POWER_KW);
-    const restored = updateRowInput(edited, REPRODUCTION_ROW_SUPPLY_ID, "3,0770", "percentage", FIXTURE_INSTALLED_POWER_KW);
+    const edited = updateRowInput(rows, REPRODUCTION_ROW_SUPPLY_ID, "3,0000", "percentage", FIXTURE_NOMINAL_POWER_KW);
+    const restored = updateRowInput(edited, REPRODUCTION_ROW_SUPPLY_ID, "3,0770", "percentage", FIXTURE_NOMINAL_POWER_KW);
 
     expect(toIntegerUnits(rowFor(restored, REPRODUCTION_ROW_SUPPLY_ID).value)).toBe(REPRODUCTION_ROW_UNITS);
     expect(isRowRevertable(rowFor(restored, REPRODUCTION_ROW_SUPPLY_ID), snapshot)).toBe(false);
@@ -606,7 +606,7 @@ describe("isRowRevertable", () => {
     const added = buildEditableRowFromSupply(buildSupply({ id: "supply-new", name: "Nuevo", code: "ES999" }));
     expect(isRowRevertable(added, snapshot)).toBe(false);
 
-    const filled = updateRowInput([added], "supply-new", "1,0000", "percentage", FIXTURE_INSTALLED_POWER_KW);
+    const filled = updateRowInput([added], "supply-new", "1,0000", "percentage", FIXTURE_NOMINAL_POWER_KW);
 
     expect(isRowRevertable(filled[0], snapshot)).toBe(false);
   });
@@ -629,7 +629,7 @@ describe("isRowRevertable", () => {
       REPRODUCTION_ROW_SUPPLY_ID,
       snapshot,
       "percentage",
-      FIXTURE_INSTALLED_POWER_KW,
+      FIXTURE_NOMINAL_POWER_KW,
     );
 
     expect(toIntegerUnits(reverted[0].value)).toBe(REPRODUCTION_ROW_UNITS);

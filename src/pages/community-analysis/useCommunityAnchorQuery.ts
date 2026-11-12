@@ -7,7 +7,7 @@ const LATEST_COMMUNITY_MONTH = { period: GetCommunityEnergyMetricsPeriod.LATEST_
 /**
  * The active community's energy metrics over its latest published month
  * (UI-CAN-002): the period's anchor, read with `readMonthAnchor`, and the
- * header's plants and installed power, which do not depend on the period.
+ * header's plants and their peak and nominal power, which do not depend on the period.
  * Nothing is asked before the community is known.
  */
 export function useCommunityAnchorQuery() {

@@ -31,7 +31,7 @@ import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 
 export interface SharingAgreementCoefficientRowProps {
   coefficient: SharingAgreementPartitionCoefficientResponse;
-  installedPowerKw: number | undefined;
+  nominalPowerKW: number | undefined;
   /** When set, the coefficient cell becomes an editable input with a remove action. */
   isEditing?: boolean;
   /** Unit the editable input is currently expressed in. Required when `isEditing`. */
@@ -79,15 +79,15 @@ export interface SharingAgreementCoefficientRowProps {
   actionsDisabled?: boolean;
 }
 
-function formatAssignedEnergy(coefficientValue: number | undefined, installedPowerKw: number | undefined): string {
-  if (coefficientValue === undefined || installedPowerKw === undefined) return "-";
-  return formatKilowatts(coefficientValue * installedPowerKw);
+function formatAssignedEnergy(coefficientValue: number | undefined, nominalPowerKW: number | undefined): string {
+  if (coefficientValue === undefined || nominalPowerKW === undefined) return "-";
+  return formatKilowatts(coefficientValue * nominalPowerKW);
 }
 
 function getCoefficientInputErrorMessage(
   raw: string,
   unit: CoefficientInputUnit,
-  installedPowerKw: number | undefined,
+  nominalPowerKW: number | undefined,
 ): string {
   if (unit === "percentage") {
     // Six coefficient decimals are four in percent, and the surplus digits reach
@@ -97,8 +97,8 @@ function getCoefficientInputErrorMessage(
       ? `Como máximo ${MAX_PERCENTAGE_DECIMALS} decimales`
       : "Introduce un valor entre 0 y 100 %";
   }
-  if (installedPowerKw === undefined || installedPowerKw <= 0) return "Introduce un valor válido";
-  return `Introduce un valor entre 0 y ${formatDecimalForInput(installedPowerKw)} kW`;
+  if (nominalPowerKW === undefined || nominalPowerKW <= 0) return "Introduce un valor válido";
+  return `Introduce un valor entre 0 y ${formatDecimalForInput(nominalPowerKW)} kW`;
 }
 
 /**
@@ -123,7 +123,7 @@ function CoefficientComparisonLine({ comparison, draftValue }: { comparison: Row
 
 /**
  * Under the assigned power: the power in force, with no delta. The in-force
- * value uses its own agreement's installed power, which may differ from the
+ * value uses its own agreement's nominal power, which may differ from the
  * draft's, so a kW difference would mix two causes. Holds the line's height
  * with a skeleton while that agreement loads.
  */
@@ -143,11 +143,11 @@ function NewSupplyBadge() {
 }
 
 /** "Potencia asignada" in percentage mode; the equivalent percentage in kW mode — always the unit the admin isn't currently typing. */
-function formatOtherUnit(value: number | undefined, unit: CoefficientInputUnit, installedPowerKw: number | undefined): string {
+function formatOtherUnit(value: number | undefined, unit: CoefficientInputUnit, nominalPowerKW: number | undefined): string {
   if (value === undefined) return "-";
   if (unit === "kw") return formatCoefficientPercentage(value);
-  if (installedPowerKw === undefined) return "-";
-  return formatKilowatts(value * installedPowerKw);
+  if (nominalPowerKW === undefined) return "-";
+  return formatKilowatts(value * nominalPowerKW);
 }
 
 /**
@@ -195,7 +195,7 @@ function CoefficientInput({
   coefficientInput,
   editedValue,
   unit,
-  installedPowerKw,
+  nominalPowerKW,
   onCoefficientChange,
   align,
   supplyLabel,
@@ -204,7 +204,7 @@ function CoefficientInput({
   coefficientInput: string;
   editedValue: number | undefined;
   unit: CoefficientInputUnit;
-  installedPowerKw: number | undefined;
+  nominalPowerKW: number | undefined;
   onCoefficientChange: (value: string) => void;
   align: "start" | "end";
 }) {
@@ -217,7 +217,7 @@ function CoefficientInput({
       value={coefficientInput}
       onChange={(event) => onCoefficientChange(event.target.value)}
       error={isInvalid || isEmpty}
-      helperText={isInvalid ? getCoefficientInputErrorMessage(coefficientInput, unit, installedPowerKw) : isEmpty ? "Obligatorio" : undefined}
+      helperText={isInvalid ? getCoefficientInputErrorMessage(coefficientInput, unit, nominalPowerKW) : isEmpty ? "Obligatorio" : undefined}
       placeholder={unit === "percentage" ? "0,0000" : "0,00"}
       slotProps={{
         htmlInput: { inputMode: "decimal", style: { textAlign: align === "end" ? "right" : "left" } },
@@ -234,7 +234,7 @@ function CoefficientInput({
 
 export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficientRowProps> = ({
   coefficient,
-  installedPowerKw,
+  nominalPowerKW,
   isEditing,
   inputUnit,
   coefficientInput,
@@ -254,7 +254,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
   actionsDisabled = false,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
-  const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", installedPowerKw) : undefined;
+  const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", nominalPowerKW) : undefined;
   const identity = getRowIdentity(coefficient.supply);
   const label = (coefficient.supply && supplyDisplayLabel(coefficient.supply)) || "suministro";
   const applicationStateDetail = getApplicationStateDetail(coefficient, isDraft);
@@ -306,7 +306,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
             coefficientInput={coefficientInput ?? ""}
             editedValue={editedValue}
             unit={inputUnit}
-            installedPowerKw={installedPowerKw}
+            nominalPowerKW={nominalPowerKW}
             onCoefficientChange={onCoefficientChange}
             align="end"
             supplyLabel={label}
@@ -320,7 +320,7 @@ export const SharingAgreementCoefficientTableRow: FC<SharingAgreementCoefficient
       </TableCell>
       <TableCell align="right">
         <Typography variant="body2" fontWeight="600">
-          {isEditing ? otherUnitValue : formatAssignedEnergy(coefficient.coefficient, installedPowerKw)}
+          {isEditing ? otherUnitValue : formatAssignedEnergy(coefficient.coefficient, nominalPowerKW)}
         </Typography>
         {isEditingInKw ? coefficientLine : powerLine}
       </TableCell>
@@ -383,7 +383,7 @@ const SELECTION_SLOT_WIDTH = 38;
 
 export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowProps> = ({
   coefficient,
-  installedPowerKw,
+  nominalPowerKW,
   isEditing,
   inputUnit,
   coefficientInput,
@@ -403,7 +403,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
   actionsDisabled = false,
 }) => {
   const endStateReadOnly = isEndStateReadOnly(coefficient.endState);
-  const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", installedPowerKw) : undefined;
+  const otherUnitValue = isEditing ? formatOtherUnit(editedValue, inputUnit ?? "percentage", nominalPowerKW) : undefined;
   const identity = getRowIdentity(coefficient.supply);
   const label = (coefficient.supply && supplyDisplayLabel(coefficient.supply)) || "suministro";
   const applicationStateDetail = getApplicationStateDetail(coefficient, isDraft);
@@ -470,7 +470,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
               coefficientInput={coefficientInput ?? ""}
               editedValue={editedValue}
               unit={inputUnit}
-              installedPowerKw={installedPowerKw}
+              nominalPowerKW={nominalPowerKW}
               onCoefficientChange={onCoefficientChange}
               align="start"
               supplyLabel={label}
@@ -481,7 +481,7 @@ export const SharingAgreementCoefficientCard: FC<SharingAgreementCoefficientRowP
                 {formatCoefficientPercentage(coefficient.coefficient ?? 0)}
               </Typography>
               <Typography variant="caption" sx={{ color: colors.text.secondary }}>
-                {formatAssignedEnergy(coefficient.coefficient, installedPowerKw)}
+                {formatAssignedEnergy(coefficient.coefficient, nominalPowerKW)}
               </Typography>
             </Box>
           )}

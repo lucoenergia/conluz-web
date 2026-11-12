@@ -12,7 +12,7 @@ import { getAllSupplies } from "../../api/supplies/supplies";
 import { buildSupply } from "../../test/fixtures";
 import {
   FIXTURE_COEFFICIENTS,
-  FIXTURE_INSTALLED_POWER_KW,
+  FIXTURE_NOMINAL_POWER_KW,
   REPRODUCTION_ROW_NAME,
   REPRODUCTION_ROW_SUPPLY_ID,
 } from "../../pages/production/__fixtures__/coefficientSet63kw";
@@ -223,7 +223,7 @@ describe("SharingAgreementCoefficientSet (per-row revert)", { timeout: 20_000 },
   function renderEditor() {
     const view = renderWithTheme({
       coefficients: FIXTURE_COEFFICIENTS,
-      installedPowerKw: FIXTURE_INSTALLED_POWER_KW,
+      nominalPowerKW: FIXTURE_NOMINAL_POWER_KW,
       agreementStatus: SharingAgreementResponseStatus.DRAFT,
     });
     fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
@@ -330,7 +330,7 @@ describe("SharingAgreementCoefficientSet (per-row revert)", { timeout: 20_000 },
     const user = userEvent.setup({ delay: null });
     renderWithTheme({
       coefficients: [],
-      installedPowerKw: FIXTURE_INSTALLED_POWER_KW,
+      nominalPowerKW: FIXTURE_NOMINAL_POWER_KW,
       agreementStatus: SharingAgreementResponseStatus.DRAFT,
     });
     fireEvent.click(screen.getByRole("button", { name: /Editar a mano/ }));
@@ -422,7 +422,7 @@ describe("SharingAgreementCoefficientSet (per-row revert)", { timeout: 20_000 },
     );
     rerenderWithTheme(rerender, {
       coefficients: saved,
-      installedPowerKw: FIXTURE_INSTALLED_POWER_KW,
+      nominalPowerKW: FIXTURE_NOMINAL_POWER_KW,
       agreementStatus: SharingAgreementResponseStatus.DRAFT,
     });
     fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));

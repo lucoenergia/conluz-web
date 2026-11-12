@@ -85,7 +85,7 @@ function Harness() {
         plantId={PLANT_ID}
         agreement={agreement}
         coefficients={coefficients ?? []}
-        installedPowerKw={agreement?.nominalPowerKW}
+        nominalPowerKW={agreement?.nominalPowerKW}
       />
     </>
   );
