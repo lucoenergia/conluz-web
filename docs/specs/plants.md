@@ -6,21 +6,21 @@
 | **Status** | Active |
 | **Routes** | `/plants`; creating and editing a plant open in the shared overlay over the list |
 | **Roles** | A community admin (the active community's `canManage`, UI-PLT-010) reads the list. A row's menu offers what the plant's own capabilities grant: editing and deleting with `canManage`, its sharing agreements with `canListSharingAgreements`. Creating a plant: a caller to whom the active community reports `canCreatePlants` |
-| **Domain rules** | n/a |
+| **Domain rules** | `lucoenergia/conluz`: PLT-003, PLT-004, PLT-005 (lucoenergia/conluz#567) |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `ListPagination` (the list; its shared rules are `record-lists.md`); the plant form is on `AppModal` (`overlays.md`) |
-| **Last reviewed against code** | #406 |
+| **Last reviewed against code** | #407 |
 
 <!-- Domain rules are cited by ID; the prefix registry in lucoenergia/conluz → docs/specs/README.md maps each prefix to its file. -->
 
 ## Purpose
 
-List a community's plants with what a person knows a plant by: its name, its CAU, its installed
-power and inverter, when it was connected and where it is. Find one by what its row shows, and
+List a community's plants with what a person knows a plant by: its name, its CAU, its peak and
+nominal power and inverter, when it was connected and where it is. Find one by what its row shows, and
 reach its detail, its sharing agreements or its deletion from its row. Create and edit a plant
 without leaving the list, say what is wrong with a form that cannot be sent, and save it once
 however often the form is sent.
 
-This document covers only the rules #349 and #373 introduced. A plant deletion's refusal and its
+This document covers only the rules #349, #373 and #407 introduced. A plant deletion's refusal and its
 confirmation keep their rules in [`plant-detail.md`](plant-detail.md) (UI-PLT-008, UI-PLT-009), and
 the rules every records list shares are in [`record-lists.md`](record-lists.md).
 
@@ -30,16 +30,19 @@ the rules every records list shares are in [`record-lists.md`](record-lists.md).
 
 - **Status:** Active
 - **Rule:**
-  - A plant row MUST show its name, its CAU or "Sin CAU", its installed power and inverter
-    provider (by name, e.g. «Huawei»), its connection date or "Sin fecha de conexión", and its
-    address.
+  - A plant row MUST show its name, its CAU or "Sin CAU", its peak power (kWp) and nominal power
+    (kW), its inverter provider by name (e.g. «Huawei»), its connection date or "Sin fecha de
+    conexión", and its address.
   - Missing values MUST be shown as neutral text.
-  - It MUST NOT show the provider's station code or the description.
+  - It MUST NOT show the provider's station code, the description or the CIL.
 - **Rationale:** A plant still being set up is not an error. The station code is an integration
   key, not something a person identifies a plant by, and the inverter provider's API code
-  ("HUAWEI") is not its name.
+  ("HUAWEI") is not its name. The single "installed power" conflated module power with exportable
+  power. The CIL is a settlement code looked up on the plant itself, not something a person scans a
+  list by.
 - **Implements:** n/a
-- **Source:** #349
+- **Source:** #349; changed in #407 (peak and nominal power replace the installed power; no CIL),
+  lucoenergia/conluz#567
 
 ### UI-PLS-002 — The search matches only what the row shows
 
@@ -93,14 +96,18 @@ the rules every records list shares are in [`record-lists.md`](record-lists.md).
 ### UI-PLS-005 — An invalid plant form says what is wrong instead of being dropped
 
 - **Status:** Active
-- **Rule:** A plant form submitted with a required input empty, or a total power that is not above
-  0, MUST send nothing, MUST show an error on each failing input, MUST move focus to the first
-  failing input in the form's order, and MUST NOT be discarded silently.
+- **Rule:** A plant form submitted with a required input empty, a peak or nominal power not above
+  0, or a non-empty CIL that does not normalise to exactly 25 alphanumeric characters MUST send
+  nothing, MUST show an error on each failing input, MUST move focus to the first failing input in
+  the form's order, and MUST NOT be discarded silently.
 - **Rationale:** The form dropped such a submit without a word: a power of 0 passed the input's own
   minimum and was then discarded, so the admin saw nothing happen. Focus on the first failing input
-  puts it in view, which on a phone may be outside the sheet's visible part.
-- **Implements:** n/a
-- **Source:** #373
+  puts it in view, which on a phone may be outside the sheet's visible part. The same holds for the
+  new inputs; validating the CIL in the form spares a round trip for a typo. The two powers are
+  checked each on its own and never against each other.
+- **Implements:** PLT-003, PLT-004
+- **Source:** #373; changed in #407 (peak and nominal power replace the total power; the CIL),
+  lucoenergia/conluz#567
 
 ### UI-PLS-006 — A plant save in flight sends nothing again, and the form is read-only
 
@@ -137,6 +144,39 @@ the rules every records list shares are in [`record-lists.md`](record-lists.md).
   had a name.
 - **Implements:** n/a
 - **Source:** #373
+
+### UI-PLS-009 — The CIL is sent as the backend stores it
+
+- **Status:** Active
+- **Rule:** The plant form MUST send the CIL upper-cased with every whitespace or Unicode space
+  character removed (U+00A0 included), and an empty CIL as absent.
+- **Rationale:** Codes are pasted from distributor documents with spaces or lower case. Matching the
+  backend's normalisation keeps the form's check and the server's check in agreement. On an edit,
+  an absent CIL clears the stored one, which is how an admin removes it.
+- **Implements:** PLT-004
+- **Source:** #407, lucoenergia/conluz#567
+
+### UI-PLS-010 — A refused CIL is said on the CIL input
+
+- **Status:** Active
+- **Rule:** A plant save refused with 409 `PLANT_CIL_ALREADY_IN_USE` or 400 `PLANT_CIL_INVALID` MUST
+  keep the form open with its values and MUST show the refusal on the CIL input.
+- **Rationale:** The admin can only fix it by changing the CIL, so the message belongs on that input
+  (UI-ERR-002). `PLANT_CIL_INVALID` covers a code the form's check accepted but the backend refused.
+- **Implements:** PLT-004, PLT-005
+- **Source:** #407, lucoenergia/conluz#567
+
+### UI-PLS-011 — The list header sums both powers over every plant
+
+- **Status:** Active
+- **Rule:** The plant list's header MUST show the number of plants, the sum of their peak powers
+  (kWp) and the sum of their nominal powers (kW). The sums are computed by the client over every
+  plant of the list, which is read in full.
+- **Rationale:** The header showed one total of the single power the plant had; each of the two
+  powers now has its own. Revisit if the plant list becomes paginated: the sums must then come from
+  the backend.
+- **Implements:** n/a
+- **Source:** #407
 
 ## States
 
