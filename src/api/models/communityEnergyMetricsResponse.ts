@@ -19,8 +19,10 @@ export interface CommunityEnergyMetricsResponse {
   coverage: CommunityEnergyMetricsCoverageResponse;
   /** The energy totals of the community: its plants' production, and the self-consumption and surplus of every supply of the community, summed. */
   energy: CommunityEnergyMetricsEnergyResponse;
-  /** Installed power of every plant of the community, summed, in kWp. */
-  installedPowerKWp: number;
+  /** Power every plant of the community can export to the grid, summed, in kW. */
+  nominalPowerKW: number;
+  /** Peak power of every plant of the community, summed, in kWp. */
+  peakPowerKWp: number;
   /** The period the metrics were computed over, the same for every supply and plant. */
   period: SupplyEnergyMetricsPeriodResponse;
   /** Every plant of the community, ordered by name, with its production over the period. */

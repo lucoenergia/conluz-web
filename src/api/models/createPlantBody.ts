@@ -10,11 +10,23 @@ import type { CreatePlantBodyInverterProvider } from './createPlantBodyInverterP
 export interface CreatePlantBody {
   /** @minLength 1 */
   address: string;
+  /** The CIL (Codigo de la Instalacion de produccion a efectos de Liquidacion): the Spanish settlement code of the plant, assigned by the distribution company. 25 alphanumeric characters, normalised to upper case with all whitespace removed, and unique across the platform. Omitted, empty or blank means no CIL. */
+  cil?: string;
   connectionDate?: string;
   description?: string;
   inverterProvider: CreatePlantBodyInverterProvider;
   /** @minLength 1 */
   name: string;
+  /**
+     * Power the plant can export to the grid, in kW, as capped by its inverters and grid connection.
+     * @exclusiveMinimum 0
+     */
+  nominalPowerKW: number;
+  /**
+     * Peak power of the plant's modules, in kWp.
+     * @exclusiveMinimum 0
+     */
+  peakPowerKWp: number;
   /**
      * The plant identifier assigned by the inverter provider (currently Huawei). Used verbatim as the station_code tag in InfluxDB: this is the join key between the PostgreSQL plant row and its time series. It is not a CUPS and not a CAU -- the regulator's code is regulatory_code.
      * @minLength 1
@@ -24,6 +36,4 @@ export interface CreatePlantBody {
   regulatoryCode?: string;
   /** @minLength 1 */
   supplyCode: string;
-  /** @exclusiveMinimum 0 */
-  totalPower: number;
 }

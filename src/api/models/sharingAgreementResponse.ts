@@ -23,10 +23,10 @@ export interface SharingAgreementResponse {
   file: SharingAgreementResponseFile;
   /** Internal unique identifier of the sharing agreement */
   id: string;
-  /** Snapshot of the plant's installed power at authoring time, in kW */
-  installedPowerKw: number;
   /** Human-readable label for the agreement */
   name: string;
+  /** Snapshot of the plant's nominal power at authoring time, in kW. */
+  nominalPowerKW: number;
   /**
      * Free-text notes about the agreement
      * @nullable

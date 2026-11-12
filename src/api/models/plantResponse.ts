@@ -14,6 +14,11 @@ export interface PlantResponse {
   address: string;
   /** What the caller may do with this plant. */
   capabilities: PlantCapabilitiesResponse;
+  /**
+     * The CIL (Codigo de la Instalacion de produccion a efectos de Liquidacion): the Spanish settlement code of the plant, assigned by the distribution company. 25 alphanumeric characters, normalised to upper case with all whitespace removed, and unique across the platform. Null when the plant has none recorded.
+     * @nullable
+     */
+  cil: string | null;
   /** The community that owns the plant. */
   community: PlantCommunityResponse;
   /** @nullable */
@@ -23,6 +28,10 @@ export interface PlantResponse {
   id: string;
   inverterProvider: PlantResponseInverterProvider;
   name: string;
+  /** Power the plant can export to the grid, in kW, as capped by its inverters and grid connection. */
+  nominalPowerKW: number;
+  /** Peak power of the plant's modules, in kWp. */
+  peakPowerKWp: number;
   /** The plant identifier assigned by the inverter provider (currently Huawei). Used verbatim as the station_code tag in InfluxDB: this is the join key between the PostgreSQL plant row and its time series. It is not a CUPS and not a CAU -- the regulator's code is regulatory_code. */
   providerCode: string;
   /**
@@ -32,6 +41,4 @@ export interface PlantResponse {
   regulatoryCode: string | null;
   /** The supply this plant produces onto. A reference: the full supply, including its owner, is fetched from GET /supplies/{supplyId}, which not every caller who may list plants is allowed to call. */
   supply: SupplyReferenceResponse;
-  /** Installed power of the plant, in kWp. */
-  totalPower: number;
 }

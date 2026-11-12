@@ -8,8 +8,10 @@
 import type { PlantReferenceResponse } from './plantReferenceResponse';
 
 export interface CommunityPlantEnergyResponse {
-  /** Installed power of the plant, in kWp. */
-  installedPowerKWp: number;
+  /** Power the plant can export to the grid, in kW, as capped by its inverters and grid connection. */
+  nominalPowerKW: number;
+  /** Peak power of the plant's modules, in kWp. */
+  peakPowerKWp: number;
   /** The plant. */
   plant: PlantReferenceResponse;
   /**
