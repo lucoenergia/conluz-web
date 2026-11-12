@@ -1,10 +1,13 @@
 import dayjs, { type Dayjs } from "dayjs";
 import type { PlantResponse, SupplyResponse } from "../../api/models";
+import { CIL_FORMAT_MESSAGE, normaliseCil } from "../../errors/plantCil";
 
 /** What the fields hold. The supply is the chosen supply's code, `null` for none. */
 export interface PlantFieldValues {
   providerCode: string;
   regulatoryCode: string;
+  /** As typed: normalised only when it is sent. */
+  cil: string;
   name: string;
   address: string;
   description: string;
@@ -17,11 +20,12 @@ export interface PlantFieldValues {
 }
 
 /** The inputs an error can be shown on. */
-export type PlantFormField = "providerCode" | "name" | "supplyCode" | "address" | "peakPowerKWp" | "nominalPowerKW";
+export type PlantFormField = "providerCode" | "cil" | "name" | "supplyCode" | "address" | "peakPowerKWp" | "nominalPowerKW";
 
 /** The inputs an error can be shown on, in the order the form shows them. */
 const FORM_ORDER: readonly PlantFormField[] = [
   "providerCode",
+  "cil",
   "name",
   "supplyCode",
   "address",
@@ -32,6 +36,7 @@ const FORM_ORDER: readonly PlantFormField[] = [
 export const EMPTY_PLANT_FIELD_VALUES: PlantFieldValues = {
   providerCode: "",
   regulatoryCode: "",
+  cil: "",
   name: "",
   address: "",
   description: "",
@@ -46,6 +51,7 @@ export function plantFieldValuesOf(plant: PlantResponse): PlantFieldValues {
   return {
     providerCode: plant.providerCode,
     regulatoryCode: plant.regulatoryCode ?? "",
+    cil: plant.cil ?? "",
     name: plant.name,
     address: plant.address,
     description: plant.description ?? "",
@@ -96,6 +102,8 @@ export function plantFieldErrors(
   const errors = REQUIRED.filter(([field]) =>
     field === "supplyCode" ? !selectedSupply : !values[field],
   );
+  // An empty CIL is no CIL; any other must be one the backend accepts.
+  if (!normaliseCil(values.cil).valid) errors.push(["cil", CIL_FORMAT_MESSAGE]);
   // Each power on its own: neither is compared with the other.
   for (const field of POWER_FIELDS) {
     if (!powerIsValid(values[field])) errors.push([field, POWER_ERROR]);

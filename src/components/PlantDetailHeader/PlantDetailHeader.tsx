@@ -11,7 +11,7 @@ import type { PlantResponse } from "../../api/models";
 import { DetailHeader, type DetailFact, type DetailKeyFacts } from "../DetailHeader";
 import { MenuTemplate } from "../Menu/MenuTemplate";
 import { formatCalendarDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
-import { colors, radii } from "../../theme/tokens";
+import { colors, fontFamilies, radii } from "../../theme/tokens";
 import { formatKilowatts, formatKilowattsPeak } from "../../utils/formatKilowatts";
 import { inverterProviderLabel } from "../../utils/inverterProviderLabel";
 import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
@@ -102,6 +102,22 @@ export const PlantDetailHeader: FC<PlantDetailHeaderProps> = ({
   ];
 
   const details: DetailFact[] = [
+    // A plant without a CIL is still being registered, not in error: neutral text (UI-PLT-006).
+    {
+      label: "CIL",
+      value: plant?.cil ? (
+        <Typography
+          component="span"
+          sx={{ display: "block", fontFamily: fontFamilies.mono, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        >
+          {plant.cil}
+        </Typography>
+      ) : (
+        <Typography component="span" sx={{ color: "text.secondary" }}>
+          Sin CIL
+        </Typography>
+      ),
+    },
     { label: "Código de proveedor", value: plant?.providerCode || "-" },
     { label: "Proveedor de inversor", value: plant?.inverterProvider ? inverterProviderLabel(plant.inverterProvider) : "-" },
     { label: "Fecha de conexión", value: formatCalendarDate(plant?.connectionDate ?? undefined, SHORT_CALENDAR_DATE) },

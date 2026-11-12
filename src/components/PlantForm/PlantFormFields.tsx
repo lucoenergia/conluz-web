@@ -71,6 +71,22 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
     />
 
     <TextField
+      id="cil"
+      label="CIL"
+      type="text"
+      name="cil"
+      inputRef={inputRefs.cil}
+      error={fieldErrors.cil !== undefined}
+      helperText={fieldErrors.cil}
+      value={values.cil}
+      onChange={(e) => onChange("cil", e.target.value)}
+      // Room for a code pasted with spaces; the form sends it without them.
+      slotProps={{ htmlInput: { maxLength: 50, readOnly } }}
+      fullWidth
+      variant="outlined"
+    />
+
+    <TextField
       id="name"
       label="Nombre"
       type="text"
