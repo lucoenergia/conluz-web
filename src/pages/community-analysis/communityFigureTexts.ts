@@ -23,14 +23,13 @@ export const NOMINAL_POWER_LABEL = "Potencia nominal";
 export const powersText = ({ peakPowerKWp, nominalPowerKW }: { peakPowerKWp: number; nominalPowerKW: number }) =>
   `${PEAK_POWER_LABEL} ${formatKilowattsPeak(peakPowerKWp)} · ${NOMINAL_POWER_LABEL} ${formatKilowatts(nominalPowerKW)}`;
 
-/** What the header says about the plants: how many, and their peak and nominal power. */
-export function plantsSummary(
-  metrics: Pick<CommunityEnergyMetricsResponse, "plants" | "peakPowerKWp" | "nominalPowerKW">,
-): string {
-  const { plants } = metrics;
+/**
+ * What the header says about the plants: how many. Their powers are in the
+ * figures: with both of them, the line no longer fits one row of a phone.
+ */
+export function plantsSummary({ plants }: Pick<CommunityEnergyMetricsResponse, "plants">): string {
   if (plants.length === 0) return "sin plantas todavía";
-  const count = plants.length === 1 ? "1 planta" : `${plants.length} plantas`;
-  return `${count} · ${powersText(metrics)}`;
+  return plants.length === 1 ? "1 planta" : `${plants.length} plantas`;
 }
 
 /** How many of the community's supplies the period's figures count (UI-CAN-004). */

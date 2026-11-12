@@ -21,14 +21,10 @@ describe("community figure texts (#403)", () => {
     expect(co2FactorText([2025])).toBe("Calculado con el factor de emisión de MITECO para la electricidad sin garantía de origen de 2025.");
   });
 
-  it("states the plants and their peak and nominal power, or that there are none yet", () => {
-    expect(plantsSummary({ plants: [PABELLON, ESCUELAS, LAVADERO], peakPowerKWp: 112.5, nominalPowerKW: 90 })).toBe(
-      "3 plantas · Potencia pico 112,5 kWp · Potencia nominal 90 kW",
-    );
-    expect(plantsSummary({ plants: [PABELLON], peakPowerKWp: 60, nominalPowerKW: 48 })).toBe(
-      "1 planta · Potencia pico 60 kWp · Potencia nominal 48 kW",
-    );
-    expect(plantsSummary({ plants: [], peakPowerKWp: 0, nominalPowerKW: 0 })).toBe("sin plantas todavía");
+  it("states how many plants there are, or that there are none yet", () => {
+    expect(plantsSummary({ plants: [PABELLON, ESCUELAS, LAVADERO] })).toBe("3 plantas");
+    expect(plantsSummary({ plants: [PABELLON] })).toBe("1 planta");
+    expect(plantsSummary({ plants: [] })).toBe("sin plantas todavía");
   });
 
   it("UI-CAN-003 writes ratios and shares through the shared percentage formatter", () => {

@@ -50,10 +50,12 @@ describe("UI-CAN-010 the community's peak and nominal power (#407)", () => {
     expect(within(figures()).getByText("Potencia nominal").parentElement).toHaveTextContent(/80 kW(?!p)/);
   });
 
-  it("UI-CAN-010 the header line under the title states both powers", () => {
+  it("UI-CAN-010 the header line under the title shows no power, leaving both to the figures", () => {
     renderPowers();
 
-    expect(screen.getByText("2 plantas · Potencia pico 100 kWp · Potencia nominal 80 kW", { exact: false })).toBeInTheDocument();
+    const header = screen.getByText("2 plantas", { exact: false });
+    expect(header).not.toHaveTextContent(/kW/);
+    expect(within(figures()).getAllByText(/^Potencia (pico|nominal)$/)).toHaveLength(2);
   });
 
   it("UI-CAN-010 labels no figure with the forbidden word for installed power", () => {

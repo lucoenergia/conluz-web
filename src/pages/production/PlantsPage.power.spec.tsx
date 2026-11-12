@@ -102,22 +102,13 @@ describe.each(["narrow", "wide"] as const)("the plant list's powers, %s", (layou
   });
 });
 
-describe("UI-PLS-011 the list header sums both powers over every plant (#407)", () => {
-  it("UI-PLS-011 shows the plant count, the summed peak power in kWp and the summed nominal power in kW", () => {
+describe("UI-PLS-011 the list header counts the plants and sums no power (#407)", () => {
+  it("UI-PLS-011 shows the plant count, and neither power nor a sum of one", () => {
     setup("wide");
 
     expect(counter("Total plantas")).toHaveTextContent("2");
-    expect(counter("Potencia pico")).toHaveTextContent("115,5 kWp");
-    expect(counter("Potencia nominal")).toHaveTextContent("90,25 kW");
-  });
-
-  it("UI-PLS-011 sums every plant of the list, beyond the 25 rows of its first page", () => {
-    const plants = Array.from({ length: 26 }, (_, index) =>
-      plant(`p-${index}`, `Planta ${index}`, { peakPowerKWp: 10, nominalPowerKW: 8 }),
-    );
-    setup("wide", plants);
-
-    expect(counter("Potencia pico")).toHaveTextContent("260 kWp");
-    expect(counter("Potencia nominal")).toHaveTextContent("208 kW");
+    const header = counter("Total plantas").parentElement as HTMLElement;
+    expect(header).not.toHaveTextContent(/kW/);
+    expect(screen.queryByText(/^(Potencia|Pico|Nominal)/, { selector: ".MuiTypography-caption" })).not.toBeInTheDocument();
   });
 });

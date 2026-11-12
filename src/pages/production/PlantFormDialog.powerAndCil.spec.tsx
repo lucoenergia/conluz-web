@@ -120,23 +120,28 @@ const save = () => screen.getByRole("button", { name: "Guardar" });
 
 type User = ReturnType<typeof userEvent.setup>;
 
-/** Every required input of the create form, with values the backend accepts. */
-async function fillCreate(user: User, powers: { peak: string; nominal: string } = { peak: "80", nominal: "60" }) {
-  await user.type(screen.getByLabelText(/Código de proveedor/), "NE=9");
-  await user.type(screen.getByLabelText(/^Nombre/), "Planta Oeste");
-  await user.click(screen.getByRole("combobox", { name: /Punto de suministro/ }));
-  await user.click(await screen.findByRole("option", { name: /ES0001/ }));
-  await user.type(screen.getByLabelText(/Dirección/), "Calle Luna 3");
-  // An empty power is left untyped.
-  if (powers.peak) await user.type(peak(), powers.peak);
-  if (powers.nominal) await user.type(nominal(), powers.nominal);
+/** Pasted rather than typed: what matters is the value, and typing each character is slow. */
+async function paste(user: User, input: HTMLElement, value: string) {
+  await user.click(input);
+  await user.paste(value);
 }
 
-/** Pasted, so a no-break space arrives as it would from a document. */
+/** Every required input of the create form, with values the backend accepts. */
+async function fillCreate(user: User, powers: { peak: string; nominal: string } = { peak: "80", nominal: "60" }) {
+  await paste(user, screen.getByLabelText(/Código de proveedor/), "NE=9");
+  await paste(user, screen.getByLabelText(/^Nombre/), "Planta Oeste");
+  await user.click(screen.getByRole("combobox", { name: /Punto de suministro/ }));
+  await user.click(await screen.findByRole("option", { name: /ES0001/ }));
+  await paste(user, screen.getByLabelText(/Dirección/), "Calle Luna 3");
+  // An empty power is left as it is.
+  if (powers.peak) await paste(user, peak(), powers.peak);
+  if (powers.nominal) await paste(user, nominal(), powers.nominal);
+}
+
+/** Replaces the CIL, pasted so a no-break space arrives as it would from a document. */
 async function pasteCil(user: User, value: string) {
   await user.clear(cil());
-  await user.click(cil());
-  await user.paste(value);
+  await paste(user, cil(), value);
 }
 
 const sentData = (mock: typeof mockCreate) => mock.mock.calls[0][0].data;
@@ -186,11 +191,11 @@ describe("UI-PLS-005 the peak and nominal power (#407)", () => {
 });
 
 describe("UI-PLS-009 the CIL is sent as the backend stores it (#407)", () => {
-  it("UI-PLS-009 sends a CIL typed in lower case with spaces upper-cased and without them", async () => {
+  it("UI-PLS-009 sends a CIL given in lower case with spaces upper-cased and without them", async () => {
     const user = userEvent.setup();
     renderCreate();
     await fillCreate(user);
-    await user.type(cil(), "es00 3140 5000 0000 01ab 1f00 1");
+    await pasteCil(user, "es00 3140 5000 0000 01ab 1f00 1");
 
     await user.click(create());
 
@@ -289,7 +294,7 @@ describe("UI-PLS-010 a CIL the backend refuses is said on the CIL input (#407)",
     const user = userEvent.setup();
     renderCreate();
     await fillCreate(user);
-    await user.type(cil(), CIL);
+    await pasteCil(user, CIL);
 
     await user.click(create());
 
@@ -324,7 +329,7 @@ describe("UI-PLS-010 a CIL the backend refuses is said on the CIL input (#407)",
     const user = userEvent.setup();
     renderCreate();
     await fillCreate(user);
-    await user.type(cil(), CIL);
+    await pasteCil(user, CIL);
     await user.click(create());
     await waitFor(() => expect(cil()).toHaveAccessibleDescription(CIL_IN_USE));
 
@@ -338,7 +343,7 @@ describe("UI-PLS-010 a CIL the backend refuses is said on the CIL input (#407)",
     const user = userEvent.setup();
     renderCreate();
     await fillCreate(user);
-    await user.type(cil(), CIL);
+    await pasteCil(user, CIL);
 
     await user.click(create());
 

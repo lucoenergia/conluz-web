@@ -131,9 +131,11 @@ test.describe("Visual baselines", () => {
    * (community-management.spec.ts), and CapabilityRoute waits for the
    * capability answer, so a cold goto lands.
    */
-  const LIST_PAGES: { name: string; open: (page: Page) => Promise<void> }[] = [
+  /** `counters`: how many counters the page's header shows with its fixture, exactly. */
+  const LIST_PAGES: { name: string; counters: number; open: (page: Page) => Promise<void> }[] = [
     {
       name: "/plants",
+      counters: 1,
       open: async (page) => {
         await injectAuthToken(page);
         await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
@@ -145,6 +147,7 @@ test.describe("Visual baselines", () => {
     },
     {
       name: "/supply-points",
+      counters: 3,
       open: async (page) => {
         await injectAuthToken(page);
         await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
@@ -155,6 +158,7 @@ test.describe("Visual baselines", () => {
     },
     {
       name: "/platform-admins",
+      counters: 3,
       open: async (page) => {
         await injectAuthToken(page);
         await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
@@ -165,6 +169,7 @@ test.describe("Visual baselines", () => {
     },
     {
       name: "/communities",
+      counters: 3,
       open: async (page) => {
         await injectAuthToken(page);
         await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
@@ -174,6 +179,7 @@ test.describe("Visual baselines", () => {
     },
     {
       name: "sharing agreements list",
+      counters: 3,
       open: async (page) => {
         await injectAuthToken(page);
         await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
@@ -218,7 +224,7 @@ test.describe("Visual baselines", () => {
       // h1 and the subtitle is body2, so nothing else in the header is one.
       const labels = header.locator(".MuiTypography-caption");
       const labelCount = await labels.count();
-      expect(labelCount).toBeGreaterThanOrEqual(2);
+      expect(labelCount, `counters on ${listPage.name}`).toBe(listPage.counters);
 
       const tops = await labels.evaluateAll((nodes) =>
         nodes.map((node) => Math.round(node.getBoundingClientRect().top)),
@@ -233,9 +239,9 @@ test.describe("Visual baselines", () => {
   }
 
   /**
-   * AC2. The plants list is the page the budget is stated against: two
-   * counters, the shortest header of the eight, and the one whose old version
-   * spent three rows on a single column of stats.
+   * AC2. The plants list is the page the budget is stated against: one
+   * counter since #407, the shortest header of the eight, and the one whose
+   * old version spent three rows on a single column of stats.
    */
   test("AC2: the /plants list header is at most 140px at 390px", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "mobile", "The 140px budget is specified against a 390px viewport.");

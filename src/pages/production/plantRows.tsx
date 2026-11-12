@@ -73,8 +73,8 @@ export const plantTableTitle: ListTableTitle<PlantResponse> = {
 
 /** Room for a 22-character CAU in the mono stack, padding included. */
 const CAU_COLUMN_WIDTH = "224px";
-/** Room for "12.840,25 kWp", the longest power the layout budget checks. */
-const POWER_COLUMN_WIDTH = "112px";
+/** Room for "12.840,25 kWp", the longest power the layout budget checks, and no more: UI-LST-001. */
+const POWER_COLUMN_WIDTH = "96px";
 const CONNECTION_COLUMN_WIDTH = "112px";
 
 /** The wide layout's columns. */

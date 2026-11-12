@@ -160,11 +160,11 @@ beforeEach(() => {
 });
 
 describe("UI-CAN-001 the page (#403)", () => {
-  it("UI-CAN-001 renders at /community-analysis, with the community, its plants and their peak and nominal power", () => {
+  it("UI-CAN-001 renders at /community-analysis, with the community and its plants", () => {
     renderPage();
 
     expect(screen.getByRole("heading", { level: 1, name: "Energía de la comunidad" })).toBeInTheDocument();
-    expect(screen.getByText("Luco Energía · 3 plantas · Potencia pico 112,5 kWp · Potencia nominal 90 kW")).toBeInTheDocument();
+    expect(screen.getByText("Luco Energía · 3 plantas")).toBeInTheDocument();
   });
 });
 
