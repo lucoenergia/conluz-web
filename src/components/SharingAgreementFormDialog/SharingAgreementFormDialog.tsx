@@ -1,5 +1,5 @@
 import { useState, type FC } from "react";
-import { Box, Button, InputAdornment, TextField, Typography } from "@mui/material";
+import { Box, Button, TextField, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -16,13 +16,13 @@ import { ActionStatus } from "../ActionStatus";
 export interface SharingAgreementFormValues {
   name: string;
   notes?: string;
-  installedPowerKw: number;
+  nominalPowerKW: number;
 }
 
 export interface SharingAgreementFormInitialValues {
   name?: string;
   notes?: string;
-  installedPowerKw?: number;
+  nominalPowerKW?: number;
 }
 
 export interface SharingAgreementFormDialogProps {
@@ -55,7 +55,7 @@ function toComparableCapacity(value: number): number {
 
 
 const CAPACITY_CHANGE_NOTICE =
-  "Cambiar la capacidad no modifica los coeficientes ya guardados, pero sí cambia la potencia en kW que corresponde a cada suministro según esos coeficientes.";
+  "Cambiar la potencia nominal no modifica los coeficientes ya guardados, pero sí cambia la potencia en kW que corresponde a cada suministro según esos coeficientes.";
 
 export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = ({
   isOpen,
@@ -71,12 +71,12 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
   const [name, setName] = useState(initialValues?.name ?? "");
   const [notes, setNotes] = useState(initialValues?.notes ?? "");
   const [capacityInput, setCapacityInput] = useState(
-    initialValues?.installedPowerKw !== undefined ? formatDecimalForInput(initialValues.installedPowerKw) : "",
+    initialValues?.nominalPowerKW !== undefined ? formatDecimalForInput(initialValues.nominalPowerKW) : "",
   );
   const [initial] = useState(() => ({
     name: initialValues?.name ?? "",
     notes: initialValues?.notes ?? "",
-    capacity: initialValues?.installedPowerKw !== undefined ? formatDecimalForInput(initialValues.installedPowerKw) : "",
+    capacity: initialValues?.nominalPowerKW !== undefined ? formatDecimalForInput(initialValues.nominalPowerKW) : "",
   }));
   const dirty = name !== initial.name || notes !== initial.notes || capacityInput !== initial.capacity;
   const [nameError, setNameError] = useState<string | undefined>();
@@ -86,9 +86,9 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
   const parsedCapacity = parseDecimalInput(capacityInput);
   const capacityChanged =
     hasCoefficients &&
-    initialValues?.installedPowerKw !== undefined &&
+    initialValues?.nominalPowerKW !== undefined &&
     isCapacityValid(capacityInput) &&
-    toComparableCapacity(parsedCapacity) !== toComparableCapacity(initialValues.installedPowerKw);
+    toComparableCapacity(parsedCapacity) !== toComparableCapacity(initialValues.nominalPowerKW);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -120,7 +120,7 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
     onSubmit({
       name: trimmedName,
       notes: notes.trim() || undefined,
-      installedPowerKw: parseDecimalInput(capacityInput),
+      nominalPowerKW: parseDecimalInput(capacityInput),
     });
   };
 
@@ -176,19 +176,18 @@ export const SharingAgreementFormDialog: FC<SharingAgreementFormDialogProps> = (
 
         <Box sx={sxStyles.flexColumnGap3}>
           <TextField
-            label="Capacidad de generación de la planta"
+            label="Potencia nominal (kW)"
             placeholder="Ej. 150"
             value={capacityInput}
             onChange={handleCapacityChange}
             error={capacityError !== undefined}
-            helperText={capacityError ?? "Potencia pico instalada, en el momento de este acuerdo."}
+            helperText={capacityError ?? "La potencia nominal de la planta en el momento de este acuerdo."}
             required
             autoFocus
             fullWidth
             variant="outlined"
             slotProps={{
               htmlInput: { inputMode: "decimal", readOnly: isSubmitting },
-              input: { endAdornment: <InputAdornment position="end">kW</InputAdornment> },
             }}
           />
 

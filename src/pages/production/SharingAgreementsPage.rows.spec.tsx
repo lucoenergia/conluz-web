@@ -56,7 +56,7 @@ const agreement = (overrides: Partial<SharingAgreementResponse> & { id: string }
     plantId: PLANT_ID,
     name: `Acuerdo ${overrides.id}`,
     status: PUBLISHED,
-    installedPowerKw: 100,
+    nominalPowerKW: 100,
     createdAt: "2024-01-15T10:00:00Z",
     updatedAt: null,
     notes: null,
@@ -128,7 +128,7 @@ const EDITED_WITH_FILE = agreement({
   id: "edited",
   name: "Reparto ampliación",
   status: DRAFT,
-  installedPowerKw: 120.5,
+  nominalPowerKW: 120.5,
   createdAt: "2024-06-15T10:00:00Z",
   updatedAt: "2024-09-20T10:00:00Z",
   notes: "Pendiente de revisión antes de publicarse.",
@@ -138,7 +138,7 @@ const NEVER_EDITED_WITHOUT_FILE = agreement({
   id: "original",
   name: "Reparto original",
   status: SUPERSEDED,
-  installedPowerKw: 80,
+  nominalPowerKW: 80,
   // 23:30 UTC is already the next day in Madrid, the zone the backend derives it from.
   createdAt: "2023-03-05T23:30:00Z",
   updatedAt: null,
@@ -169,7 +169,7 @@ describe.each(LAYOUTS)("the sharing agreement rows, %s", (layout) => {
     expect(rowOf(layout, "Reparto original")).toHaveTextContent("Sin fichero");
   });
 
-  it("UI-AGR-015 shows the status and the installed power", () => {
+  it("UI-AGR-015 shows the status and the nominal power", () => {
     setup({ agreements: [EDITED_WITH_FILE, NEVER_EDITED_WITHOUT_FILE], layout });
 
     expect(rowOf(layout, "Reparto ampliación")).toHaveTextContent("Borrador");

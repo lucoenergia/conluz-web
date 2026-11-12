@@ -52,7 +52,7 @@ describe("SharingAgreementDetailHeader", () => {
     plantId: "plant-1",
     name: "Acuerdo Comunidad Sur",
     status: SharingAgreementResponseStatus.PUBLISHED,
-    installedPowerKw: 42.5,
+    nominalPowerKW: 42.5,
     createdAt: "2024-05-23T10:30:00Z",
     createdBy: "user-1",
     notes: "Revisión anual pendiente",
@@ -110,11 +110,11 @@ describe("SharingAgreementDetailHeader", () => {
     // The two values that describe the agreement itself, each under the field
     // name it belongs to. Run together on one line they gave no clue which was
     // which; at equal weight with everything else they said nothing at all.
-    it("promotes the installed power and the creation date into the strip", () => {
+    it("promotes the nominal power and the creation date into the strip", () => {
       renderHeader({ coefficients: ALL_PENDING });
 
       for (const [label, value] of [
-        ["Potencia instalada", "42,5 kW"],
+        ["Potencia nominal", "42,5 kW"],
         ["Creado el", "23 may 2024"],
       ] as const) {
         expect(screen.getByText(label).parentElement).toHaveTextContent(value);
@@ -185,7 +185,7 @@ describe("SharingAgreementDetailHeader", () => {
       expect(panel).toHaveTextContent("No disponible");
     });
 
-    // An agreement's name, notes and installed power can be corrected after
+    // An agreement's name, notes and nominal power can be corrected after
     // publication, so the record has to say when that happened and by whom.
     it("reports the last edit, with the editor's name rather than their id", async () => {
       const user = userEvent.setup();

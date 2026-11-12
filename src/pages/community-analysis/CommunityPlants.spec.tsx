@@ -13,12 +13,12 @@ import { ESCUELAS, PABELLON, plain } from "./communityAnalysis.testData";
 const rows = () => within(screen.getByRole("list", { name: "Plantas de la comunidad" })).getAllByRole("listitem");
 
 describe("UI-CAN-008 the plant rows (#403)", () => {
-  it("UI-CAN-008 shows each plant's name, installed power, production and share, all from the response (AC12)", () => {
+  it("UI-CAN-008 shows each plant's name, peak and nominal power, production and share, all from the response (AC12)", () => {
     renderWithProviders(<CommunityPlants plants={[PABELLON, ESCUELAS]} />);
 
     const [pabellon, escuelas] = rows();
-    expect(pabellon).toHaveTextContent(plain(`Planta Pabellón60 kWp${formatKilowattHours(7776.5)}${sharePercent(0.5333)} del total`));
-    expect(escuelas).toHaveTextContent(plain(`Planta Escuelas37,5 kWp${formatKilowattHours(4861.9)}${sharePercent(0.3334)} del total`));
+    expect(pabellon).toHaveTextContent(plain(`Planta PabellónPotencia pico 60 kWp · Potencia nominal 48 kW${formatKilowattHours(7776.5)}${sharePercent(0.5333)} del total`));
+    expect(escuelas).toHaveTextContent(plain(`Planta EscuelasPotencia pico 37,5 kWp · Potencia nominal 30 kW${formatKilowattHours(4861.9)}${sharePercent(0.3334)} del total`));
   });
 
   it("UI-CAN-008 reads a plant without production as 'Sin datos en este periodo', never 0 (AC12)", () => {

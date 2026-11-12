@@ -43,7 +43,8 @@ const plant = (overrides: Partial<PlantResponse> & { id: string }, capabilities:
     address: `Calle ${overrides.id}`,
     description: null,
     connectionDate: null,
-    totalPower: 100,
+    peakPowerKWp: 100,
+    nominalPowerKW: 80,
     community: { id: COMMUNITY_ID },
     ...overrides,
     capabilities: buildPlantCapabilities({ canRead: true, ...capabilities }),
@@ -101,7 +102,8 @@ const COMPLETE = plant({
   regulatoryCode: "ES0031300806333002ET1F",
   address: "Polígono Norte, Nave 3",
   description: "Cubierta del polideportivo",
-  totalPower: 100,
+  peakPowerKWp: 100,
+  nominalPowerKW: 80,
   connectionDate: "2023-05-10",
 });
 const IN_SETUP = plant({
@@ -111,18 +113,19 @@ const IN_SETUP = plant({
   regulatoryCode: null,
   address: "Calle del Sol 7",
   description: "Pendiente de legalizar",
-  totalPower: 62.25,
+  peakPowerKWp: 62.25,
+  nominalPowerKW: 50.5,
   connectionDate: null,
 });
 
 describe.each(LAYOUTS)("the plant rows, %s", (layout) => {
-  it("UI-PLS-001 shows the name, the CAU, the power with the inverter, the connection date and the address", () => {
+  it("UI-PLS-001 shows the name, the CAU, the peak and nominal power with the inverter, the connection date and the address", () => {
     setup({ plants: [COMPLETE, IN_SETUP], layout });
 
     const row = rowOf(layout, "Planta Norte");
     expect(within(row).getByRole("link", { name: "Planta Norte" })).toHaveAttribute("href", "/plants/north");
     expect(row).toHaveTextContent(layout === "narrow" ? "CAU ES0031300806333002ET1F" : "ES0031300806333002ET1F");
-    expect(row).toHaveTextContent("100 kW");
+    expect(row).toHaveTextContent(/100 kWp( · )?80 kW/);
     expect(row).toHaveTextContent("Inversor Huawei");
     expect(row).toHaveTextContent(layout === "narrow" ? "Conectada el 10 may 2023" : "10 may 2023");
     expect(row).toHaveTextContent("Polígono Norte, Nave 3");
@@ -146,11 +149,13 @@ describe.each(LAYOUTS)("the plant rows, %s", (layout) => {
     expect(within(rowOf(layout, "Planta Norte")).queryByText(/^Sin /)).not.toBeInTheDocument();
   });
 
-  it("UI-PLS-001 formats the installed power in kW with a decimal comma", () => {
+  it("UI-PLS-001 formats the peak power in kWp and the nominal power in kW, with a decimal comma", () => {
     setup({ plants: [COMPLETE, IN_SETUP], layout });
 
-    expect(rowOf(layout, "Planta Norte")).toHaveTextContent(/(^|\D)100 kW/);
-    expect(rowOf(layout, "Planta Sur")).toHaveTextContent("62,25 kW");
+    expect(rowOf(layout, "Planta Norte")).toHaveTextContent(/(^|\D)100 kWp/);
+    expect(rowOf(layout, "Planta Norte")).toHaveTextContent(/(^|\D)80 kW(?!p)/);
+    expect(rowOf(layout, "Planta Sur")).toHaveTextContent("62,25 kWp");
+    expect(rowOf(layout, "Planta Sur")).toHaveTextContent(/(^|\D)50,5 kW(?!p)/);
   });
 
   it("UI-PLS-001 shows neither the provider's station code nor the description on any row", () => {

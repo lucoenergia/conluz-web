@@ -37,11 +37,11 @@ const REPARTO_AMPLIACION: SharingAgreementReferenceResponse = {
   name: "Reparto ampliación",
   status: SharingAgreementReferenceResponseStatus.PUBLISHED,
 };
-const INSTALLED_POWER_KW: Record<string, number> = {
+const NOMINAL_POWER_KW: Record<string, number> = {
   [REPARTO_2024.id]: 80,
   [REPARTO_AMPLIACION.id]: 60,
 };
-const DRAFT_INSTALLED_POWER_KW = 100;
+const DRAFT_NOMINAL_POWER_KW = 100;
 
 const VIVIENDA_A = { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" };
 const VIVIENDA_B = { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" };
@@ -96,7 +96,7 @@ function renderDraft(coefficients: SharingAgreementPartitionCoefficientResponse[
   return renderWithTheme({
     coefficients,
     agreementStatus: SharingAgreementResponseStatus.DRAFT,
-    installedPowerKw: DRAFT_INSTALLED_POWER_KW,
+    nominalPowerKW: DRAFT_NOMINAL_POWER_KW,
   });
 }
 
@@ -121,11 +121,11 @@ beforeEach(() => {
   vi.mocked(getSharingAgreementById).mockClear();
   givenActive(ACTIVE);
   vi.mocked(getSharingAgreementById).mockImplementation((_plantId, sharingAgreementId) => {
-    const installedPowerKw = INSTALLED_POWER_KW[sharingAgreementId];
-    return installedPowerKw === undefined
+    const nominalPowerKW = NOMINAL_POWER_KW[sharingAgreementId];
+    return nominalPowerKW === undefined
       ? Promise.reject(new Error(`No agreement fixture for ${sharingAgreementId}`))
       : Promise.resolve(
-          buildSharingAgreement({ id: sharingAgreementId, status: SharingAgreementResponseStatus.PUBLISHED, installedPowerKw }),
+          buildSharingAgreement({ id: sharingAgreementId, status: SharingAgreementResponseStatus.PUBLISHED, nominalPowerKW }),
         );
   });
 });
@@ -189,7 +189,7 @@ describe("SharingAgreementCoefficientSet (draft vs. in force)", () => {
   });
 
   it("neither compares nor asks for the plant's active coefficients on a PUBLISHED agreement (AC10)", () => {
-    renderWithTheme({ coefficients: DRAFT_ROWS, agreementStatus: SharingAgreementResponseStatus.PUBLISHED, installedPowerKw: 100 });
+    renderWithTheme({ coefficients: DRAFT_ROWS, agreementStatus: SharingAgreementResponseStatus.PUBLISHED, nominalPowerKW: 100 });
 
     expect(vi.mocked(useGetPlantActivePartitionCoefficients)).toHaveBeenCalled();
     for (const [, options] of vi.mocked(useGetPlantActivePartitionCoefficients).mock.calls) {
@@ -227,7 +227,7 @@ describe("SharingAgreementCoefficientSet (draft vs. in force)", () => {
     vi.mocked(getSharingAgreementById).mockImplementation((_plantId, sharingAgreementId) =>
       sharingAgreementId === REPARTO_AMPLIACION.id
         ? Promise.reject(new Error("boom"))
-        : Promise.resolve(buildSharingAgreement({ id: sharingAgreementId, status: SharingAgreementResponseStatus.PUBLISHED, installedPowerKw: 80 })),
+        : Promise.resolve(buildSharingAgreement({ id: sharingAgreementId, status: SharingAgreementResponseStatus.PUBLISHED, nominalPowerKW: 80 })),
     );
     renderDraft();
 
@@ -347,7 +347,7 @@ describe("SharingAgreementCoefficientSet (draft vs. in force)", () => {
 
     it("is not shown on a PUBLISHED agreement (AC10)", () => {
       givenActive(WITH_OUTGOING);
-      renderWithTheme({ coefficients: DRAFT_ROWS, agreementStatus: SharingAgreementResponseStatus.PUBLISHED, installedPowerKw: 100 });
+      renderWithTheme({ coefficients: DRAFT_ROWS, agreementStatus: SharingAgreementResponseStatus.PUBLISHED, nominalPowerKW: 100 });
       expect(screen.queryByText(/^Salen del reparto/)).not.toBeInTheDocument();
     });
   });

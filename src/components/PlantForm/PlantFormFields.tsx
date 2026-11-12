@@ -71,6 +71,22 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
     />
 
     <TextField
+      id="cil"
+      label="CIL"
+      type="text"
+      name="cil"
+      inputRef={inputRefs.cil}
+      error={fieldErrors.cil !== undefined}
+      helperText={fieldErrors.cil}
+      value={values.cil}
+      onChange={(e) => onChange("cil", e.target.value)}
+      // Room for a code pasted with spaces; the form sends it without them.
+      slotProps={{ htmlInput: { maxLength: 50, readOnly } }}
+      fullWidth
+      variant="outlined"
+    />
+
+    <TextField
       id="name"
       label="Nombre"
       type="text"
@@ -149,15 +165,37 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
     />
 
     <TextField
-      id="totalPower"
-      label="Potencia total (kW)"
+      id="peakPowerKWp"
+      label="Potencia pico (kWp)"
       type="number"
-      error={fieldErrors.totalPower !== undefined}
-      helperText={fieldErrors.totalPower}
-      name="totalPower"
-      inputRef={inputRefs.totalPower}
-      value={values.totalPower}
-      onChange={(e) => onChange("totalPower", e.target.value)}
+      error={fieldErrors.peakPowerKWp !== undefined}
+      helperText={fieldErrors.peakPowerKWp}
+      name="peakPowerKWp"
+      inputRef={inputRefs.peakPowerKWp}
+      value={values.peakPowerKWp}
+      onChange={(e) => onChange("peakPowerKWp", e.target.value)}
+      required
+      fullWidth
+      variant="outlined"
+      slotProps={{
+        htmlInput: {
+          min: 0,
+          step: 0.01,
+          readOnly,
+        },
+      }}
+    />
+
+    <TextField
+      id="nominalPowerKW"
+      label="Potencia nominal (kW)"
+      type="number"
+      error={fieldErrors.nominalPowerKW !== undefined}
+      helperText={fieldErrors.nominalPowerKW}
+      name="nominalPowerKW"
+      inputRef={inputRefs.nominalPowerKW}
+      value={values.nominalPowerKW}
+      onChange={(e) => onChange("nominalPowerKW", e.target.value)}
       required
       fullWidth
       variant="outlined"

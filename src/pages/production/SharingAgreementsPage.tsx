@@ -311,7 +311,7 @@ export const SharingAgreementsPage: FC = () => {
           isOpen
           mode="create"
           plantName={plant?.name}
-          initialValues={{ installedPowerKw: plant?.totalPower }}
+          initialValues={{ nominalPowerKW: plant?.nominalPowerKW }}
           isSubmitting={createSharingAgreement.isPending}
           onCancel={() => setIsCreateDialogOpen(false)}
           onSubmit={handleCreateSubmit}

@@ -78,7 +78,7 @@ const surfaces: Array<[string, ReactElement]> = [
     <SharingAgreementFormDialog
       isOpen
       mode="edit"
-      initialValues={{ name: "Reparto bloque A", installedPowerKw: 10 }}
+      initialValues={{ name: "Reparto bloque A", nominalPowerKW: 10 }}
       onCancel={vi.fn()}
       onSubmit={vi.fn()}
     />,

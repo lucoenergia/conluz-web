@@ -8,7 +8,7 @@ import type { SharingAgreementPartitionCoefficientResponse } from "../../../api/
  * A realistic coefficient set for the manual editor's tests: a 29-supply
  * community on a 63,00 kW plant, summing to EXACTLY 1 000 000 millionths.
  *
- * Size and installed power both matter. 63 kW is the issue's reproduction
+ * Size and nominal power both matter. 63 kW is the issue's reproduction
  * figure, and at two kW decimals it makes the kW projection badly lossy --
  * roughly 159 distinct coefficients all render as "1,94 kW". A small fixture
  * hides that: with a handful of round coefficients on a round plant every kW
@@ -32,8 +32,8 @@ const PENDING_OPEN = {
   currentCoefficient: null,
 };
 
-/** Installed power the editor's kW mode renders against. */
-export const FIXTURE_INSTALLED_POWER_KW = 63;
+/** Nominal power the editor's kW mode renders against. */
+export const FIXTURE_NOMINAL_POWER_KW = 63;
 
 /** The reproduction row's canonical value, in 1e-6 units. */
 export const REPRODUCTION_ROW_UNITS = 30770;

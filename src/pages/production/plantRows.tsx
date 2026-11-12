@@ -4,7 +4,7 @@ import type { PlantRowActions } from "../../hooks/actions/usePlantActions";
 import type { RecordListItem } from "../../components/RecordList";
 import type { ListTableColumn, ListTableTitle } from "../../components/ListTable/ListTable";
 import { fontFamilies } from "../../theme/tokens";
-import { formatKilowatts } from "../../utils/formatKilowatts";
+import { formatKilowatts, formatKilowattsPeak } from "../../utils/formatKilowatts";
 import { inverterProviderLabel } from "../../utils/inverterProviderLabel";
 import { formatCalendarDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
 
@@ -37,6 +37,10 @@ const cauCode = (code: string) => (
 const connectionDateText = (plant: PlantResponse) =>
   plant.connectionDate ? formatCalendarDate(plant.connectionDate, SHORT_CALENDAR_DATE) : undefined;
 
+/** Both powers, told apart by their units: "120,5 kWp · 100 kW". */
+const powerText = (plant: PlantResponse) =>
+  `${formatKilowattsPeak(plant.peakPowerKWp)} · ${formatKilowatts(plant.nominalPowerKW)}`;
+
 const inverterText = (plant: PlantResponse) => `Inversor ${inverterProviderLabel(plant.inverterProvider)}`;
 
 /** The narrow layout's row. */
@@ -48,7 +52,7 @@ export function toRecordListItem(plant: PlantResponse): RecordListItem {
     href: plantHref(plant),
     lines: [
       plant.regulatoryCode ? <>CAU {cauCode(plant.regulatoryCode)}</> : "Sin CAU",
-      `${formatKilowatts(plant.totalPower)} · ${inverterText(plant)}`,
+      `${powerText(plant)} · ${inverterText(plant)}`,
       connectionDate ? `Conectada el ${connectionDate}` : "Sin fecha de conexión",
       plant.address,
     ],
@@ -69,6 +73,7 @@ export const plantTableTitle: ListTableTitle<PlantResponse> = {
 
 /** Room for a 22-character CAU in the mono stack, padding included. */
 const CAU_COLUMN_WIDTH = "224px";
+/** Room for "12.840,25 kWp", the longest power the layout budget checks, and no more: UI-LST-001. */
 const POWER_COLUMN_WIDTH = "96px";
 const CONNECTION_COLUMN_WIDTH = "112px";
 
@@ -93,7 +98,13 @@ export const plantTableColumns: ListTableColumn<PlantResponse>[] = [
     key: "power",
     header: "Potencia",
     width: POWER_COLUMN_WIDTH,
-    render: (plant) => <Typography variant="body2">{formatKilowatts(plant.totalPower)}</Typography>,
+    // The peak power over the nominal power, each with its unit.
+    render: (plant) => (
+      <>
+        <Typography variant="body2">{formatKilowattsPeak(plant.peakPowerKWp)}</Typography>
+        <Typography variant="body2">{formatKilowatts(plant.nominalPowerKW)}</Typography>
+      </>
+    ),
   },
   {
     key: "connection",

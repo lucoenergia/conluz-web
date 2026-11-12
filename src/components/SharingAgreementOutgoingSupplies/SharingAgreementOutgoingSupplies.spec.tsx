@@ -36,8 +36,8 @@ const OUTGOING = [
 ];
 
 const POWER = new Map<string, InForceAgreementPower>([
-  [REPARTO_2024.id, { status: "success", installedPowerKw: 80 }],
-  [REPARTO_AMPLIACION.id, { status: "success", installedPowerKw: 60 }],
+  [REPARTO_2024.id, { status: "success", nominalPowerKW: 80 }],
+  [REPARTO_AMPLIACION.id, { status: "success", nominalPowerKW: 60 }],
 ]);
 
 function renderSection(props: Partial<SharingAgreementOutgoingSuppliesProps> = {}) {

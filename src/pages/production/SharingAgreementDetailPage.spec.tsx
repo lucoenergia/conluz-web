@@ -103,7 +103,7 @@ function agreementFixture(overrides: Parameters<typeof buildSharingAgreement>[0]
     id: "agreement-1",
     name: "Reparto 2025",
     status: SharingAgreementResponseStatus.DRAFT,
-    installedPowerKw: 12.5,
+    nominalPowerKW: 12.5,
     notes: "Nota original",
     createdAt: "2026-01-15T10:00:00Z",
     capabilities: MANAGEABLE,
@@ -332,7 +332,7 @@ describe("SharingAgreementDetailPage", () => {
         data: expect.objectContaining({
           name: "Reparto 2025 corregido",
           notes: "Nota original",
-          installedPowerKw: 12.5,
+          nominalPowerKW: 12.5,
         }),
       }),
     );
@@ -369,7 +369,7 @@ describe("SharingAgreementDetailPage", () => {
 
     expect(await screen.findByLabelText("Nombre", { exact: false })).toHaveValue("Reparto 2025");
     expect(screen.getByLabelText("Notas internas", { exact: false })).toHaveValue("Nota original");
-    expect(screen.getByLabelText("Capacidad de generación de la planta", { exact: false })).toHaveValue("12,5");
+    expect(screen.getByLabelText("Potencia nominal (kW)", { exact: false })).toHaveValue("12,5");
 
     await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
@@ -377,7 +377,7 @@ describe("SharingAgreementDetailPage", () => {
       expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
         plantId: "plant-1",
         sharingAgreementId: "agreement-1",
-        data: expect.objectContaining({ name: "Reparto 2025", notes: "Nota original", installedPowerKw: 12.5 }),
+        data: expect.objectContaining({ name: "Reparto 2025", notes: "Nota original", nominalPowerKW: 12.5 }),
       }),
     );
   });
@@ -390,12 +390,12 @@ describe("SharingAgreementDetailPage", () => {
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
     await user.click(await screen.findByText("Editar datos del acuerdo"));
 
-    const capacityInput = await screen.findByLabelText("Capacidad de generación de la planta", { exact: false });
+    const capacityInput = await screen.findByLabelText("Potencia nominal (kW)", { exact: false });
     await user.clear(capacityInput);
     await user.type(capacityInput, "20");
 
     expect(
-      await screen.findByText(/cambiar la capacidad no modifica los coeficientes ya guardados/i, VISIBLE),
+      await screen.findByText(/cambiar la potencia nominal no modifica los coeficientes ya guardados/i, VISIBLE),
     ).toBeInTheDocument();
   });
 
@@ -407,11 +407,11 @@ describe("SharingAgreementDetailPage", () => {
     await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
     await user.click(await screen.findByText("Editar datos del acuerdo"));
 
-    const capacityInput = await screen.findByLabelText("Capacidad de generación de la planta", { exact: false });
+    const capacityInput = await screen.findByLabelText("Potencia nominal (kW)", { exact: false });
     await user.clear(capacityInput);
     await user.type(capacityInput, "20");
 
-    expect(screen.queryByText(/cambiar la capacidad no modifica los coeficientes ya guardados/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/cambiar la potencia nominal no modifica los coeficientes ya guardados/i)).not.toBeInTheDocument();
   });
 
   test("deleting navigates back to the list on success, removing (not invalidating) the detail query is the hook's job", async () => {

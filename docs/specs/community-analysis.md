@@ -6,9 +6,9 @@
 | **Status** | Active |
 | **Routes** | `/community-analysis` |
 | **Roles** | A caller who may read the active community (`canRead`): members and community admins, who see the same page |
-| **Domain rules** | `lucoenergia/conluz`: CEM-006, CEM-007 (lucoenergia/conluz#554); lucoenergia/conluz#556 (estimated income); lucoenergia/conluz#559 (CO₂ avoided) |
+| **Domain rules** | `lucoenergia/conluz`: CEM-003, CEM-005 (lucoenergia/conluz#567); CEM-006, CEM-007 (lucoenergia/conluz#554); lucoenergia/conluz#556 (estimated income); lucoenergia/conluz#559 (CO₂ avoided) |
 | **Design reference** | Claude Design canvas "Conluz · Energía de la comunidad y detalle de planta", direction A, revision 5: artboards `Main`, `A-Escritorio`, `A-Estados-1`, `A-Estados-2`, `CompPeriodo`, `CompGrafico`. Where the canvas and #403 disagree, #403 wins. |
-| **Last reviewed against code** | #403 |
+| **Last reviewed against code** | #407 |
 
 ## Purpose
 
@@ -88,11 +88,13 @@ the page is about one member or one supply.
 ### UI-CAN-008 — Plant rows
 
 - **Status:** Active
-- **Rule:** Each plant row MUST show the plant's production and share from the response. A plant
-  without data MUST read as such, never as 0. Rows MUST NOT link to the plant detail.
-- **Rationale:** A gap is not a zero. The plant detail is for admins.
-- **Implements:** n/a
-- **Source:** #403
+- **Rule:** Each plant row MUST show the plant's peak power (kWp), nominal power (kW), production and
+  share from the response. A plant without data MUST read as such, never as 0. Rows MUST NOT link to
+  the plant detail.
+- **Rationale:** A gap is not a zero. The plant detail is for admins. Each row showed the plant's
+  installed power; it shows both powers, as UI-CAN-010 requires wherever a plant power is shown.
+- **Implements:** CEM-005
+- **Source:** #403; changed in #407 (both powers replace the installed power)
 
 ### UI-CAN-009 — Colours
 
@@ -104,6 +106,17 @@ the page is about one member or one supply.
   from the green by lightness.
 - **Implements:** n/a
 - **Source:** #403
+
+### UI-CAN-010 — Plant power is shown as peak and nominal power
+
+- **Status:** Active
+- **Rule:** Wherever the community energy page shows a plant power, for the community total or for a
+  plant, it MUST show both the peak power ("Potencia pico", kWp) and the nominal power ("Potencia
+  nominal", kW) from `getCommunityEnergyMetrics`, and MUST NOT label any figure "instalada".
+- **Rationale:** Module power alone overstates what the community can deliver to the grid (Luco:
+  80 kWp, 60 kW). "Instalada" is ambiguous: in Spanish regulation it means the lower of the two.
+- **Implements:** CEM-003
+- **Source:** #407, lucoenergia/conluz#567
 
 ## States
 

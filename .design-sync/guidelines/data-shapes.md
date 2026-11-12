@@ -28,8 +28,8 @@ interface SharingAgreementResponse {
   notes: string | null;
   /** Status of the agreement: DRAFT, PUBLISHED or SUPERSEDED */
   status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED';
-  /** Snapshot of the plant's installed power at authoring time, in kW */
-  installedPowerKw: number;
+  /** Snapshot of the plant's nominal power at authoring time, in kW. */
+  nominalPowerKW: number;
   /** Date and time the agreement was created */
   createdAt: string;
   /** Identifier of the user who created the agreement. Null means it was created by the system (a migration), not by a person */
@@ -94,13 +94,18 @@ interface PlantResponse {
   providerCode: string;
   /** The identifier assigned by the regulator. In Spain this is the CAU (Codigo de Autoconsumo). It is not the provider's station code (provider_code) and not a CUPS. */
   regulatoryCode: string | null;
+  /** The CIL (Código de la Instalación de producción a efectos de Liquidación): the plant's Spanish settlement code, 25 alphanumeric characters, upper-cased. Null when the plant has none. */
+  cil: string | null;
   /** The supply this plant produces onto. A reference: the full supply, including its owner, is fetched from GET /supplies/{supplyId}, which not every caller who may list plants is allowed to call. */
   supply: SupplyReferenceResponse;
   name: string;
   address: string;
   description: string | null;
   inverterProvider: 'HUAWEI';
-  totalPower: number;
+  /** Peak power of the plant's modules, in kWp. */
+  peakPowerKWp: number;
+  /** Power the plant can export to the grid, in kW, as capped by its inverters and grid connection. */
+  nominalPowerKW: number;
   connectionDate: string | null;
   /** The community that owns the plant. */
   community: PlantCommunityResponse;

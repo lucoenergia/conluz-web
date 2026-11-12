@@ -59,7 +59,7 @@ function makeAgreement(overrides: Partial<SharingAgreementResponse> = {}): Shari
     name: "Reparto",
     notes: null,
     status: SharingAgreementResponseStatus.DRAFT,
-    installedPowerKw: 100,
+    nominalPowerKW: 100,
     createdAt: "2024-01-01T00:00:00Z",
     createdBy: "user-1",
     file: null,

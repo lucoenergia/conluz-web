@@ -53,7 +53,8 @@ const data = (): SharingAgreementsData => ({
   plant: buildPlant({
     name: "Planta Solar Norte",
     regulatoryCode: "CAU-123",
-    totalPower: 30,
+    peakPowerKWp: 36,
+    nominalPowerKW: 30,
     capabilities: buildPlantCapabilities({ canRead: true, canListSharingAgreements: true, canManageSharingAgreements: true }),
   }),
   counts: { vigentes: 1, drafts: 1, historicos: 0 },

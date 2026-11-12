@@ -27,7 +27,8 @@ const mockPlant = buildPlant({
   address: "Calle Callejas 4, 44391, Luco de Jiloca, Teruel",
   regulatoryCode: "ES0031300325733001FH0FA000",
   providerCode: "NE=35899672",
-  totalPower: 63,
+  peakPowerKWp: 63,
+  nominalPowerKW: 50,
   connectionDate: "2024-04-20",
   description: "Huerto solar Luco Energía",
   supply: linkedSupply,
@@ -74,12 +75,13 @@ describe("PlantDetailHeader", () => {
   });
 
   describe("the key-fact strip", () => {
-    it("promotes power and the CAU, leaving everything else behind the toggle", () => {
+    it("promotes both powers and the CAU, leaving everything else behind the toggle", () => {
       renderHeader(mockPlant);
 
-      expect(screen.getByText("63 kW")).toBeInTheDocument();
+      expect(screen.getByText("63 kWp")).toBeInTheDocument();
+      expect(screen.getByText("50 kW")).toBeInTheDocument();
       expect(screen.getByText("ES0031300325733001FH0FA000")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Ver 5 datos más" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Ver 6 datos más" })).toBeInTheDocument();
       expect(screen.queryByText("Huawei")).not.toBeInTheDocument();
     });
 
@@ -160,7 +162,8 @@ describe("PlantDetailHeader", () => {
       const noSupply = { ...mockPlant, supply: undefined, description: null } as unknown as PlantResponse;
       renderHeader(noSupply);
 
-      expect(screen.getByRole("button", { name: "Ver 3 datos más" })).toBeInTheDocument();
+      // The CIL stays: a plant without one says "Sin CIL".
+      expect(screen.getByRole("button", { name: "Ver 4 datos más" })).toBeInTheDocument();
     });
   });
 
@@ -169,25 +172,27 @@ describe("PlantDetailHeader", () => {
     it("renders neither the strip nor the details while loading", () => {
       renderHeader(mockPlant, { isLoading: true });
 
-      expect(screen.queryByText("63 kW")).not.toBeInTheDocument();
+      expect(screen.queryByText("63 kWp")).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /^Ver \d+ dato/ })).not.toBeInTheDocument();
     });
 
     it("renders neither the strip nor the details on error", () => {
       renderHeader(mockPlant, { error: new Error("boom") });
 
-      expect(screen.queryByText("63 kW")).not.toBeInTheDocument();
+      expect(screen.queryByText("63 kWp")).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /^Ver \d+ dato/ })).not.toBeInTheDocument();
     });
   });
 
   // AC1 / AC5: the strip already holds only two facts, so nothing is displaced
   // and the count stays at the five details.
-  it("keeps both key facts on a narrow viewport and still offers exactly five", () => {
+  it("keeps the CAU and the peak power on a narrow viewport, and counts the nominal power among the seven hidden", () => {
     mockUseMediaQuery.mockReturnValue(true);
     renderHeader(mockPlant);
 
-    expect(screen.getByText("63 kW")).toBeInTheDocument();
-    expect(screen.getByText("+5")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copiar CAU" })).toBeInTheDocument();
+    expect(screen.getByText("63 kWp")).toBeInTheDocument();
+    expect(screen.queryByText("50 kW")).not.toBeInTheDocument();
+    expect(screen.getByText("+7")).toBeInTheDocument();
   });
 });

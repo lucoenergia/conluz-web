@@ -80,7 +80,8 @@ describe("PlantFormDialog across a community switch", () => {
     await user.type(screen.getByLabelText(/Código de proveedor/), "NE=1");
     await user.type(screen.getByLabelText(/^Nombre/), "Planta");
     await user.type(screen.getByLabelText(/Dirección/), "Calle 1");
-    await user.type(screen.getByLabelText(/Potencia total/), "5");
+    await user.type(screen.getByLabelText(/Potencia pico/), "5");
+    await user.type(screen.getByLabelText(/Potencia nominal/), "4");
     await user.click(screen.getByRole("button", { name: "Crear planta" }));
 
     expect(screen.getByText("El punto de suministro es obligatorio")).toBeInTheDocument();

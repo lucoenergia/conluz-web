@@ -66,9 +66,9 @@ test.describe("Visual baselines", () => {
     await page.goto("/community-analysis");
 
     await expect(page.getByRole("heading", { name: "Datos de agosto de 2026" })).toBeVisible();
-    await expect(page.getByText("Sol Común · 3 plantas · 112,5 kWp instalados")).toBeVisible();
+    await expect(page.getByText("Sol Común · 3 plantas")).toBeVisible();
     await expect(page.getByRole("list", { name: "Adónde fue la energía" }).getByRole("listitem")).toHaveCount(2);
-    await expect(page.getByRole("region", { name: "En cifras" }).getByText("Potencia instalada")).toBeVisible();
+    await expect(page.getByRole("region", { name: "En cifras" }).getByText("Potencia nominal")).toBeVisible();
     const evolution = page.getByRole("region", { name: "La energía de la comunidad día a día" });
     await expect(evolution.getByRole("group", { name: "Energía de los puntos de la comunidad" })).toBeVisible();
     await expectChartDrawn(evolution, testInfo, 31);

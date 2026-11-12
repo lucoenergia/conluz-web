@@ -182,6 +182,11 @@ export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>
  * A supply is the supply of at most one plant: when the supply already has one, the request is
  * answered 409 with `SUPPLY_ALREADY_HAS_PLANT`, and nothing is created.
  *
+ * The CIL is optional. It is upper-cased and stripped of all whitespace, and empty after that means
+ * no CIL. A CIL that is not then exactly 25 ASCII alphanumeric characters is answered 400 with
+ * `PLANT_CIL_INVALID`. A CIL identifies at most one plant across the platform: a CIL another plant
+ * holds is answered 409 with `PLANT_CIL_ALREADY_IN_USE`, and nothing is created.
+ *
  * In case of failure, the server returns an appropriate error status code along with a descriptiv
  * error message, aiding the client in diagnosing and addressing the issue.
  * @summary Creates a new plant within the system.
@@ -437,6 +442,12 @@ export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>
  *
  * A supply is the supply of at most one plant: moving the plant to a supply that already has one is
  * answered 409 with `SUPPLY_ALREADY_HAS_PLANT`, and nothing is updated.
+ *
+ * The CIL is replaced like every other field, so omitting it clears it. It is upper-cased and stripped
+ * of all whitespace, and empty after that means no CIL. A CIL that is not then exactly 25 ASCII
+ * alphanumeric characters is answered 400 with `PLANT_CIL_INVALID`. A CIL identifies at most one
+ * plant across the platform: a CIL another plant holds is answered 409 with
+ * `PLANT_CIL_ALREADY_IN_USE`, and nothing is updated; keeping the plant's own CIL is not a conflict.
  * @summary Updates plant information
  */
 export const updatePlant = (

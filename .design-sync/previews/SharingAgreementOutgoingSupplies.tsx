@@ -34,8 +34,8 @@ export const Default = () =>
       onRetry={noop}
       powerByAgreementId={
         new Map([
-          ["sa-2025", { status: "success", installedPowerKw: 40 }],
-          ["sa-2025b", { status: "success", installedPowerKw: 45.6 }],
+          ["sa-2025", { status: "success", nominalPowerKW: 40 }],
+          ["sa-2025b", { status: "success", nominalPowerKW: 45.6 }],
         ]) as any
       }
     />,
@@ -47,7 +47,7 @@ export const PowerLoading = () =>
       outgoing={outgoing}
       isError={false}
       onRetry={noop}
-      powerByAgreementId={new Map([["sa-2025", { status: "success", installedPowerKw: 40 }]]) as any}
+      powerByAgreementId={new Map([["sa-2025", { status: "success", nominalPowerKW: 40 }]]) as any}
     />,
   );
 

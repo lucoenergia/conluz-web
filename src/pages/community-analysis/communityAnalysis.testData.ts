@@ -28,19 +28,22 @@ export const NOTHING_PUBLISHED = { startDate: null, endDate: null };
 
 export const PABELLON: CommunityPlantEnergyResponse = {
   plant: { id: "plant-pabellon", name: "Planta Pabellón" },
-  installedPowerKWp: 60,
+  peakPowerKWp: 60,
+  nominalPowerKW: 48,
   productionKWh: 7776.5,
   productionShare: 0.5333,
 };
 export const ESCUELAS: CommunityPlantEnergyResponse = {
   plant: { id: "plant-escuelas", name: "Planta Escuelas" },
-  installedPowerKWp: 37.5,
+  peakPowerKWp: 37.5,
+  nominalPowerKW: 30,
   productionKWh: 4861.9,
   productionShare: 0.3334,
 };
 export const LAVADERO: CommunityPlantEnergyResponse = {
   plant: { id: "plant-lavadero", name: "Planta Lavadero" },
-  installedPowerKWp: 15,
+  peakPowerKWp: 15,
+  nominalPowerKW: 12,
   productionKWh: 1944.2,
   productionShare: 0.1333,
 };
@@ -59,7 +62,8 @@ export function communityMetrics(
     energy: { productionKWh: 14582.6, selfConsumptionKWh: 8457.9, surplusKWh: 6124.7 },
     selfConsumptionRatio: 0.58,
     surplusRatio: 0.42,
-    installedPowerKWp: 112.5,
+    peakPowerKWp: 112.5,
+    nominalPowerKW: 90,
     coverage: { supplyCount: 14, suppliesWithData: 14 },
     plants: [PABELLON, ESCUELAS, LAVADERO],
     surplusIncome: { amountEur: 367.12, unpricedSurplusKWh: 0 },

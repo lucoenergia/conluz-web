@@ -66,10 +66,11 @@ describe("UI-CAN-006 the CO₂ avoided names its factor (#403)", () => {
   });
 });
 
-describe("UI-CAN-003 the installed power is the response's (#403)", () => {
-  it("UI-CAN-003 writes it in kWp", () => {
-    renderWithProviders(<CommunityFigures metrics={communityMetrics(SEPTEMBER_2026, { installedPowerKWp: 112.5 })} />);
+describe("UI-CAN-003 the plant powers are the response's (#403)", () => {
+  it("UI-CAN-003 writes the peak power in kWp and the nominal power in kW", () => {
+    renderWithProviders(<CommunityFigures metrics={communityMetrics(SEPTEMBER_2026, { peakPowerKWp: 112.5, nominalPowerKW: 90 })} />);
 
-    expect(within(card()).getByText("Potencia instalada").parentElement).toHaveTextContent("112,5 kWp");
+    expect(within(card()).getByText("Potencia pico").parentElement).toHaveTextContent("112,5 kWp");
+    expect(within(card()).getByText("Potencia nominal").parentElement).toHaveTextContent("90 kW");
   });
 });

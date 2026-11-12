@@ -8,11 +8,11 @@
 | **Roles** | A caller with the plant's `canListSharingAgreements`. Authoring and lifecycle actions: the capabilities each agreement and coefficient carries |
 | **Domain rules** | n/a |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `ListPagination` (the list; its shared rules are `record-lists.md`) |
-| **Last reviewed against code** | #406 |
+| **Last reviewed against code** | #407 |
 
 Scope: the rules introduced in #277 for sharing-agreement states migrated from visual tests to
 Vitest, the rules #350 introduced for the list's rows and for how a status is shown, and the
-coefficient history's layout (#369). Not
+coefficient history's layout (#369), and the create dialog's starting power (#407). Not
 exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
 list shares, the agreement list among them, are in [`record-lists.md`](record-lists.md).
 
@@ -59,17 +59,18 @@ is in force today.
 
 - **Status:** Active
 - **Rule:**
-  - While editing in kW, when the kW total rounded to cents equals the installed power but the
-    coefficients sum to less than 100 %, the sum caption MUST say the total is rounded and state, as
+  - While editing in kW, when the kW total rounded to cents equals the agreement's nominal power but
+    the coefficients sum to less than 100 %, the sum caption MUST say the total is rounded and state, as
     "faltan …", the percentage still missing, to be adjusted in percent mode.
   - In the same situation with the coefficients summing to more than 100 %, the caption MUST state the
     excess as "sobran …", to be adjusted in percent mode.
-- **Rationale:** kW inputs have two decimals, so a set can round to the installed power while its
+- **Rationale:** kW inputs have two decimals, so a set can round to the nominal power while its
   coefficients miss 100 % by less than a kW input can express. Only an exact 100 % can be put in
   force, so a caption implying the set is complete would lead to a dead end. Percent mode is named
-  because only there can the gap be closed.
+  because only there can the gap be closed. The kW view is defined against the agreement's nominal
+  power, its own snapshot, since lucoenergia/conluz#567.
 - **Implements:** n/a
-- **Source:** #277
+- **Source:** #277; changed in #407 (nominal power replaces installed power)
 
 ### UI-AGR-004 — A draft is compared only when something is in force or leaving
 
@@ -145,12 +146,13 @@ is in force today.
 ### UI-AGR-009 — Editing an agreement starts from its stored values
 
 - **Status:** Active
-- **Rule:** The edit dialog MUST open with its name, notes and installed-power fields filled with the
+- **Rule:** The edit dialog MUST open with its name, notes and nominal-power fields filled with the
   agreement's current values.
 - **Rationale:** Saving sends every field, so a field that opened empty would be sent as a change the
-  admin never made.
+  admin never made. The field is renamed; the reasoning is unchanged, and the value is the
+  agreement's own, never the plant's.
 - **Implements:** n/a
-- **Source:** #277
+- **Source:** #277; changed in #407 (nominal power replaces installed power)
 
 ### UI-AGR-010 — Going back to draft states what it undoes
 
@@ -208,14 +210,15 @@ is in force today.
 ### UI-AGR-015 — A row shows what the list response carries about the agreement, in the API's order
 
 - **Status:** Active
-- **Rule:** A sharing agreement row MUST show its name, its status, its installed power, its evidence
+- **Rule:** A sharing agreement row MUST show its name, its status, its nominal power, its evidence
   file (filename and upload date) or "Sin fichero", its last edit date ("Editado el …") or, if never
   edited, its creation date ("Creado el …"), and its notes on one line when it has any. The list MUST
   keep the API's order (newest first). It MUST NOT show the number of supplies or the coefficient sum.
 - **Rationale:** A row shows only data the list response carries; the coefficient sum and the number
-  of supplies are not in it. The backend owns the order, so the page does not sort.
+  of supplies are not in it. The backend owns the order, so the page does not sort. The power is the
+  agreement's nominal power, renamed from installed power.
 - **Implements:** n/a
-- **Source:** #350
+- **Source:** #350; changed in #407 (nominal power replaces installed power)
 
 ### UI-AGR-016 — A status is never shown as a failure
 
@@ -240,6 +243,17 @@ is in force today.
   thumb; from `md` up the side panel keeps the agreement's table in view beside it.
 - **Implements:** n/a
 - **Source:** #369
+
+### UI-AGR-018 — The create dialog starts from the plant's nominal power
+
+- **Status:** Active
+- **Rule:** The agreement create dialog MUST seed its nominal power with the plant's
+  `nominalPowerKW`, editable before saving.
+- **Rationale:** The agreement keeps its own snapshot, but its natural starting value is the
+  plant's exportable power. Seeding avoids retyping, and retyping the peak power is the error this
+  rule prevents. The edit dialog starts from the agreement's own value instead (UI-AGR-009).
+- **Implements:** n/a
+- **Source:** #407, lucoenergia/conluz#567
 
 ## States
 

@@ -19,7 +19,7 @@ export const SupportCardHeading = () => <LabeledIcon label="Contacto por correo"
 export const Compact = () => (
   <Mui.Stack spacing={0.5}>
     <LabeledIcon label="Calle del Sol 14, Torrent" icon={Icons.LocationOn} variant="compact" labelSize="0.875rem" />
-    <LabeledIcon label="45,6 kW instalados" icon={Icons.Bolt} variant="compact" labelSize="0.875rem" />
+    <LabeledIcon label="45,6 kW nominales" icon={Icons.Bolt} variant="compact" labelSize="0.875rem" />
     <LabeledIcon label="Conectada el 12 mar 2024" icon={Icons.CalendarToday} variant="compact" labelSize="0.875rem" />
   </Mui.Stack>
 );

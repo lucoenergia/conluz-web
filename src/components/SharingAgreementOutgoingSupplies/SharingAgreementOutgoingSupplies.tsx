@@ -28,7 +28,7 @@ export interface SharingAgreementOutgoingSuppliesProps {
   /** The plant's active coefficients could not be read, so which supplies leave is unknown. */
   isError: boolean;
   onRetry: () => void;
-  /** Installed power of each authoring agreement, for the in-force power line. */
+  /** Nominal power of each authoring agreement, for the in-force power line. */
   powerByAgreementId: ReadonlyMap<string, InForceAgreementPower>;
 }
 

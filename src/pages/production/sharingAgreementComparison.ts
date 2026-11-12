@@ -143,19 +143,19 @@ export function formatInForceCoefficientLine(inForceCoefficient: number, draftVa
 
 /**
  * Power assigned by an in-force coefficient. Always computed with the
- * `installedPowerKw` of the agreement that authored it, never the draft's:
+ * `nominalPowerKW` of the agreement that authored it, never the draft's:
  * the two can differ, and mixing them would misstate what is assigned today.
  */
-export function computeInForcePowerKw(coefficient: number, installedPowerKw: number | undefined): number | null {
-  if (installedPowerKw === undefined || !Number.isFinite(installedPowerKw)) return null;
-  return coefficient * installedPowerKw;
+export function computeInForcePowerKw(coefficient: number, nominalPowerKW: number | undefined): number | null {
+  if (nominalPowerKW === undefined || !Number.isFinite(nominalPowerKW)) return null;
+  return coefficient * nominalPowerKW;
 }
 
 /** State of the GET for the agreement an in-force coefficient came from. */
 export type InForceAgreementPower =
   | { status: "loading" }
   | { status: "error" }
-  | { status: "success"; installedPowerKw: number | undefined };
+  | { status: "success"; nominalPowerKW: number | undefined };
 
 /**
  * `Vigente 2,62 kW`, or `Vigente —` when the authoring agreement could not be
@@ -163,7 +163,7 @@ export type InForceAgreementPower =
  */
 export function formatInForcePowerLine(inForceCoefficient: number, power: InForceAgreementPower): string | null {
   if (power.status === "loading") return null;
-  const kw = power.status === "success" ? computeInForcePowerKw(inForceCoefficient, power.installedPowerKw) : null;
+  const kw = power.status === "success" ? computeInForcePowerKw(inForceCoefficient, power.nominalPowerKW) : null;
   return kw === null ? "Vigente —" : `Vigente ${formatKilowatts(kw)}`;
 }
 

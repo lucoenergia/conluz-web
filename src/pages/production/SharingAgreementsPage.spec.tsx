@@ -61,7 +61,7 @@ const AGREEMENTS = [
     id: "2",
     name: "Borrador reciente",
     status: SharingAgreementResponseStatus.DRAFT,
-    installedPowerKw: 5,
+    nominalPowerKW: 5,
     capabilities: MANAGEABLE,
   }),
   buildSharingAgreement({
@@ -190,12 +190,13 @@ describe("SharingAgreementsPage", () => {
     expect(screen.queryByText("Reparto vecinos bloque A")).not.toBeInTheDocument();
   });
 
-  test("create dialog prefills capacity from the plant's totalPower and navigates to the new agreement on submit", async () => {
+  test("create dialog prefills the nominal power from the plant's and navigates to the new agreement on submit", async () => {
     mockData({
       plant: buildPlant({
         name: "Planta Solar Norte",
         regulatoryCode: "CAU-123",
-        totalPower: 30,
+        peakPowerKWp: 36,
+        nominalPowerKW: 30,
         capabilities: MANAGING_PLANT,
       }),
     });
@@ -204,7 +205,7 @@ describe("SharingAgreementsPage", () => {
     setup("plant-42");
 
     await user.click(screen.getByRole("button", { name: "Nuevo acuerdo de reparto" }));
-    expect(await screen.findByLabelText("Capacidad de generación de la planta", { exact: false })).toHaveValue("30");
+    expect(await screen.findByLabelText("Potencia nominal (kW)", { exact: false })).toHaveValue("30");
 
     await user.type(screen.getByLabelText("Nombre del acuerdo", { exact: false }), "Reparto nuevo");
     await user.click(screen.getByRole("button", { name: "Crear borrador" }));
@@ -224,7 +225,7 @@ describe("SharingAgreementsPage", () => {
 
     await user.click(screen.getByRole("button", { name: "Nuevo acuerdo de reparto" }));
     await user.type(screen.getByLabelText("Nombre del acuerdo", { exact: false }), "Reparto nuevo");
-    await user.type(screen.getByLabelText("Capacidad de generación de la planta", { exact: false }), "10");
+    await user.type(screen.getByLabelText("Potencia nominal (kW)", { exact: false }), "10");
     await user.click(screen.getByRole("button", { name: "Crear borrador" }));
 
     await waitFor(() => expect(mockCreateMutateAsync).toHaveBeenCalled());

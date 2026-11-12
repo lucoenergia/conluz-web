@@ -5,12 +5,14 @@ const plant = {
   id: "plant-1",
   providerCode: "HUAWEI-TOR-0012",
   regulatoryCode: "ES0031406900011122ZX9BA000",
+  cil: "ES0031406900011122ZX9BA01",
   supply: { id: "sup-1", code: "ES0031406912345678JN0F", name: "Polideportivo municipal" },
   name: "Planta Polideportivo",
   address: "Calle del Polideportivo 3, 46900 Torrent, Valencia",
   description: "Cubierta fotovoltaica del polideportivo municipal, 112 módulos de 410 W orientados al sur.",
   inverterProvider: "HUAWEI",
-  totalPower: 45.6,
+  peakPowerKWp: 45.6,
+  nominalPowerKW: 40,
   connectionDate: "2024-03-12",
   community: { id: "com-1", name: "Comunidad Energética de Torrent" },
   capabilities: { canRead: true, canManage: true, canListSharingAgreements: true, canManageSharingAgreements: true, canReadSupply: true },
@@ -40,7 +42,7 @@ export const SupplyNotReadable = () => (
 export const SparseData = () => (
   <Mui.Box sx={{ width: "100%" }}>
     <PlantDetailHeader
-      plant={{ ...plant, name: "Planta CEIP Lluís Vives", regulatoryCode: null, providerCode: "", inverterProvider: null, connectionDate: null, description: null, supply: null, totalPower: 22.4 }}
+      plant={{ ...plant, name: "Planta CEIP Lluís Vives", regulatoryCode: null, providerCode: "", inverterProvider: null, connectionDate: null, description: null, supply: null, peakPowerKWp: 22.4, nominalPowerKW: 20, cil: null }}
     />
   </Mui.Box>
 );

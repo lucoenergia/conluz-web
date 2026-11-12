@@ -245,13 +245,13 @@ describe("useSharingAgreementActions", () => {
       const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
       const { result } = renderActions(agreement(), queryClient);
 
-      const success = await result.current.actions.update!.run({ name: "Nuevo nombre", installedPowerKw: 45 });
+      const success = await result.current.actions.update!.run({ name: "Nuevo nombre", nominalPowerKW: 45 });
 
       expect(success).toBe(true);
       expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
         plantId: "plant-1",
         sharingAgreementId: "agreement-1",
-        data: { name: "Nuevo nombre", installedPowerKw: 45 },
+        data: { name: "Nuevo nombre", nominalPowerKW: 45 },
       });
       expect(invalidateSpy).toHaveBeenCalledWith({
         queryKey: getGetSharingAgreementByIdQueryKey("plant-1", "agreement-1"),
@@ -263,7 +263,7 @@ describe("useSharingAgreementActions", () => {
       mockUpdateMutateAsync.mockRejectedValue(new Error("network error"));
       const { result } = renderActions();
 
-      expect(await result.current.actions.update!.run({ name: "x", installedPowerKw: 45 })).toBe(false);
+      expect(await result.current.actions.update!.run({ name: "x", nominalPowerKW: 45 })).toBe(false);
       await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalled());
     });
   });

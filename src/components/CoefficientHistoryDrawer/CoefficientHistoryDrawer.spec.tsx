@@ -114,7 +114,7 @@ function setElement(
         capabilities: buildSharingAgreementCapabilities({ canRead: true, canManage: true }),
       })}
       coefficients={coefficients}
-      installedPowerKw={100}
+      nominalPowerKW={100}
     />
   );
 }

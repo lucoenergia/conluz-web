@@ -3,6 +3,7 @@ import { isPasswordRule, PASSWORD_RULE_MESSAGES } from "../utils/passwordPolicy"
 import { PASSWORD_UNCHANGED_MESSAGE, throttledMessage } from "./authErrors";
 import { LAST_ACTIVE_ADMIN_EXPLANATION, resendLimitMessage } from "./membershipErrorMessages";
 import { MISSING_CAU_MESSAGE } from "./sharingAgreementFileCopy";
+import { CIL_FORMAT_MESSAGE, CIL_IN_USE_MESSAGE } from "./plantCil";
 import { incompleteText, labelsForMissingFields, missingFieldNamesFrom } from "../utils/integrationStatus";
 import { CONTACT_CHANNEL_MESSAGES } from "../utils/contactChannelRules";
 
@@ -183,6 +184,13 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   // own supply (lucoenergia/conluz#411; #253). A supply is the own supply of
   // at most one plant, so no retry would succeed.
   SUPPLY_ALREADY_HAS_PLANT: "Este punto de suministro ya pertenece a otra planta.",
+
+  // Creating or editing a plant with a CIL the backend refuses
+  // (lucoenergia/conluz#567; #407). The form checks the format first, so
+  // PLANT_CIL_INVALID covers a code the client accepted and the backend did
+  // not, and shares the form's own words. Both are shown on the CIL input.
+  PLANT_CIL_INVALID: CIL_FORMAT_MESSAGE,
+  PLANT_CIL_ALREADY_IN_USE: CIL_IN_USE_MESSAGE,
 
   // Deleting a supply that a plant or a sharing agreement still references
   // (lucoenergia/conluz#412; #290). Disabling is what stops using it.

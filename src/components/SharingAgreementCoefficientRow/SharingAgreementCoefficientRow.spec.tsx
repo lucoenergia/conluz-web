@@ -66,7 +66,7 @@ describe("SharingAgreementCoefficientTableRow", () => {
     render(
       <Table>
         <TableBody>
-          <SharingAgreementCoefficientTableRow coefficient={pendingCoefficient} installedPowerKw={100} />
+          <SharingAgreementCoefficientTableRow coefficient={pendingCoefficient} nominalPowerKW={100} />
         </TableBody>
       </Table>,
     );
@@ -76,7 +76,7 @@ describe("SharingAgreementCoefficientTableRow", () => {
     // getByText's default normalizer collapses the formatter's U+00A0 into a
     // regular space before comparing, so the matcher uses a regular space too.
     expect(screen.getByText("25,0000 %")).toBeInTheDocument();
-    // 25% of 100 kW, matching the mock-up's coefficient×installedPowerKw derivation.
+    // 25% of 100 kW, matching the mock-up's coefficient×nominalPowerKW derivation.
     expect(screen.getByText("25 kW")).toBeInTheDocument();
     expect(screen.getByText("Sin fecha de aplicación")).toBeInTheDocument();
     expect(screen.getByText("No recibe producción hasta que registres la fecha")).toBeInTheDocument();
@@ -91,7 +91,7 @@ describe("SharingAgreementCoefficientTableRow", () => {
     render(
       <Table>
         <TableBody>
-          <SharingAgreementCoefficientTableRow coefficient={coefficientWithId} installedPowerKw={100} />
+          <SharingAgreementCoefficientTableRow coefficient={coefficientWithId} nominalPowerKW={100} />
         </TableBody>
       </Table>,
     );
@@ -100,11 +100,11 @@ describe("SharingAgreementCoefficientTableRow", () => {
     expect(screen.queryByText("d8e14158-41fa-405b-ab48-4abd9a126079")).not.toBeInTheDocument();
   });
 
-  it("falls back to a dash for assigned energy when installedPowerKw is unavailable", () => {
+  it("falls back to a dash for assigned energy when nominalPowerKW is unavailable", () => {
     render(
       <Table>
         <TableBody>
-          <SharingAgreementCoefficientTableRow coefficient={pendingCoefficient} installedPowerKw={undefined} />
+          <SharingAgreementCoefficientTableRow coefficient={pendingCoefficient} nominalPowerKW={undefined} />
         </TableBody>
       </Table>,
     );
@@ -118,7 +118,7 @@ describe("SharingAgreementCoefficientTableRow", () => {
     render(
       <Table>
         <TableBody>
-          <SharingAgreementCoefficientTableRow coefficient={derivedCoefficient} installedPowerKw={100} />
+          <SharingAgreementCoefficientTableRow coefficient={derivedCoefficient} nominalPowerKW={100} />
         </TableBody>
       </Table>,
     );
@@ -134,7 +134,7 @@ describe("SharingAgreementCoefficientTableRow", () => {
     render(
       <Table>
         <TableBody>
-          <SharingAgreementCoefficientTableRow coefficient={pendingCoefficient} installedPowerKw={100} showStateColumns={false} />
+          <SharingAgreementCoefficientTableRow coefficient={pendingCoefficient} nominalPowerKW={100} showStateColumns={false} />
         </TableBody>
       </Table>,
     );
@@ -148,7 +148,7 @@ describe("SharingAgreementCoefficientTableRow", () => {
     render(
       <Table>
         <TableBody>
-          <SharingAgreementCoefficientTableRow coefficient={pendingCoefficient} installedPowerKw={100} />
+          <SharingAgreementCoefficientTableRow coefficient={pendingCoefficient} nominalPowerKW={100} />
         </TableBody>
       </Table>,
     );
@@ -167,7 +167,7 @@ describe("SharingAgreementCoefficientTableRow — application state caption", ()
             <SharingAgreementCoefficientTableRow
               key={coefficient.coefficientId}
               coefficient={coefficient}
-              installedPowerKw={100}
+              nominalPowerKW={100}
               isDraft={isDraft}
             />
           ))}
@@ -205,7 +205,7 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             isEditing
             inputUnit="percentage"
             coefficientInput="0,25"
@@ -230,7 +230,7 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             isEditing
             inputUnit="percentage"
             coefficientInput=""
@@ -255,7 +255,7 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             isEditing
             inputUnit="percentage"
             coefficientInput=""
@@ -277,7 +277,7 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             isEditing
             inputUnit="percentage"
             coefficientInput="0"
@@ -300,7 +300,7 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             isEditing
             inputUnit="percentage"
             coefficientInput="150"
@@ -324,7 +324,7 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             isEditing
             inputUnit="percentage"
             coefficientInput="30,00005"
@@ -347,7 +347,7 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             isEditing
             inputUnit="percentage"
             coefficientInput="40,0000"
@@ -370,7 +370,7 @@ describe("SharingAgreementCoefficientTableRow (editing, percentage unit)", () =>
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={60}
+            nominalPowerKW={60}
             isEditing
             inputUnit="kw"
             // value 0.016670 -> exact kW is 1.0002, but the 2dp-rounded display text is "1,00" —
@@ -399,7 +399,7 @@ describe("SharingAgreementCoefficientTableRow (editing, kW unit)", () => {
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={60}
+            nominalPowerKW={60}
             isEditing
             inputUnit="kw"
             coefficientInput=""
@@ -421,7 +421,7 @@ describe("SharingAgreementCoefficientTableRow (editing, kW unit)", () => {
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             isEditing
             inputUnit="percentage"
             coefficientInput="3,0992"
@@ -437,13 +437,13 @@ describe("SharingAgreementCoefficientTableRow (editing, kW unit)", () => {
     expect(screen.queryByText("%")).not.toBeInTheDocument();
   });
 
-  it("shows a kW-range error message using the plant's installedPowerKw", () => {
+  it("shows a kW-range error message using the plant's nominalPowerKW", () => {
     render(
       <Table>
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={60}
+            nominalPowerKW={60}
             isEditing
             inputUnit="kw"
             coefficientInput="90"
@@ -464,7 +464,7 @@ describe("SharingAgreementCoefficientTableRow (editing, kW unit)", () => {
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={60}
+            nominalPowerKW={60}
             isEditing
             inputUnit="kw"
             coefficientInput="30"
@@ -485,7 +485,7 @@ describe("SharingAgreementCoefficientTableRow (editing, kW unit)", () => {
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={60}
+            nominalPowerKW={60}
             isEditing
             inputUnit="kw"
             coefficientInput=""
@@ -506,7 +506,7 @@ describe("SharingAgreementCoefficientTableRow (editing, kW unit)", () => {
 
 describe("SharingAgreementCoefficientCard", () => {
   it("renders the same fields as a stacked mobile card", () => {
-    render(<SharingAgreementCoefficientCard coefficient={pendingCoefficient} installedPowerKw={100} />);
+    render(<SharingAgreementCoefficientCard coefficient={pendingCoefficient} nominalPowerKW={100} />);
 
     expect(screen.getByText("Vivienda A")).toBeInTheDocument();
     expect(screen.getByText("ES0031300000000001AB")).toBeInTheDocument();
@@ -518,7 +518,7 @@ describe("SharingAgreementCoefficientCard", () => {
   });
 
   it("renders a read-only PENDING_SUCCESSION/DERIVED end date with the muted text token", () => {
-    render(<SharingAgreementCoefficientCard coefficient={derivedCoefficient} installedPowerKw={100} />);
+    render(<SharingAgreementCoefficientCard coefficient={derivedCoefficient} nominalPowerKW={100} />);
 
     expect(screen.getByText("En vigor desde 23 de mayo de 2024")).toBeInTheDocument();
     const endDate = screen.getByText("1 de enero de 2025");
@@ -526,7 +526,7 @@ describe("SharingAgreementCoefficientCard", () => {
   });
 
   it("hides both state readouts when showStateColumns is false", () => {
-    render(<SharingAgreementCoefficientCard coefficient={pendingCoefficient} installedPowerKw={100} showStateColumns={false} />);
+    render(<SharingAgreementCoefficientCard coefficient={pendingCoefficient} nominalPowerKW={100} showStateColumns={false} />);
 
     expect(screen.queryByText("Sin fecha de aplicación")).not.toBeInTheDocument();
     expect(screen.queryByText("No recibe producción hasta que registres la fecha")).not.toBeInTheDocument();
@@ -539,7 +539,7 @@ describe("SharingAgreementCoefficientCard — application state caption", () => 
     const { container } = render(
       <>
         {[pendingInForceCoefficient, pendingCoefficient, derivedCoefficient].map((coefficient) => (
-          <SharingAgreementCoefficientCard key={coefficient.coefficientId} coefficient={coefficient} installedPowerKw={100} />
+          <SharingAgreementCoefficientCard key={coefficient.coefficientId} coefficient={coefficient} nominalPowerKW={100} />
         ))}
       </>,
     );
@@ -555,7 +555,7 @@ describe("SharingAgreementCoefficientCard — application state caption", () => 
   });
 
   it("shows only the headline on a DRAFT's pending card", () => {
-    render(<SharingAgreementCoefficientCard coefficient={pendingInForceCoefficient} installedPowerKw={100} isDraft />);
+    render(<SharingAgreementCoefficientCard coefficient={pendingInForceCoefficient} nominalPowerKW={100} isDraft />);
 
     expect(screen.getByText("Sin fecha de aplicación")).toBeInTheDocument();
     expect(screen.queryByText(/^En vigor:/)).not.toBeInTheDocument();
@@ -572,7 +572,7 @@ describe("SharingAgreementCoefficientTableRow (batch-activation checkbox)", () =
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             showSelectionColumn
             selected={false}
             onToggleSelected={onToggleSelected}
@@ -593,7 +593,7 @@ describe("SharingAgreementCoefficientTableRow (batch-activation checkbox)", () =
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={{ ...pendingCoefficient, supply: { ...pendingCoefficient.supply!, name: null } }}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             showSelectionColumn
             selected={false}
             onToggleSelected={vi.fn()}
@@ -613,7 +613,7 @@ describe("SharingAgreementCoefficientTableRow (batch-activation checkbox)", () =
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={derivedCoefficient}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             showSelectionColumn
             selected={false}
             onToggleSelected={onToggleSelected}
@@ -634,7 +634,7 @@ describe("SharingAgreementCoefficientTableRow (batch-activation checkbox)", () =
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             showSelectionColumn={false}
             onToggleSelected={vi.fn()}
           />
@@ -651,7 +651,7 @@ describe("SharingAgreementCoefficientTableRow (batch-activation checkbox)", () =
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             showSelectionColumn
             selected
             onToggleSelected={vi.fn()}
@@ -680,7 +680,7 @@ describe("SharingAgreementCoefficientTableRow (lifecycle actions menu)", () => {
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={pendingCoefficient}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             showActionsColumn
             onOpenActionsMenu={onOpenActionsMenu}
           />
@@ -700,7 +700,7 @@ describe("SharingAgreementCoefficientTableRow (lifecycle actions menu)", () => {
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={appliedOrphanCoefficient}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             showActionsColumn={false}
             onOpenActionsMenu={vi.fn()}
           />
@@ -719,7 +719,7 @@ describe("SharingAgreementCoefficientTableRow (lifecycle actions menu)", () => {
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={appliedOrphanCoefficient}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             showActionsColumn
             onOpenActionsMenu={onOpenActionsMenu}
           />
@@ -739,7 +739,7 @@ describe("SharingAgreementCoefficientTableRow (lifecycle actions menu)", () => {
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={appliedOrphanCoefficient}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             showActionsColumn
             onOpenActionsMenu={vi.fn()}
             actionsDisabled
@@ -766,7 +766,7 @@ describe("SharingAgreementCoefficientCard (lifecycle actions menu)", () => {
     render(
       <SharingAgreementCoefficientCard
         coefficient={pendingCoefficient}
-        installedPowerKw={100}
+        nominalPowerKW={100}
         showActionsColumn
         onOpenActionsMenu={onOpenActionsMenu}
       />,
@@ -784,7 +784,7 @@ describe("SharingAgreementCoefficientCard (lifecycle actions menu)", () => {
     render(
       <SharingAgreementCoefficientCard
         coefficient={appliedOrphanCoefficient}
-        installedPowerKw={100}
+        nominalPowerKW={100}
         showActionsColumn
         onOpenActionsMenu={onOpenActionsMenu}
       />,
@@ -799,7 +799,7 @@ describe("SharingAgreementCoefficientCard (lifecycle actions menu)", () => {
     render(
       <SharingAgreementCoefficientCard
         coefficient={appliedOrphanCoefficient}
-        installedPowerKw={100}
+        nominalPowerKW={100}
         showActionsColumn
         onOpenActionsMenu={vi.fn()}
         actionsDisabled
@@ -817,7 +817,7 @@ describe("SharingAgreementCoefficientCard (batch-activation checkbox)", () => {
     render(
       <SharingAgreementCoefficientCard
         coefficient={pendingCoefficient}
-        installedPowerKw={100}
+        nominalPowerKW={100}
         showSelectionColumn
         selected={false}
         onToggleSelected={onToggleSelected}
@@ -836,7 +836,7 @@ describe("SharingAgreementCoefficientCard (batch-activation checkbox)", () => {
     render(
       <SharingAgreementCoefficientCard
         coefficient={derivedCoefficient}
-        installedPowerKw={100}
+        nominalPowerKW={100}
         showSelectionColumn
         selected={false}
         onToggleSelected={onToggleSelected}
@@ -862,7 +862,7 @@ describe("row identity when the supply has no name", () => {
     render(
       <Table>
         <TableBody>
-          <SharingAgreementCoefficientTableRow coefficient={namelessCoefficient} installedPowerKw={100} />
+          <SharingAgreementCoefficientTableRow coefficient={namelessCoefficient} nominalPowerKW={100} />
         </TableBody>
       </Table>,
     );
@@ -872,7 +872,7 @@ describe("row identity when the supply has no name", () => {
   });
 
   it("promotes the CUPS to the primary identifier on the mobile card, and does not repeat it", () => {
-    render(<SharingAgreementCoefficientCard coefficient={namelessCoefficient} installedPowerKw={100} />);
+    render(<SharingAgreementCoefficientCard coefficient={namelessCoefficient} nominalPowerKW={100} />);
 
     expect(screen.getAllByText("ES0031300000000009ZZ")).toHaveLength(1);
     expect(screen.queryByText("-")).not.toBeInTheDocument();
@@ -882,7 +882,7 @@ describe("row identity when the supply has no name", () => {
     render(
       <Table>
         <TableBody>
-          <SharingAgreementCoefficientTableRow coefficient={pendingCoefficient} installedPowerKw={100} />
+          <SharingAgreementCoefficientTableRow coefficient={pendingCoefficient} nominalPowerKW={100} />
         </TableBody>
       </Table>,
     );
@@ -897,7 +897,7 @@ describe("row identity when the supply has no name", () => {
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={{ ...pendingCoefficient, supply: { id: "s0", name: "", code: "" } }}
-            installedPowerKw={100}
+            nominalPowerKW={100}
           />
         </TableBody>
       </Table>,
@@ -912,7 +912,7 @@ describe("row identity when the supply has no name", () => {
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={{ ...namelessCoefficient, supply: { id: "s9", name: "   ", code: "ES0031300000000009ZZ" } }}
-            installedPowerKw={100}
+            nominalPowerKW={100}
           />
         </TableBody>
       </Table>,
@@ -934,11 +934,11 @@ describe("draft vs. in-force comparison (DRAFT-only)", () => {
   }
 
   /**
-   * In force at `coefficient`, authored by an agreement whose installed power
+   * In force at `coefficient`, authored by an agreement whose nominal power
    * (80 kW) differs from the draft's (100 kW), so a line computed with the
    * wrong one shows.
    */
-  function inForce(coefficient: number, power: InForceAgreementPower = { status: "success", installedPowerKw: 80 }): RowComparisonView {
+  function inForce(coefficient: number, power: InForceAgreementPower = { status: "success", nominalPowerKW: 80 }): RowComparisonView {
     return { kind: "inForce", coefficient, power };
   }
 
@@ -950,7 +950,7 @@ describe("draft vs. in-force comparison (DRAFT-only)", () => {
         <TableBody>
           <SharingAgreementCoefficientTableRow
             coefficient={row(0.4)}
-            installedPowerKw={100}
+            nominalPowerKW={100}
             showStateColumns={false}
             comparison={inForce(0.35)}
             {...props}
@@ -964,7 +964,7 @@ describe("draft vs. in-force comparison (DRAFT-only)", () => {
     return render(
       <SharingAgreementCoefficientCard
         coefficient={row(0.4)}
-        installedPowerKw={100}
+        nominalPowerKW={100}
         showStateColumns={false}
         comparison={inForce(0.35)}
         {...props}
@@ -1082,7 +1082,7 @@ describe("draft vs. in-force comparison (DRAFT-only)", () => {
      * performs instead of restating it.
      */
     describe("unit invariance", () => {
-      const INSTALLED_KW = 200;
+      const NOMINAL_KW = 200;
       const seed: EditableCoefficientRow = {
         supplyId: "s1",
         coefficient: row(0.4),
@@ -1090,13 +1090,13 @@ describe("draft vs. in-force comparison (DRAFT-only)", () => {
         inputText: "",
       };
 
-      function deltaLineFor(inputText: string, unit: "percentage" | "kw", installedPowerKw = INSTALLED_KW): string | null {
-        const [updated] = updateRowInput([seed], "s1", inputText, unit, installedPowerKw);
+      function deltaLineFor(inputText: string, unit: "percentage" | "kw", nominalPowerKW = NOMINAL_KW): string | null {
+        const [updated] = updateRowInput([seed], "s1", inputText, unit, nominalPowerKW);
         const { unmount } = renderRow({
           coefficient: updated.coefficient,
           isEditing: true,
           inputUnit: unit,
-          installedPowerKw,
+          nominalPowerKW,
           coefficientInput: updated.inputText,
           editedValue: updated.value,
           onCoefficientChange: vi.fn(),
@@ -1122,7 +1122,7 @@ describe("draft vs. in-force comparison (DRAFT-only)", () => {
         expect(deltaLineFor("abc", "kw")).toBeNull();
       });
 
-      it("drops the difference when installed power can't convert the kW figure", () => {
+      it("drops the difference when nominal power can't convert the kW figure", () => {
         expect(deltaLineFor("100", "kw", 0)).toBeNull();
       });
     });
@@ -1132,7 +1132,7 @@ describe("draft vs. in-force comparison (DRAFT-only)", () => {
 describe("revert control", () => {
   const editingProps = {
     coefficient: pendingCoefficient,
-    installedPowerKw: 100,
+    nominalPowerKW: 100,
     isEditing: true,
     inputUnit: "kw" as const,
     coefficientInput: "25,00",

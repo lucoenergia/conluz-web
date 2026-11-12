@@ -21,7 +21,7 @@ function agreement(status: SharingAgreementResponseStatus): SharingAgreementResp
     plantId: "plant-1",
     name: "Reparto de prueba",
     status,
-    installedPowerKw: 45,
+    nominalPowerKW: 45,
     createdAt: "2024-09-01T09:30:00Z",
     createdBy: "user-1",
   });

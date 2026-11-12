@@ -2,7 +2,7 @@ import { LoadingStat, Stat, Mui } from "conluz-web";
 
 export const Normal = () => (
   <Mui.Box sx={{ width: 200 }}>
-    <LoadingStat label="Potencia instalada" />
+    <LoadingStat label="Potencia nominal" />
   </Mui.Box>
 );
 

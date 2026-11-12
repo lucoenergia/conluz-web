@@ -53,7 +53,7 @@ const agreement = buildSharingAgreement({
   plantId: PLANT_ID,
   name: "Reparto 2026",
   status: SharingAgreementResponseStatus.PUBLISHED,
-  installedPowerKw: 100,
+  nominalPowerKW: 100,
   // Registering an application date is a write: without canManage the row menu
   // this spec drives would not be there to click.
   capabilities: buildSharingAgreementCapabilities({ canRead: true, canManage: true }),

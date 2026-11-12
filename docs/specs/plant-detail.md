@@ -8,7 +8,7 @@
 | **Roles** | Community admin only: the plant's `canManage` (UI-PLT-010). Agreements: also the plant's `canListSharingAgreements` |
 | **Domain rules** | `lucoenergia/conluz`: PLT-001 (UI-PLT-008) |
 | **Design reference** | Claude Design canvas "Conluz · Energía de la comunidad y detalle de planta", revision 5: artboards `Planta-Movil`, `Planta-Escritorio`, `Planta-Estados`, `Planta-Hoy-Estados`, `CompHoy`, `CompPeriodo`, `CompGrafico` |
-| **Last reviewed against code** | #406 |
+| **Last reviewed against code** | #407 |
 
 ## Purpose
 
@@ -16,7 +16,7 @@ Show a community admin what a plant produced: today, according to its inverter, 
 as the distributor measured it. Tell them what state its sharing agreements and its Huawei
 integration are in, without scrolling past the production blocks on a phone.
 
-This document covers only the rules #260, #290, #311, #349 and #406 introduced. The integrations section keeps the rules in
+This document covers only the rules #260, #290, #311, #349, #406 and #407 introduced. The integrations section keeps the rules in
 [`integrations.md`](integrations.md) (UI-INT-005 to UI-INT-010), and the figures and chart labels
 keep those in [`formatting.md`](formatting.md).
 
@@ -246,6 +246,31 @@ keep those in [`formatting.md`](formatting.md).
   landed on it would show a plant that is gone.
 - **Implements:** n/a
 - **Source:** #406
+
+### UI-PLT-015 — The header's details show the plant's CIL
+
+- **Status:** Active
+- **Rule:** The plant detail header MUST show the plant's CIL among its details, the facts shown
+  when the header is expanded, to any caller who can read the plant, and "Sin CIL" in neutral
+  styling when it has none. It MUST offer no action on the CIL.
+- **Rationale:** The CIL is needed when claiming surplus compensation, and the plant's own page is
+  where it is looked up. Every reader already receives it in `getPlantById`. A missing CIL is a
+  plant still being registered, not an error (UI-PLT-006). It sits among the details because the
+  key-fact strip holds three facts, and they are the CAU and the two powers (UI-PLT-016).
+- **Implements:** n/a
+- **Source:** #407 (the placement among the details: maintainer decision), lucoenergia/conluz#567
+
+### UI-PLT-016 — The header's key facts are the CAU, the peak power and the nominal power
+
+- **Status:** Active
+- **Rule:** The plant detail header's key facts MUST be, in this order, the CAU (copyable when the
+  plant has one), the peak power (kWp) and the nominal power (kW). Where the strip holds two facts,
+  the nominal power MUST move into the details.
+- **Rationale:** The single "Potencia" fact showed the plant's total power, which the backend split
+  into peak and nominal power; both describe the plant. The CAU leads so that on a phone, where the
+  strip holds two facts and a fact moved into the details loses its copy control, it keeps it.
+- **Implements:** n/a
+- **Source:** #407 (both powers on the detail: maintainer decision), lucoenergia/conluz#567
 
 ## States
 

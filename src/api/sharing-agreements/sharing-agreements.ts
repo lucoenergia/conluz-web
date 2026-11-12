@@ -292,9 +292,9 @@ export function useGetSharingAgreements<TData = Awaited<ReturnType<typeof getSha
 
 /**
  * This endpoint creates a new DRAFT sharing agreement under the given plant. The
- * agreement's installed power is supplied by the caller as a snapshot of the plant's
- * installed power at authoring time (the frontend pre-fills it from the plant's
- * current total power, but it may be edited before submission).
+ * agreement's nominal power is supplied by the caller as a snapshot of the plant's
+ * nominal power at authoring time (the frontend pre-fills it from the plant's
+ * current nominal power, but it may be edited before submission).
  *
  * **Required: Community Admin**
  *
@@ -556,7 +556,7 @@ export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof get
 
 
 /**
- * This endpoint replaces the name, notes and installed power of a sharing agreement,
+ * This endpoint replaces the name, notes and nominal power of a sharing agreement,
  * regardless of its status: DRAFT, PUBLISHED and SUPERSEDED agreements can all be
  * edited this way. All three fields must be provided; this is a full replacement of
  * the updatable fields, not a partial update. Its status, plant and creation metadata
@@ -569,7 +569,7 @@ export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof get
  * plant, or the caller is not a member of its community, to avoid leaking existence.
  *
  * Authentication is required using a Bearer token.
- * @summary Replaces a sharing agreement's name, notes and installed power
+ * @summary Replaces a sharing agreement's name, notes and nominal power
  */
 export const updateSharingAgreement = (
     plantId: string,
@@ -625,7 +625,7 @@ const {mutation: mutationOptions} = options ?
     export type UpdateSharingAgreementMutationVariables = {plantId: string;sharingAgreementId: string;data: UpdateSharingAgreementBody}
 
     /**
- * @summary Replaces a sharing agreement's name, notes and installed power
+ * @summary Replaces a sharing agreement's name, notes and nominal power
  */
 export const useUpdateSharingAgreement = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,UpdateSharingAgreementMutationVariables, TContext>, }

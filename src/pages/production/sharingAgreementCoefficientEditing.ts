@@ -93,24 +93,24 @@ function toMillionths(value: number): number {
  * nothing downstream re-derives or re-rounds it. Rounding here (rather than
  * only at display time) is what guarantees the save payload is always an
  * exact multiple of 1e-6, matching the distributor file's precision: a plain
- * `kw / installedPowerKw` division produces an arbitrary-precision float, and
+ * `kw / nominalPowerKW` division produces an arbitrary-precision float, and
  * without rounding at the point of conversion that float reaches the server
  * verbatim. NaN (never 0) for empty/unparseable text, or for kW text when
- * installedPowerKw is missing or non-positive — an unusable conversion, not a
+ * nominalPowerKW is missing or non-positive — an unusable conversion, not a
  * silent zero.
  */
 export function parseCoefficientInput(
   raw: string,
   unit: CoefficientInputUnit,
-  installedPowerKw: number | undefined,
+  nominalPowerKW: number | undefined,
 ): number {
   if (unit === "percentage") {
     const result = parsePercentageInput(raw);
     return result.ok ? result.units / COEFFICIENT_SCALE : NaN;
   }
   const parsed = parseDecimalInput(raw);
-  if (installedPowerKw === undefined || installedPowerKw <= 0) return NaN;
-  return toMillionths(parsed / installedPowerKw);
+  if (nominalPowerKW === undefined || nominalPowerKW <= 0) return NaN;
+  return toMillionths(parsed / nominalPowerKW);
 }
 
 /**
@@ -142,12 +142,12 @@ export function parseCoefficientInput(
 export function formatCoefficientForInput(
   value: number | undefined,
   unit: CoefficientInputUnit,
-  installedPowerKw: number | undefined,
+  nominalPowerKW: number | undefined,
 ): string {
   if (value === undefined || !Number.isFinite(value)) return "";
   if (unit === "percentage") return formatUnitsAsPercentage(value);
-  if (installedPowerKw === undefined || installedPowerKw <= 0) return "";
-  const kw = Math.round(value * installedPowerKw * 100) / 100;
+  if (nominalPowerKW === undefined || nominalPowerKW <= 0) return "";
+  const kw = Math.round(value * nominalPowerKW * 100) / 100;
   return formatFixedDecimalForInput(kw, 2);
 }
 
@@ -159,7 +159,7 @@ export function isValidCoefficientValue(value: number | undefined): boolean {
 export function buildEditableRowsFromCoefficients(
   coefficients: SharingAgreementPartitionCoefficientResponse[],
   unit: CoefficientInputUnit,
-  installedPowerKw: number | undefined,
+  nominalPowerKW: number | undefined,
 ): EditableCoefficientRow[] {
   return coefficients
     .filter((coefficient) => !!coefficient.supply?.id)
@@ -174,7 +174,7 @@ export function buildEditableRowsFromCoefficients(
         supplyId: coefficient.supply!.id!,
         coefficient,
         value,
-        inputText: formatCoefficientForInput(value, unit, installedPowerKw),
+        inputText: formatCoefficientForInput(value, unit, nominalPowerKW),
       };
     });
 }
@@ -267,14 +267,14 @@ export function revertRowToSnapshot(
   supplyId: string,
   snapshot: CoefficientSnapshot,
   unit: CoefficientInputUnit,
-  installedPowerKw: number | undefined,
+  nominalPowerKW: number | undefined,
 ): EditableCoefficientRow[] {
   if (!snapshot.has(supplyId)) return rows;
   const originalUnits = snapshot.get(supplyId);
   const value = originalUnits === undefined ? undefined : originalUnits / COEFFICIENT_SCALE;
   return rows.map((row) =>
     row.supplyId === supplyId
-      ? { ...row, value, inputText: formatCoefficientForInput(value, unit, installedPowerKw) }
+      ? { ...row, value, inputText: formatCoefficientForInput(value, unit, nominalPowerKW) }
       : row,
   );
 }
@@ -343,20 +343,20 @@ export function buildEditableRowFromSupply(supply: SupplyResponse): EditableCoef
  * how the user got to the text rather than on the text.
  *
  * Both sides must be finite: otherwise the degenerate "" === "" case (an
- * empty row, or kW mode with no installed power) would match everything and
+ * empty row, or kW mode with no nominal power) would match everything and
  * freeze the field.
  */
 function rendersAsCurrentValue(
   row: EditableCoefficientRow,
   candidate: number,
   unit: CoefficientInputUnit,
-  installedPowerKw: number | undefined,
+  nominalPowerKW: number | undefined,
 ): boolean {
   if (!Number.isFinite(candidate)) return false;
   if (row.value === undefined || !Number.isFinite(row.value)) return false;
   return (
-    formatCoefficientForInput(candidate, unit, installedPowerKw) ===
-    formatCoefficientForInput(row.value, unit, installedPowerKw)
+    formatCoefficientForInput(candidate, unit, nominalPowerKW) ===
+    formatCoefficientForInput(row.value, unit, nominalPowerKW)
   );
 }
 
@@ -380,12 +380,12 @@ export function updateRowInput(
   supplyId: string,
   inputText: string,
   unit: CoefficientInputUnit,
-  installedPowerKw: number | undefined,
+  nominalPowerKW: number | undefined,
 ): EditableCoefficientRow[] {
   return rows.map((row) => {
     if (row.supplyId !== supplyId) return row;
-    const parsed = parseCoefficientInput(inputText, unit, installedPowerKw);
-    if (rendersAsCurrentValue(row, parsed, unit, installedPowerKw)) return { ...row, inputText };
+    const parsed = parseCoefficientInput(inputText, unit, nominalPowerKW);
+    if (rendersAsCurrentValue(row, parsed, unit, nominalPowerKW)) return { ...row, inputText };
     return { ...row, inputText, value: Number.isFinite(parsed) ? parsed : undefined };
   });
 }
@@ -399,7 +399,7 @@ export function updateRowInput(
 export function retextRowsForUnit(
   rows: EditableCoefficientRow[],
   toUnit: CoefficientInputUnit,
-  installedPowerKw: number | undefined,
+  nominalPowerKW: number | undefined,
 ): EditableCoefficientRow[] {
-  return rows.map((row) => ({ ...row, inputText: formatCoefficientForInput(row.value, toUnit, installedPowerKw) }));
+  return rows.map((row) => ({ ...row, inputText: formatCoefficientForInput(row.value, toUnit, nominalPowerKW) }));
 }

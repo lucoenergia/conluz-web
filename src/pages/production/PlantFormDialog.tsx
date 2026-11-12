@@ -1,4 +1,4 @@
-import { useRef, useState, type FC, type FormEvent, type ReactNode, type RefObject } from "react";
+import { useEffect, useRef, useState, type FC, type FormEvent, type ReactNode, type RefObject } from "react";
 import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import type { CreatePlantBody, SupplyResponse, UpdatePlantBody } from "../../api/models";
@@ -14,14 +14,16 @@ import {
   plantFieldValuesOf,
   selectedSupplyOf,
   plantFieldErrors,
-  TOTAL_POWER_ERROR,
-  totalPowerIsValid,
+  POWER_ERROR,
+  POWER_FIELDS,
+  powerIsValid,
   type PlantFieldValues,
   type PlantFormField,
 } from "../../components/PlantForm/plantFields";
 import { useActiveCommunity } from "../../context/community.context";
 import { useErrorDispatch } from "../../context/error.context";
-import { getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
+import { normaliseCil } from "../../errors/plantCil";
+import { plantSaveRefusalOf } from "../../errors/plantErrors";
 import { useCommunityActions, usePlantActions } from "../../hooks/actions";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
@@ -49,18 +51,30 @@ export const PlantFormDialog: FC<PlantFormDialogProps> = ({ target, onClose }) =
 
 type SaveOutcome = { ok: true } | { error: unknown };
 
-/** What the form sends, from what it holds. An empty optional input is sent as no value. */
+/**
+ * What the form sends, from what it holds, once every input is valid. An empty
+ * optional input is sent as no value.
+ */
 const bodyOf = (values: PlantFieldValues, supplyCode: string): CreatePlantBody & UpdatePlantBody => ({
   providerCode: values.providerCode,
   regulatoryCode: values.regulatoryCode || undefined,
+  // Upper-cased and without spaces; empty is absent, which on an edit clears it.
+  cil: sentCil(values.cil),
   name: values.name,
   address: values.address,
   description: values.description || undefined,
-  totalPower: Number(values.totalPower),
+  peakPowerKWp: Number(values.peakPowerKWp),
+  nominalPowerKW: Number(values.nominalPowerKW),
   connectionDate: values.connectionDate ? values.connectionDate.toISOString() : undefined,
   supplyCode,
   inverterProvider: "HUAWEI",
 });
+
+/** The CIL as it is sent: upper-cased, without spaces, absent when empty. */
+function sentCil(input: string): string | undefined {
+  const normalised = normaliseCil(input);
+  return normalised.valid ? normalised.cil : undefined;
+}
 
 /** The active community's supplies, as the selector offers them. */
 function useCommunitySupplies() {
@@ -199,11 +213,22 @@ const PlantFormOverlay: FC<PlantFormOverlayProps> = ({
   const [saving, setSaving] = useState(false);
   const inputRefs: Record<PlantFormField, RefObject<HTMLInputElement | null>> = {
     providerCode: useRef(null),
+    cil: useRef(null),
     name: useRef(null),
     supplyCode: useRef(null),
     address: useRef(null),
-    totalPower: useRef(null),
+    peakPowerKWp: useRef(null),
+    nominalPowerKW: useRef(null),
   };
+
+  // A refused CIL takes focus once the inputs are editable again.
+  const [refusedCil, setRefusedCil] = useState(false);
+  const cilRef = inputRefs.cil;
+  useEffect(() => {
+    if (saving || !refusedCil) return;
+    cilRef.current?.focus();
+    setRefusedCil(false);
+  }, [saving, refusedCil, cilRef]);
 
   const selectedSupply = selectedSupplyOf(supplies, values?.supplyCode ?? null);
   const dirty =
@@ -212,12 +237,12 @@ const PlantFormOverlay: FC<PlantFormOverlayProps> = ({
     (Object.keys(seeded) as (keyof PlantFieldValues)[]).some((field) => !sameValue(field, values[field], seeded[field]));
 
   const onChange = <K extends keyof PlantFieldValues>(field: K, value: PlantFieldValues[K]) => {
-    // Editing an input clears what was said about it; the power is checked as it is typed.
-    if (field === "totalPower") {
+    // Editing an input clears what was said about it; each power is checked as it is typed.
+    if ((POWER_FIELDS as readonly string[]).includes(field)) {
       const input = value as string;
       setFieldErrors((errors) => ({
         ...errors,
-        totalPower: input && !totalPowerIsValid(input) ? TOTAL_POWER_ERROR : undefined,
+        [field]: input && !powerIsValid(input) ? POWER_ERROR : undefined,
       }));
     } else if (field in inputRefs) {
       setFieldErrors((errors) => ({ ...errors, [field]: undefined }));
@@ -246,8 +271,15 @@ const PlantFormOverlay: FC<PlantFormOverlayProps> = ({
       return;
     }
     // The form stays as it was typed. The refusal is worded by its code
-    // (UI-ERR-001, UI-ERR-005); without one, the generic text.
-    errorDispatch(getFirstApiErrorMessage(outcome.error, generic));
+    // (UI-ERR-001, UI-ERR-005); without one, the generic text. A refused CIL
+    // is said on its input, the one the admin can fix (UI-PLS-010).
+    const refusal = plantSaveRefusalOf(outcome.error, generic);
+    if ("field" in refusal) {
+      setFieldErrors({ cil: refusal.message });
+      setRefusedCil(true);
+    } else {
+      errorDispatch(refusal.form);
+    }
   };
 
   return (

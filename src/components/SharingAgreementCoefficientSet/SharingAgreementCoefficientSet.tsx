@@ -130,7 +130,7 @@ export interface SharingAgreementCoefficientSetProps {
    */
   agreement: SharingAgreementResponse | undefined;
   coefficients: SharingAgreementPartitionCoefficientResponse[];
-  installedPowerKw: number | undefined;
+  nominalPowerKW: number | undefined;
   /**
    * Bumped by the page when another surface — the next-step banner — asks to
    * start editing. A nonce rather than a controlled boolean: the rows are seeded
@@ -238,26 +238,26 @@ function filterEditableRows(rows: EditableCoefficientRow[], searchText: string):
 /**
  * The sum caption. Percentage mode is unchanged from before this feature. kW
  * mode always states the precise percentage gap alongside a 2-decimal kW
- * total — "kW rounds to installedPowerKw" is a coarse, disclosed statement,
+ * total — "kW rounds to nominalPowerKW" is a coarse, disclosed statement,
  * never phrased as "done"/"cuadra": the coefficient sum stays the governing
  * indicator (rendered separately, always, by the caller).
  */
 function formatSumCaption(
   sums: SharingAgreementCoefficientSums,
   inputUnit: CoefficientInputUnit,
-  installedPowerKw: number | undefined,
+  nominalPowerKW: number | undefined,
 ): string {
   const full = isFullSum(sums.fileSumUnits);
-  if (inputUnit !== "kw" || installedPowerKw === undefined) {
+  if (inputUnit !== "kw" || nominalPowerKW === undefined) {
     return full ? "Suma completa (100%)" : "Sigue añadiendo o ajustando coeficientes hasta llegar al 100%";
   }
 
-  const kwTotal = (sums.fileSumUnits / COEFFICIENT_SCALE) * installedPowerKw;
-  const kwSummary = `${formatKilowatts(kwTotal)} de ${formatKilowatts(installedPowerKw)} instalados`;
+  const kwTotal = (sums.fileSumUnits / COEFFICIENT_SCALE) * nominalPowerKW;
+  const kwSummary = `${formatKilowatts(kwTotal)} de ${formatKilowatts(nominalPowerKW)} de potencia nominal`;
   if (full) return `Suma completa (100%) · ${kwSummary}`;
 
-  const kwRoundsToInstalled = Math.round(kwTotal * 100) === Math.round(installedPowerKw * 100);
-  if (!kwRoundsToInstalled) return `${kwSummary} — sigue añadiendo o ajustando suministros hasta llegar al 100%`;
+  const kwRoundsToNominal = Math.round(kwTotal * 100) === Math.round(nominalPowerKW * 100);
+  if (!kwRoundsToNominal) return `${kwSummary} — sigue añadiendo o ajustando suministros hasta llegar al 100%`;
 
   const gapUnits = COEFFICIENT_SCALE - sums.fileSumUnits;
   const gapLabel = gapUnits > 0 ? "faltan" : "sobran";
@@ -267,7 +267,7 @@ function formatSumCaption(
 
 /**
  * "Potencia asignada" is the single most misread figure on this page — it is a
- * share of installed power, not an entitlement to energy. The explanation used
+ * share of the agreement's nominal power, not an entitlement to energy. The explanation used
  * to sit as a paragraph above the list, which pushed the table down and added
  * a third block of prose to an already dense screen. It now travels with the
  * column itself: an info affordance the reader opens where the number is.
@@ -276,7 +276,7 @@ function formatSumCaption(
  * hover does not exist — the same pattern GraphCard uses.
  */
 const ASSIGNED_POWER_EXPLANATION =
-  "Potencia asignada: parte de la potencia instalada que corresponde a cada punto según su coeficiente. No es potencia garantizada: la energía que recibe depende de lo que produzca la planta en cada momento.";
+  "Potencia asignada: parte de la potencia nominal del acuerdo que corresponde a cada punto según su coeficiente. No es potencia garantizada: la energía que recibe depende de lo que produzca la planta en cada momento.";
 
 const AssignedPowerInfoButton: FC = () => {
   const [open, setOpen] = useState(false);
@@ -336,7 +336,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   plantId,
   agreement,
   coefficients,
-  installedPowerKw,
+  nominalPowerKW,
   editRequestId = 0,
   onImportRequest,
   registerDatesRequestId = 0,
@@ -500,7 +500,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   }, [coefficients, activeDialog]);
 
   const isDraft = agreementStatus === SharingAgreementResponseStatus.DRAFT;
-  const kwModeAvailable = installedPowerKw !== undefined && installedPowerKw > 0;
+  const kwModeAvailable = nominalPowerKW !== undefined && nominalPowerKW > 0;
   // Superseded is a closed CYCLE, not a read-only record: reopening a closed
   // coefficient revives the agreement, and this selection plus the row actions
   // menu are the only routes to it. "Closed" is therefore expressed by the
@@ -811,7 +811,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const handleStartEditing = () => {
     const startingUnit: CoefficientInputUnit = kwModeAvailable ? "kw" : "percentage";
     setInputUnit(startingUnit);
-    setRows(buildEditableRowsFromCoefficients(coefficients, startingUnit, installedPowerKw));
+    setRows(buildEditableRowsFromCoefficients(coefficients, startingUnit, nominalPowerKW));
     setSnapshot(buildCoefficientSnapshot(coefficients));
     setIsEditing(true);
   };
@@ -844,12 +844,12 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
   const handleUnitChange = (newUnit: CoefficientInputUnit) => {
     if (newUnit === inputUnit) return;
-    setRows((prev) => retextRowsForUnit(prev, newUnit, installedPowerKw));
+    setRows((prev) => retextRowsForUnit(prev, newUnit, nominalPowerKW));
     setInputUnit(newUnit);
   };
 
   const handleCoefficientChange = (supplyId: string, value: string) => {
-    setRows((prev) => updateRowInput(prev, supplyId, value, inputUnit, installedPowerKw));
+    setRows((prev) => updateRowInput(prev, supplyId, value, inputUnit, nominalPowerKW));
   };
 
   const handleRemoveRow = (supplyId: string) => {
@@ -862,7 +862,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
    * displayed kW string is exactly what loses it.
    */
   const handleRevertRow = (supplyId: string) => {
-    setRows((prev) => revertRowToSnapshot(prev, supplyId, snapshot, inputUnit, installedPowerKw));
+    setRows((prev) => revertRowToSnapshot(prev, supplyId, snapshot, inputUnit, nominalPowerKW));
   };
 
   const handleConfirmAddSupplies: AddSupplyDialogProps["onConfirm"] = (supplies) => {
@@ -937,12 +937,12 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
       {isDraft && !isEditing && <SharingAgreementCoefficientSumGauges coefficients={coefficients} />}
 
-      {/* Installed power is an agreement field and now sits in the header's
+      {/* Nominal power is an agreement field and now sits in the header's
           identity tiles. While editing in kW it is working context, not
           identity, so it stays here too — the sum caption below reads against it. */}
-      {isEditing && inputUnit === "kw" && installedPowerKw !== undefined && (
+      {isEditing && inputUnit === "kw" && nominalPowerKW !== undefined && (
         <Typography variant="body2" sx={{ color: colors.text.subtle, mb: 2 }}>
-          Potencia instalada de la planta: {formatKilowatts(installedPowerKw)}
+          Potencia nominal del acuerdo: {formatKilowatts(nominalPowerKW)}
         </Typography>
       )}
 
@@ -993,7 +993,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
               onChange={(_, value: CoefficientInputUnit | null) => value && handleUnitChange(value)}
             >
               <ToggleButton value="percentage">%</ToggleButton>
-              <Tooltip title={kwModeAvailable ? "" : "Este acuerdo no tiene potencia instalada definida"}>
+              <Tooltip title={kwModeAvailable ? "" : "Este acuerdo no tiene potencia nominal definida"}>
                 <span>
                   <ToggleButton value="kw" disabled={!kwModeAvailable}>
                     kW
@@ -1071,7 +1071,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
             Suma de los coeficientes: {formatCoefficientPercentage(sums.fileSumUnits / COEFFICIENT_SCALE)}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {formatSumCaption(sums, inputUnit, installedPowerKw)}
+            {formatSumCaption(sums, inputUnit, nominalPowerKW)}
           </Typography>
         </Box>
       )}
@@ -1211,7 +1211,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                       <SharingAgreementCoefficientTableRow
                         key={row.supplyId}
                         coefficient={row.coefficient}
-                        installedPowerKw={installedPowerKw}
+                        nominalPowerKW={nominalPowerKW}
                         isEditing
                         inputUnit={inputUnit}
                         coefficientInput={row.inputText}
@@ -1228,7 +1228,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                       <SharingAgreementCoefficientTableRow
                         key={coefficient.coefficientId}
                         coefficient={coefficient}
-                        installedPowerKw={installedPowerKw}
+                        nominalPowerKW={nominalPowerKW}
                         showStateColumns={showStateColumns}
                         comparison={getRowComparison(coefficient)}
                         isDraft={isDraft}
@@ -1264,7 +1264,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                   <SharingAgreementCoefficientCard
                     key={row.supplyId}
                     coefficient={row.coefficient}
-                    installedPowerKw={installedPowerKw}
+                    nominalPowerKW={nominalPowerKW}
                     isEditing
                     inputUnit={inputUnit}
                     coefficientInput={row.inputText}
@@ -1281,7 +1281,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
                   <SharingAgreementCoefficientCard
                     key={coefficient.coefficientId}
                     coefficient={coefficient}
-                    installedPowerKw={installedPowerKw}
+                    nominalPowerKW={nominalPowerKW}
                     showStateColumns={showStateColumns}
                     comparison={getRowComparison(coefficient)}
                     isDraft={isDraft}

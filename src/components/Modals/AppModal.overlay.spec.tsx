@@ -91,7 +91,7 @@ const deleteSupply = (props: Partial<Parameters<typeof DeleteSupplyConfirmationM
 const DELETE_SUPPLY_TITLE = /^Eliminar punto de suministro de /;
 
 const agreementForm = (onCancel: () => void = vi.fn()) => (
-  <SharingAgreementFormDialog isOpen mode="create" plantName="Planta Sol" initialValues={{ installedPowerKw: 150 }} onCancel={onCancel} onSubmit={vi.fn()} />
+  <SharingAgreementFormDialog isOpen mode="create" plantName="Planta Sol" initialValues={{ nominalPowerKW: 150 }} onCancel={onCancel} onSubmit={vi.fn()} />
 );
 const AGREEMENT_FORM_TITLE = /^Nuevo acuerdo de reparto (en|de) /;
 

@@ -436,27 +436,27 @@ describe("SharingAgreementCoefficientSet (anomalous draft)", () => {
   });
 });
 
-describe("SharingAgreementCoefficientSet (installed power)", () => {
-  it("carries the installed power while editing in kW, where it is the working reference", () => {
+describe("SharingAgreementCoefficientSet (nominal power)", () => {
+  it("carries the nominal power while editing in kW, where it is the working reference", () => {
     renderWithTheme({ coefficients, agreementStatus: SharingAgreementResponseStatus.DRAFT });
 
     // Identity, in read mode, belongs to the header's tiles — printing it here
     // too would be the same number in two places on one screen.
-    expect(screen.queryByText(/Potencia instalada de la planta/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Potencia nominal del acuerdo/)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Editar a mano" }));
 
-    expect(screen.getByText("Potencia instalada de la planta: 100 kW")).toBeInTheDocument();
+    expect(screen.getByText("Potencia nominal del acuerdo: 100 kW")).toBeInTheDocument();
   });
 
   it("omits it when the agreement has none", () => {
     renderWithTheme({
       coefficients,
-      installedPowerKw: undefined,
+      nominalPowerKW: undefined,
       agreementStatus: SharingAgreementResponseStatus.PUBLISHED,
     });
 
-    expect(screen.queryByText(/^Potencia instalada:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Potencia nominal del acuerdo/)).not.toBeInTheDocument();
   });
 });
 
@@ -486,12 +486,12 @@ describe("SharingAgreementCoefficientSet (the split section)", () => {
     const user = userEvent.setup({ delay: null });
     renderWithTheme({ coefficients, agreementStatus: DRAFT });
 
-    expect(screen.queryByText(/parte de la potencia instalada que corresponde a cada punto/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/parte de la potencia nominal del acuerdo que corresponde a cada punto/)).not.toBeInTheDocument();
 
     await user.click(screen.getAllByRole("button", { name: "Qué es la potencia asignada" })[0]);
 
     const explanation = await screen.findByRole("tooltip");
-    expect(explanation).toHaveTextContent(/parte de la potencia instalada que corresponde a cada punto/);
+    expect(explanation).toHaveTextContent(/parte de la potencia nominal del acuerdo que corresponde a cada punto/);
     expect(explanation).toHaveTextContent(/No es potencia garantizada/);
   });
 

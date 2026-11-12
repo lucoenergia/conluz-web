@@ -147,12 +147,12 @@ describe("formatInForceCoefficientLine", () => {
 });
 
 describe("in-force assigned power", () => {
-  it("uses the installed power of the agreement that authored the coefficient, not the draft's", () => {
+  it("uses the nominal power of the agreement that authored the coefficient, not the draft's", () => {
     const draftInstalledPowerKw = 100;
     const rows = [savedRow("s1", 0.5, { coefficient: 0.5, agreement: AGREEMENT_A }), savedRow("s2", 0.5, { coefficient: 0.25, agreement: AGREEMENT_B })];
     const power = new Map<string, InForceAgreementPower>([
-      [AGREEMENT_A.id, { status: "success", installedPowerKw: 80 }],
-      [AGREEMENT_B.id, { status: "success", installedPowerKw: 60 }],
+      [AGREEMENT_A.id, { status: "success", nominalPowerKW: 80 }],
+      [AGREEMENT_B.id, { status: "success", nominalPowerKW: 60 }],
     ]);
 
     const lines = rows.map((row) => {
@@ -164,14 +164,14 @@ describe("in-force assigned power", () => {
     expect(lines).not.toContain(`Vigente ${0.5 * draftInstalledPowerKw},00 kW`);
   });
 
-  it("computes nothing without an installed power", () => {
+  it("computes nothing without an nominal power", () => {
     expect(computeInForcePowerKw(0.3, 50)).toBe(15);
     expect(computeInForcePowerKw(0.3, undefined)).toBeNull();
   });
 
   it("shows a dash when the authoring agreement failed to load, and nothing while it loads", () => {
     expect(formatInForcePowerLine(0.3, { status: "error" })).toBe("Vigente —");
-    expect(formatInForcePowerLine(0.3, { status: "success", installedPowerKw: undefined })).toBe("Vigente —");
+    expect(formatInForcePowerLine(0.3, { status: "success", nominalPowerKW: undefined })).toBe("Vigente —");
     expect(formatInForcePowerLine(0.3, { status: "loading" })).toBeNull();
   });
 });
@@ -206,7 +206,7 @@ describe("resolveRowInForce", () => {
 
 describe("buildRowComparisonView", () => {
   it("maps each row to new, in force with its agreement's power, or unknown", () => {
-    const power = new Map<string, InForceAgreementPower>([[AGREEMENT_A.id, { status: "success", installedPowerKw: 80 }]]);
+    const power = new Map<string, InForceAgreementPower>([[AGREEMENT_A.id, { status: "success", nominalPowerKW: 80 }]]);
     const views = [
       { kind: "none" as const },
       { kind: "present" as const, inForce: { coefficient: 0.3, sharingAgreement: AGREEMENT_A } },
@@ -216,7 +216,7 @@ describe("buildRowComparisonView", () => {
 
     expect(views).toEqual([
       { kind: "new" },
-      { kind: "inForce", coefficient: 0.3, power: { status: "success", installedPowerKw: 80 } },
+      { kind: "inForce", coefficient: 0.3, power: { status: "success", nominalPowerKW: 80 } },
       { kind: "inForce", coefficient: 0.2, power: { status: "loading" } },
       { kind: "unknown" },
     ]);
