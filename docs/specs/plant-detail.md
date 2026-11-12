@@ -209,6 +209,9 @@ keep those in [`formatting.md`](formatting.md).
   - The curve runs over the local day on the instant line, from today's midnight to tomorrow's in
     the app's time zone, so a day the clocks change lasts 23 or 25 hours; its "Ahora" mark is at
     now, and a gap is covered by a "Sin datos" band.
+  - The "Ahora" mark reads now's time and the latest snapshot's power ("Ahora · 14:00 · 44,99 kW").
+    It reads the time alone when that snapshot is a gap, or while the data is stale: an hour-old
+    power is not now's.
   - The block also refetches when the page regains focus, and after a change to the plant's Huawei
     configuration.
 - **Rationale:** Inverter data is separate from, and may differ from, the distributor's. Without
