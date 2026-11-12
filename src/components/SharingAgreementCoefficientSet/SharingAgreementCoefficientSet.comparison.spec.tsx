@@ -125,7 +125,7 @@ beforeEach(() => {
     return installedPowerKw === undefined
       ? Promise.reject(new Error(`No agreement fixture for ${sharingAgreementId}`))
       : Promise.resolve(
-          buildSharingAgreement({ id: sharingAgreementId, status: SharingAgreementResponseStatus.PUBLISHED, installedPowerKw }),
+          buildSharingAgreement({ id: sharingAgreementId, status: SharingAgreementResponseStatus.PUBLISHED, nominalPowerKW: installedPowerKw }),
         );
   });
 });
@@ -227,7 +227,7 @@ describe("SharingAgreementCoefficientSet (draft vs. in force)", () => {
     vi.mocked(getSharingAgreementById).mockImplementation((_plantId, sharingAgreementId) =>
       sharingAgreementId === REPARTO_AMPLIACION.id
         ? Promise.reject(new Error("boom"))
-        : Promise.resolve(buildSharingAgreement({ id: sharingAgreementId, status: SharingAgreementResponseStatus.PUBLISHED, installedPowerKw: 80 })),
+        : Promise.resolve(buildSharingAgreement({ id: sharingAgreementId, status: SharingAgreementResponseStatus.PUBLISHED, nominalPowerKW: 80 })),
     );
     renderDraft();
 

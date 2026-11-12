@@ -9,13 +9,25 @@ export interface PlantFieldValues {
   address: string;
   description: string;
   /** As typed, so that an empty or partial number stays what the user sees. */
-  totalPower: string;
+  peakPowerKWp: string;
+  /** As typed, like the peak power. */
+  nominalPowerKW: string;
   connectionDate: Dayjs | null;
   supplyCode: string | null;
 }
 
 /** The inputs an error can be shown on. */
-export type PlantFormField = "providerCode" | "name" | "supplyCode" | "address" | "totalPower";
+export type PlantFormField = "providerCode" | "name" | "supplyCode" | "address" | "peakPowerKWp" | "nominalPowerKW";
+
+/** The inputs an error can be shown on, in the order the form shows them. */
+const FORM_ORDER: readonly PlantFormField[] = [
+  "providerCode",
+  "name",
+  "supplyCode",
+  "address",
+  "peakPowerKWp",
+  "nominalPowerKW",
+];
 
 export const EMPTY_PLANT_FIELD_VALUES: PlantFieldValues = {
   providerCode: "",
@@ -23,7 +35,8 @@ export const EMPTY_PLANT_FIELD_VALUES: PlantFieldValues = {
   name: "",
   address: "",
   description: "",
-  totalPower: "",
+  peakPowerKWp: "",
+  nominalPowerKW: "",
   connectionDate: null,
   supplyCode: null,
 };
@@ -36,7 +49,8 @@ export function plantFieldValuesOf(plant: PlantResponse): PlantFieldValues {
     name: plant.name,
     address: plant.address,
     description: plant.description ?? "",
-    totalPower: String(plant.totalPower),
+    peakPowerKWp: String(plant.peakPowerKWp),
+    nominalPowerKW: String(plant.nominalPowerKW),
     connectionDate: plant.connectionDate ? dayjs(plant.connectionDate) : null,
     supplyCode: plant.supply.code,
   };
@@ -51,15 +65,18 @@ export function selectedSupplyOf(options: SupplyResponse[], supplyCode: string |
   return options.find((supply) => supply.code === supplyCode) ?? null;
 }
 
-/** A total power the backend accepts: a number above zero. */
-export function totalPowerIsValid(input: string): boolean {
+/** A peak or nominal power the backend accepts: a number above zero. */
+export function powerIsValid(input: string): boolean {
   const num = Number(input);
   return !isNaN(num) && num > 0;
 }
 
-export const TOTAL_POWER_ERROR = "Por favor, introduce un número mayor que 0";
+export const POWER_ERROR = "Por favor, introduce un número mayor que 0";
 
-/** What each input that can be left wrong says, in the order the form shows them. */
+/** The power inputs, checked as they are typed. */
+export const POWER_FIELDS = ["peakPowerKWp", "nominalPowerKW"] as const;
+
+/** What each required input says when it is left empty. */
 const REQUIRED: [PlantFormField, string][] = [
   ["providerCode", "El código de proveedor es obligatorio"],
   ["name", "El nombre es obligatorio"],
@@ -79,6 +96,9 @@ export function plantFieldErrors(
   const errors = REQUIRED.filter(([field]) =>
     field === "supplyCode" ? !selectedSupply : !values[field],
   );
-  if (!totalPowerIsValid(values.totalPower)) errors.push(["totalPower", TOTAL_POWER_ERROR]);
-  return errors;
+  // Each power on its own: neither is compared with the other.
+  for (const field of POWER_FIELDS) {
+    if (!powerIsValid(values[field])) errors.push([field, POWER_ERROR]);
+  }
+  return errors.sort(([a], [b]) => FORM_ORDER.indexOf(a) - FORM_ORDER.indexOf(b));
 }

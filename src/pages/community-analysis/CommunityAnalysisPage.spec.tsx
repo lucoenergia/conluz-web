@@ -160,11 +160,11 @@ beforeEach(() => {
 });
 
 describe("UI-CAN-001 the page (#403)", () => {
-  it("UI-CAN-001 renders at /community-analysis, with the community, its plants and their installed power", () => {
+  it("UI-CAN-001 renders at /community-analysis, with the community, its plants and their peak and nominal power", () => {
     renderPage();
 
     expect(screen.getByRole("heading", { level: 1, name: "Energía de la comunidad" })).toBeInTheDocument();
-    expect(screen.getByText("Luco Energía · 3 plantas · 112,5 kWp instalados")).toBeInTheDocument();
+    expect(screen.getByText("Luco Energía · 3 plantas · Potencia pico 112,5 kWp · Potencia nominal 90 kW")).toBeInTheDocument();
   });
 });
 
@@ -314,7 +314,7 @@ describe("UI-CAN-004 the coverage notice (#403)", () => {
 
 describe("UI-CAN-008 a community without plants (#403)", () => {
   it("UI-CAN-008 says so in the header and in a neutral plants section (AC13)", () => {
-    periodOverrides = { plants: [], installedPowerKWp: 0 };
+    periodOverrides = { plants: [], peakPowerKWp: 0, nominalPowerKW: 0 };
     renderPage();
 
     expect(screen.getByText("Luco Energía · sin plantas todavía")).toBeInTheDocument();

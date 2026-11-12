@@ -57,12 +57,12 @@ export function useInForceAgreementPower(
   // `combine` is re-run only when a query's result changes, so the map keeps
   // its identity across unrelated renders.
   const combine = useCallback(
-    (results: { data?: { installedPowerKw: number }; isError: boolean }[]) => {
+    (results: { data?: { nominalPowerKW: number }; isError: boolean }[]) => {
       const power = new Map<string, InForceAgreementPower>();
       distinctIds.forEach((id, index) => {
         const result = results[index];
         if (result?.isError) power.set(id, { status: "error" });
-        else if (result?.data) power.set(id, { status: "success", installedPowerKw: result.data.installedPowerKw });
+        else if (result?.data) power.set(id, { status: "success", installedPowerKw: result.data.nominalPowerKW });
         else power.set(id, { status: "loading" });
       });
       return power as ReadonlyMap<string, InForceAgreementPower>;

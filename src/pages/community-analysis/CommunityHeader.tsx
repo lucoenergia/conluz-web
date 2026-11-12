@@ -7,11 +7,11 @@ import { plantsSummary } from "./communityFigureTexts";
 
 
 /**
- * Under the page title: the community's name, its plants and their installed
- * power, from the response the anchor came with -- none of it depends on the
+ * Under the page title: the community's name, its plants and their peak and
+ * nominal power, from the response the anchor came with -- none of it depends on the
  * period (#403). The name joins once the community list has loaded.
  */
-export const CommunityHeader: FC<{ metrics: Pick<CommunityEnergyMetricsResponse, "plants" | "installedPowerKWp"> }> = ({ metrics }) => {
+export const CommunityHeader: FC<{ metrics: Pick<CommunityEnergyMetricsResponse, "plants" | "peakPowerKWp" | "nominalPowerKW"> }> = ({ metrics }) => {
   const name = useActiveCommunityName();
   return (
     <Typography variant="body1" sx={{ color: colors.text.body, mt: 0.75 }}>

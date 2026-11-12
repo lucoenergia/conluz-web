@@ -40,7 +40,7 @@ export interface DetailKeyFact {
   label: string;
   /**
    * Narrow-viewport form of `label`. On a phone the label and the value share
-   * one line, so a long label ("POTENCIA INSTALADA") crowds out the very thing
+   * one line, so a long label ("POTENCIA NOMINAL") crowds out the very thing
    * it names. The full label still stands everywhere there is room for it.
    */
   shortLabel?: string;

@@ -22,7 +22,8 @@ const PLANT = buildPlant({
   providerCode: "PC-1",
   name: "Planta Norte",
   address: "Calle Uno",
-  totalPower: 10,
+  peakPowerKWp: 10,
+  nominalPowerKW: 8,
   community: { id: "community-a" },
 });
 

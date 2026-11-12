@@ -14,7 +14,7 @@ import { RecordList, type RecordListItem } from "../../components/RecordList";
 import { ListPagination } from "../../components/ListPagination";
 import { useListPage } from "../../components/ListPagination/useListPage";
 import { EmptyState } from "../../components/EmptyState";
-import { formatKilowatts } from "../../utils/formatKilowatts";
+import { formatKilowatts, formatKilowattsPeak } from "../../utils/formatKilowatts";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
@@ -77,8 +77,10 @@ export const PlantsPage: FC = () => {
 
   const stats = useMemo(() => {
     const total = responseFromApi.length;
-    const totalPower = responseFromApi.reduce((sum, item) => sum + (item.totalPower || 0), 0);
-    return { total, totalPower };
+    // Over every plant: the list is read in full (size 10000), not a page of it.
+    const peakPowerKWp = responseFromApi.reduce((sum, item) => sum + item.peakPowerKWp, 0);
+    const nominalPowerKW = responseFromApi.reduce((sum, item) => sum + item.nominalPowerKW, 0);
+    return { total, peakPowerKWp, nominalPowerKW };
   }, [responseFromApi]);
 
   const plantById = (id: string | null) => responseFromApi.find((plant) => plant.id === id);
@@ -135,7 +137,8 @@ export const PlantsPage: FC = () => {
           subtitle="Gestiona las plantas de producción de la comunidad energética"
           keyFacts={[
             { label: "Total plantas", value: stats.total },
-            { label: "Potencia total", value: formatKilowatts(stats.totalPower) },
+            { label: "Potencia pico", value: formatKilowattsPeak(stats.peakPowerKWp) },
+            { label: "Potencia nominal", value: formatKilowatts(stats.nominalPowerKW) },
           ]}
         />
       </Box>

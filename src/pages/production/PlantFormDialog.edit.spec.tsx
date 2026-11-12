@@ -56,7 +56,8 @@ const thePlant = (canManage: boolean, overrides: Partial<PlantResponse> = {}) =>
     regulatoryCode: "CAU-1",
     address: "Calle Sol 1",
     description: null,
-    totalPower: 63,
+    peakPowerKWp: 63,
+    nominalPowerKW: 50,
     connectionDate: null,
     supply: buildSupplyReference({ id: "supply-1", code: "ES0001" }),
     community: { id: COMMUNITY_ID },
@@ -133,7 +134,8 @@ describe("PlantFormDialog: editing", () => {
     expect(screen.getByLabelText(/CAU/)).toHaveValue("CAU-1");
     expect(screen.getByLabelText(/^Nombre/)).toHaveValue("Planta Norte");
     expect(screen.getByLabelText(/Dirección/)).toHaveValue("Calle Sol 1");
-    expect(screen.getByLabelText(/Potencia total/)).toHaveValue(63);
+    expect(screen.getByLabelText(/Potencia pico/)).toHaveValue(63);
+    expect(screen.getByLabelText(/Potencia nominal/)).toHaveValue(50);
   });
 
   it("saves through the action when the plant permits managing it, and closes", async () => {
@@ -150,7 +152,8 @@ describe("PlantFormDialog: editing", () => {
           regulatoryCode: "CAU-1",
           name: "Planta Norte",
           address: "Calle Sol 1",
-          totalPower: 63,
+          peakPowerKWp: 63,
+          nominalPowerKW: 50,
           supplyCode: "ES0001",
           inverterProvider: "HUAWEI",
         }),
@@ -302,7 +305,7 @@ describe("PlantFormDialog: editing", () => {
 
       await user.click(saveButton());
 
-      for (const label of [/Código de proveedor/, /CAU/, /^Nombre/, /Dirección/, /Descripción/, /Potencia total/]) {
+      for (const label of [/Código de proveedor/, /CAU/, /^Nombre/, /Dirección/, /Descripción/, /Potencia pico/, /Potencia nominal/]) {
         expect(screen.getByLabelText(label)).toHaveAttribute("readonly");
       }
       expect(screen.getByRole("button", { name: "Cancelar" })).toBeDisabled();

@@ -12,7 +12,7 @@ describe("SharingAgreementFormDialog", () => {
       <SharingAgreementFormDialog isOpen mode="create" onCancel={vi.fn()} onSubmit={vi.fn()} />,
     );
 
-    const capacityField = screen.getByLabelText("Capacidad de generación de la planta", { exact: false });
+    const capacityField = screen.getByLabelText("Potencia nominal (kW)", { exact: false });
     expect(capacityField).toHaveValue("");
     expect(screen.getByRole("heading", { name: /^Nuevo acuerdo de reparto (en|de) / })).toBeInTheDocument();
   });
@@ -24,18 +24,18 @@ describe("SharingAgreementFormDialog", () => {
     expect(screen.queryByText(/te haya facilitado la distribuidora/)).not.toBeInTheDocument();
   });
 
-  test("create mode prefills capacity from the plant's totalPower, formatted with a Spanish comma", () => {
+  test("create mode prefills the nominal power it is given, formatted with a Spanish comma", () => {
     renderWithProviders(
       <SharingAgreementFormDialog
         isOpen
         mode="create"
-        initialValues={{ installedPowerKw: 12.5 }}
+        initialValues={{ nominalPowerKW: 12.5 }}
         onCancel={vi.fn()}
         onSubmit={vi.fn()}
       />,
     );
 
-    expect(screen.getByLabelText("Capacidad de generación de la planta", { exact: false })).toHaveValue("12,5");
+    expect(screen.getByLabelText("Potencia nominal (kW)", { exact: false })).toHaveValue("12,5");
   });
 
   test("submitting with an empty name shows a field error and does not call onSubmit", async () => {
@@ -45,7 +45,7 @@ describe("SharingAgreementFormDialog", () => {
       <SharingAgreementFormDialog
         isOpen
         mode="create"
-        initialValues={{ installedPowerKw: 10 }}
+        initialValues={{ nominalPowerKW: 10 }}
         onCancel={vi.fn()}
         onSubmit={onSubmit}
       />,
@@ -75,14 +75,14 @@ describe("SharingAgreementFormDialog", () => {
     renderWithProviders(<SharingAgreementFormDialog isOpen mode="create" onCancel={vi.fn()} onSubmit={onSubmit} />);
 
     await user.type(screen.getByLabelText("Nombre del acuerdo", { exact: false }), "Reparto 2025");
-    await user.type(screen.getByLabelText("Capacidad de generación de la planta", { exact: false }), "12,5");
+    await user.type(screen.getByLabelText("Potencia nominal (kW)", { exact: false }), "12,5");
     await user.type(screen.getByLabelText("Notas internas", { exact: false }), "Primer reparto del año");
     await user.click(screen.getByRole("button", { name: "Crear borrador" }));
 
     expect(onSubmit).toHaveBeenCalledWith({
       name: "Reparto 2025",
       notes: "Primer reparto del año",
-      installedPowerKw: 12.5,
+      nominalPowerKW: 12.5,
     });
   });
 
@@ -93,7 +93,7 @@ describe("SharingAgreementFormDialog", () => {
       <SharingAgreementFormDialog
         isOpen
         mode="edit"
-        initialValues={{ name: "Reparto 2024", notes: "Nota original", installedPowerKw: 8 }}
+        initialValues={{ name: "Reparto 2024", notes: "Nota original", nominalPowerKW: 8 }}
         onCancel={vi.fn()}
         onSubmit={onSubmit}
       />,
@@ -101,7 +101,7 @@ describe("SharingAgreementFormDialog", () => {
 
     expect(screen.getByLabelText("Nombre del acuerdo", { exact: false })).toHaveValue("Reparto 2024");
     expect(screen.getByLabelText("Notas internas", { exact: false })).toHaveValue("Nota original");
-    expect(screen.getByLabelText("Capacidad de generación de la planta", { exact: false })).toHaveValue("8");
+    expect(screen.getByLabelText("Potencia nominal (kW)", { exact: false })).toHaveValue("8");
     expect(screen.getByRole("heading", { name: /^Editar acuerdo de reparto (en|de) / })).toBeInTheDocument();
 
     await user.clear(screen.getByLabelText("Nombre del acuerdo", { exact: false }));
@@ -111,7 +111,7 @@ describe("SharingAgreementFormDialog", () => {
     expect(onSubmit).toHaveBeenCalledWith({
       name: "Reparto 2024 (revisado)",
       notes: "Nota original",
-      installedPowerKw: 8,
+      nominalPowerKW: 8,
     });
   });
 
@@ -126,7 +126,7 @@ describe("SharingAgreementFormDialog", () => {
     expect(screen.getByPlaceholderText("Ej. 150")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Ej. Recálculo julio 2026")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Motivo del nuevo reparto, cambios respecto al anterior, etc.")).toBeInTheDocument();
-    expect(screen.getByText("Potencia pico instalada, en el momento de este acuerdo.")).toBeInTheDocument();
+    expect(screen.getByText("La potencia nominal de la planta en el momento de este acuerdo.")).toBeInTheDocument();
   });
 
   test("edit mode does not show the create-only intro line or publish info box", () => {
@@ -134,7 +134,7 @@ describe("SharingAgreementFormDialog", () => {
       <SharingAgreementFormDialog
         isOpen
         mode="edit"
-        initialValues={{ name: "Reparto 2024", installedPowerKw: 8 }}
+        initialValues={{ name: "Reparto 2024", nominalPowerKW: 8 }}
         onCancel={vi.fn()}
         onSubmit={vi.fn()}
       />,
@@ -144,7 +144,7 @@ describe("SharingAgreementFormDialog", () => {
     expect(screen.queryByText(/poner en vigor/)).not.toBeInTheDocument();
   });
 
-  const CAPACITY_WARNING = /cambiar la capacidad no modifica los coeficientes ya guardados/i;
+  const CAPACITY_WARNING = /cambiar la potencia nominal no modifica los coeficientes ya guardados/i;
 
   test("warns when hasCoefficients and the capacity is changed to a different valid value", async () => {
     const user = userEvent.setup();
@@ -152,7 +152,7 @@ describe("SharingAgreementFormDialog", () => {
       <SharingAgreementFormDialog
         isOpen
         mode="edit"
-        initialValues={{ name: "Reparto 2024", installedPowerKw: 8 }}
+        initialValues={{ name: "Reparto 2024", nominalPowerKW: 8 }}
         hasCoefficients
         onCancel={vi.fn()}
         onSubmit={vi.fn()}
@@ -164,7 +164,7 @@ describe("SharingAgreementFormDialog", () => {
     const region = screen.getByRole("status");
     expect(region).toHaveTextContent(/^$/);
 
-    const capacityField = screen.getByLabelText("Capacidad de generación de la planta", { exact: false });
+    const capacityField = screen.getByLabelText("Potencia nominal (kW)", { exact: false });
     await user.clear(capacityField);
     await user.type(capacityField, "20");
 
@@ -178,14 +178,14 @@ describe("SharingAgreementFormDialog", () => {
       <SharingAgreementFormDialog
         isOpen
         mode="edit"
-        initialValues={{ name: "Reparto 2024", installedPowerKw: 8 }}
+        initialValues={{ name: "Reparto 2024", nominalPowerKW: 8 }}
         hasCoefficients
         onCancel={vi.fn()}
         onSubmit={vi.fn()}
       />,
     );
 
-    await user.clear(screen.getByLabelText("Capacidad de generación de la planta", { exact: false }));
+    await user.clear(screen.getByLabelText("Potencia nominal (kW)", { exact: false }));
 
     expect(screen.queryByText(CAPACITY_WARNING)).not.toBeInTheDocument();
   });
@@ -196,14 +196,14 @@ describe("SharingAgreementFormDialog", () => {
       <SharingAgreementFormDialog
         isOpen
         mode="edit"
-        initialValues={{ name: "Reparto 2024", installedPowerKw: 8 }}
+        initialValues={{ name: "Reparto 2024", nominalPowerKW: 8 }}
         hasCoefficients
         onCancel={vi.fn()}
         onSubmit={vi.fn()}
       />,
     );
 
-    const capacityField = screen.getByLabelText("Capacidad de generación de la planta", { exact: false });
+    const capacityField = screen.getByLabelText("Potencia nominal (kW)", { exact: false });
     await user.clear(capacityField);
     await user.type(capacityField, "8");
 
@@ -216,13 +216,13 @@ describe("SharingAgreementFormDialog", () => {
       <SharingAgreementFormDialog
         isOpen
         mode="edit"
-        initialValues={{ name: "Reparto 2024", installedPowerKw: 8 }}
+        initialValues={{ name: "Reparto 2024", nominalPowerKW: 8 }}
         onCancel={vi.fn()}
         onSubmit={vi.fn()}
       />,
     );
 
-    const capacityField = screen.getByLabelText("Capacidad de generación de la planta", { exact: false });
+    const capacityField = screen.getByLabelText("Potencia nominal (kW)", { exact: false });
     await user.clear(capacityField);
     await user.type(capacityField, "20");
 

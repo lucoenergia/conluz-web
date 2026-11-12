@@ -81,7 +81,8 @@ const NORTE = atCommunity({
   providerCode: "NE=1",
   regulatoryCode: "CAU-1",
   address: "Calle Sol 1",
-  totalPower: 63,
+  peakPowerKWp: 63,
+  nominalPowerKW: 50,
   supply: buildSupplyReference({ id: "supply-1", code: "ES0001" }),
 });
 const SUR = atCommunity({
@@ -90,7 +91,8 @@ const SUR = atCommunity({
   providerCode: "NE=2",
   regulatoryCode: "CAU-2",
   address: "Avenida Mar 2",
-  totalPower: 40,
+  peakPowerKWp: 40,
+  nominalPowerKW: 35,
   supply: buildSupplyReference({ id: "supply-2", code: "ES0002" }),
 });
 
@@ -158,7 +160,8 @@ function serve({ community = ADMIN_COMMUNITY, plants: initial = [NORTE, SUR], pl
           name: body.name,
           providerCode: body.providerCode,
           address: body.address,
-          totalPower: body.totalPower,
+          peakPowerKWp: body.peakPowerKWp,
+          nominalPowerKW: body.nominalPowerKW,
           supply: buildSupplyReference({ id: "supply-3", code: body.supplyCode }),
         });
         plants = [...plants, created];
@@ -221,7 +224,8 @@ async function fillCreate(u: User, dialog: HTMLElement) {
   await u.click(within(dialog).getByRole("combobox", { name: /^Punto de suministro/ }));
   await u.click(await screen.findByRole("option", { name: "Casa Este (ES0003)" }));
   await paste(u, dialog, "Dirección", "Camino Viejo 7");
-  await paste(u, dialog, "Potencia total", "25");
+  await paste(u, dialog, "Potencia pico", "25");
+  await paste(u, dialog, "Potencia nominal", "20");
 }
 
 const dialogGone = () =>
@@ -279,7 +283,8 @@ describe("UI-PLS-004 the plant forms open over the plant list", () => {
     expect(field(dialog, "CAU")).toHaveValue("CAU-2");
     expect(field(dialog, "Nombre")).toHaveValue("Planta Sur");
     expect(field(dialog, "Dirección")).toHaveValue("Avenida Mar 2");
-    expect(field(dialog, "Potencia total")).toHaveValue(40);
+    expect(field(dialog, "Potencia pico")).toHaveValue(40);
+    expect(field(dialog, "Potencia nominal")).toHaveValue(35);
     expect(within(dialog).getByRole("combobox", { name: /^Punto de suministro/ })).toHaveValue("Casa Sur (ES0002)");
     expect(requestsTo(router, "GET", plantUrl(SUR.id))).toHaveLength(1);
     expect(requestsTo(router, "GET", plantUrl(NORTE.id))).toHaveLength(0);
@@ -404,7 +409,8 @@ describe("UI-OVL-002 a plant form holding its save stays open", () => {
       // The form has changes: an attempt the lock let through would ask first.
       expect(within(dialog).queryByRole("alert")).not.toBeInTheDocument();
       for (const textbox of within(dialog).getAllByRole("textbox")) expect(textbox).toHaveAttribute("readonly");
-      expect(within(dialog).getByRole("spinbutton", { name: /^Potencia total/ })).toHaveAttribute("readonly");
+      expect(within(dialog).getByRole("spinbutton", { name: /^Potencia pico/ })).toHaveAttribute("readonly");
+      expect(within(dialog).getByRole("spinbutton", { name: /^Potencia nominal/ })).toHaveAttribute("readonly");
       // A request the second submit sent is recorded a tick later: let it land before counting.
       await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
       const writes = router.requests.filter((r) => ["POST", "PUT"].includes((r.method ?? "").toUpperCase()));

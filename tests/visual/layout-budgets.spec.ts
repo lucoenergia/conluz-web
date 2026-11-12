@@ -842,7 +842,8 @@ test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side me
       ...FIXED_PLANT,
       name: `Planta fotovoltaica ${LONG}`,
       address: `${LONG}, Avenida de la Constitución Española 1978, Bloque 4, Escalera B, 03300 Orihuela`,
-      totalPower: 12840.25,
+      peakPowerKWp: 12840.25,
+      nominalPowerKW: 11250.75,
     },
     {
       ...FIXED_PLANT,
@@ -869,7 +870,7 @@ test.describe("UI-LST-001 the list tables fit a 1024px viewport with the side me
       updatedAt: "2024-09-20T10:00:00Z",
       file: null,
     },
-    { ...FIXED_SHARING_AGREEMENTS[2], installedPowerKw: 12840.25 },
+    { ...FIXED_SHARING_AGREEMENTS[2], nominalPowerKW: 12840.25 },
   ];
 
   /** `minNameWidth`: the narrowest the name column may be on that page; below it, long names are cut. */

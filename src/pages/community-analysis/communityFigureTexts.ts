@@ -1,6 +1,6 @@
 import type { CommunityEnergyMetricsResponse } from "../../api/models";
 import { formatKilowattHours } from "../../utils/formatEnergyFigures";
-import { formatKilowattsPeak } from "../../utils/formatKilowatts";
+import { formatKilowatts, formatKilowattsPeak } from "../../utils/formatKilowatts";
 import { formatPercentage } from "../../utils/formatPercentage";
 
 // Words and figures shared by the sections of "Energía de la comunidad" (#403).
@@ -16,11 +16,21 @@ export const sharePercent = (share: number) => formatPercentage(share, { minimum
 
 export const kilowattHoursOrNoData = (value: number | null) => (value === null ? NO_DATA : formatKilowattHours(value));
 
-/** What the header says about the plants: how many, and their installed power. */
-export function plantsSummary({ plants, installedPowerKWp }: Pick<CommunityEnergyMetricsResponse, "plants" | "installedPowerKWp">): string {
+export const PEAK_POWER_LABEL = "Potencia pico";
+export const NOMINAL_POWER_LABEL = "Potencia nominal";
+
+/** "Potencia pico 60 kWp · Potencia nominal 48 kW", both as the response gives them (UI-CAN-010). */
+export const powersText = ({ peakPowerKWp, nominalPowerKW }: { peakPowerKWp: number; nominalPowerKW: number }) =>
+  `${PEAK_POWER_LABEL} ${formatKilowattsPeak(peakPowerKWp)} · ${NOMINAL_POWER_LABEL} ${formatKilowatts(nominalPowerKW)}`;
+
+/** What the header says about the plants: how many, and their peak and nominal power. */
+export function plantsSummary(
+  metrics: Pick<CommunityEnergyMetricsResponse, "plants" | "peakPowerKWp" | "nominalPowerKW">,
+): string {
+  const { plants } = metrics;
   if (plants.length === 0) return "sin plantas todavía";
   const count = plants.length === 1 ? "1 planta" : `${plants.length} plantas`;
-  return `${count} · ${formatKilowattsPeak(installedPowerKWp)} instalados`;
+  return `${count} · ${powersText(metrics)}`;
 }
 
 /** How many of the community's supplies the period's figures count (UI-CAN-004). */

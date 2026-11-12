@@ -1,6 +1,6 @@
 import { Stat, Mui } from "conluz-web";
 
-export const Normal = () => <Stat label="Potencia instalada" value="45,6 kW" />;
+export const Normal = () => <Stat label="Potencia nominal" value="45,6 kW" />;
 
 export const Big = () => <Stat label="Energía producida hoy" value="182,4 kWh" variant="big" />;
 

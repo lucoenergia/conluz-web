@@ -74,7 +74,7 @@ export const toRecordListItem =
     href: sharingAgreementHref(plantId)(agreement),
     status: <SharingAgreementStatusChip status={agreement.status} />,
     lines: [
-      `${formatKilowatts(agreement.installedPowerKw)} · ${editedText(agreement)}`,
+      `Potencia nominal ${formatKilowatts(agreement.nominalPowerKW)} · ${editedText(agreement)}`,
       fileText(agreement),
       ...notesLines(agreement),
     ],
@@ -108,9 +108,9 @@ export const sharingAgreementTableColumns: ListTableColumn<SharingAgreementRespo
   },
   {
     key: "power",
-    header: "Potencia",
+    header: "Potencia nominal",
     width: POWER_COLUMN_WIDTH,
-    render: (agreement) => <Typography variant="body2">{formatKilowatts(agreement.installedPowerKw)}</Typography>,
+    render: (agreement) => <Typography variant="body2">{formatKilowatts(agreement.nominalPowerKW)}</Typography>,
   },
   {
     key: "date",

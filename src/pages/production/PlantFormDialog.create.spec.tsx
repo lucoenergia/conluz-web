@@ -101,7 +101,8 @@ async function fillValid(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/^Nombre/), "Planta Oeste");
   await chooseSupply(user, /ES0003/);
   await user.type(screen.getByLabelText(/Dirección/), "Calle Luna 3");
-  await user.type(screen.getByLabelText(/Potencia total/), "12.5");
+  await user.type(screen.getByLabelText(/Potencia pico/), "12.5");
+  await user.type(screen.getByLabelText(/Potencia nominal/), "10");
 }
 
 beforeEach(() => {
@@ -152,7 +153,8 @@ describe("PlantFormDialog: creating", () => {
           name: "Planta Oeste",
           address: "Calle Luna 3",
           description: undefined,
-          totalPower: 12.5,
+          peakPowerKWp: 12.5,
+          nominalPowerKW: 10,
           connectionDate: undefined,
           supplyCode: "ES0003",
           inverterProvider: "HUAWEI",
@@ -183,7 +185,8 @@ describe("PlantFormDialog: creating", () => {
       expect(screen.getByText("El nombre es obligatorio")).toBeInTheDocument();
       expect(screen.getByText("El punto de suministro es obligatorio")).toBeInTheDocument();
       expect(screen.getByText("La dirección es obligatoria")).toBeInTheDocument();
-      expect(screen.getByText("Por favor, introduce un número mayor que 0")).toBeInTheDocument();
+      expect(screen.getByLabelText(/Potencia pico/)).toHaveAccessibleDescription("Por favor, introduce un número mayor que 0");
+      expect(screen.getByLabelText(/Potencia nominal/)).toHaveAccessibleDescription("Por favor, introduce un número mayor que 0");
       expect(screen.getByLabelText(/Código de proveedor/)).toHaveFocus();
       expect(screen.getByLabelText(/Código de proveedor/)).toHaveAttribute("aria-invalid", "true");
       expect(screen.getByRole("dialog", { name: DIALOG })).toBeInTheDocument();
@@ -209,7 +212,8 @@ describe("PlantFormDialog: creating", () => {
       await user.type(screen.getByLabelText(/Código de proveedor/), "NE=9");
       await user.type(screen.getByLabelText(/^Nombre/), "Planta Oeste");
       await user.type(screen.getByLabelText(/Dirección/), "Calle Luna 3");
-      await user.type(screen.getByLabelText(/Potencia total/), "5");
+      await user.type(screen.getByLabelText(/Potencia pico/), "5");
+      await user.type(screen.getByLabelText(/Potencia nominal/), "4");
 
       await user.click(submit());
 
@@ -218,20 +222,20 @@ describe("PlantFormDialog: creating", () => {
       expect(supplyInput()).toHaveFocus();
     });
 
-    it("UI-PLS-005 with a power of 0 sends nothing, says so on the power, and focuses it", async () => {
+    it("UI-PLS-005 with a peak power of 0 sends nothing, says so on the peak power, and focuses it", async () => {
       const user = userEvent.setup();
       setup();
       await fillValid(user);
 
-      await user.clear(screen.getByLabelText(/Potencia total/));
-      await user.type(screen.getByLabelText(/Potencia total/), "0");
+      await user.clear(screen.getByLabelText(/Potencia pico/));
+      await user.type(screen.getByLabelText(/Potencia pico/), "0");
       await user.click(submit());
 
       expect(mockMutateAsync).not.toHaveBeenCalled();
-      expect(screen.getByLabelText(/Potencia total/)).toHaveAccessibleDescription(
+      expect(screen.getByLabelText(/Potencia pico/)).toHaveAccessibleDescription(
         "Por favor, introduce un número mayor que 0",
       );
-      expect(screen.getByLabelText(/Potencia total/)).toHaveFocus();
+      expect(screen.getByLabelText(/Potencia pico/)).toHaveFocus();
     });
 
     it("UI-PLS-005 with several failing inputs focuses the first in the form's order, not the first typed", async () => {
@@ -239,7 +243,7 @@ describe("PlantFormDialog: creating", () => {
       setup();
       await fillValid(user);
 
-      await user.clear(screen.getByLabelText(/Potencia total/));
+      await user.clear(screen.getByLabelText(/Potencia pico/));
       await user.clear(screen.getByLabelText(/^Nombre/));
       await user.click(submit());
 

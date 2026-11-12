@@ -79,10 +79,10 @@ describe("DetailHeader", () => {
 
     it("keeps the full label where there is room for it", () => {
       renderHeader({
-        keyFacts: [{ label: "Potencia instalada", shortLabel: "Potencia", value: "120,50 kW" }],
+        keyFacts: [{ label: "Potencia nominal", shortLabel: "Potencia", value: "120,50 kW" }],
       });
 
-      expect(screen.getByText("Potencia instalada")).toBeInTheDocument();
+      expect(screen.getByText("Potencia nominal")).toBeInTheDocument();
     });
 
     it("renders no strip when there is neither a key fact nor a detail", () => {
@@ -226,12 +226,12 @@ describe("DetailHeader", () => {
 
     it("uses the short label, so a long one cannot crowd out the value it names", () => {
       renderHeader({
-        keyFacts: [{ label: "Potencia instalada", shortLabel: "Potencia", value: "120,50 kW" }],
+        keyFacts: [{ label: "Potencia nominal", shortLabel: "Potencia", value: "120,50 kW" }],
         details: FIVE_DETAILS,
       });
 
       expect(screen.getByText("Potencia")).toBeInTheDocument();
-      expect(screen.queryByText("Potencia instalada")).not.toBeInTheDocument();
+      expect(screen.queryByText("Potencia nominal")).not.toBeInTheDocument();
       expect(screen.getByText("120,50 kW")).toBeInTheDocument();
     });
 

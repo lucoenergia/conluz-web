@@ -149,15 +149,37 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
     />
 
     <TextField
-      id="totalPower"
-      label="Potencia total (kW)"
+      id="peakPowerKWp"
+      label="Potencia pico (kWp)"
       type="number"
-      error={fieldErrors.totalPower !== undefined}
-      helperText={fieldErrors.totalPower}
-      name="totalPower"
-      inputRef={inputRefs.totalPower}
-      value={values.totalPower}
-      onChange={(e) => onChange("totalPower", e.target.value)}
+      error={fieldErrors.peakPowerKWp !== undefined}
+      helperText={fieldErrors.peakPowerKWp}
+      name="peakPowerKWp"
+      inputRef={inputRefs.peakPowerKWp}
+      value={values.peakPowerKWp}
+      onChange={(e) => onChange("peakPowerKWp", e.target.value)}
+      required
+      fullWidth
+      variant="outlined"
+      slotProps={{
+        htmlInput: {
+          min: 0,
+          step: 0.01,
+          readOnly,
+        },
+      }}
+    />
+
+    <TextField
+      id="nominalPowerKW"
+      label="Potencia nominal (kW)"
+      type="number"
+      error={fieldErrors.nominalPowerKW !== undefined}
+      helperText={fieldErrors.nominalPowerKW}
+      name="nominalPowerKW"
+      inputRef={inputRefs.nominalPowerKW}
+      value={values.nominalPowerKW}
+      onChange={(e) => onChange("nominalPowerKW", e.target.value)}
       required
       fullWidth
       variant="outlined"

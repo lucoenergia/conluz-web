@@ -29,7 +29,8 @@ const UPDATE_PLANT_BODY = {
   supplyCode: "TEST-SUPPLY-CODE",
   inverterProvider: UpdatePlantBodyInverterProvider.HUAWEI,
   address: "TEST-ADDRESS",
-  totalPower: 90001,
+  peakPowerKWp: 90001,
+  nominalPowerKW: 90003,
 };
 const HUAWEI_CONFIG_BODY = {
   username: "TEST-USERNAME",
@@ -37,7 +38,7 @@ const HUAWEI_CONFIG_BODY = {
   baseUrl: "https://test.invalid",
   enabled: true,
 };
-const CREATE_AGREEMENT_BODY = { name: "TEST-AGREEMENT-NAME", installedPowerKw: 90002 };
+const CREATE_AGREEMENT_BODY = { name: "TEST-AGREEMENT-NAME", nominalPowerKW: 90002 };
 
 vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
   ...(await importOriginal()),

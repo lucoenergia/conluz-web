@@ -355,7 +355,7 @@ describe("SharingAgreementCoefficientSet (DRAFT editing)", () => {
     // 0.4 + 0.6 + 0 = 100%.
     expect(screen.getByText("Suma de los coeficientes: 100,0000 %")).toBeInTheDocument();
     expect(screen.getByText(/Suma completa \(100%\)/)).toBeInTheDocument();
-    expect(screen.getByText(/100 kW de 100 kW instalados/)).toBeInTheDocument();
+    expect(screen.getByText(/100 kW de 100 kW de potencia nominal/)).toBeInTheDocument();
   });
 
   it("UI-AGR-003 kW mode shows the outstanding percentage gap, with the rounding caveat, when kW rounds to installedPowerKw but the coefficient sum isn't exactly 100%", () => {

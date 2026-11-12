@@ -9,7 +9,7 @@ export const Plain = () => (
           Avenida del Mediterráneo 88, 46900 Torrent, Valencia
         </Mui.Typography>
         <Mui.Box sx={{ display: "flex", gap: 4 }}>
-          <Stat label="Potencia instalada" value="45,6 kW" />
+          <Stat label="Potencia nominal" value="45,6 kW" />
           <Stat label="Suministros" value="28" />
         </Mui.Box>
       </Mui.Box>

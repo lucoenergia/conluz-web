@@ -14,8 +14,9 @@ import {
   plantFieldValuesOf,
   selectedSupplyOf,
   plantFieldErrors,
-  TOTAL_POWER_ERROR,
-  totalPowerIsValid,
+  POWER_ERROR,
+  POWER_FIELDS,
+  powerIsValid,
   type PlantFieldValues,
   type PlantFormField,
 } from "../../components/PlantForm/plantFields";
@@ -56,7 +57,8 @@ const bodyOf = (values: PlantFieldValues, supplyCode: string): CreatePlantBody &
   name: values.name,
   address: values.address,
   description: values.description || undefined,
-  totalPower: Number(values.totalPower),
+  peakPowerKWp: Number(values.peakPowerKWp),
+  nominalPowerKW: Number(values.nominalPowerKW),
   connectionDate: values.connectionDate ? values.connectionDate.toISOString() : undefined,
   supplyCode,
   inverterProvider: "HUAWEI",
@@ -202,7 +204,8 @@ const PlantFormOverlay: FC<PlantFormOverlayProps> = ({
     name: useRef(null),
     supplyCode: useRef(null),
     address: useRef(null),
-    totalPower: useRef(null),
+    peakPowerKWp: useRef(null),
+    nominalPowerKW: useRef(null),
   };
 
   const selectedSupply = selectedSupplyOf(supplies, values?.supplyCode ?? null);
@@ -212,12 +215,12 @@ const PlantFormOverlay: FC<PlantFormOverlayProps> = ({
     (Object.keys(seeded) as (keyof PlantFieldValues)[]).some((field) => !sameValue(field, values[field], seeded[field]));
 
   const onChange = <K extends keyof PlantFieldValues>(field: K, value: PlantFieldValues[K]) => {
-    // Editing an input clears what was said about it; the power is checked as it is typed.
-    if (field === "totalPower") {
+    // Editing an input clears what was said about it; each power is checked as it is typed.
+    if ((POWER_FIELDS as readonly string[]).includes(field)) {
       const input = value as string;
       setFieldErrors((errors) => ({
         ...errors,
-        totalPower: input && !totalPowerIsValid(input) ? TOTAL_POWER_ERROR : undefined,
+        [field]: input && !powerIsValid(input) ? POWER_ERROR : undefined,
       }));
     } else if (field in inputRefs) {
       setFieldErrors((errors) => ({ ...errors, [field]: undefined }));

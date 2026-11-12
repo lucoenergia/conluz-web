@@ -32,7 +32,7 @@ import {
 } from "./fixtures";
 
 test.describe("Visual baselines", () => {
-  test("sharing agreement create dialog (capacity prefilled from plant totalPower)", async ({ page }) => {
+  test("sharing agreement create dialog (nominal power prefilled from the plant)", async ({ page }) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
@@ -41,7 +41,7 @@ test.describe("Visual baselines", () => {
     await navigateToSharingAgreements(page);
     await page.getByRole("button", { name: "Nuevo acuerdo de reparto" }).click();
 
-    await expect(page.getByLabel("Capacidad de generación de la planta", { exact: false })).toHaveValue("120,5");
+    await expect(page.getByLabel("Potencia nominal (kW)", { exact: false })).toHaveValue("100");
     await stabilizePage(page);
 
     await expect(page.getByRole("dialog", { name: /^Nuevo acuerdo de reparto en / })).toHaveScreenshot(

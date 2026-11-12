@@ -63,7 +63,7 @@ const baseAgreement = buildSharingAgreement({
   name: "Acuerdo test",
   status: SharingAgreementResponseStatus.SUPERSEDED,
   createdAt: "2024-01-01T00:00:00Z",
-  installedPowerKw: 100,
+  nominalPowerKW: 100,
   notes: null,
   file: null,
   // Reopening is a write: without canManage the row menu this spec drives would
@@ -85,7 +85,7 @@ function Harness() {
         plantId={PLANT_ID}
         agreement={agreement}
         coefficients={coefficients ?? []}
-        installedPowerKw={agreement?.installedPowerKw}
+        installedPowerKw={agreement?.nominalPowerKW}
       />
     </>
   );

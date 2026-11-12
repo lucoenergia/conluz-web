@@ -253,7 +253,7 @@ function formatSumCaption(
   }
 
   const kwTotal = (sums.fileSumUnits / COEFFICIENT_SCALE) * installedPowerKw;
-  const kwSummary = `${formatKilowatts(kwTotal)} de ${formatKilowatts(installedPowerKw)} instalados`;
+  const kwSummary = `${formatKilowatts(kwTotal)} de ${formatKilowatts(installedPowerKw)} de potencia nominal`;
   if (full) return `Suma completa (100%) · ${kwSummary}`;
 
   const kwRoundsToInstalled = Math.round(kwTotal * 100) === Math.round(installedPowerKw * 100);
@@ -267,7 +267,7 @@ function formatSumCaption(
 
 /**
  * "Potencia asignada" is the single most misread figure on this page — it is a
- * share of installed power, not an entitlement to energy. The explanation used
+ * share of the agreement's nominal power, not an entitlement to energy. The explanation used
  * to sit as a paragraph above the list, which pushed the table down and added
  * a third block of prose to an already dense screen. It now travels with the
  * column itself: an info affordance the reader opens where the number is.
@@ -276,7 +276,7 @@ function formatSumCaption(
  * hover does not exist — the same pattern GraphCard uses.
  */
 const ASSIGNED_POWER_EXPLANATION =
-  "Potencia asignada: parte de la potencia instalada que corresponde a cada punto según su coeficiente. No es potencia garantizada: la energía que recibe depende de lo que produzca la planta en cada momento.";
+  "Potencia asignada: parte de la potencia nominal del acuerdo que corresponde a cada punto según su coeficiente. No es potencia garantizada: la energía que recibe depende de lo que produzca la planta en cada momento.";
 
 const AssignedPowerInfoButton: FC = () => {
   const [open, setOpen] = useState(false);
@@ -937,12 +937,12 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
 
       {isDraft && !isEditing && <SharingAgreementCoefficientSumGauges coefficients={coefficients} />}
 
-      {/* Installed power is an agreement field and now sits in the header's
+      {/* Nominal power is an agreement field and now sits in the header's
           identity tiles. While editing in kW it is working context, not
           identity, so it stays here too — the sum caption below reads against it. */}
       {isEditing && inputUnit === "kw" && installedPowerKw !== undefined && (
         <Typography variant="body2" sx={{ color: colors.text.subtle, mb: 2 }}>
-          Potencia instalada de la planta: {formatKilowatts(installedPowerKw)}
+          Potencia nominal del acuerdo: {formatKilowatts(installedPowerKw)}
         </Typography>
       )}
 
@@ -993,7 +993,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
               onChange={(_, value: CoefficientInputUnit | null) => value && handleUnitChange(value)}
             >
               <ToggleButton value="percentage">%</ToggleButton>
-              <Tooltip title={kwModeAvailable ? "" : "Este acuerdo no tiene potencia instalada definida"}>
+              <Tooltip title={kwModeAvailable ? "" : "Este acuerdo no tiene potencia nominal definida"}>
                 <span>
                   <ToggleButton value="kw" disabled={!kwModeAvailable}>
                     kW

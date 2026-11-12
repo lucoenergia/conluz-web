@@ -34,7 +34,8 @@ const CREATE_PLANT_BODY = {
   supplyCode: "TEST-SUPPLY-CODE",
   inverterProvider: UpdatePlantBodyInverterProvider.HUAWEI,
   address: "TEST-ADDRESS",
-  totalPower: 90001,
+  peakPowerKWp: 90001,
+  nominalPowerKW: 90003,
 };
 
 vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({

@@ -10,7 +10,7 @@ export function formatKilowatts(value: number): string {
 }
 
 /**
- * Spanish-locale peak power in kWp, the installed power of a plant, written as
+ * Spanish-locale peak power in kWp, the power of a plant's modules, written as
  * formatKilowatts writes kW: "112,5 kWp", "60 kWp" (#403).
  */
 export function formatKilowattsPeak(value: number): string {

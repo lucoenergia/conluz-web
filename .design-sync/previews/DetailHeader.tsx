@@ -89,7 +89,7 @@ export const Loading = () => (
       title="Planta Polideportivo"
       subtitle="Avenida del Mediterráneo 88, 46900 Torrent, Valencia"
       subtitleIcon={<Icons.LocationOn />}
-      keyFacts={[{ label: "Potencia instalada", value: "45,6 kW" }]}
+      keyFacts={[{ label: "Potencia nominal", value: "45,6 kW" }]}
       isLoading
     />
   </Mui.Box>

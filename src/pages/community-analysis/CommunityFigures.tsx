@@ -5,16 +5,15 @@ import type { CommunityEnergyMetricsResponse } from "../../api/models";
 import { NeutralNotice } from "../../components/EnergyFigures/NeutralNotice";
 import { colors } from "../../theme/tokens";
 import { formatEuros, formatMass } from "../../utils/formatEnergyFigures";
-import { formatKilowattsPeak } from "../../utils/formatKilowatts";
+import { formatKilowatts, formatKilowattsPeak } from "../../utils/formatKilowatts";
 import { HomeCard } from "../home/HomeCard";
-import { NO_DATA, co2FactorText, unpricedSurplusText } from "./communityFigureTexts";
+import { NO_DATA, NOMINAL_POWER_LABEL, PEAK_POWER_LABEL, co2FactorText, unpricedSurplusText } from "./communityFigureTexts";
 
 export const FIGURES_TITLE = "En cifras";
 export const INCOME_LABEL = "Ingreso estimado por la energía que se fue a la red";
 export const ESTIMATE_LABEL = "Estimación · precio del mercado eléctrico";
 export const NEGATIVE_PRICES_TEXT = "El mercado eléctrico puede tener precios negativos, así que el ingreso estimado puede ser negativo.";
 export const CO2_LABEL = "CO₂ evitado";
-export const INSTALLED_POWER_LABEL = "Potencia instalada";
 
 
 
@@ -35,11 +34,11 @@ const Figure: FC<{ label: string; value: string; children?: ReactNode }> = ({ la
  * The period's other figures (#403): what the exported energy would have
  * earned at market price, an estimate that may be negative and that leaves
  * out the energy no price covers (UI-CAN-005); the CO₂ avoided, with the
- * factor and its years (UI-CAN-006); and the installed power. All of them the
- * response's own; a null one reads "Sin datos".
+ * factor and its years (UI-CAN-006); and the peak and nominal power
+ * (UI-CAN-010). All of them the response's own; a null one reads "Sin datos".
  */
 export const CommunityFigures: FC<{ metrics: CommunityEnergyMetricsResponse }> = ({ metrics }) => {
-  const { surplusIncome, co2Avoided, installedPowerKWp } = metrics;
+  const { surplusIncome, co2Avoided, peakPowerKWp, nominalPowerKW } = metrics;
   const unpriced = surplusIncome.unpricedSurplusKWh;
   return (
     <HomeCard title={FIGURES_TITLE} icon={InsightsRoundedIcon}>
@@ -58,7 +57,11 @@ export const CommunityFigures: FC<{ metrics: CommunityEnergyMetricsResponse }> =
             </Typography>
           )}
         </Figure>
-        <Figure label={INSTALLED_POWER_LABEL} value={formatKilowattsPeak(installedPowerKWp)} />
+        {/* Both powers share the third column, so the grid keeps its three. */}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
+          <Figure label={PEAK_POWER_LABEL} value={formatKilowattsPeak(peakPowerKWp)} />
+          <Figure label={NOMINAL_POWER_LABEL} value={formatKilowatts(nominalPowerKW)} />
+        </Box>
       </Box>
     </HomeCard>
   );
