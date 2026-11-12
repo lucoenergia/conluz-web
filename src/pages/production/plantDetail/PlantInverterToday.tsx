@@ -80,6 +80,8 @@ const AvailableToday: FC<{ today: PlantInverterProductionTodayResponse }> = ({ t
   const lastUpdated = today.lastUpdatedAt ? formatTimeOfDay(today.lastUpdatedAt) : null;
   const energy = today.todayEnergyKWh ?? 0;
   const stale = today.stale === true;
+  // The latest snapshot's power, read at the "Ahora" mark; a stale one is not now's.
+  const nowPowerKW = stale ? null : curve.latestPowerKW;
 
   return (
     <>
@@ -107,7 +109,7 @@ const AvailableToday: FC<{ today: PlantInverterProductionTodayResponse }> = ({ t
         )}
       </Box>
 
-      <InverterTodayChart curve={curve} description={curveDescription(curve)} />
+      <InverterTodayChart curve={curve} nowPowerKW={nowPowerKW} description={curveDescription(curve, nowPowerKW)} />
 
       {!stale && lastUpdated && (
         <Typography variant="caption" sx={{ color: colors.text.secondary }}>
@@ -128,12 +130,13 @@ const LegendEntry: FC<{ swatch: ReactNode; label: string }> = ({ swatch, label }
 );
 
 /** What the curve shows, for a reader who cannot see it. */
-function curveDescription(curve: InverterCurve): string {
+function curveDescription(curve: InverterCurve, nowPowerKW: number | null): string {
   const until = axisTime(curve.now, curve.dayEnd);
   const measured = curve.points.filter((point): point is [number, number] => point[1] !== null);
   const peak = measured.reduce<[number, number] | null>((best, point) => (best === null || point[1] > best[1] ? point : best), null);
   const parts = [`Potencia del inversor hoy, de 00:00 a las ${until}.`];
   if (peak && peak[1] > 0) parts.push(`Máximo ${formatKilowatts(peak[1])} a las ${axisTime(peak[0], curve.dayEnd)}.`);
+  if (nowPowerKW !== null) parts.push(`Ahora, ${formatKilowatts(nowPowerKW)}.`);
   if (curve.gaps.length > 0) parts.push(`Sin datos ${gapsPhrase(curve.gaps, curve.dayEnd)}.`);
   return parts.join(" ");
 }

@@ -11,8 +11,11 @@ const MINUTE_MS = 60_000;
 /** ApexCharts hands its formatters floats a few ms off a tick: read them to the minute. */
 const toMinute = (value: number) => Math.round(value / MINUTE_MS) * MINUTE_MS;
 
-/** The chart's options: the instant axis, the gold curve, the "Ahora" mark and the "Sin datos" bands. */
-export function inverterChartOptions(curve: InverterCurve, wide: boolean): ApexOptions {
+/**
+ * The chart's options: the instant axis, the gold curve, the "Ahora" mark and the "Sin datos" bands.
+ * `nowPowerKW` is the power the "Ahora" mark reads beside now's time, or null to show the time alone.
+ */
+export function inverterChartOptions(curve: InverterCurve, wide: boolean, nowPowerKW: number | null): ApexOptions {
   const { dayStart, dayEnd, gaps, now } = curve;
   return {
     chart: {
@@ -81,7 +84,7 @@ export function inverterChartOptions(curve: InverterCurve, wide: boolean): ApexO
           borderColor: colors.brand.main,
           strokeDashArray: 0,
           label: {
-            text: `${NOW_LABEL} · ${axisTime(now, dayEnd)}`,
+            text: [NOW_LABEL, axisTime(now, dayEnd), ...(nowPowerKW === null ? [] : [formatKilowatts(nowPowerKW)])].join(" · "),
             orientation: "horizontal",
             position: "top",
             borderWidth: 0,

@@ -28,6 +28,8 @@ export interface InverterCurve {
   gaps: CurveGap[];
   /** Now's instant: the "Ahora" mark. */
   now: number;
+  /** The latest point's power: null when nothing is drawn yet, or the latest point is a gap. */
+  latestPowerKW: number | null;
 }
 
 /** The local day an instant falls on, as the instants its midnights fall on. */
@@ -63,7 +65,7 @@ export function inverterCurve(powerCurve: readonly PlantInverterPowerPointRespon
     gaps.push({ from: previous ? previous.x : dayStart, to: x });
   });
 
-  return { dayStart, dayEnd, points: drawn.map(({ x, y }) => [x, y]), gaps, now };
+  return { dayStart, dayEnd, points: drawn.map(({ x, y }) => [x, y]), gaps, now, latestPowerKW: drawn.at(-1)?.y ?? null };
 }
 
 /** "14:05" in the app's time zone; the end of the day reads "24:00", not the next day's "00:00". */

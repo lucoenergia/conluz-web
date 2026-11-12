@@ -26,8 +26,9 @@ import { getPlantInverterProductionToday, useGetPlantInverterProductionToday } f
 import { ENERGY_COLORS } from "../../../components/EnergyFigures/energyColors";
 import { colors } from "../../../theme/tokens";
 import { formatKilowattHours } from "../../../utils/formatEnergyFigures";
+import { formatKilowatts } from "../../../utils/formatKilowatts";
 import { PlantInverterToday } from "./PlantInverterToday";
-import { NOT_AVAILABLE, NOT_STARTED, NO_DATA_TODAY, NOW, STALE, WITH_GAP, available } from "./inverterToday.testData";
+import { NOT_AVAILABLE, NOT_STARTED, NO_DATA_TODAY, NOW, STALE, WITH_GAP, available, points } from "./inverterToday.testData";
 
 const PLANT_ID = "plant-1";
 const TITLE = "Hoy, según el inversor";
@@ -116,8 +117,28 @@ describe("UI-PLT-012 producing (#406)", () => {
       min: Date.parse("2026-11-12T00:00:00+01:00"),
       max: Date.parse("2026-11-13T00:00:00+01:00"),
     });
-    expect(nowMark()).toMatchObject({ x: Date.parse(NOW), label: { text: "Ahora · 13:42" } });
+    expect(nowMark()).toMatchObject({ x: Date.parse(NOW), label: { text: `Ahora · 13:42 · ${formatKilowatts(18.25)}` } });
     expect(gapBands()).toEqual([]);
+  });
+
+  it("UI-PLT-012 reads the latest snapshot's power at the Ahora mark, and says it in words", () => {
+    renderBlock(available({ powerCurve: [...points("08:00", "13:35", 12.5), { endsAt: "2026-11-12T13:40:00+01:00", powerKW: 21.4 }] }));
+
+    expect(nowMark().label?.text).toBe(`Ahora · 13:42 · ${formatKilowatts(21.4)}`);
+    expect(within(block()).getByRole("img", { name: new RegExp(` Ahora, ${formatKilowatts(21.4)}\\.$`) })).toBeInTheDocument();
+  });
+
+  it("UI-PLT-012 reads 0 kW at the Ahora mark before the inverter starts producing", () => {
+    renderBlock(NOT_STARTED);
+
+    expect(nowMark().label?.text).toBe(`Ahora · 13:42 · ${formatKilowatts(0)}`);
+  });
+
+  it("UI-PLT-012 reads only the time at the Ahora mark when the latest snapshot is a gap", () => {
+    renderBlock(available({ powerCurve: [...points("08:00", "13:30", 12.5), { endsAt: "2026-11-12T13:40:00+01:00", powerKW: null }] }));
+
+    expect(nowMark().label?.text).toBe("Ahora · 13:42");
+    expect(within(block()).getByRole("img", { name: /Sin datos de 13:30 a 13:40\.$/ })).toBeInTheDocument();
   });
 
   it("UI-PLT-012 describes the curve in words for a reader who cannot see it", () => {
@@ -168,8 +189,9 @@ describe("UI-PLT-012 stale (#406)", () => {
     expect(note.closest("[role='note']")).toBeInTheDocument();
     expect(within(block()).queryByRole("alert")).not.toBeInTheDocument();
     expect(within(block()).queryByText(/^Actualizado a las/)).not.toBeInTheDocument();
-    // The mark stays at now, not at the latest snapshot.
+    // The mark stays at now, not at the latest snapshot, and reads no power: the latest is not now's.
     expect(nowMark()).toMatchObject({ x: Date.parse(NOW), label: { text: "Ahora · 13:42" } });
+    expect(within(block()).getByRole("img", { name: (name) => !name.includes("Ahora,") })).toBeInTheDocument();
   });
 });
 

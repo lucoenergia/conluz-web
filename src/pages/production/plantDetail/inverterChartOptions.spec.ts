@@ -6,14 +6,14 @@ import { NOW } from "./inverterToday.testData";
 const HOUR_MS = 3_600_000;
 const curve = inverterCurve([], Date.parse(NOW));
 const labelAt = (hours: number, wide: boolean, noise = 0) => {
-  const xaxis = inverterChartOptions(curve, wide).xaxis!;
+  const xaxis = inverterChartOptions(curve, wide, null).xaxis!;
   const formatter = xaxis.labels!.formatter as (value: string) => string;
   return formatter(String(curve.dayStart + hours * HOUR_MS + noise));
 };
 
 describe("UI-PLT-012 the power curve's time axis (#406)", () => {
   it("UI-PLT-012 has one tick per hour of the day, from midnight to midnight", () => {
-    expect(inverterChartOptions(curve, true).xaxis).toMatchObject({ min: curve.dayStart, max: curve.dayEnd, tickAmount: 24 });
+    expect(inverterChartOptions(curve, true, null).xaxis).toMatchObject({ min: curve.dayStart, max: curve.dayEnd, tickAmount: 24 });
   });
 
   it("UI-PLT-012 labels every 3 hours on a wide screen, the end of the day as 24:00", () => {
