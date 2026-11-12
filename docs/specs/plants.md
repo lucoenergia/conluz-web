@@ -166,17 +166,17 @@ the rules every records list shares are in [`record-lists.md`](record-lists.md).
 - **Implements:** PLT-004, PLT-005
 - **Source:** #407, lucoenergia/conluz#567
 
-### UI-PLS-011 — The list header sums both powers over every plant
+### UI-PLS-011 — The list header counts the plants and sums no power
 
 - **Status:** Active
-- **Rule:** The plant list's header MUST show the number of plants, the sum of their peak powers
-  (kWp) and the sum of their nominal powers (kW). The sums are computed by the client over every
-  plant of the list, which is read in full.
-- **Rationale:** The header showed one total of the single power the plant had; each of the two
-  powers now has its own. Revisit if the plant list becomes paginated: the sums must then come from
-  the backend.
+- **Rule:** The plant list's header MUST show the number of plants and MUST NOT show a power, nor a
+  sum of the plants' peak or nominal powers.
+- **Rationale:** The header summed the single power each plant had. With two powers, a sum of each
+  does not fit the header's row of counters on a phone (its layout budget), and each row already
+  shows its plant's two powers (UI-PLS-001). A sum computed by the client would also stop being
+  right if the plant list became paginated: a total belongs to the backend.
 - **Implements:** n/a
-- **Source:** #407
+- **Source:** #407 (the count alone: maintainer decision)
 
 ## States
 
