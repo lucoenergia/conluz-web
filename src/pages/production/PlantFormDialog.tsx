@@ -36,7 +36,8 @@ interface PlantFormDialogProps {
 }
 
 /**
- * Creates or edits a plant in the shared overlay, over the plant list. Mounted
+ * Creates or edits a plant in the shared overlay, over the plant list or the
+ * plant's detail (UI-PLT-014). Mounted
  * on open, so every opening starts from its own values.
  */
 export const PlantFormDialog: FC<PlantFormDialogProps> = ({ target, onClose }) =>

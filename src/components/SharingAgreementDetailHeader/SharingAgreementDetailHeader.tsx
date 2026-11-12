@@ -250,7 +250,7 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
           plant?.name && plantId ? (
             <Link
               component={RouterLink}
-              to={`/production/${plantId}`}
+              to={`/plants/${plantId}`}
               sx={{ color: "primary.main", fontWeight: 600, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
             >
               {plant.name}

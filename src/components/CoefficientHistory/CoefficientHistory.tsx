@@ -102,7 +102,7 @@ const Period: FC<{
           {linkable ? (
             <Link
               component={RouterLink}
-              to={`/production/${period.plant.id}/sharing-agreements/${period.sharingAgreement.id}`}
+              to={`/plants/${period.plant.id}/sharing-agreements/${period.sharingAgreement.id}`}
               sx={{
                 color: "primary.main",
                 fontWeight: 600,

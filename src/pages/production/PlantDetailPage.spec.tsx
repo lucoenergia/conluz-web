@@ -6,7 +6,7 @@ import { Route, Routes } from "react-router";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { query } from "../../test/queryState";
 import { buildPlant, buildPlantCapabilities, buildSupplyReference } from "../../test/fixtures";
-import type { PlantCapabilitiesResponse } from "../../api/models";
+import type { PlantCapabilitiesResponse, PlantInverterProductionTodayResponse } from "../../api/models";
 
 vi.mock(import("./usePlantInActiveCommunity"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -16,11 +16,12 @@ vi.mock(import("./usePlantInActiveCommunity"), async (importOriginal) => ({
 vi.mock("react-apexcharts", () => ({ default: () => null }));
 vi.mock(import("../../api/production/production"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useGetHourlyProduction: vi.fn(),
-  useGetDailyProduction: vi.fn(),
-  useGetMonthlyProduction: vi.fn(),
-  useGetYearlyProduction: vi.fn(),
   useGetHuaweiConfig: vi.fn(),
+}));
+vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  useGetPlantEnergyMetrics: vi.fn(),
+  useGetPlantInverterProductionToday: vi.fn(),
 }));
 vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -28,22 +29,23 @@ vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (import
 }));
 
 import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
+import { useGetHuaweiConfig } from "../../api/production/production";
 import {
-  getHourlyProduction,
-  useGetDailyProduction,
-  useGetHourlyProduction,
-  useGetHuaweiConfig,
-  useGetMonthlyProduction,
-  useGetYearlyProduction,
-} from "../../api/production/production";
+  getPlantInverterProductionToday,
+  useGetPlantEnergyMetrics,
+  useGetPlantInverterProductionToday,
+} from "../../api/plants/plants";
+import { available } from "./plantDetail/inverterToday.testData";
 import { getSharingAgreements, useGetSharingAgreements } from "../../api/sharing-agreements/sharing-agreements";
 import { PlantDetailPage } from "./PlantDetailPage";
 
 const COMMUNITY_ID = "community-a";
 const PLANT_ID = "plant-1";
 
-function setup(options: Partial<PlantCapabilitiesResponse> & { isNotFound?: boolean } = {}) {
-  const { isNotFound = false, ...capabilities } = options;
+function setup(
+  options: Partial<PlantCapabilitiesResponse> & { isNotFound?: boolean; inverter?: PlantInverterProductionTodayResponse } = {},
+) {
+  const { isNotFound = false, inverter, ...capabilities } = options;
 
   vi.mocked(usePlantInActiveCommunity).mockReturnValue({
     plant: isNotFound
@@ -62,23 +64,20 @@ function setup(options: Partial<PlantCapabilitiesResponse> & { isNotFound?: bool
     error: null,
     refetch: vi.fn(),
   });
-  for (const hook of [
-    useGetHourlyProduction,
-    useGetDailyProduction,
-    useGetMonthlyProduction,
-    useGetYearlyProduction,
-  ]) {
-    vi.mocked(hook).mockReturnValue(query.success<typeof getHourlyProduction>([]));
-  }
+  // The production sections have specs of their own; here they only have to stay quiet.
+  vi.mocked(useGetPlantEnergyMetrics).mockReturnValue(query.loading());
+  vi.mocked(useGetPlantInverterProductionToday).mockReturnValue(
+    inverter ? query.success<typeof getPlantInverterProductionToday>(inverter) : query.loading(),
+  );
   // The integrations section has its own spec; here it only has to stay quiet.
   vi.mocked(useGetHuaweiConfig).mockReturnValue(query.loading());
   vi.mocked(useGetSharingAgreements).mockReturnValue(query.success<typeof getSharingAgreements>([]));
 
   return renderWithProviders(
     <Routes>
-      <Route path="/production/:plantId" element={<PlantDetailPage />} />
+      <Route path="/plants/:plantId" element={<PlantDetailPage />} />
     </Routes>,
-    { route: `/production/${PLANT_ID}`, activeCommunityId: COMMUNITY_ID },
+    { route: `/plants/${PLANT_ID}`, activeCommunityId: COMMUNITY_ID },
   );
 }
 
@@ -91,17 +90,35 @@ beforeEach(() => {
 });
 
 describe("PlantDetailPage", () => {
-  // The page offers no write on the plant itself: no edit, no delete. Those live
-  // on the card menu. The Huawei integration is the one exception, in its own
-  // section under the same canManage gate (PlantIntegrationsSection.spec). This
-  // case is what would fail if an edit or delete appeared here without a gate.
-  it("offers no action on the plant itself, to a caller who may manage it", () => {
+  // Edit and delete sit in the header's menu, under the plant's own canManage.
+  // The Huawei integration is the one other write, in its own section under the
+  // same gate (PlantIntegrationsSection.spec).
+  it("UI-PLT-014 offers Editar planta and Eliminar planta in the header's menu to a caller who may manage the plant", async () => {
+    const user = userEvent.setup();
     setup({ canManage: true, canListSharingAgreements: true });
 
+    await user.click(screen.getByRole("button", { name: "Más opciones de la planta" }));
+
+    expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual(["Editar planta", "Eliminar planta"]);
+  });
+
+  it("UI-PLT-014 shows no menu to a caller the plant refuses canManage", () => {
+    setup({ canManage: false, canListSharingAgreements: true });
+
     expect(screen.getByRole("heading", { name: "Planta Norte" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /Editar/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Eliminar/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /Acuerdos de Reparto/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Más opciones de la planta" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem")).not.toBeInTheDocument();
+  });
+
+  it("shows its sections in the design's order: summary, today, the period, agreements and integrations (#406)", () => {
+    setup({ canManage: true, canListSharingAgreements: true, inverter: available() });
+
+    // The page's own sections, not the regions inside them (the Huawei card).
+    const names = screen
+      .getAllByRole("region")
+      .filter((region) => !region.parentElement?.closest("section, [role='region']"))
+      .map((region) => region.getAttribute("aria-label") ?? document.getElementById(region.getAttribute("aria-labelledby") ?? "")?.textContent);
+    expect(names).toEqual(["En esta planta", "Hoy, según el inversor", "Producción por periodo", "Acuerdos de reparto", "Integraciones"]);
   });
 
   it("links the supply for a caller the plant says may read it", async () => {

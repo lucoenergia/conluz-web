@@ -97,9 +97,9 @@ function baseData(): SharingAgreementsData {
 function setup(plantId = "plant-1") {
   renderWithProviders(
     <Routes>
-      <Route path="/production/:plantId/sharing-agreements" element={<SharingAgreementsPage />} />
+      <Route path="/plants/:plantId/sharing-agreements" element={<SharingAgreementsPage />} />
     </Routes>,
-    { route: `/production/${plantId}/sharing-agreements`, activeCommunityId: "TEST-COMMUNITY-ID" },
+    { route: `/plants/${plantId}/sharing-agreements`, activeCommunityId: "TEST-COMMUNITY-ID" },
   );
 }
 
@@ -121,7 +121,7 @@ describe("SharingAgreementsPage", () => {
     expect(screen.getByText("Acuerdo histórico norte")).toBeInTheDocument();
 
     const planLink = screen.getByText("Planta").closest("a");
-    expect(planLink).toHaveAttribute("href", "/production/plant-42");
+    expect(planLink).toHaveAttribute("href", "/plants/plant-42");
     expect(mockErrorDispatch).not.toHaveBeenCalled();
   });
 
@@ -213,7 +213,7 @@ describe("SharingAgreementsPage", () => {
     // The destination only: as the dialog closes, the navigation takes the
     // overlay's history entry (useOverlayNavigate), with the options that implies.
     expect(mockNavigate).toHaveBeenCalledTimes(1);
-    expect(mockNavigate.mock.calls[0][0]).toBe("/production/plant-42/sharing-agreements/new-agreement");
+    expect(mockNavigate.mock.calls[0][0]).toBe("/plants/plant-42/sharing-agreements/new-agreement");
   });
 
   test("does not navigate to a route with a missing id when create succeeds without an id", async () => {
@@ -237,7 +237,7 @@ describe("SharingAgreementsPage", () => {
     setup("plant-42");
 
     const link = screen.getByRole("link", { name: "Borrador reciente" });
-    expect(link).toHaveAttribute("href", "/production/plant-42/sharing-agreements/2");
+    expect(link).toHaveAttribute("href", "/plants/plant-42/sharing-agreements/2");
   });
 
   test("only the DRAFT agreement's row renders a kebab, and it only offers Eliminar", async () => {
@@ -298,7 +298,7 @@ describe("SharingAgreementsPage", () => {
       expect(screen.getAllByRole("button").filter((button) => button.textContent === "")).toHaveLength(0);
       expect(screen.getByRole("link", { name: "Borrador reciente" })).toHaveAttribute(
         "href",
-        "/production/plant-42/sharing-agreements/2",
+        "/plants/plant-42/sharing-agreements/2",
       );
     });
   });

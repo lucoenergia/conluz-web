@@ -347,9 +347,9 @@ describe("landing at / (#221)", () => {
 
     it("UI-ENT-007 losing the active community mid-task lands the caller on the new community's home", async () => {
       as(MEMBER_OF_TWO);
-      const { rerender } = openApp("/production", undefined, { remembered: COMMUNITY_A });
+      const { rerender } = openApp("/supply-points", undefined, { remembered: COMMUNITY_A });
       await settle();
-      expect(currentPath()).toBe("/production");
+      expect(currentPath()).toBe("/supply-points");
       expect(within(scopeSurface()).getByText("Comunidad A")).toBeInTheDocument();
 
       // Removed from community A while working in it.

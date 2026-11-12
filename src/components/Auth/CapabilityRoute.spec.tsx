@@ -89,7 +89,7 @@ function setup(require: CapabilityRequirement, { route = "/protected" }: { route
         }
       />
       <Route
-        path="/production/:plantId/sharing-agreements"
+        path="/plants/:plantId/sharing-agreements"
         element={
           <CapabilityRoute require={require}>
             <span>protected</span>
@@ -203,7 +203,7 @@ describe("CapabilityRoute — community scope", () => {
 });
 
 describe("CapabilityRoute — plant scope", () => {
-  const plantRoute = `/production/${PLANT_ID}/sharing-agreements`;
+  const plantRoute = `/plants/${PLANT_ID}/sharing-agreements`;
 
   it("renders children when the plant capability is granted", () => {
     setPlantCapabilities({ canListSharingAgreements: true });
@@ -238,7 +238,7 @@ describe("CapabilityRoute — plant scope", () => {
   });
 
   // The URL carries a plant id, so only `enabled` stops the resolver fetching
-  // it. Without that, every guarded route under /production/:plantId would
+  // it. Without that, every guarded route under /plants/:plantId would
   // fetch the plant to answer a question that has nothing to do with it.
   it("fires no plant request when the requirement is not a plant one, even on a plant URL", () => {
     setPlatformCapabilities({ canListPlatformAdmins: true });

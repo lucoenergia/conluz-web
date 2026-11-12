@@ -21,7 +21,7 @@ test.describe("Visual baselines", () => {
   // -------------------------------------------------------------------------
 
   test("plant detail page", async ({ page }) => {
-    // The capture includes GraphFilter's date input, which defaults to today.
+    // The capture includes today's power curve, whose "Ahora" mark is at the browser's now.
     await freezeClock(page);
     await openPlantDetail(page);
     // The integrations section reads its configuration after the header lands;

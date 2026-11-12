@@ -99,12 +99,12 @@ describe("resolveLandingRoute", () => {
 
 describe("resolveCommunityScopedTarget", () => {
   it("sends a plant detail route back to the plants list", () => {
-    expect(resolveCommunityScopedTarget("/production/plant-a", "")).toBe("/production");
+    expect(resolveCommunityScopedTarget("/plants/plant-a", "")).toBe("/plants");
   });
 
   it("sends every nested plant route back to the plants list, however deep", () => {
-    expect(resolveCommunityScopedTarget("/production/plant-a/sharing-agreements", "")).toBe("/production");
-    expect(resolveCommunityScopedTarget("/production/plant-a/sharing-agreements/agreement-1", "")).toBe("/production");
+    expect(resolveCommunityScopedTarget("/plants/plant-a/sharing-agreements", "")).toBe("/plants");
+    expect(resolveCommunityScopedTarget("/plants/plant-a/sharing-agreements/agreement-1", "")).toBe("/plants");
   });
 
   it("sends a supply detail route back to the supplies list", () => {
@@ -112,9 +112,9 @@ describe("resolveCommunityScopedTarget", () => {
   });
 
   it("leaves the section index routes alone -- they re-key on their own", () => {
-    expect(resolveCommunityScopedTarget("/production", "")).toBeNull();
+    expect(resolveCommunityScopedTarget("/plants", "")).toBeNull();
     expect(resolveCommunityScopedTarget("/supply-points", "")).toBeNull();
-    expect(resolveCommunityScopedTarget("/production/", "")).toBeNull();
+    expect(resolveCommunityScopedTarget("/plants/", "")).toBeNull();
   });
 
   it("strips a ?personId= filter, which is scoped to a user and not to a community", () => {
@@ -151,7 +151,7 @@ describe("resolveForcedPasswordChangeTarget", () => {
   test("sends a flagged caller to /change-password from anywhere else", () => {
     const user = { ...baseUser, mustChangePassword: true };
     expect(resolveForcedPasswordChangeTarget(user, "/")).toBe("/change-password");
-    expect(resolveForcedPasswordChangeTarget(user, "/production/plant-1")).toBe("/change-password");
+    expect(resolveForcedPasswordChangeTarget(user, "/plants/plant-1")).toBe("/change-password");
   });
 
   test("leaves a flagged caller on /change-password", () => {

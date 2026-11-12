@@ -78,7 +78,7 @@ beforeEach(() => {
 });
 
 describe("without a session", () => {
-  it.each(["/esto-no-existe", "/production/p-1/unknown/deeper"])(
+  it.each(["/esto-no-existe", "/plants/p-1/unknown/deeper"])(
     "UI-ROUTE-001 renders the not-found page at %s, with a link to /",
     async (url) => {
       const router = routeRequests([]);

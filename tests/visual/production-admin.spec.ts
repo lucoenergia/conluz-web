@@ -18,13 +18,10 @@ import {
 } from "./fixtures";
 
 /**
- * Production as a community admin: the list layout, and the two plant forms
- * that open over it.
- *
- * production-member.spec.ts covers the same list for a member, which is where
- * the absence of create and of the card menus is proven. The admin list had no
- * mainRegion capture at all -- only the full-page chrome canaries passed
- * through it.
+ * The plant list as a community admin, the only caller who reaches it (#406):
+ * the list layout, and the two plant forms that open over it. The admin list
+ * had no mainRegion capture at all -- only the full-page chrome canaries
+ * passed through it.
  */
 
 test.describe("Visual baselines", () => {
@@ -34,7 +31,7 @@ test.describe("Visual baselines", () => {
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockPlantDetailRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
 
-    await page.goto("/production");
+    await page.goto("/plants");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     // The subject is the empty list: a fixture that starts serving plants
     // fails here rather than becoming a plausible baseline.
@@ -57,7 +54,7 @@ test.describe("Visual baselines", () => {
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
     await mockPlantDetailRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
 
-    await page.goto("/production");
+    await page.goto("/plants");
     await page.getByRole("button", { name: "Nueva Planta" }).click();
     const dialog = page.getByRole("dialog", { name: /^Crear planta en / });
     // The action has been handed out: a capture of a form that cannot submit would look plausible.
@@ -99,7 +96,7 @@ test.describe("Visual baselines", () => {
         }),
     );
 
-    await page.goto("/production");
+    await page.goto("/plants");
     await page.getByRole("button", { name: `Más acciones para ${FIXED_PLANT.name}` }).click();
     await page.getByRole("menuitem", { name: "Editar" }).click();
     const dialog = page.getByRole("dialog", { name: "Editar planta" });

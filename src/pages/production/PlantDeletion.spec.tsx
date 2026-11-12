@@ -85,7 +85,7 @@ function renderPlants(deleteNorth: () => unknown) {
       <ErrorDisplay />
       <SuccessDisplay />
     </>,
-    { route: "/production", activeCommunityId: COMMUNITY_ID },
+    { route: "/plants", activeCommunityId: COMMUNITY_ID },
   );
   return { router };
 }

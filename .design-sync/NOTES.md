@@ -14,9 +14,7 @@
   Csv/Import modals and CsvImportDialog (its `run` is an action), SharingAgreement{CoefficientSet,DetailHeader,FilePanel,FormDialog,
   GenerateDialog,UploadDialog}, CoefficientHistoryDrawer, SupplyCoefficientHistorySection,
   ScopeContext, AddSupplyDialog).
-- `GraphFilterDates` (src/components/Graph) is deliberately not exported: it takes the internal
-  `useGraphFilterRange` state object and only exists as a piece of the plant period
-  control. `NextStepBanner` (the "Siguiente paso" shell) IS synced, in the layout group.
+- `NextStepBanner` (the "Siguiente paso" shell) IS synced, in the layout group.
 - `src/components/EnergyFigures/` (`PeriodUsageCard`, `PeriodTotals`, `PeriodHeader`, `NeutralNotice`,
   `EstimatedPriceLabel`) renders with `ConluzProvider` alone, so it is eligible, but it is not synced
   yet: it moved out of the historical analysis and home pages in #252 without design-system work.
@@ -82,10 +80,6 @@
 - Charts: `react-apexcharts` is CJS-only and the repo is `"type": "module"`, so esbuild's default import
   is the exports object ("Element type is invalid … got: object"). `cfg.tsconfig` →
   `.design-sync/pkg/tsconfig.bundle.json` aliases it to `.design-sync/pkg/shims/react-apexcharts.ts`.
-  Charts animate (800 ms + 150 ms per bar) and expose no prop to turn it off, so a capture catches
-  half-height bars. The chart preview (GraphBar) speeds up
-  `performance.now()` 20x behind a `window.__dsFastCharts` guard — ApexCharts times animations off it.
-  Preview-only; an `animate` prop on the chart components would be the clean fix.
 - Overlay first cells occasionally capture with the menu closed — spot-check overlay sheets.
 - `alphas` has no `primary` entry — use `alphas.info.light` for a primary-tinted circle.
 - Don't name a preview export `Error` (shadows the global).

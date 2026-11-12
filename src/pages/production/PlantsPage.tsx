@@ -121,7 +121,7 @@ export const PlantsPage: FC = () => {
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
-            { label: "Producción", href: "/production" }
+            { label: "Plantas", href: "/plants" }
           ]}
         />
       </Box>
@@ -131,7 +131,7 @@ export const PlantsPage: FC = () => {
         <DetailHeader
           variant="list"
           icon={<SolarPowerIcon />}
-          title="Producción"
+          title="Plantas"
           subtitle="Gestiona las plantas de producción de la comunidad energética"
           keyFacts={[
             { label: "Total plantas", value: stats.total },

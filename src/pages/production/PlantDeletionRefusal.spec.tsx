@@ -71,7 +71,7 @@ function renderRefused(error: unknown) {
       <PlantsPage />
       <ErrorDisplay />
     </>,
-    { route: "/production", activeCommunityId: COMMUNITY_ID },
+    { route: "/plants", activeCommunityId: COMMUNITY_ID },
   );
   return { router, plantsServed: () => plantsServed };
 }

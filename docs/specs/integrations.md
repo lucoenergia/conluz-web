@@ -4,11 +4,11 @@
 | --- | --- |
 | **Prefix** | `UI-INT` |
 | **Status** | Active |
-| **Routes** | `/integrations`, `/production/:plantId` |
+| **Routes** | `/integrations`, `/plants/:plantId` |
 | **Roles** | `/integrations`: a caller who may manage the active community (`canManage`). Plant detail's integrations section: a caller who may manage that plant (the plant's `canManage`) |
 | **Domain rules** | `lucoenergia/conluz`: DCF-001, DCF-002, DCF-003 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #371 |
+| **Last reviewed against code** | #406 |
 
 ## Purpose
 
@@ -17,8 +17,8 @@ community integrations page holds the community-scoped integrations, Datadis and
 integration belongs to a plant and is configured from that plant's detail screen.
 
 This document covers the Datadis configuration form (the rules #245 introduced) and its switch
-(#256), the plant's Huawei integration, and which integrations the community page lists (#192). The
-Shelly card is not covered.
+(#256), the plant's Huawei integration, which integrations the community page lists (#192), and
+whether Shelly is shown at all (#406). The Shelly card itself is not covered.
 
 ## Rules
 
@@ -183,7 +183,7 @@ Shelly card is not covered.
 
 - **Status:** Active
 - **Rule:** The community integrations page MUST list only community-scoped integrations: Datadis
-  and Shelly. It MUST NOT read a plant or a plant's configuration.
+  and Shelly, Shelly only as UI-INT-015 allows. It MUST NOT read a plant or a plant's configuration.
 - **Rationale:** A plant-scoped integration on a community page can only be reached by picking a
   plant implicitly, which UI-INT-005 forbids.
 - **Implements:** n/a
@@ -241,6 +241,18 @@ Shelly card is not covered.
 - **Implements:** n/a
 - **Source:** #256, lucoenergia/conluz#414, lucoenergia/conluz#425
 
+
+### UI-INT-015 — Shelly is shown only when the build enables it
+
+- **Status:** Active
+- **Rule:** Unless `CONLUZ_SHELLY_ENABLED` is `true`, the app MUST NOT render any Shelly
+  configuration, card, field or link.
+  - With the flag off, the integrations page has no Shelly card and does not read its configuration,
+    and the supply deletion's confirmation does not name a Shelly device.
+  - The flag is read at build time; any value other than `true`, or none, is off.
+- **Rationale:** No Shelly data is used in the MVP.
+- **Implements:** n/a
+- **Source:** #406
 ## States
 
 The Datadis card only.

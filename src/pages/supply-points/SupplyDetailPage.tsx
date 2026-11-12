@@ -11,7 +11,7 @@ import { useSupplyInActiveCommunity } from "./useSupplyInActiveCommunity";
 import { useErrorDispatch } from "../../context/error.context";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { EmptyState } from "../../components/EmptyState";
-import { Can, outcomeFromResource, useActiveCommunityCapabilities } from "../../hooks/permissions";
+import { Can, outcomeFromResource, usePlantCapabilities } from "../../hooks/permissions";
 import { useSupplyActions } from "../../hooks/actions";
 import { SupplyDeletionDialog } from "./SupplyDeletionDialog";
 import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
@@ -39,11 +39,12 @@ export const SupplyDetailPage: FC = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   // Each navigation here leaves the page as an overlay closes (UI-OVL-004).
   const navigate = useOverlayNavigate();
-  // A plant opens to any reader of its community -- the same canRead the
-  // /production routes require -- and the plant reference carries no
-  // capabilities of its own, so the tag links on the community's answer.
-  const canOpenPlants = useActiveCommunityCapabilities("canRead").state === "allowed";
-  const plantHref = canOpenPlants && supplyPoint?.plant ? `/production/${supplyPoint.plant.id}` : undefined;
+  // A plant's detail opens only to whoever may manage that plant (#406). The
+  // plant reference carries no capabilities of its own, so the tag reads the
+  // plant itself: the same request, and the same answer, as the route guard.
+  const plantId = supplyPoint?.plant?.id;
+  const canOpenPlant = usePlantCapabilities(plantId, "canManage", { enabled: !!plantId }).state === "allowed";
+  const plantHref = canOpenPlant && plantId ? `/plants/${plantId}` : undefined;
 
   useEffect(() => {
     if (supplyPointError)

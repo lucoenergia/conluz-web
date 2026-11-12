@@ -103,7 +103,7 @@ function renderLayoutAt(initialEntry: string, communityId: string | null) {
   const { switchActiveCommunity } = renderWithProviders(
     <Routes>
       <Route element={<AuthenticatedLayout />}>
-        <Route path="production">
+        <Route path="plants">
           <Route index element={<PlantsListPage />} />
           <Route path=":plantId/sharing-agreements" element={<PlantPage />} />
         </Route>
@@ -133,7 +133,7 @@ describe("AuthenticatedLayout community switching", () => {
   });
 
   it("never mounts the foreign entity page after a switch", () => {
-    const { rerenderWith } = renderLayoutAt("/production/plant-a/sharing-agreements", "community-a");
+    const { rerenderWith } = renderLayoutAt("/plants/plant-a/sharing-agreements", "community-a");
     expect(screen.getByTestId("plant-page")).toHaveTextContent("plant-a");
 
     renders.length = 0;
@@ -147,7 +147,7 @@ describe("AuthenticatedLayout community switching", () => {
   });
 
   it("remounts the routed page when the community changes, so seeded state is cleared", () => {
-    const { rerenderWith } = renderLayoutAt("/production", "community-a");
+    const { rerenderWith } = renderLayoutAt("/plants", "community-a");
     expect(mounts).toEqual(["plants-list"]);
 
     rerenderWith("community-b");
@@ -156,14 +156,14 @@ describe("AuthenticatedLayout community switching", () => {
   });
 
   it("keeps a deep link on first load, when the provider resolves the community from null", () => {
-    const { rerenderWith } = renderLayoutAt("/production/plant-a/sharing-agreements", null);
+    const { rerenderWith } = renderLayoutAt("/plants/plant-a/sharing-agreements", null);
     rerenderWith("community-a");
 
     expect(screen.getByTestId("plant-page")).toHaveTextContent("plant-a");
   });
 
   it("leaves the header and side menu mounted across a switch", () => {
-    const { rerenderWith } = renderLayoutAt("/production", "community-a");
+    const { rerenderWith } = renderLayoutAt("/plants", "community-a");
     rerenderWith("community-b");
 
     expect(screen.getByTestId("header")).toBeInTheDocument();

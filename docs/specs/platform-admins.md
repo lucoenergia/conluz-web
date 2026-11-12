@@ -8,7 +8,7 @@
 | **Roles** | A caller whose platform capabilities carry `canListPlatformAdmins` |
 | **Domain rules** | lucoenergia/conluz ADR-0004 (platform-admin invitations, #452) |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #371 |
+| **Last reviewed against code** | #406 |
 
 ## Purpose
 
@@ -121,8 +121,9 @@ invitation. The acceptance itself is the invitation-acceptance screen (`UI-INV`)
     password change.
   - None of those screens MUST request the user list, a user's record, a roster, supplies, plants,
     consumption, production, investment or payback. None of them MUST show a member's data.
-  - Every route under `/supply-points` and `/production` MUST require an active community the
-    caller may read (`canRead`). A platform admin with no membership who opens one by URL MUST be
+  - Every route under `/supply-points` MUST require an active community the caller may read
+    (`canRead`), and every route under `/plants` one the caller may manage (`canManage`,
+    UI-PLT-010). A platform admin with no membership who opens one by URL MUST be
     sent to `/`, before any of its requests is sent.
   - The side menu MUST offer them no entry to a member screen or to users.
 - **Rationale:** The platform flag never grants access to a community's operational data.

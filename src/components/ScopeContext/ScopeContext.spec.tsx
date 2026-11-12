@@ -68,7 +68,7 @@ beforeEach(() => {
 describe("ScopeContext — community-scoped page", () => {
   test("states the active community with initials, the label and its name", () => {
     setUp(TWO_COMMUNITIES, "community-a");
-    renderWithProviders(<ScopeContext variant="menuHeader" />, { route: "/production" });
+    renderWithProviders(<ScopeContext variant="menuHeader" />, { route: "/plants" });
 
     const region = scopeRegion();
     expect(within(region).getByText("Comunidad activa")).toBeInTheDocument();

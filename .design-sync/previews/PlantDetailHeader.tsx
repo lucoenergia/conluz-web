@@ -22,6 +22,13 @@ export const Full = () => (
   </Mui.Box>
 );
 
+/** For a caller who may manage the plant: the header's menu offers "Editar planta" and "Eliminar planta". */
+export const WithActions = () => (
+  <Mui.Box sx={{ width: "100%" }}>
+    <PlantDetailHeader plant={plant} onEditRequest={() => {}} onDeleteRequest={() => {}} />
+  </Mui.Box>
+);
+
 export const SupplyNotReadable = () => (
   <Mui.Box sx={{ width: "100%" }}>
     <PlantDetailHeader

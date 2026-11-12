@@ -88,9 +88,9 @@ function mockReads(agreements: SharingAgreementResponse[]) {
 function render() {
   return renderWithProviders(
     <Routes>
-      <Route path="/production/:plantId/sharing-agreements" element={<SharingAgreementsPage />} />
+      <Route path="/plants/:plantId/sharing-agreements" element={<SharingAgreementsPage />} />
     </Routes>,
-    { route: `/production/${PLANT_ID}/sharing-agreements`, activeCommunityId: COMMUNITY_ID },
+    { route: `/plants/${PLANT_ID}/sharing-agreements`, activeCommunityId: COMMUNITY_ID },
   );
 }
 

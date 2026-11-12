@@ -20,7 +20,7 @@ import {
 
 test.describe("Visual baselines", () => {
   // Community-admin fixture tests: sharing-agreements list.
-  // These reach the guarded route by navigating from the unguarded /production
+  // These reach the guarded route by navigating from the unguarded /plants
   // list and clicking through the plant card's kebab menu, the way a real user
   // would, rather than deep-linking.
   //

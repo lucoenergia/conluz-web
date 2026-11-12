@@ -4,11 +4,11 @@
 | --- | --- |
 | **Prefix** | `UI-OVL` |
 | **Status** | Active |
-| **Routes** | Every route whose page opens a create, edit, action or confirmation flow; on the overlay today: the contact channel editor (#368), every flow on `AppModal` or `ConfirmationModal` (#369), the investment editor on `/members` (#358), the member, community admin and platform admin dialogs (#370), the CSV import on `/members` and `/supply-points` and the Huawei configuration on `/production/:plantId` (#371), the supply create and edit forms on `/supply-points` (#372), the plant create and edit forms on `/production` (#373), and the community create and edit forms on `/communities` and `/platform` and "Ver contacto" on `/communities` (#374) |
+| **Routes** | Every route whose page opens a create, edit, action or confirmation flow; on the overlay today: the contact channel editor (#368), every flow on `AppModal` or `ConfirmationModal` (#369), the investment editor on `/members` (#358), the member, community admin and platform admin dialogs (#370), the CSV import on `/members` and `/supply-points` and the Huawei configuration on `/plants/:plantId` (#371), the supply create and edit forms on `/supply-points` (#372), the plant create and edit forms on `/plants` (#373), the plant edit form and deletion on `/plants/:plantId` (#406), and the community create and edit forms on `/communities` and `/platform` and "Ver contacto" on `/communities` (#374) |
 | **Roles** | Whoever may start the flow; the overlay adds no rule of its own |
 | **Domain rules** | `lucoenergia/conluz`: none |
 | **Design reference** | Design system: `ContactChannelEditor` (dialogs), the reference the overlay was taken from |
-| **Last reviewed against code** | #398 |
+| **Last reviewed against code** | #406 |
 
 <!-- Domain rules are cited by ID; the prefix registry in lucoenergia/conluz → docs/specs/README.md maps each prefix to its file. -->
 

@@ -69,7 +69,7 @@ function setup({ plants, layout = "wide" }: { plants: PlantResponse[]; layout?: 
   vi.mocked(useGetAllPlants).mockReturnValue(
     query.success<typeof getAllPlants>({ items: plants, size: 10000, totalElements: plants.length, totalPages: 1, number: 0 }),
   );
-  return renderWithProviders(<PlantsPage />, { activeCommunityId: COMMUNITY_ID, route: "/production" });
+  return renderWithProviders(<PlantsPage />, { activeCommunityId: COMMUNITY_ID, route: "/plants" });
 }
 
 /** The rows the layout on screen shows: list items below 1024px, body rows of the table from it. */
@@ -120,7 +120,7 @@ describe.each(LAYOUTS)("the plant rows, %s", (layout) => {
     setup({ plants: [COMPLETE, IN_SETUP], layout });
 
     const row = rowOf(layout, "Planta Norte");
-    expect(within(row).getByRole("link", { name: "Planta Norte" })).toHaveAttribute("href", "/production/north");
+    expect(within(row).getByRole("link", { name: "Planta Norte" })).toHaveAttribute("href", "/plants/north");
     expect(row).toHaveTextContent(layout === "narrow" ? "CAU ES0031300806333002ET1F" : "ES0031300806333002ET1F");
     expect(row).toHaveTextContent("100 kW");
     expect(row).toHaveTextContent("Inversor Huawei");

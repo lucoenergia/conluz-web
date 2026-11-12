@@ -65,9 +65,9 @@ function renderPage(activeCommunityId: string | null): void {
   );
   renderWithProviders(
     <Routes>
-      <Route path="/production/:plantId/sharing-agreements" element={<SharingAgreementsPage />} />
+      <Route path="/plants/:plantId/sharing-agreements" element={<SharingAgreementsPage />} />
     </Routes>,
-    { route: "/production/plant-a/sharing-agreements", activeCommunityId },
+    { route: "/plants/plant-a/sharing-agreements", activeCommunityId },
   );
 }
 

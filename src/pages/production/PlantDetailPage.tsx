@@ -1,15 +1,11 @@
 import { colors } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
-import { useEffect, useMemo, useState, type FC } from "react";
+import { useState, type FC } from "react";
 import { Box } from "@mui/material";
 import { useParams } from "react-router";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { PlantDetailHeader } from "../../components/PlantDetailHeader";
 import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
-import { useGetDailyProduction, useGetHourlyProduction, useGetMonthlyProduction, useGetYearlyProduction } from "../../api/production/production";
-import { formatCalendarDate, formatTimeOfDay } from "../../utils/formatCalendarDate";
-import { useErrorDispatch } from "../../context/error.context";
-import { useActiveCommunity } from "../../context/community.context";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { EmptyState } from "../../components/EmptyState";
 import { PlantIntegrationsSection } from "./PlantIntegrationsSection";
@@ -17,295 +13,53 @@ import { PlantSummary } from "./plantDetail/PlantSummary";
 import { PlantNextStep } from "./plantDetail/PlantNextStep";
 import { PlantAgreementsSection } from "./plantDetail/PlantAgreementsSection";
 import { usePlantIntegrationStatus } from "./plantDetail/usePlantIntegrationStatus";
-import { PlantProductionSection } from "./plantDetail/PlantProductionSection";
-import { productionSubtitle, type DatesGranularity, type ProductionPeriodKind } from "./plantDetail/productionSubtitle";
+import { PlantPeriodProduction } from "./plantDetail/PlantPeriodProduction";
+import { PlantInverterToday } from "./plantDetail/PlantInverterToday";
+import { PLANT_DEFAULT_PRESET, PLANT_PRESETS, plantClampNotice } from "./plantDetail/plantPeriod";
+import { readDayAnchor, usePlantAnchorQuery } from "./plantDetail/usePlantAnchorQuery";
+import { useHistoricalAnchor } from "../../components/period/useHistoricalAnchor";
+import { useHistoricalPeriodState } from "../../components/period/useHistoricalPeriodState";
+import { useOverlayNavigate } from "../../components/ResponsiveOverlay";
+import { useOverlayOpener } from "../../hooks/useOverlayOpener";
+import { usePlantActions } from "../../hooks/actions";
+import { PlantFormDialog } from "./PlantFormDialog";
+import { PlantDeletionDialog } from "./PlantDeletionDialog";
 
+/**
+ * A plant's detail, for the admins of its community (#406): what it is, what
+ * its inverter produced today and what the distributor measured over a
+ * period, its sharing agreements and its integration.
+ */
 export const PlantDetailPage: FC = () => {
   const { plantId = "" } = useParams();
-  const activeCommunityId = useActiveCommunity();
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
-  const errorDispatch = useErrorDispatch();
-
-  // Detect which filter button was clicked based on date patterns
-  const filterType = useMemo((): ProductionPeriodKind => {
-    const difference = Math.abs(endDate.getTime() - startDate.getTime());
-    const daysInRange = difference / (1000 * 60 * 60 * 24);
-
-    // DAY: same day (start and end are within the same calendar day)
-    if (daysInRange < 1.5) {
-      return "day";
-    }
-
-    // MONTH: spans 27-32 days and starts at day 1
-    if (daysInRange >= 27 && daysInRange <= 32 &&
-        startDate.getDate() === 1 &&
-        startDate.getMonth() !== endDate.getMonth()) {
-      return "month";
-    }
-
-    // YEAR: spans 300-730 days
-    if (daysInRange >= 300 && daysInRange <= 730) {
-      return "year";
-    }
-
-    // TOTALS: spans more than 730 days (multi-year range)
-    if (daysInRange > 730) {
-      return "totals";
-    }
-
-    // DATES: custom range
-    return "dates";
-  }, [startDate, endDate]);
-
-  // For "dates" filter, determine granularity based on range size
-  const datesGranularity = useMemo((): DatesGranularity => {
-    if (filterType !== "dates") return null;
-    const days = Math.abs(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
-    if (days <= 60) return "daily";
-    if (days <= 730) return "monthly";
-    return "yearly";
-  }, [filterType, startDate, endDate]);
-
-  const handleFilterChange = (startDate: Date, endDate: Date) => {
-    setStartDate(startDate);
-    setEndDate(endDate);
-  };
-
-  // Calculate previous period dates for trend comparison
-  const { prevStartDate, prevEndDate } = useMemo(() => {
-    const difference = Math.abs(endDate.getTime() - startDate.getTime());
-
-    const prevEnd = new Date(startDate);
-    prevEnd.setMilliseconds(-1); // End of previous period is 1ms before current start
-
-    const prevStart = new Date(prevEnd);
-    prevStart.setTime(prevStart.getTime() - difference); // Same duration as current period
-
-    return {
-      prevStartDate: prevStart,
-      prevEndDate: prevEnd,
-    };
-  }, [startDate, endDate]);
 
   const { plant, isLoading: plantLoading, isNotFound: isPlantNotFound, error: plantError } =
     usePlantInActiveCommunity(plantId);
-
-  // The community endpoints filtered by the plant's supply: a supply backs at
-  // most one plant, so this is the plant's own production (UI-PLT-001). Nothing
-  // is requested before the plant is known, or the first answer would be the
-  // whole community's.
-  const supplyId = plant?.supply.id;
   const integrationStatus = usePlantIntegrationStatus(plant);
-  const canQueryProduction = !!activeCommunityId && !!supplyId;
+  // Edit and delete open over the detail, from the header's menu (UI-PLT-014).
+  // Each dialog mounts only while the plant grants its action.
+  const { edit, remove } = usePlantActions().forPlant(plant).actions;
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  // The menu item that opened the form is gone by the time it closes, so focus
+  // returns to the menu's button.
+  const editOpener = useOverlayOpener(isEditOpen);
+  // Each navigation here leaves the page as an overlay closes (UI-OVL-004).
+  const navigate = useOverlayNavigate();
 
-    // Fetch hourly production data when DAY filter is selected
-  const {
-    data: hourlyProductionData,
-    isLoading: hourlyProductionIsLoading,
-    error: hourlyProductionError,
-  } = useGetHourlyProduction(
-    activeCommunityId ?? "",
-    { startDate: startDate.toISOString(), endDate: endDate.toISOString(), supplyId },
-    { query: { enabled: canQueryProduction && filterType === "day" } },
-  );
+  // The period of "Producción por periodo", anchored to the plant's latest
+  // complete production day (UI-PLT-011). Nothing is asked before the plant,
+  // and so its community, is known.
+  const anchorQuery = usePlantAnchorQuery(plant?.id);
+  const anchor = useHistoricalAnchor(anchorQuery, readDayAnchor);
+  const period = useHistoricalPeriodState(anchor, {
+    presets: PLANT_PRESETS,
+    defaultPreset: PLANT_DEFAULT_PRESET,
+    scopeKey: plantId,
+    clampNotice: plantClampNotice,
+  });
 
-  // Fetch daily production data for month filter and dates filter with daily granularity
-  const {
-    data: dailyProductionData,
-    isLoading: dailyProductionIsLoading,
-    error: dailyProductionError,
-  } = useGetDailyProduction(
-    activeCommunityId ?? "",
-    { startDate: startDate.toISOString(), endDate: endDate.toISOString(), supplyId },
-    { query: { enabled: canQueryProduction && (filterType === "month" || (filterType === "dates" && datesGranularity === "daily")) } },
-  );
-
-  // Fetch monthly production data for year filter and dates filter with monthly granularity
-  const {
-    data: monthlyProductionData,
-    isLoading: monthlyProductionIsLoading,
-    error: monthlyProductionError,
-  } = useGetMonthlyProduction(
-    activeCommunityId ?? "",
-    { startDate: startDate.toISOString(), endDate: endDate.toISOString(), supplyId },
-    { query: { enabled: canQueryProduction && (filterType === "year" || (filterType === "dates" && datesGranularity === "monthly")) } },
-  );
-
-  // Fetch yearly production data for totals filter and dates filter with yearly granularity
-  const {
-    data: yearlyProductionData,
-    isLoading: yearlyProductionIsLoading,
-    error: yearlyProductionError,
-  } = useGetYearlyProduction(
-    activeCommunityId ?? "",
-    { startDate: startDate.toISOString(), endDate: endDate.toISOString(), supplyId },
-    { query: { enabled: canQueryProduction && (filterType === "totals" || (filterType === "dates" && datesGranularity === "yearly")) } },
-  );
-
-  // Fetch previous period hourly production data when DAY filter is selected
-  const {
-    data: prevHourlyProductionData,
-  } = useGetHourlyProduction(
-    activeCommunityId ?? "",
-    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString(), supplyId },
-    { query: { enabled: canQueryProduction && filterType === "day" } },
-  );
-
-  // Fetch previous period daily production data for month filter and dates filter with daily granularity
-  const {
-    data: prevDailyProductionData,
-  } = useGetDailyProduction(
-    activeCommunityId ?? "",
-    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString(), supplyId },
-    { query: { enabled: canQueryProduction && (filterType === "month" || (filterType === "dates" && datesGranularity === "daily")) } },
-  );
-
-  // Fetch previous period monthly production data
-  const {
-    data: prevMonthlyProductionData,
-  } = useGetMonthlyProduction(
-    activeCommunityId ?? "",
-    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString(), supplyId },
-    { query: { enabled: canQueryProduction && (filterType === "year" || (filterType === "dates" && datesGranularity === "monthly")) } },
-  );
-
-  // No meaningful previous period for totals (multi-year range)
-  const {
-    data: prevYearlyProductionData,
-  } = useGetYearlyProduction(
-    activeCommunityId ?? "",
-    { startDate: prevStartDate.toISOString(), endDate: prevEndDate.toISOString(), supplyId },
-    { query: { enabled: false } },
-  );
-
-  // Unified data sources - select endpoint based on filterType and datesGranularity
-  const productionData =
-    filterType === "day" ? hourlyProductionData
-    : filterType === "year" || (filterType === "dates" && datesGranularity === "monthly") ? monthlyProductionData
-    : filterType === "totals" || (filterType === "dates" && datesGranularity === "yearly") ? yearlyProductionData
-    : dailyProductionData;
-
-  const prevProductionData =
-    filterType === "day" ? prevHourlyProductionData
-    : filterType === "year" || (filterType === "dates" && datesGranularity === "monthly") ? prevMonthlyProductionData
-    : filterType === "totals" || (filterType === "dates" && datesGranularity === "yearly") ? prevYearlyProductionData
-    : prevDailyProductionData;
-
-  // Unified loading and error states
-  const isLoading =
-    hourlyProductionIsLoading ||
-    dailyProductionIsLoading ||
-    monthlyProductionIsLoading ||
-    yearlyProductionIsLoading ||
-    plantLoading;
-
-  const error =
-    hourlyProductionError ||
-    dailyProductionError ||
-    monthlyProductionError ||
-    yearlyProductionError ||
-    plantError;
-
-  useEffect(() => {
-    if (error)
-      errorDispatch(
-        "Ha habido un problema al cargar la información de esta planta. Por favor, inténtalo más tarde",
-      );
-  }, [error, errorDispatch]);
-
-  // A period has data when at least one of its rows carries a figure. The
-  // contract does not say how an empty period is answered, so an empty array
-  // and rows without a power both count as none; a power of 0 is a real zero
-  // and is shown (UI-PLT-005).
-  const hasProductionData = !!productionData?.some((item) => item.power !== undefined && item.power !== null);
-
-  // Process production data from the API response
-  const data = useMemo(() => {
-    if (!productionData) return [];
-    return productionData.map((item) => item.power ?? 0);
-  }, [productionData]);
-
-  // Generate categories (x-axis labels) from production data
-  const categories = useMemo(() => {
-    if (!productionData || productionData.length === 0) return [];
-
-    return productionData.map((item) => {
-      const dateStr = item.time || "";
-      if (!dateStr) return "";
-
-      // Instants, labelled in the app's time zone, never the device's (#255).
-      if (filterType === "day") {
-        return formatTimeOfDay(dateStr);
-      }
-
-      if (filterType === "month") {
-        return formatCalendarDate(dateStr, { day: "numeric", month: undefined, year: undefined });
-      }
-
-      // monthly data → show month name
-      if (filterType === "year") {
-        return formatCalendarDate(dateStr, { day: undefined, month: "short", year: undefined });
-      }
-
-      // yearly data → show year number
-      if (filterType === "totals") {
-        return formatCalendarDate(dateStr, { day: undefined, month: undefined, year: "numeric" });
-      }
-
-      if (filterType === "dates") {
-        if (datesGranularity === "monthly") {
-          return formatCalendarDate(dateStr, { day: undefined, month: "short", year: "2-digit" });
-        }
-        if (datesGranularity === "yearly") {
-          return formatCalendarDate(dateStr, { day: undefined, month: undefined, year: "numeric" });
-        }
-      }
-
-      return formatCalendarDate(dateStr, { day: "2-digit", month: "short", year: undefined });
-    });
-  }, [productionData, filterType, datesGranularity]);
-
-  // Process production data for chart
-  const productionValues = useMemo(() => {
-    if (!data || data.length === 0) return [];
-    return data;
-  }, [data]);
-
-  // Calculate production metrics with trends
-  const productionMetrics = useMemo(() => {
-    if (!productionData || productionData.length === 0) {
-      return {
-        totalProduction: 0,
-        productionTrend: undefined,
-      };
-    }
-
-    const totalProduction = productionData.reduce((sum, item) => sum + (item.power || 0), 0);
-
-    // Calculate trend compared to previous period
-    let productionTrend: number | undefined = undefined;
-
-    if (prevProductionData && prevProductionData.length > 0) {
-      const prevTotalProduction = prevProductionData.reduce((sum, item) => sum + (item.power || 0), 0);
-
-      // Calculate trend as percentage change
-      if (prevTotalProduction > 0) {
-        productionTrend = ((totalProduction - prevTotalProduction) / prevTotalProduction) * 100;
-      } else if (totalProduction > 0) {
-        // If previous was 0 but current is positive, show as 100% increase
-        productionTrend = 100;
-      }
-    }
-
-    return {
-      totalProduction,
-      productionTrend,
-    };
-  }, [productionData, prevProductionData]);
-
-  // A plant outside the active community is withheld, so its supply is never
-  // requested against the active community's production either.
+  // A plant outside the active community is withheld.
   if (isPlantNotFound) {
     return (
       <Box sx={sxStyles.pageContainer}>
@@ -338,7 +92,7 @@ export const PlantDetailPage: FC = () => {
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
-            { label: "Producción", href: "/production" },
+            { label: "Plantas", href: "/plants" },
             { label: plant?.name || plantId, href: "#" },
           ]}
         />
@@ -350,8 +104,29 @@ export const PlantDetailPage: FC = () => {
           plant={plant}
           isLoading={plantLoading}
           error={plantError}
+          onEditRequest={
+            edit &&
+            ((opener) => {
+              editOpener.record(opener);
+              setIsEditOpen(true);
+            })
+          }
+          onDeleteRequest={remove && (() => setIsDeleteOpen(true))}
         />
       </Box>
+
+      {isEditOpen && edit && plant && (
+        <PlantFormDialog target={{ kind: "edit", plantId: plant.id }} onClose={() => setIsEditOpen(false)} />
+      )}
+
+      {/* Once the plant is gone -- deleted now, or already (a 404) -- there is
+          nothing left to show here, so the screen returns to the list. */}
+      <PlantDeletionDialog
+        plant={isDeleteOpen ? plant : undefined}
+        onClose={() => setIsDeleteOpen(false)}
+        // Replacing this page: one back must not land on a plant that is gone.
+        onGone={() => navigate("/plants", { replace: true })}
+      />
 
       {/* Only while the integration needs a step from someone who may manage it.
           Edge to edge on a phone, as the agreement's next step is. */}
@@ -364,20 +139,19 @@ export const PlantDetailPage: FC = () => {
         <PlantSummary plant={plant} integrationStatus={integrationStatus} />
       </Box>
 
-      <Box sx={sxStyles.pageContainer}>
-        <PlantProductionSection
-          handlePeriodChange={handleFilterChange}
-          isLoading={isLoading}
-          hasError={!!error}
-          hasData={hasProductionData}
-          total={productionMetrics.totalProduction}
-          trend={productionMetrics.productionTrend}
-          values={productionValues}
-          categories={categories}
-          subtitle={productionSubtitle(filterType, datesGranularity)}
-          integrationStatus={integrationStatus}
-        />
-      </Box>
+      {/* Today's inverter production, apart from the distributor's: only for a
+          plant with an enabled inverter integration (UI-PLT-012). */}
+      {plant && (
+        <Box sx={{ ...sxStyles.pageContainer, "&:empty": { display: "none" } }}>
+          <PlantInverterToday plantId={plant.id} />
+        </Box>
+      )}
+
+      {plant && (
+        <Box sx={sxStyles.pageContainer}>
+          <PlantPeriodProduction plantId={plant.id} anchor={anchor} period={period} />
+        </Box>
+      )}
 
       {plant?.capabilities.canListSharingAgreements && (
         <Box sx={sxStyles.pageContainer}>

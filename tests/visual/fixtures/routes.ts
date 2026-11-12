@@ -19,6 +19,11 @@ import type {
   SupplyConsumptionBucketResponse,
   SupplyEnergyMetricsResponse,
   SupplyResponse,
+  PlantDailyEnergyBucketResponse,
+  PlantEnergyMetricsResponse,
+  PlantHourlyEnergyBucketResponse,
+  PlantInverterProductionTodayResponse,
+  PlantMonthlyEnergyBucketResponse,
 } from "../../../src/api/models";
 import {
   COMMUNITY_ADMIN_CAPABILITIES,
@@ -39,6 +44,11 @@ import {
   COMMUNITY_ADMIN_PLANT_CAPABILITIES,
   FIXED_PLANT,
   FIXED_PLANT_ID,
+  FIXED_INVERTER_TODAY,
+  FIXED_PLANT_DAYS,
+  FIXED_PLANT_MONTHS,
+  FIXED_PLANT_PRODUCTION_DAY,
+  plantPeriodMetrics,
   MEMBER_PLANT_CAPABILITIES,
   FIXED_SUPPLY,
   FIXED_SUPPLY_2,
@@ -670,6 +680,74 @@ export async function mockPlantDetailRoutes(page: Page, currentUser?: { membersh
       refusal(plant.capabilities, "canListSharingAgreements")
         ? refuse(route, "canListSharingAgreements")
         : route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(FIXED_SHARING_AGREEMENTS) }),
+  );
+}
+
+const INVERTER_NOT_AVAILABLE: PlantInverterProductionTodayResponse = {
+  status: "NOT_AVAILABLE",
+  todayEnergyKWh: null,
+  powerCurve: null,
+  lastUpdatedAt: null,
+  stale: null,
+};
+
+/** Whether a served Huawei configuration is there and enabled; unset is mockHuaweiConfigRoutes' default, which is. */
+const huaweiEnabled = (config: HuaweiConfigFixture | null | undefined) =>
+  config === undefined ? FIXED_HUAWEI_CONFIG.enabled === true : config !== null && config.enabled === true;
+
+/**
+ * The plant's production (#406): its latest production day, its metrics and
+ * series by period, and today's inverter production. Registered AFTER
+ * mockPlantDetailRoutes(), whose predicate also matches these URLs. Every call
+ * is refused with 403 unless the plant served to this caller says canManage,
+ * as the backend does: these operations are for the community's admins.
+ *
+ * The period's metrics are derived from the series served for it, so the
+ * total and the bars cannot disagree.
+ */
+export async function mockPlantProductionRoutes(
+  page: Page,
+  options: {
+    productionDay?: PlantEnergyMetricsResponse;
+    daily?: PlantDailyEnergyBucketResponse[];
+    monthly?: PlantMonthlyEnergyBucketResponse[];
+    hourly?: PlantHourlyEnergyBucketResponse[];
+    inverter?: PlantInverterProductionTodayResponse;
+    /** The Huawei configuration served, as mockHuaweiConfigRoutes takes it: null is "not configured". */
+    huaweiConfig?: HuaweiConfigFixture | null;
+    currentUser?: { memberships?: Record<string, string> };
+  } = {},
+) {
+  const {
+    productionDay = FIXED_PLANT_PRODUCTION_DAY,
+    daily = FIXED_PLANT_DAYS,
+    monthly = FIXED_PLANT_MONTHS,
+    hourly = [],
+    currentUser,
+  } = options;
+  // Today's inverter production follows the Huawei configuration served, as
+  // the backend's does: NOT_AVAILABLE unless an enabled configuration exists.
+  const inverter = options.inverter ?? (huaweiEnabled(options.huaweiConfig) ? FIXED_INVERTER_TODAY : INVERTER_NOT_AVAILABLE);
+  const plant = asPlantCaller(FIXED_PLANT, currentUser);
+  const base = `/api/v1/plants/${FIXED_PLANT_ID}`;
+  const json = (route: Route, body: unknown) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
+
+  await page.route(
+    (url) => url.pathname === `${base}/energy-metrics` || url.pathname.startsWith(`${base}/energy-series/`) || url.pathname === `${base}/inverter-production/today`,
+    (route: Route) => {
+      if (refusal(plant.capabilities, "canManage")) return refuse(route, "canManage");
+      const url = new URL(route.request().url());
+      if (url.pathname === `${base}/inverter-production/today`) return json(route, inverter);
+      if (url.pathname === `${base}/energy-series/daily`) return json(route, daily);
+      if (url.pathname === `${base}/energy-series/monthly`) return json(route, monthly);
+      if (url.pathname === `${base}/energy-series/hourly`) return json(route, hourly);
+      if (url.searchParams.get("period") === "LATEST_PRODUCTION_DAY") return json(route, productionDay);
+      const buckets = url.searchParams.get("startDate")?.startsWith("2026-01-01") ? monthly : daily;
+      return json(route, {
+        ...plantPeriodMetrics(buckets),
+        period: { startDate: url.searchParams.get("startDate"), endDate: url.searchParams.get("endDate") },
+      });
+    },
   );
 }
 

@@ -54,7 +54,7 @@ const PAGE_SCOPES: ReadonlyArray<{ prefix: string; scope: Exclude<PageScope, "un
   { prefix: "/home", scope: "community" },
   { prefix: "/historical-analysis", scope: "community" },
   { prefix: "/community-analysis", scope: "community" },
-  { prefix: "/production", scope: "community" },
+  { prefix: "/plants", scope: "community" },
   { prefix: "/supply-points", scope: "community" },
   { prefix: "/members", scope: "community" },
   { prefix: "/integrations", scope: "community" },
@@ -87,7 +87,7 @@ export function resolvePageScope(pathname: string): PageScope {
 export const HISTORICAL_ANALYSIS_PATH = "/historical-analysis";
 export const SUPPLY_ID_PARAM = "supplyId";
 
-const ENTITY_SCOPED_SECTIONS = ["/production", "/supply-points"] as const;
+const ENTITY_SCOPED_SECTIONS = ["/plants", "/supply-points"] as const;
 
 /**
  * Where to send someone who switches community while standing on a page

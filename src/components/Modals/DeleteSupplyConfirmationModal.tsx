@@ -4,6 +4,7 @@ import { ConfirmationModal } from "./ConfirmationModal";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { radii, alphas, fontSizes } from "../../theme/tokens";
 import { CommunityScopeHeader } from "../CommunityScopeHeader";
+import { isShellyEnabled } from "../../utils/featureFlags";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 
 interface DeleteSupplyConfirmationModalProps {
@@ -82,8 +83,10 @@ export const DeleteSupplyConfirmationModal: FC<DeleteSupplyConfirmationModalProp
           lineHeight: 1.6,
         }}
       >
-        Se eliminarán también su contrato, sus datos de distribuidora y su dispositivo Shelly. Esta acción no se puede
-        deshacer.
+        {/* Shelly is not named unless the build enables it (UI-INT-015). */}
+        {isShellyEnabled()
+          ? "Se eliminarán también su contrato, sus datos de distribuidora y su dispositivo Shelly. Esta acción no se puede deshacer."
+          : "Se eliminarán también su contrato y sus datos de distribuidora. Esta acción no se puede deshacer."}
       </Typography>
     </ConfirmationModal>
   );

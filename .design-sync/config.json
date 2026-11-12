@@ -64,8 +64,6 @@
     "FilterChipsBar": "../groups/forms.md",
     "ContactChannelEditor": "../groups/dialogs.md",
     "ContactChannelReorderList": "../groups/forms.md",
-    "GraphBar": "../groups/charts.md",
-    "LoadingGraphCard": "../groups/charts.md",
     "AppModal": "../groups/dialogs.md",
     "ConfirmationModal": "../groups/dialogs.md",
     "DisableSuccessModal": "../groups/dialogs.md",
@@ -197,9 +195,6 @@
     "MenuTemplate": {
       "cardMode": "single",
       "viewport": "480x360"
-    },
-    "GraphBar": {
-      "cardMode": "column"
     },
     "CommunityStatusChip": {
       "cardMode": "column"

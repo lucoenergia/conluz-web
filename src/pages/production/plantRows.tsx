@@ -26,7 +26,7 @@ export function offersPlantRowActions(plant: PlantResponse, { actions }: PlantRo
   return !!(actions.edit || actions.remove || plant.capabilities.canListSharingAgreements);
 }
 
-export const plantHref = (plant: PlantResponse) => `/production/${plant.id}`;
+export const plantHref = (plant: PlantResponse) => `/plants/${plant.id}`;
 
 const cauCode = (code: string) => (
   <Box component="span" sx={{ fontFamily: fontFamilies.mono }}>

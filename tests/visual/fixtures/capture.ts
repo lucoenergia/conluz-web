@@ -92,9 +92,7 @@ export const LAYOUT_MAX_DIFF_PIXELS = threshold(100);
  * Seen once, on a machine deliberately oversubscribed to 24 busy threads on 20
  * cores, and not reproduced in roughly ten targeted attempts since. Ruled out
  * as the trigger: the page settling after stabilizePage (a flat 2828 px across
- * 40 samples in each of 4 runs under load) and the resize-driven chart remount
- * in src/components/Graph/GraphBar.tsx (no height change at all when sampled
- * every 25 ms straight through its 300 ms window). The trigger is still
+ * 40 samples in each of 4 runs under load). The trigger is still
  * unidentified, so this is a tolerance for a transient, not a fix for a known
  * cause: if it starts failing again, that is the signal to find the shrink
  * rather than to raise this number.

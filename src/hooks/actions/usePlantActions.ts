@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   getGetAllPlantsQueryKey,
   getGetPlantByIdQueryKey,
+  getGetPlantInverterProductionTodayQueryKey,
   useDeletePlant,
   useUpdatePlant,
 } from "../../api/plants/plants";
@@ -108,11 +109,14 @@ export function usePlantActions(): PlantActions {
       const manageAgreements = outcomeFromResource(capabilities, "canManageSharingAgreements");
 
       // Only this plant's configuration is read back: another plant's is not
-      // touched by a write to this one (#192).
+      // touched by a write to this one (#192). Today's inverter production is
+      // read back with it: whether it is available follows the configuration
+      // (UI-PLT-012).
       const writeHuawei = async (call: () => Promise<unknown>): Promise<HuaweiWriteResult> => {
         try {
           await call();
           queryClient.invalidateQueries({ queryKey: getGetHuaweiConfigQueryKey(plantId) });
+          queryClient.invalidateQueries({ queryKey: getGetPlantInverterProductionTodayQueryKey(plantId) });
           return { ok: true };
         } catch (error) {
           return { error };
@@ -143,8 +147,10 @@ export function usePlantActions(): PlantActions {
                 // Removed, not invalidated: the plant no longer exists, so an
                 // invalidation-triggered refetch would 404 straight after a
                 // successful delete. Same reasoning as the agreement delete in
-                // useSharingAgreementMutations.
-                queryClient.removeQueries({ queryKey: getGetPlantByIdQueryKey(plantId) });
+                // useSharingAgreementMutations. Only an inactive one: the plant's
+                // own detail, deleting it, still observes it until it navigates
+                // away, and would refetch a removed query straight into that 404.
+                queryClient.removeQueries({ queryKey: getGetPlantByIdQueryKey(plantId), type: "inactive" });
                 invalidateList();
                 return { ok: true };
               } catch (error) {

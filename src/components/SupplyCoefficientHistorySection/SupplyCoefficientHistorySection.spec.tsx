@@ -94,11 +94,11 @@ describe("SupplyCoefficientHistorySection", () => {
 
     expect(screen.getByRole("link", { name: "Reparto 2024" })).toHaveAttribute(
       "href",
-      "/production/plant-norte/sharing-agreements/sa-2024",
+      "/plants/plant-norte/sharing-agreements/sa-2024",
     );
     expect(screen.getByRole("link", { name: "Reparto Sur" })).toHaveAttribute(
       "href",
-      "/production/plant-sur/sharing-agreements/sa-sur",
+      "/plants/plant-sur/sharing-agreements/sa-sur",
     );
   });
 

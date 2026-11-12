@@ -11,7 +11,7 @@ const VISUAL_DIR = dirname(fileURLToPath(import.meta.url));
  *
  * Every page in src/App.tsx is React.lazy, so in dev its module subtree is
  * transformed on the FIRST request that reaches that route — hundreds of files
- * for a screen like /production. While the server is doing that work no request
+ * for a screen like /plants. While the server is doing that work no request
  * is in flight, which makes `waitForLoadState("networkidle")` fire against a
  * page whose #root is still empty behind the Suspense fallback. The navigation
  * helpers then hunt for elements that do not exist yet, and with two projects
