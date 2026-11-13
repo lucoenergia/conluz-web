@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { mutation, query } from "../test/queryState";
+import { apiError } from "../test/apiError";
 import { buildCurrentUser, buildUserCapabilities } from "../test/fixtures";
 import { CommunityRole } from "../hooks/permissions";
 import type { CurrentUserResponse } from "../api/models";
@@ -194,6 +195,65 @@ describe("ProfilePage save", () => {
     // Announced through a region that was in place before the save (#310).
     expect(screen.getByRole("status")).toHaveTextContent("Perfil actualizado correctamente");
     expect(mockErrorDispatch).not.toHaveBeenCalled();
+  });
+});
+
+describe("ProfilePage address and refusals (#411)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRoleLabel = "";
+    mockSaveProfile.mockResolvedValue(mockCurrentUser);
+    vi.mocked(useUpdateProfile).mockReturnValue(mutation.idle({ mutateAsync: mockSaveProfile }));
+    vi.mocked(useGetCurrentUser).mockReturnValue(query.success<typeof getCurrentUser>(mockCurrentUser));
+  });
+
+  const address = () => screen.getByRole("textbox", { name: "Dirección" });
+
+  it("UI-FRM-001 refuses the 251st character", async () => {
+    const u = userEvent.setup();
+    renderWithProviders(<ProfilePage />);
+
+    await u.clear(address());
+    await u.paste("a".repeat(250));
+    await u.type(address(), "b");
+
+    expect(address()).toHaveValue("a".repeat(250));
+  });
+
+  it("UI-FRM-002 Enter in the address submits the form, and adds no line break", async () => {
+    const u = userEvent.setup();
+    renderWithProviders(<ProfilePage />);
+
+    await u.type(address(), ", bajo{Enter}");
+
+    await waitFor(() => expect(mockSaveProfile).toHaveBeenCalledTimes(1));
+    expect(mockSaveProfile).toHaveBeenCalledWith({
+      data: { email: "ana@example.com", address: "Calle Mayor 1, bajo", phoneNumber: "600000001" },
+    });
+  });
+
+  it.each<[string, unknown, string]>([
+    [
+      "a catalogued code with its catalogue's text",
+      apiError(400, { code: "FIELD_TOO_LONG", params: { field: "address", maxLength: "250", n: "251" } }),
+      "La dirección puede tener como máximo 250 caracteres. Ahora tiene 251.",
+    ],
+    ["a code outside the catalogue with the server's message", apiError(400, { code: null }), "raw backend message"],
+    [
+      "a failure with no error detail with the page's own text",
+      apiError(500),
+      "Error al actualizar el perfil. Por favor, inténtalo de nuevo.",
+    ],
+  ])("UI-PRF-004 words %s", async (_case, error, message) => {
+    mockSaveProfile.mockRejectedValue(error);
+    const u = userEvent.setup();
+    renderWithProviders(<ProfilePage />);
+
+    await u.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalledWith(message));
+    expect(mockErrorDispatch).toHaveBeenCalledTimes(1);
+    expect(address()).toHaveValue("Calle Mayor 1");
   });
 });
 

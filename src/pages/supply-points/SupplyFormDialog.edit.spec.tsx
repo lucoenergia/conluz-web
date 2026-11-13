@@ -339,3 +339,58 @@ describe("SupplyFormDialog: the supply being loaded", () => {
     expect(vi.mocked(useSupplyInActiveCommunity)).toHaveBeenCalledWith(SUPPLY_ID);
   });
 });
+
+describe("SupplyFormDialog: editing the address (#411)", () => {
+  const nameInput = () => screen.getByRole("textbox", { name: /^Nombre/ });
+  const addressInput = () => screen.getByRole("textbox", { name: /^Dirección/ });
+
+  it("UI-FRM-001 refuses the 251st character", async () => {
+    const u = userEvent.setup();
+    setup({ canEdit: true });
+
+    await u.clear(addressInput());
+    await u.paste("a".repeat(250));
+    await u.type(addressInput(), "b");
+
+    expect(addressInput()).toHaveValue("a".repeat(250));
+  });
+
+  it("UI-FRM-002 Enter in the address submits the form, and adds no line break", async () => {
+    mutateAsync.mockResolvedValue(buildSupply());
+    const u = userEvent.setup();
+    setup({ canEdit: true });
+
+    await u.type(addressInput(), ", bajo{Enter}");
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+    expect(mutateAsync.mock.calls[0][0].data.address).toBe("Calle Mayor 1, bajo");
+  });
+
+  it("UI-ERR-002 UI-ERR-007 shows FIELD_TOO_LONG on the address input, focuses it, and clears it once the address is edited", async () => {
+    mutateAsync.mockRejectedValue(
+      apiError(400, {
+        code: "FIELD_TOO_LONG",
+        message: SERVER_MESSAGE,
+        params: { field: "address", maxLength: "250", n: "260" },
+      }),
+    );
+    const u = userEvent.setup();
+    setup({ canEdit: true });
+
+    await u.type(addressInput(), ", bajo");
+    await u.click(saveButton());
+
+    await waitFor(() =>
+      expect(addressInput()).toHaveAccessibleDescription(
+        "La dirección puede tener como máximo 250 caracteres. Ahora tiene 260.",
+      ),
+    );
+    await waitFor(() => expect(addressInput()).toHaveFocus());
+    expect(mockErrorDispatch).not.toHaveBeenCalled();
+    expect(nameInput()).toHaveValue("Casa");
+    expect(addressInput()).toHaveValue("Calle Mayor 1, bajo");
+
+    await u.type(addressInput(), "X");
+    expect(addressInput()).toBeValid();
+  });
+});
