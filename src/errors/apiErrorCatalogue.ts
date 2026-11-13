@@ -419,6 +419,14 @@ export function getFirstApiErrorCode(error: unknown): RestErrorDetailCode | unde
 }
 
 /**
+ * The `field` param of the first error detail, which names the input a code
+ * such as COMMUNITY_ALREADY_EXISTS is about. `undefined` when it is absent.
+ */
+export function getFirstApiErrorField(error: unknown): string | undefined {
+  return extractRestError(error)?.errors?.[0]?.params?.field;
+}
+
+/**
  * Picks the first error detail off an API error response and translates it.
  * All this slice needs; a future multi-error consumer should call
  * `translateErrorDetail` directly per-detail instead of adding options here.

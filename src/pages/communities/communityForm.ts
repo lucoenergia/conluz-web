@@ -1,4 +1,4 @@
-import { getFirstApiErrorCode, getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
+import { getFirstApiErrorCode, getFirstApiErrorField, getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
 
 /** The community form's inputs an API refusal can name. */
 export type CommunityField = "code" | "legalId";
@@ -7,11 +7,6 @@ export type CommunityRefusal = { field: CommunityField; message: string } | { fo
 
 const isCommunityField = (value: string | undefined): value is CommunityField =>
   value === "code" || value === "legalId";
-
-function firstErrorField(error: unknown): string | undefined {
-  return (error as { response?: { data?: { errors?: { params?: Record<string, string> | null }[] } } } | null)
-    ?.response?.data?.errors?.[0]?.params?.field;
-}
 
 /**
  * Where a refused community create or edit is shown (#232). COMMUNITY_ALREADY_EXISTS
@@ -22,7 +17,7 @@ function firstErrorField(error: unknown): string | undefined {
 export function communityRefusalOf(error: unknown, generic: string): CommunityRefusal {
   if (getFirstApiErrorCode(error) !== "COMMUNITY_ALREADY_EXISTS") return { form: generic };
   const message = getFirstApiErrorMessage(error, generic);
-  const field = firstErrorField(error);
+  const field = getFirstApiErrorField(error);
   return isCommunityField(field) ? { field, message } : { form: message };
 }
 
