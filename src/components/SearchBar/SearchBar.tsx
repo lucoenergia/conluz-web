@@ -76,6 +76,12 @@ export const SearchBar: FC<SearchBarProps> = ({
               color: colors.text.placeholder,
               opacity: 1,
             },
+            // type="search" makes WebKit and Blink draw their own cancel button next to
+            // "Borrar búsqueda"; hide it so the field offers a single clear control (#412).
+            "&::-webkit-search-cancel-button": {
+              appearance: "none",
+              display: "none",
+            },
           },
         }}
         startAdornment={

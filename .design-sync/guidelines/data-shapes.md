@@ -94,7 +94,7 @@ interface PlantResponse {
   providerCode: string;
   /** The identifier assigned by the regulator. In Spain this is the CAU (Codigo de Autoconsumo). It is not the provider's station code (provider_code) and not a CUPS. */
   regulatoryCode: string | null;
-  /** The CIL (Código de la Instalación de producción a efectos de Liquidación): the plant's Spanish settlement code, 25 alphanumeric characters, upper-cased. Null when the plant has none. */
+  /** The CIL (Código de la Instalación de producción a efectos de Liquidación): the plant's Spanish settlement code, assigned by the distribution company. 25 alphanumeric characters, upper-cased with no whitespace, unique across the platform. Null when the plant has none recorded. */
   cil: string | null;
   /** The supply this plant produces onto. A reference: the full supply, including its owner, is fetched from GET /supplies/{supplyId}, which not every caller who may list plants is allowed to call. */
   supply: SupplyReferenceResponse;
@@ -122,6 +122,8 @@ interface SupplyResponse {
   user: UserReferenceResponse | null;
   /** The owner's member record in the supply's community. Null when the supply has no owner, or its owner has no membership in that community. */
   ownerRecord: MemberRecordResponse | null;
+  /** The plant whose own supply this is: the supply its production is measured at. Null when the supply is no plant's own supply. */
+  plant: PlantReferenceResponse | null;
   /** Name of the supply */
   name: string | null;
   /** Address of the supply */
@@ -210,7 +212,7 @@ interface PartitionCoefficientCapabilitiesResponse {
 }
 
 interface PlantCapabilitiesResponse {
-  /** Whether the caller may read this plant. Open to any enabled member of its community. */
+  /** Whether the caller may read this plant. Open to any active member of its community. */
   canRead: boolean;
   /** Whether the caller may update or delete this plant, and read and write its Huawei configuration. */
   canManage: boolean;
@@ -262,15 +264,6 @@ interface AttentionItem {
   label: string;
   /** Route the "Revisar" link points to. */
   to: string;
-}
-
-interface StatItem {
-  label: string;
-  value: string;
-  trend?: number | undefined;
-  trendLabel?: string | undefined;
-  icon?: ReactNode;
-  color?: string | undefined;
 }
 
 interface RecordListItem {
