@@ -52,4 +52,5 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-DATA` | Data fetching: how the app consumes the generated API client, and the token its requests carry | [`data-fetching.md`](data-fetching.md) |
 | `UI-OVL` | Overlays: the shared dialog or bottom sheet of every create, edit, action and confirmation flow, its close path and back, and what may bypass it | [`overlays.md`](overlays.md) |
 | `UI-COM` | Communities: creating and editing a community over the communities list and the platform page | [`communities.md`](communities.md) |
+| `UI-FRM` | Forms: the address input every record form shares | [`forms.md`](forms.md) |
 | `UI-CAN` | Community energy: the community's production, where it went, its estimated income, the CO₂ avoided, its evolution and its plants, for every member | [`community-analysis.md`](community-analysis.md) |

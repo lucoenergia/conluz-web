@@ -6,9 +6,9 @@
 | **Status** | Active |
 | **Routes** | Every screen that shows the message of an API error detail |
 | **Roles** | Any caller |
-| **Domain rules** | `lucoenergia/conluz`: PLT-002 |
+| **Domain rules** | `lucoenergia/conluz`: PLT-002, API-003, API-004 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #358 |
+| **Last reviewed against code** | #411 |
 
 ## Purpose
 
@@ -18,10 +18,11 @@ maps; the server's message is only the fallback for the codes it does not.
 
 Screens that word a code their own way, such as the member invitation actions or the import rows
 of UI-MBR-023 and UI-SUP-008, are covered by the exception in UI-ERR-001. UI-SUP-009 applies
-UI-ERR-001 and UI-ERR-002 to the supply forms.
+UI-ERR-001 and UI-ERR-002 to the supply forms. A too-long value in an import row is worded by the
+import's own rules (UI-SUP-022, UI-MBR-046).
 
-This document covers only the rules #232, #324, #253 and #378 introduced, and #358's exception to
-UI-ERR-003.
+This document covers only the rules #232, #324, #253, #378 and #411 introduced, and #358's
+exception to UI-ERR-003.
 
 ## Rules
 
@@ -97,6 +98,25 @@ UI-ERR-003.
 - **Implements:** EPR-005 (lucoenergia/conluz#545, #546), under which the refusal carries the limit
   it enforces.
 - **Source:** #378, lucoenergia/conluz#546
+
+### UI-ERR-007 — The too-long value refusal states the limit and the length it carries
+
+- **Status:** Active
+- **Rule:**
+  - `FIELD_TOO_LONG` MUST have a catalogue entry that states the `maxLength` and `n` it carries,
+    when both are whole numbers from 1 up (the contract's strings, or numbers): "La dirección puede
+    tener como máximo {maxLength} caracteres. Ahora tiene {n}." when `field` is `address`, and
+    "Este campo puede tener como máximo {maxLength} caracteres. Ahora tiene {n}." otherwise.
+  - Without readable params, it MUST read "El texto es demasiado largo.".
+  - The supply, plant, community, member record and member registration forms MUST show it on the
+    address input when `field` is `address` (UI-ERR-002), and MUST clear it when the address is
+    edited. The supply, plant and community forms MUST also move focus to that input, as they do for
+    the other refusals they place on an input; the member forms place theirs without moving focus.
+- **Rationale:** The backend answers every length violation with this one code, so the text cannot
+  hold a fixed limit: the user needs the limit and how far over it they are. The address is the
+  only field that sends it today, and naming it says what to shorten.
+- **Implements:** API-003, API-004
+- **Source:** #411, lucoenergia/conluz#574
 
 ## States
 
