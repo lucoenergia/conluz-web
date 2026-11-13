@@ -139,7 +139,7 @@ const CommunityFormOverlay: FC<CommunityFormOverlayProps> = ({
   // state locks the overlay and the inputs (UI-OVL-002).
   const savingRef = useRef(false);
   const [saving, setSaving] = useState(false);
-  const inputRefs: Record<CommunityFormInput, RefObject<HTMLInputElement | null>> = {
+  const inputRefs: Record<CommunityFormInput, RefObject<HTMLInputElement | HTMLTextAreaElement | null>> = {
     name: useRef(null),
     code: useRef(null),
     legalId: useRef(null),
@@ -177,8 +177,9 @@ const CommunityFormOverlay: FC<CommunityFormOverlayProps> = ({
       onClose();
       return;
     }
-    // The form stays as it was typed. A duplicate goes on the input it names
-    // (UI-ERR-002), which takes focus; anything else to the snackbar.
+    // The form stays as it was typed. A duplicate or a too long address goes
+    // on the input it names (UI-ERR-002), which takes focus; anything else to
+    // the snackbar.
     const refusal = communityRefusalOf(outcome.error, generic);
     if ("field" in refusal) {
       setFieldErrors({ [refusal.field]: refusal.message });

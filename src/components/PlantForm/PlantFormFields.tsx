@@ -26,7 +26,7 @@ interface PlantFormFieldsProps {
   /** While a save is in flight, nothing can be changed. */
   readOnly?: boolean;
   /** The inputs an error can be shown on, so the screen can focus one. */
-  inputRefs?: Partial<Record<PlantFormField, Ref<HTMLInputElement>>>;
+  inputRefs?: Partial<Record<PlantFormField, Ref<HTMLInputElement | HTMLTextAreaElement>>>;
 }
 
 /** The plant's inputs, controlled by the screen that holds them. */

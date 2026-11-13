@@ -1,6 +1,12 @@
 import type { ImportMembersRowErrorResponse, ImportMembersRowResponse } from "../../api/models";
 import { translateErrorDetail } from "../../errors/apiErrorCatalogue";
-import { columnLabel, csvTemplate, downloadCsvTemplate, type CsvImportColumn } from "../../components/CsvImportDialog/csvImport";
+import {
+  columnLabel,
+  csvTemplate,
+  downloadCsvTemplate,
+  fieldTooLongText,
+  type CsvImportColumn,
+} from "../../components/CsvImportDialog/csvImport";
 
 /**
  * The member import's columns (lucoenergia/conluz#397; #284), in the order the
@@ -84,6 +90,8 @@ export function constraintText({ column, constraint, params }: ImportMembersRowE
       return `${label}: no es un email válido.`;
     case "NOT_AN_INTEGER":
       return `${label}: tiene que ser un número entero.`;
+    case "FIELD_TOO_LONG":
+      return fieldTooLongText(label, params);
     default:
       return `${label}: no es válido.`;
   }

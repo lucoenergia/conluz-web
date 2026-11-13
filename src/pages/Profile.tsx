@@ -8,6 +8,7 @@ import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import { BreadCrumb } from "../components/Breadcrumb";
 import { useGetCurrentUser } from "../api/users/users";
 import { useErrorDispatch } from "../context/error.context";
+import { getFirstApiErrorMessage } from "../errors/apiErrorCatalogue";
 import { useProfileActions } from "../hooks/actions";
 import { useActiveCommunityRoleLabel } from "../hooks/permissions";
 import { isValidEmail } from "../utils/email";
@@ -16,6 +17,7 @@ import { ActionStatus } from "../components/ActionStatus";
 import { AddressField } from "../components/AddressField";
 
 const PROFILE_SAVED_MESSAGE = "Perfil actualizado correctamente";
+const PROFILE_SAVE_FAILED_MESSAGE = "Error al actualizar el perfil. Por favor, inténtalo de nuevo.";
 
 export const ProfilePage: FC = () => {
   const { data: currentUser, isLoading, error } = useGetCurrentUser();
@@ -87,16 +89,18 @@ export const ProfilePage: FC = () => {
     // field means -- the email included, which then leaves the account without
     // one. The action refreshes the signed-in user itself, so there is nothing
     // to refetch here.
-    const saved = await actions.save.run({
+    const outcome = await actions.save.run({
       email: formData.email.trim() || undefined,
       address: formData.address || undefined,
       phoneNumber: formData.phone || undefined,
     });
 
-    if (saved) {
+    if (outcome.ok) {
       setSuccessMessage(true);
     } else {
-      errorDispatch("Error al actualizar el perfil. Por favor, inténtalo de nuevo.");
+      // Worded by its code when the catalogue has it (UI-ERR-001), else the
+      // server's message (UI-ERR-003); without an error detail, this page's own.
+      errorDispatch(getFirstApiErrorMessage(outcome.error, PROFILE_SAVE_FAILED_MESSAGE));
     }
   };
 

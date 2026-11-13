@@ -11,7 +11,7 @@ interface CommunityFormFieldsProps {
   /** While a save is in flight, nothing can be changed. */
   readOnly?: boolean;
   /** The inputs an error can be shown on, so the screen can focus one. */
-  inputRefs?: Partial<Record<CommunityFormInput, Ref<HTMLInputElement>>>;
+  inputRefs?: Partial<Record<CommunityFormInput, Ref<HTMLInputElement | HTMLTextAreaElement>>>;
 }
 
 /** The community's inputs, controlled by the screen that holds them. */
@@ -58,6 +58,8 @@ export const CommunityFormFields: FC<CommunityFormFieldsProps> = ({
       value={values.address}
       onValueChange={(value) => onChange("address", value)}
       inputRef={inputRefs.address}
+      error={!!fieldErrors.address}
+      helperText={fieldErrors.address}
       readOnly={readOnly}
     />
   </>

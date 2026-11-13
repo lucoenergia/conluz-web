@@ -6,6 +6,9 @@ import { type Action, ungated } from "./action";
 
 export type ChangePasswordResult = { ok: true } | { ok: false; failure: AuthFailure };
 
+/** A refused save carries its error, so the screen can word it by its code (#411). */
+export type SaveProfileResult = { ok: true } | { ok: false; error: unknown };
+
 /**
  * Saving your own profile.
  *
@@ -22,7 +25,7 @@ export type ChangePasswordResult = { ok: true } | { ok: false; failure: AuthFail
  */
 export interface ProfileActions {
   actions: {
-    save: Action<[UpdateProfileBody], boolean>;
+    save: Action<[UpdateProfileBody], SaveProfileResult>;
     changePassword: Action<[ChangePasswordBody], ChangePasswordResult>;
   };
 }
@@ -36,7 +39,7 @@ export function useProfileActions(): ProfileActions {
     actions: {
       save: ungated(
         "open to any authenticated caller: PUT /users/profile acts on the caller and takes no id",
-        async (data: UpdateProfileBody) => {
+        async (data: UpdateProfileBody): Promise<SaveProfileResult> => {
           try {
             await updateProfileMutation.mutateAsync({ data });
             // PUT /users/profile changes the caller's own record -- email,
@@ -45,9 +48,9 @@ export function useProfileActions(): ProfileActions {
             // the display name are not among those fields, so this refreshes
             // the data, not the gating.
             queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() });
-            return true;
-          } catch {
-            return false;
+            return { ok: true };
+          } catch (error) {
+            return { ok: false, error };
           }
         },
         updateProfileMutation.isPending,

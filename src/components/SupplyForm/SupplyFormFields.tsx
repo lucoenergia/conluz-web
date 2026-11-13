@@ -15,6 +15,7 @@ interface SupplyFormFieldsProps {
   readOnly?: boolean;
   cupsInputRef?: Ref<HTMLInputElement>;
   ownerInputRef?: Ref<HTMLInputElement>;
+  addressInputRef?: Ref<HTMLTextAreaElement>;
 }
 
 /** The supply's inputs, controlled by the screen that holds them. */
@@ -27,6 +28,7 @@ export const SupplyFormFields: FC<SupplyFormFieldsProps> = ({
   readOnly = false,
   cupsInputRef,
   ownerInputRef,
+  addressInputRef,
 }) => {
   const ownerOptions = owner?.mode === "choose" ? owner.options : [];
   const selectedOwner = selectedOwnerOf(owner, values.ownerId);
@@ -132,7 +134,13 @@ export const SupplyFormFields: FC<SupplyFormFieldsProps> = ({
         label="Dirección"
         name="address"
         value={values.address}
-        onValueChange={(value) => onChange("address", value)}
+        onValueChange={(value) => {
+          onChange("address", value);
+          onFieldEdit?.("address");
+        }}
+        inputRef={addressInputRef}
+        error={!!fieldErrors.address}
+        helperText={fieldErrors.address}
         readOnly={readOnly}
         required
       />
