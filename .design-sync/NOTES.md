@@ -108,3 +108,12 @@
 - `ConluzProvider`'s GLOBAL_STYLES is a trimmed copy of `src/main.tsx`'s; drift there is not picked up.
 - `.d.ts` for props typed with API models carries the bare model name (e.g. `SharingAgreementResponse`)
   without its shape.
+
+## Re-sync risks
+
+- 2026-11-13: the upload into project `0f2a485c-…` was refused at the first write (HTTP 403, "This design
+  system moved to Claude. /design-sync can't send updates to Claude yet"). Nothing was written; the
+  project still holds the previous sync. Before the next run, check whether /design-sync can write to
+  it again; the local build, grades and diff can be regenerated with the driver at any time.
+- `guidelines/data-shapes.md` is hand-tidied (field order, `ReactNode` instead of the expanded union),
+  so diff it against `scripts/data-shapes.mjs` output per type and ignoring order, not line by line.
