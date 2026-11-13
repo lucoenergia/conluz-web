@@ -189,6 +189,8 @@ export function useGetAllPlants<TData = Awaited<ReturnType<typeof getAllPlants>>
  *
  * In case of failure, the server returns an appropriate error status code along with a descriptiv
  * error message, aiding the client in diagnosing and addressing the issue.
+ *
+ * An `address` longer than 250 characters is answered 400 with the `FIELD_TOO_LONG` code, whose params give the `field`, its `maxLength` and the length `n` sent, and nothing is created.
  * @summary Creates a new plant within the system.
  */
 export const createPlant = (
@@ -448,6 +450,8 @@ export function useGetPlantById<TData = Awaited<ReturnType<typeof getPlantById>>
  * alphanumeric characters is answered 400 with `PLANT_CIL_INVALID`. A CIL identifies at most one
  * plant across the platform: a CIL another plant holds is answered 409 with
  * `PLANT_CIL_ALREADY_IN_USE`, and nothing is updated; keeping the plant's own CIL is not a conflict.
+ *
+ * An `address` longer than 250 characters is answered 400 with the `FIELD_TOO_LONG` code, whose params give the `field`, its `maxLength` and the length `n` sent, and nothing is updated.
  * @summary Updates plant information
  */
 export const updatePlant = (

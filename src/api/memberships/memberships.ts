@@ -620,6 +620,8 @@ export function useGetMemberships<TData = Awaited<ReturnType<typeof getMembershi
  * **Rows.** Otherwise each row is registered in a transaction of its own, so a row that fails keeps the others. The response has one result per row. A person who already has an account is registered exactly as a new one, and their result is the same. A person who already has a membership in this community, including from an earlier row of the same file, fails with `MEMBERSHIP_ALREADY_EXISTS`. Importing the same file again is therefore safe: rows already registered fail with that code, and the rest are registered.
  *
  * A row whose values break rules of the registration fails with `MEMBERSHIP_IMPORT_ROW_INVALID` and lists each rule broken in `errors`, by column and constraint code, for a client to write its own text. A row whose `personalId`, once its spaces, dots and hyphens are removed and its letters upper-cased, is not a valid DNI, NIE or NIF fails with `USER_PERSONAL_ID_INVALID`, the code `registerMember` answers with, and lists the constraint `INVALID_PERSONAL_ID` of the column `personalId` in `errors`. Every `message` is in the language of the request's Accept-Language.
+ *
+ * A row whose `address` has more than 250 characters fails with `MEMBERSHIP_IMPORT_ROW_INVALID` and lists the constraint `FIELD_TOO_LONG` of the column `address` in `errors`, with the params `field`, `maxLength` and `n`, the length of the value.
  * @summary Imports members into a community from a CSV file.
  */
 export const importMembers = (
@@ -772,6 +774,8 @@ export const useSendInvitations = <TError = ErrorType<RestError>,
  * The response is the same whether or not the person already had an account, and carries nothing from it. Registering someone who already has a membership in this community, in any state, responds 409 with the `MEMBERSHIP_ALREADY_EXISTS` code.
  *
  * The DNI/NIE/NIF may be typed in any case, with spaces, dots and hyphens. Once those are removed it must be a valid DNI, NIE or NIF, with the control letter or character matching its digits; otherwise it responds 400 with the `USER_PERSONAL_ID_INVALID` code and nothing is created.
+ *
+ * An `address` longer than 250 characters is answered 400 with the `FIELD_TOO_LONG` code, whose params give the `field`, its `maxLength` and the length `n` sent, and nothing is created.
  * @summary Registers a member in a community.
  */
 export const registerMember = (
@@ -988,8 +992,8 @@ export const useUpdateMembershipRole = <TError = ErrorType<RestError>,
     }
     /**
  * For each day of the requested period, the energy and the estimated savings of
- * **every** supply the member owns in this community that stored a record that day,
- * added up. Each energy figure sums the unrounded per-supply daily totals and is
+ * the supplies the member owns in this community that have data that day, added
+ * up. Each energy figure sums the unrounded per-supply daily totals and is
  * rounded once, to 3 decimals, on the result; the savings are likewise summed
  * unrounded and rounded once, to cents. A figure can therefore differ from adding
  * up the rounded figures of the per-supply daily series. Supplies in the member's
@@ -1003,7 +1007,7 @@ export const useUpdateMembershipRole = <TError = ErrorType<RestError>,
  * **Every day is emitted:**
  * A bucket is returned for every local calendar day of the community's time zone
  * that overlaps the period, in chronological order, whether or not any supply
- * stored a record that day, so the series has a regular time axis. A day runs
+ * has data that day, so the series has a regular time axis. A day runs
  * from its local midnight to the next one, so the days on which daylight saving
  * time starts and ends cover 23 and 25 hours. The first and the last day are cut
  * to the period: a period starting at 12:00 counts only that day's hours from
@@ -1041,24 +1045,32 @@ export const useUpdateMembershipRole = <TError = ErrorType<RestError>,
  * counted as expected. Energy metrics report the clipped end in `period`, and a series
  * emits no bucket starting at or after it.
  *
+ * **Supplies with data:**
+ * Datadis publishes a month's self-consumption around the 10th of the following
+ * month; until then the supply's records carry consumption but no
+ * self-consumption. A supply has data on a day only when its records carrying
+ * self-consumption cover at least 90 % of the day's hours inside the period. A
+ * supply below that does not contribute to the day at all, so an unpublished day is
+ * never summed as zero self-consumption.
+ *
  * **Completeness:**
  * `supplyCount` is the number of supplies the member **currently** owns in the
- * community, and `suppliesWithData` how many of them stored at least one hourly
- * record that day, within the period. A day with `suppliesWithData` below
+ * community, and `suppliesWithData` how many of them have data that day, as
+ * defined above. A day with `suppliesWithData` below
  * `supplyCount` is incomplete. The model records no date a supply joined its
  * community, so the count is the same for every day, and the days before a supply
  * started reporting show as incomplete. The aggregated energy metrics measure
  * their `suppliesWithData` over the whole period, so the two are not comparable.
  *
  * **Gaps and measured zeros:**
- * The energy figures add up only the supplies that stored a record that day; a
- * day on which no supply stored one reports zero energy. `savingsEur` is an
+ * The energy figures add up only the supplies with data that day; a day on which
+ * no supply has data reports zero energy. `savingsEur` is an
  * **estimate** of what the day's self-consumed energy was worth, pricing the
  * **energy term before taxes** only, exactly as the per-supply series does. It is
- * `null` when no supply stored a record that day (`suppliesWithData` is 0), and
- * only then: a day with nothing stored is a different statement from a day that
- * saved nothing, which reports `0.00` -- as does a day whose stored records carry
- * no self-consumption, a measured zero. This differs from the per-supply series,
+ * `null` when no supply has data that day (`suppliesWithData` is 0), and only
+ * then: a day without data is a different statement from a day that saved
+ * nothing, which reports `0.00` -- as does a day whose published self-consumption
+ * is zero, a measured zero. This differs from the per-supply series,
  * which reports `0.00` for every bucket it emits. `tariffSource` says where the
  * prices came from -- `ESTIMATE` or `REAL_TARIFF` -- and a single estimated supply
  * makes the whole day an estimate; it is `null` exactly when `savingsEur` is.
@@ -1177,8 +1189,8 @@ export function useGetMembershipDailyConsumption<TData = Awaited<ReturnType<type
 
 /**
  * For each hour of the requested period, the energy and the estimated savings of
- * **every** supply the member owns in this community that stored a record that hour,
- * added up. Each energy figure sums the unrounded per-supply hourly figures and is
+ * the supplies the member owns in this community that have data that hour, added
+ * up. Each energy figure sums the unrounded per-supply hourly figures and is
  * rounded once, to 3 decimals, on the result; the savings are likewise summed
  * unrounded and rounded once, to cents. A figure can therefore differ from adding
  * up the rounded figures of the per-supply hourly series. Supplies in the member's
@@ -1221,7 +1233,7 @@ export function useGetMembershipDailyConsumption<TData = Awaited<ReturnType<type
  *
  * **Every hour is emitted:**
  * A bucket is returned for every whole hour that starts inside the period, in
- * chronological order, whether or not any supply stored a record that hour, so the
+ * chronological order, whether or not any supply has data that hour, so the
  * series has a regular time axis: 24 for a whole local day of the community's time
  * zone, 23 on the day the clocks go forward and 25 on the day they go back. A period
  * starting in the middle of an hour starts with the next whole hour; an `endDate` in
@@ -1234,9 +1246,16 @@ export function useGetMembershipDailyConsumption<TData = Awaited<ReturnType<type
  * `date` and `time` are the local date and time the hour starts at; on the day the
  * clocks go back, two consecutive hours carry the same ones.
  *
+ * **Supplies with data:**
+ * Datadis publishes a month's self-consumption around the 10th of the following
+ * month; until then the supply's records carry consumption but no
+ * self-consumption. A supply has data in an hour only when its record of that hour
+ * carries self-consumption. A supply without it does not contribute to the hour at
+ * all, so an unpublished hour is never summed as zero self-consumption.
+ *
  * **Completeness:**
  * `supplyCount` is the number of supplies the member **currently** owns in the
- * community, and `suppliesWithData` how many of them stored a record that hour. An
+ * community, and `suppliesWithData` how many of them have data that hour. An
  * hour with `suppliesWithData` below `supplyCount` is incomplete. The model records
  * no date a supply joined its community, so the count is the same for every hour,
  * and the hours before a supply started reporting show as incomplete. The aggregated
@@ -1244,14 +1263,14 @@ export function useGetMembershipDailyConsumption<TData = Awaited<ReturnType<type
  * are not comparable.
  *
  * **Gaps and measured zeros:**
- * The energy figures add up only the supplies that stored a record that hour; an
- * hour in which no supply stored one reports zero energy. `savingsEur` is an
+ * The energy figures add up only the supplies with data that hour; an hour in which
+ * no supply has data reports zero energy. `savingsEur` is an
  * **estimate** of what the hour's self-consumed energy was worth, pricing the
  * **energy term before taxes** only, exactly as the per-supply series does. It is
- * `null` when no supply stored a record that hour (`suppliesWithData` is 0), and
- * only then: an hour with nothing stored is a different statement from an hour that
- * saved nothing, which reports `0.00` -- as does an hour whose stored records carry
- * no self-consumption, a measured zero. This differs from the per-supply series,
+ * `null` when no supply has data that hour (`suppliesWithData` is 0), and only
+ * then: an hour without data is a different statement from an hour that saved
+ * nothing, which reports `0.00` -- as does an hour whose published self-consumption
+ * is zero, a measured zero. This differs from the per-supply series,
  * which reports `0.00` for every bucket it emits. `tariffSource` says where the
  * prices came from -- `ESTIMATE` or `REAL_TARIFF` -- and a single estimated supply
  * makes the whole hour an estimate; it is `null` exactly when `savingsEur` is.
@@ -1370,36 +1389,39 @@ export function useGetMembershipHourlyConsumption<TData = Awaited<ReturnType<typ
 
 /**
  * For each month of the requested period, the energy and the estimated savings of
- * **every** supply the member owns in this community, added up. Each energy figure
- * sums the unrounded per-supply monthly totals and is rounded once, to 3 decimals,
+ * the supplies the member owns in this community that have data that month, added
+ * up. Each energy figure sums the unrounded per-supply monthly totals and is
+ * rounded once, to 3 decimals,
  * on the result; the savings are likewise summed unrounded and rounded once, to
  * cents. A figure can therefore differ from adding up the rounded figures of the
  * per-supply monthly series. Supplies in the member's other communities are not
  * counted.
  *
- * **Source and freshness:**
- * Each supply's month is read from a monthly total pre-aggregated from its hourly
- * records. That total is rewritten once a day for every month in the Datadis sync
- * window (by default, the current month and the 12 before it), and on demand through
- * `POST /api/v1/communities/{communityId}/consumption/datadis/sync/monthly`. Nothing
- * else refreshes it: in particular, synchronising the hourly records does not. Until
- * the next refresh, a month can therefore lag the energy metrics, which sum the
- * hourly records when they are read.
+ * **Source:**
+ * Each supply's month is summed from its hourly records when the series is read,
+ * so it is as fresh as the energy metrics.
+ *
+ * **Supplies with data:**
+ * Datadis publishes a month's self-consumption around the 10th of the following
+ * month; until then the supply's records carry consumption but no
+ * self-consumption. A supply has data in a month only when its records carrying
+ * self-consumption cover at least 90 % of the month's hours inside the period. A
+ * supply below that does not contribute to the month at all, so an unpublished
+ * month is never summed as zero self-consumption.
  *
  * **Every month is emitted:**
  * A bucket is returned for every month in range, in chronological order, whether or
- * not any supply stored a record in it, so the series has a regular time axis. This
- * differs from the per-supply monthly series, which omits months without a stored
- * record.
+ * not any supply has data in it, so the series has a regular time axis. This
+ * differs from the per-supply monthly series, which omits months without data.
  *
  * **Time zone and month selection:**
  * Months are local calendar months of the community's time zone, not UTC ones.
  * `startDate` and `endDate` are both required, and a month is in range if and only
- * if its local midnight on day 1 falls inside them -- the rule the
- * per-supply monthly series selects its pre-aggregated points by. Once in range a
- * month always carries its whole energy and its whole savings: bounds falling
- * mid-month never trim it. Pass the bounds with the zone's offset: a bound expressed
- * in UTC can select one month too few or too many.
+ * if its local midnight on day 1 falls inside them, the rule the per-supply
+ * monthly series selects its months by. A month the end bound falls inside counts
+ * only its hours before that bound, energy and savings alike. Pass the bounds with
+ * the zone's offset: a bound expressed in UTC can select one month too few or too
+ * many.
  *
  * **Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is
  * included and `endDate` is not, so a record stamped exactly at `endDate` belongs to the
@@ -1433,21 +1455,21 @@ export function useGetMembershipHourlyConsumption<TData = Awaited<ReturnType<typ
  *
  * **Completeness:**
  * `supplyCount` is the number of supplies the member **currently** owns in the
- * community, and `suppliesWithData` how many of them stored a monthly record that
- * month. A month with `suppliesWithData` below `supplyCount` is incomplete. The
- * model records no date a supply joined its community, so the count is the same
- * for every month, and the months before a supply started reporting show as
- * incomplete. `suppliesWithData` is measured from stored monthly records, month by
- * month; the aggregated energy metrics measure theirs from hourly records over the
- * whole period, so the two are not comparable.
+ * community, and `suppliesWithData` how many of them have data that month, as
+ * defined above. A month with `suppliesWithData` below `supplyCount` is
+ * incomplete. The model records no date a supply joined its community, so the
+ * count is the same for every month, and the months before a supply started
+ * reporting show as incomplete. `suppliesWithData` is measured month by month; the
+ * aggregated energy metrics measure theirs over the whole period, so the two are
+ * not comparable.
  *
  * **Savings:**
  * `savingsEur` is an **estimate** of what the month's self-consumed energy was
  * worth, pricing the **energy term before taxes** only, exactly as the per-supply
- * series does. It is `null` when no supply stored a record that month, and only
- * then: a month with nothing stored is a different statement from a month that
- * saved nothing, which reports `0.00` -- as does a month whose stored records carry
- * no self-consumption, a measured zero. This differs from the per-supply series,
+ * series does. It is `null` when no supply has data that month, and only then: a
+ * month without data is a different statement from a month that saved nothing,
+ * which reports `0.00` -- as does a month whose published self-consumption is zero,
+ * a measured zero. This differs from the per-supply series,
  * which reports `0.00` for every bucket it emits. `tariffSource` says where the
  * prices came from -- `ESTIMATE` or `REAL_TARIFF` -- and a single estimated supply
  * makes the whole month an estimate; it is `null` exactly when `savingsEur` is.
@@ -2589,6 +2611,8 @@ export function useGetMembershipPayback<TData = Awaited<ReturnType<typeof getMem
  * Changing the contact email of a pending membership revokes its active invitation link, so a link sent to the old address stops working and `invitationExpiresAt` is null; the next invitation, or resend, goes to the new contact email. A change only of letter case is not a change of address and keeps the link.
  *
  * **Required: Community Admin of this community.** A platform admin who is not one is refused with 403.
+ *
+ * An `address` longer than 250 characters is answered 400 with the `FIELD_TOO_LONG` code, whose params give the `field`, its `maxLength` and the length `n` sent, and nothing is updated.
  * @summary Replaces the member record of a membership.
  */
 export const updateMemberRecord = (

@@ -7,6 +7,7 @@
  */
 
 export interface UpdateProfileBody {
+  /** @maxLength 250 */
   address?: string;
   email?: string;
   phoneNumber?: string;

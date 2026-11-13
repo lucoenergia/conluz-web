@@ -68,7 +68,10 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 /**
+ * Deprecated: use `getPlantInverterProductionToday`.
+ *
  * Offers real-time insights into the instantaneous energy production of the plants of the community identified by the path `communityId`. **Required: any member of the community.** Returns 404 if the community does not exist or the caller is not a member of it, and 403 for a non-member platform admin. When a `supplyId` is provided, it must back a plant of the community in the path; otherwise a 404 is returned (an out-of-community supply is never confirmed to exist).
+ * @deprecated
  * @summary Delivers real-time energy production details of a community.
  */
 export const getInstantProduction = (
@@ -147,6 +150,7 @@ export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getIns
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * @deprecated
  * @summary Delivers real-time energy production details of a community.
  */
 
@@ -169,7 +173,10 @@ export function useGetInstantProduction<TData = Awaited<ReturnType<typeof getIns
 
 
 /**
+ * Deprecated: use `getCommunityEnergyMetrics` and `getCommunity{Hourly,Daily,Monthly}EnergySeries` for distributor data; `getPlantInverterProductionToday` for today's inverter data.
+ *
  * Retrieves daily energy production data for the plants of the community identified by the path `communityId`, within the specified date interval. **Required: any member of the community.** Returns 404 if the community does not exist or the caller is not a member of it, and 403 for a non-member platform admin. When a `supplyId` is provided, it must back a plant of the community in the path; otherwise a 404 is returned (an out-of-community supply is never confirmed to exist).
+ * @deprecated
  * @summary Retrieves daily energy production data of a community within a given date interval.
  */
 export const getDailyProduction = (
@@ -248,6 +255,7 @@ export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDaily
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * @deprecated
  * @summary Retrieves daily energy production data of a community within a given date interval.
  */
 
@@ -270,6 +278,8 @@ export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDaily
 
 
 /**
+ * Deprecated: use `getCommunityEnergyMetrics` and `getCommunity*EnergySeries` for the community; `getPlantEnergyMetrics` and `getPlant*EnergySeries` for a plant.
+ *
  * Retrieves daily Datadis-derived production data for the plants of the community identified by
  * `communityId`, within the specified date range. **Required: any member of the community.**
  *
@@ -283,6 +293,7 @@ export function useGetDailyProduction<TData = Awaited<ReturnType<typeof getDaily
  * `time` are the UTC midnight that starts it, expressed in the time zone the
  * application is configured with, so `time` is the zone's offset from UTC rather than
  * `00:00` (in Europe/Madrid, `01:00` in winter and `02:00` in summer).
+ * @deprecated
  * @summary Retrieves daily Datadis production data of a community within a given date interval.
  */
 export const getDatadisDailyProduction = (
@@ -361,6 +372,7 @@ export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof g
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * @deprecated
  * @summary Retrieves daily Datadis production data of a community within a given date interval.
  */
 
@@ -383,6 +395,8 @@ export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof g
 
 
 /**
+ * Deprecated: use `getCommunityEnergyMetrics` and `getCommunity*EnergySeries` for the community; `getPlantEnergyMetrics` and `getPlant*EnergySeries` for a plant.
+ *
  * Retrieves hourly Datadis-derived production data for the plants of the community identified by
  * `communityId`, within the specified date range. **Required: any member of the community.**
  *
@@ -396,6 +410,7 @@ export function useGetDatadisDailyProduction<TData = Awaited<ReturnType<typeof g
  * application is configured with, at which each hour starts (`time` from `00:00` to
  * `23:00`). On the day the clocks go back, two consecutive hours carry the same `date`
  * and `time`; on the day they go forward, the local hour the clocks skip has no entry.
+ * @deprecated
  * @summary Retrieves hourly Datadis production data of a community within a given date interval.
  */
 export const getDatadisHourlyProduction = (
@@ -474,6 +489,7 @@ export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof 
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * @deprecated
  * @summary Retrieves hourly Datadis production data of a community within a given date interval.
  */
 
@@ -496,6 +512,8 @@ export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof 
 
 
 /**
+ * Deprecated: use `getCommunityEnergyMetrics` and `getCommunity*EnergySeries` for the community; `getPlantEnergyMetrics` and `getPlant*EnergySeries` for a plant.
+ *
  * Retrieves monthly Datadis-derived production data for the plants of the community identified by
  * `communityId`, within the specified date range. **Required: any member of the community.**
  *
@@ -508,6 +526,7 @@ export function useGetDatadisHourlyProduction<TData = Awaited<ReturnType<typeof 
  * **`date` and `time`:** `date` is the first day of the month and `time` is `00:00`:
  * the local midnight, in the time zone the application is configured with, at which
  * the month starts.
+ * @deprecated
  * @summary Retrieves monthly Datadis production data of a community within a given date interval.
  */
 export const getDatadisMonthlyProduction = (
@@ -586,6 +605,7 @@ export function useGetDatadisMonthlyProduction<TData = Awaited<ReturnType<typeof
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * @deprecated
  * @summary Retrieves monthly Datadis production data of a community within a given date interval.
  */
 
@@ -790,6 +810,8 @@ export const useSyncYearlyDatadisProduction = <TError = ErrorType<RestError>,
       return useMutation(getSyncYearlyDatadisProductionMutationOptions(options), queryClient);
     }
     /**
+ * Deprecated: use `getCommunityEnergyMetrics` and `getCommunity*EnergySeries` for the community; `getPlantEnergyMetrics` and `getPlant*EnergySeries` for a plant.
+ *
  * Retrieves yearly Datadis-derived production data for the plants of the community identified by
  * `communityId`, within the specified date range. **Required: any member of the community.**
  *
@@ -801,6 +823,7 @@ export const useSyncYearlyDatadisProduction = <TError = ErrorType<RestError>,
  *
  * **`date` and `time`:** `date` is 1 January and `time` is `00:00`: the local midnight,
  * in the time zone the application is configured with, at which the year starts.
+ * @deprecated
  * @summary Retrieves yearly Datadis production data of a community within a given date interval.
  */
 export const getDatadisYearlyProduction = (
@@ -879,6 +902,7 @@ export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof 
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * @deprecated
  * @summary Retrieves yearly Datadis production data of a community within a given date interval.
  */
 
@@ -901,7 +925,10 @@ export function useGetDatadisYearlyProduction<TData = Awaited<ReturnType<typeof 
 
 
 /**
+ * Deprecated: use `getCommunityEnergyMetrics` and `getCommunity{Hourly,Daily,Monthly}EnergySeries` for distributor data; `getPlantInverterProductionToday` for today's inverter data.
+ *
  * Retrieves hourly energy production data for the plants of the community identified by the path `communityId`, within the specified date interval. **Required: any member of the community.** Returns 404 if the community does not exist or the caller is not a member of it, and 403 for a non-member platform admin. When a `supplyId` is provided, it must back a plant of the community in the path; otherwise a 404 is returned (an out-of-community supply is never confirmed to exist).
+ * @deprecated
  * @summary Retrieves hourly energy production data of a community within a given date interval.
  */
 export const getHourlyProduction = (
@@ -980,6 +1007,7 @@ export function useGetHourlyProduction<TData = Awaited<ReturnType<typeof getHour
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * @deprecated
  * @summary Retrieves hourly energy production data of a community within a given date interval.
  */
 
@@ -1178,7 +1206,10 @@ export const useSyncYearlyHuaweiProduction = <TError = ErrorType<RestError>,
       return useMutation(getSyncYearlyHuaweiProductionMutationOptions(options), queryClient);
     }
     /**
+ * Deprecated: use `getCommunityEnergyMetrics` and `getCommunity{Hourly,Daily,Monthly}EnergySeries` for distributor data; `getPlantInverterProductionToday` for today's inverter data.
+ *
  * Retrieves monthly energy production data for the plants of the community identified by the path `communityId`, within the specified date interval. **Required: any member of the community.** Returns 404 if the community does not exist or the caller is not a member of it, and 403 for a non-member platform admin. When a `supplyId` is provided, it must back a plant of the community in the path; otherwise a 404 is returned (an out-of-community supply is never confirmed to exist).
+ * @deprecated
  * @summary Retrieves monthly energy production data of a community within a given date interval.
  */
 export const getMonthlyProduction = (
@@ -1257,6 +1288,7 @@ export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMon
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * @deprecated
  * @summary Retrieves monthly energy production data of a community within a given date interval.
  */
 
@@ -1279,7 +1311,10 @@ export function useGetMonthlyProduction<TData = Awaited<ReturnType<typeof getMon
 
 
 /**
+ * Deprecated: use `getCommunityEnergyMetrics` and `getCommunity{Hourly,Daily,Monthly}EnergySeries` for distributor data; `getPlantInverterProductionToday` for today's inverter data.
+ *
  * Retrieves yearly energy production data for the plants of the community identified by the path `communityId`, within the specified date interval. **Required: any member of the community.** Returns 404 if the community does not exist or the caller is not a member of it, and 403 for a non-member platform admin. When a `supplyId` is provided, it must back a plant of the community in the path; otherwise a 404 is returned (an out-of-community supply is never confirmed to exist).
+ * @deprecated
  * @summary Retrieves yearly energy production data of a community within a given date interval.
  */
 export const getYearlyProduction = (
@@ -1358,6 +1393,7 @@ export function useGetYearlyProduction<TData = Awaited<ReturnType<typeof getYear
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * @deprecated
  * @summary Retrieves yearly energy production data of a community within a given date interval.
  */
 

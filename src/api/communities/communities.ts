@@ -164,6 +164,8 @@ export function useGetAllCommunities<TData = Awaited<ReturnType<typeof getAllCom
  * `code` and `legalId` are unique across communities. Reusing either responds 409
  * with the `COMMUNITY_ALREADY_EXISTS` code, whose `field` param names which of the
  * two collided.
+ *
+ * An `address` longer than 250 characters is answered 400 with the `FIELD_TOO_LONG` code, whose params give the `field`, its `maxLength` and the length `n` sent, and nothing is created.
  * @summary Creates a new energy community.
  */
 export const createCommunity = (
@@ -334,6 +336,8 @@ export function useGetCommunityById<TData = Awaited<ReturnType<typeof getCommuni
  * another community already uses responds 409 with the
  * `COMMUNITY_ALREADY_EXISTS` code, whose `field` param names which of the two
  * collided. Leaving this community's own values unchanged is not a conflict.
+ *
+ * An `address` longer than 250 characters is answered 400 with the `FIELD_TOO_LONG` code, whose params give the `field`, its `maxLength` and the length `n` sent, and nothing is updated.
  * @summary Updates an existing community.
  */
 export const updateCommunity = (

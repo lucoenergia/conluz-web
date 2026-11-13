@@ -681,6 +681,8 @@ export const useChangePassword = <TError = ErrorType<RestError>,
  * `email` also clears it; any other value must be a valid email address.
  *
  * **Required: any authenticated user (edits their own contact details).**
+ *
+ * An `address` longer than 250 characters is answered 400 with the `FIELD_TOO_LONG` code, whose params give the `field`, its `maxLength` and the length `n` sent, and nothing is updated.
  * @summary Updates the contact details of the current user
  */
 export const updateProfile = (
