@@ -158,7 +158,9 @@ describe("SupplyFormDialog: naming the supply", () => {
     });
     renderDialog();
 
-    expect(screen.getByText("Plaza del Pueblo 3")).toBeInTheDocument();
+    // The address input is a textarea, whose value is also its text: only the
+    // name under the title is looked for.
+    expect(screen.getByText("Plaza del Pueblo 3", { ignore: "script, style, textarea" })).toBeInTheDocument();
     expect(screen.queryByText("Cargando...")).not.toBeInTheDocument();
   });
 });

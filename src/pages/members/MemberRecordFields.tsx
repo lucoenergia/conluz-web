@@ -1,5 +1,6 @@
 import type { ChangeEvent } from "react";
 import { TextField } from "@mui/material";
+import { AddressField } from "../../components/AddressField";
 import type { MemberRecordErrors, MemberRecordField, MemberRecordValues } from "./memberRecordForm";
 
 type RecordField = keyof MemberRecordValues;
@@ -62,7 +63,17 @@ export function MemberRecordFields<F extends RecordField>({
         />
       )}
       {shown("contactEmail") && <TextField label={ownLabels.contactEmail ?? "Email de contacto"} type="email" {...fieldProps("contactEmail")} />}
-      {shown("address") && <TextField label="Dirección" {...fieldProps("address")} />}
+      {shown("address") && (
+        <AddressField
+          label="Dirección"
+          value={recordValues.address ?? ""}
+          onValueChange={(value) => onChange("address", value)}
+          error={!!errors.address}
+          helperText={errors.address ?? ""}
+          required={requiredFields.includes("address")}
+          readOnly={readOnly}
+        />
+      )}
       {shown("phoneNumber") && <TextField label="Teléfono" {...fieldProps("phoneNumber")} />}
     </>
   );

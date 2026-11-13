@@ -1,5 +1,6 @@
 import type { FC, Ref } from "react";
 import { TextField, Autocomplete, CircularProgress } from "@mui/material";
+import { AddressField } from "../AddressField";
 import { selectedOwnerOf, type SupplyFieldValues, type SupplyFormField, type SupplyOwnerField } from "./supplyFields";
 
 interface SupplyFormFieldsProps {
@@ -126,17 +127,14 @@ export const SupplyFormFields: FC<SupplyFormFieldsProps> = ({
         variant="outlined"
       />
 
-      <TextField
+      <AddressField
         id="address"
         label="Dirección"
-        type="text"
         name="address"
         value={values.address}
-        onChange={(e) => onChange("address", e.target.value)}
-        slotProps={{ htmlInput: { maxLength: 50, readOnly } }}
+        onValueChange={(value) => onChange("address", value)}
+        readOnly={readOnly}
         required
-        fullWidth
-        variant="outlined"
       />
 
       <TextField

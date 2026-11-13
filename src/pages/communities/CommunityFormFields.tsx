@@ -1,5 +1,6 @@
 import type { FC, Ref } from "react";
 import { TextField } from "@mui/material";
+import { AddressField } from "../../components/AddressField";
 import type { CommunityFieldValues, CommunityFormInput } from "./communityFields";
 
 interface CommunityFormFieldsProps {
@@ -52,13 +53,12 @@ export const CommunityFormFields: FC<CommunityFormFieldsProps> = ({
       helperText={fieldErrors.legalId}
       slotProps={{ htmlInput: { readOnly } }}
     />
-    <TextField
+    <AddressField
       label="Dirección"
-      fullWidth
       value={values.address}
-      onChange={(e) => onChange("address", e.target.value)}
+      onValueChange={(value) => onChange("address", value)}
       inputRef={inputRefs.address}
-      slotProps={{ htmlInput: { readOnly } }}
+      readOnly={readOnly}
     />
   </>
 );

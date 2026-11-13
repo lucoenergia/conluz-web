@@ -13,6 +13,7 @@ import { useActiveCommunityRoleLabel } from "../hooks/permissions";
 import { isValidEmail } from "../utils/email";
 import { Notice } from "../components/Notice";
 import { ActionStatus } from "../components/ActionStatus";
+import { AddressField } from "../components/AddressField";
 
 const PROFILE_SAVED_MESSAGE = "Perfil actualizado correctamente";
 
@@ -54,11 +55,15 @@ export const ProfilePage: FC = () => {
     phone: false,
   });
 
-  const handleChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [field]: event.target.value });
+  const changeValue = (field: string) => (value: string) => {
+    setFormData({ ...formData, [field]: value });
     if (formErrors[field as keyof typeof formErrors]) {
       setFormErrors({ ...formErrors, [field]: false });
     }
+  };
+
+  const handleChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    changeValue(field)(event.target.value);
   };
 
   // The email is optional (lucoenergia/conluz#389): an empty field is valid,
@@ -214,7 +219,7 @@ export const ProfilePage: FC = () => {
               </Typography>
 
               <TextField label="Email" error={formErrors.email} helperText={formErrors.email ? "Introduce un email válido" : ""} type="email" value={formData.email} onChange={handleChange("email")} fullWidth variant="outlined" />
-              <TextField label="Dirección" value={formData.address} onChange={handleChange("address")} fullWidth variant="outlined" />
+              <AddressField label="Dirección" value={formData.address} onValueChange={changeValue("address")} />
               <TextField label="Número de teléfono" value={formData.phone} onChange={handleChange("phone")} fullWidth variant="outlined" />
 
               <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 2 }}>
