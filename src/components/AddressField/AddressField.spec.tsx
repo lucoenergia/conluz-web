@@ -30,13 +30,17 @@ describe("UI-FRM-001 an address takes up to 250 characters", () => {
     expect(ADDRESS_MAX_LENGTH).toBe(250);
   });
 
-  it("UI-FRM-001 typing 251 characters leaves 250", async () => {
+  it("UI-FRM-001 typing past 250 characters leaves 250", async () => {
     const u = userEvent.setup();
     renderWithProviders(<Harness onSubmit={vi.fn()} />);
 
-    await u.type(address(), "a".repeat(251));
+    // Pasted up to near the limit, then typed across it: 251 keystrokes take
+    // seconds on a loaded machine, and the limit is what is under test.
+    await u.click(address());
+    await u.paste("a".repeat(248));
+    await u.type(address(), "bcd");
 
-    expect(address().value).toBe("a".repeat(250));
+    expect(address().value).toBe(`${"a".repeat(248)}bc`);
   });
 
   it("UI-FRM-001 keeps the caller's input attributes next to the limit", () => {
