@@ -12,6 +12,7 @@ export { selectSharingAgreementNextStep } from "../../src/pages/production/selec
 export { selectSharingAgreementLifecycleView } from "../../src/pages/production/sharingAgreementLifecycle";
 
 export { ActionStatus } from "../../src/components/ActionStatus/ActionStatus";
+export { ADDRESS_MAX_LENGTH, AddressField } from "../../src/components/AddressField/AddressField";
 export { AppAccordion } from "../../src/components/AppAccordion/AppAccordion";
 export { LoadingAppAccordion } from "../../src/components/AppAccordion/LoadingAppAccordion";
 export { AppCard } from "../../src/components/AppCard/AppCard";

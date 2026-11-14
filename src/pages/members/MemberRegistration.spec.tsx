@@ -305,6 +305,68 @@ describe("registering a member", () => {
   });
 });
 
+describe("a registration's address (#411)", () => {
+  it("UI-FRM-001 refuses the 251st character", async () => {
+    const u = user();
+    serveMembersPage(mockCustomInstance, { current: [ANA] });
+    await renderPage();
+
+    const dialog = await openRegistration(u);
+    await fill(u, dialog, { Dirección: "a".repeat(250) });
+    await u.type(within(dialog).getByLabelText(/^Dirección/), "b");
+
+    expect(within(dialog).getByLabelText(/^Dirección/)).toHaveValue("a".repeat(250));
+  });
+
+  it("UI-FRM-002 Enter in the address submits the form, and adds no line break", async () => {
+    const u = user();
+    const roster: Roster = { current: [ANA] };
+    const router = serveMembersPage(mockCustomInstance, roster, { register: registerInto(roster) });
+    await renderPage();
+
+    const dialog = await openRegistration(u);
+    await fill(u, dialog, { "DNI/NIE/NIF": "12345678Z", "Nombre completo": "Nuria Nueva", Dirección: "Calle Sol 4" });
+    await u.type(within(dialog).getByLabelText(/^Dirección/), "{Enter}");
+
+    await waitFor(() => expect(requestsTo(router, "POST", REGISTER_URL)).toHaveLength(1));
+    expect(requestsTo(router, "POST", REGISTER_URL)[0].data).toMatchObject({ address: "Calle Sol 4" });
+  });
+
+  it("UI-ERR-002 UI-ERR-007 shows FIELD_TOO_LONG on the address field, keeps every value, and clears once the address is edited", async () => {
+    const u = user();
+    serveMembersPage(mockCustomInstance, { current: [ANA] }, {
+      register: () => {
+        throw restError(400, "FIELD_TOO_LONG", { params: { field: "address", maxLength: "250", n: "251" } });
+      },
+    });
+    await renderPage();
+
+    const dialog = await openRegistration(u);
+    await fill(u, dialog, {
+      "DNI/NIE/NIF": "12345678Z",
+      "Nombre completo": "Nuria Nueva",
+      Dirección: "Calle Sol 4",
+      Teléfono: "600 111 222",
+    });
+    await u.click(within(dialog).getByRole("button", { name: "Registrar" }));
+
+    const address = within(dialog).getByLabelText(/^Dirección/);
+    await waitFor(() => expect(address).toHaveAttribute("aria-invalid", "true"));
+    expect(address).toHaveAccessibleDescription("La dirección puede tener como máximo 250 caracteres. Ahora tiene 251.");
+    expect(within(dialog).queryByRole("alert")).not.toBeInTheDocument();
+    expect(address).toHaveValue("Calle Sol 4");
+    expect(within(dialog).getByLabelText(/^DNI\/NIE\/NIF/)).toHaveValue("12345678Z");
+    expect(within(dialog).getByLabelText(/^Nombre completo/)).toHaveValue("Nuria Nueva");
+    expect(within(dialog).getByLabelText(/^Teléfono/)).toHaveValue("600 111 222");
+
+    await u.type(within(dialog).getByLabelText(/^Teléfono/), "3");
+    expect(address).toHaveAttribute("aria-invalid", "true");
+    await u.type(address, "X");
+    expect(address).toHaveAttribute("aria-invalid", "false");
+    expect(address).not.toHaveAccessibleDescription();
+  });
+});
+
 describe("the add-member picker is gone", () => {
   it("UI-MBR-016 reads no user list and links no existing account", async () => {
     const u = user();

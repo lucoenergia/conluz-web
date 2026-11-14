@@ -193,6 +193,7 @@ const SupplyFormOverlay: FC<SupplyFormOverlayProps> = ({
   const [refusedField, setRefusedField] = useState<SupplyFormField | null>(null);
   const cupsRef = useRef<HTMLInputElement>(null);
   const ownerRef = useRef<HTMLInputElement>(null);
+  const addressRef = useRef<HTMLTextAreaElement>(null);
 
   const dirty =
     !!values &&
@@ -202,7 +203,8 @@ const SupplyFormOverlay: FC<SupplyFormOverlayProps> = ({
   // Once the inputs are editable again, the refused one takes focus.
   useEffect(() => {
     if (saving || !refusedField) return;
-    (refusedField === "cups" ? cupsRef : ownerRef).current?.focus();
+    const refs = { cups: cupsRef, personalId: ownerRef, address: addressRef };
+    refs[refusedField].current?.focus();
     setRefusedField(null);
   }, [saving, refusedField]);
 
@@ -264,6 +266,7 @@ const SupplyFormOverlay: FC<SupplyFormOverlayProps> = ({
           readOnly={saving}
           cupsInputRef={cupsRef}
           ownerInputRef={ownerRef}
+          addressInputRef={addressRef}
         />
       ) : (
         status

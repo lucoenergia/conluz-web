@@ -9,6 +9,7 @@
 export interface RegisterMemberBody {
   /**
      * The member's address, as this community records it. An empty or blank value is recorded as none.
+     * @maxLength 250
      * @nullable
      */
   address?: string | null;

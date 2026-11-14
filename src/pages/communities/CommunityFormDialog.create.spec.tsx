@@ -285,3 +285,77 @@ describe("a refused create (#232)", () => {
     expectTypedValuesKept();
   });
 });
+
+describe("the community's address (#411)", () => {
+  const tooLong = (params: Record<string, string>) =>
+    apiError(400, { code: "FIELD_TOO_LONG", message: SERVER_MESSAGE, params });
+
+  it("UI-FRM-001 refuses the 251st character", async () => {
+    const u = userEvent.setup();
+    renderDialog();
+
+    await u.click(addressInput());
+    await u.paste("a".repeat(250));
+    await u.type(addressInput(), "b");
+
+    expect(addressInput()).toHaveValue("a".repeat(250));
+  });
+
+  it("UI-FRM-002 Enter in the address submits the form, and adds no line break", async () => {
+    const u = userEvent.setup();
+    renderDialog();
+    await fill(u);
+
+    await u.type(addressInput(), "{Enter}");
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+    expect(mutateAsync.mock.calls[0][0].data.address).toBe("Calle Mayor 1");
+  });
+
+  it("UI-ERR-002 UI-ERR-007 shows FIELD_TOO_LONG on the address input, focuses it, and keeps every typed value", async () => {
+    mutateAsync.mockRejectedValue(tooLong({ field: "address", maxLength: "250", n: "251" }));
+    const u = userEvent.setup();
+    renderDialog();
+
+    await fillAndSubmit(u);
+
+    await waitFor(() =>
+      expect(addressInput()).toHaveAccessibleDescription(
+        "La dirección puede tener como máximo 250 caracteres. Ahora tiene 251.",
+      ),
+    );
+    expect(addressInput()).toBeInvalid();
+    expect(addressInput()).toHaveFocus();
+    expect(codeInput()).toBeValid();
+    expect(mockErrorDispatch).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+    expectTypedValuesKept();
+  });
+
+  it("UI-ERR-002 clears the address error once the address is edited, not when another input is", async () => {
+    mutateAsync.mockRejectedValue(tooLong({ field: "address", maxLength: "250", n: "251" }));
+    const u = userEvent.setup();
+    renderDialog();
+    await fillAndSubmit(u);
+    await waitFor(() => expect(addressInput()).toBeInvalid());
+
+    await u.type(nameInput(), "s");
+    expect(addressInput()).toBeInvalid();
+
+    await u.type(addressInput(), "X");
+    expect(addressInput()).toBeValid();
+    expect(addressInput()).not.toHaveAccessibleDescription();
+  });
+
+  it("UI-ERR-007 keeps the generic message when FIELD_TOO_LONG names another field", async () => {
+    mutateAsync.mockRejectedValue(tooLong({ field: "name", maxLength: "100", n: "101" }));
+    const u = userEvent.setup();
+    renderDialog();
+
+    await fillAndSubmit(u);
+
+    await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalledWith(GENERIC));
+    expect(addressInput()).toBeValid();
+    expectTypedValuesKept();
+  });
+});

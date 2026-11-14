@@ -269,6 +269,8 @@ export const useSyncDatadisSupplies = <TError = ErrorType<RestError>,
  * **Whole-file refusals.** If the file is neither UTF-8 nor Windows-1252, its separator cannot be told, it is not valid CSV, its header names an unknown column, a column twice or lacks a required one, or it has more than 1000 data rows, the response is 400 with a dedicated code, and nothing is created.
  *
  * **Rows.** Otherwise each row is created in a transaction of its own, so a row that fails keeps the others. The response has one result per row. An empty `addressRef` or `name` is stored as null. A row with an empty required value, or whose `code` is not a CUPS (once upper-cased, it holds whitespace or is neither 20 nor 22 characters long), fails with `SUPPLY_IMPORT_ROW_INVALID` and lists each rule broken in `errors`, by column and constraint code, for a client to write its own text. A row whose `personalId` matches no member of this community fails with `SUPPLY_OWNER_NOT_FOUND`, whether or not it matches a user; a member whose membership is pending is an owner. The code is stored upper-cased, and is the same CUPS as another once both are completed to 22 characters (a 20-character one with `0F`) and compared case-insensitively. A CUPS a supply of this community already has, including from an earlier row of the same file, fails with `SUPPLY_ALREADY_EXISTS`, so importing the same file again is safe: rows already created fail with that code, and the rest are created. A CUPS only a supply of another community has fails with `SUPPLY_REGISTERED_IN_ANOTHER_COMMUNITY`. No result carries a value of the file. Every `message` is in the language of the request's Accept-Language.
+ *
+ * A row whose `address` has more than 250 characters fails with `SUPPLY_IMPORT_ROW_INVALID` and lists the constraint `FIELD_TOO_LONG` of the column `address` in `errors`, with the params `field`, `maxLength` and `n`, the length of the value.
  * @summary Imports supplies into a community from a CSV file.
  */
 export const importSupplies = (
@@ -367,6 +369,8 @@ export const useImportSupplies = <TError = ErrorType<RestError>,
  * Upon successful creation, the server responds with a status code of 200, providing comprehensive details about the newly created supply, including its unique identifier.
  *
  * In case of failure, the server returns an appropriate error status code along with a descriptive error message, aiding the client in diagnosing and addressing the issue. This endpoint plays a pivotal role in dynamically expanding the system's repertoire of energy supplies.
+ *
+ * An `address` longer than 250 characters is answered 400 with the `FIELD_TOO_LONG` code, whose params give the `field`, its `maxLength` and the length `n` sent, and nothing is created.
  * @summary Creates a new supply within the system.
  */
 export const createSupply = (
@@ -610,6 +614,8 @@ export function useGetSupply<TData = Awaited<ReturnType<typeof getSupply>>, TErr
  * If you don't provide some of the optional parameters, they will be considered as null value so their values will be updated with a null value.
  *
  * A `code` equal to the stored one is kept as it is, even if it was stored before the CUPS rules. A changed `code` follows the rules of `createSupply`: it is upper-cased, and refused with 400 `SUPPLY_CUPS_INVALID` if it is not a CUPS, `SUPPLY_ALREADY_EXISTS` if another supply of this community has the same CUPS, or `SUPPLY_REGISTERED_IN_ANOTHER_COMMUNITY` if only a supply of another community has it.
+ *
+ * An `address` longer than 250 characters is answered 400 with the `FIELD_TOO_LONG` code, whose params give the `field`, its `maxLength` and the length `n` sent, and nothing is updated.
  * @summary Updates supply information
  */
 export const updateSupply = (
@@ -731,8 +737,16 @@ export const useUpdateSupply = <TError = ErrorType<RestError>,
  * that fall in the middle of a local day produce a partial first and last bucket,
  * so a caller wanting whole local days passes both at local midnight, offset
  * included -- for example `2023-04-01T00:00:00+02:00` to
- * `2023-05-01T00:00:00+02:00` for April 2023 in Europe/Madrid. A day with no stored
- * record is returned with zero energy rather than omitted.
+ * `2023-05-01T00:00:00+02:00` for April 2023 in Europe/Madrid.
+ *
+ * **Days without data:** Datadis publishes a month's self-consumption around the
+ * 10th of the following month; until then the supply's records carry consumption
+ * but no self-consumption. A day has data only
+ * when its records carrying self-consumption cover at least 90 % of the day's hours
+ * inside the range. A day without data -- below that, or without any record -- is
+ * returned with zero energy, a null `obtainMethod` and savings of `0.00`, even when
+ * its consumption is already known, so that no false self-consumption or savings is
+ * shown; its consumption appears once its self-consumption is published.
  *
  * Each day is priced over its own local day, clipped to the requested bounds, so a
  * partial edge bucket's savings cover exactly the hours its energy fields cover.
@@ -743,12 +757,8 @@ export const useUpdateSupply = <TError = ErrorType<RestError>,
  * applied only where the resolved tariff carries a rate. `tariffSource` says where
  * the prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`
  * for the supply's contracted tariff -- and a single estimated stretch of the
- * bucket makes the whole amount an estimate. A bucket with no self-consumption,
- * and a bucket with no stored record at all, reports `0.00`.
- *
- * Datadis publishes a month's self-consumption around the 10th of the following
- * month, so the current month has no self-consumption data yet and its savings
- * come back as zero.
+ * bucket makes the whole amount an estimate. A day whose published
+ * self-consumption is zero, and a day without data, reports `0.00`.
  * @summary Retrieves daily consumption data for a specific supply
  */
 export const getSupplyDailyConsumption = (
@@ -898,9 +908,17 @@ export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof g
  *
  * **Every hour:** one bucket is returned for every hour that starts inside the period,
  * in chronological order: 24 for a whole local day, 23 on the day the clocks go forward
- * and 25 on the day they go back. An hour with no stored record is returned with zero
- * energy and a null `obtainMethod` rather than omitted; an hour whose records carry no
- * energy has its `obtainMethod` set.
+ * and 25 on the day they go back.
+ *
+ * **Hours without data:** Datadis publishes a month's self-consumption around the
+ * 10th of the following month; until then the supply's records carry consumption
+ * but no self-consumption. An hour has data only when its record carries
+ * self-consumption. An hour without data -- without self-consumption, or without
+ * any record -- is returned with zero energy, a null `obtainMethod` and savings of
+ * `0.00` rather than omitted, even when its consumption is already known, so that
+ * no false self-consumption or savings is shown; its consumption appears once its
+ * self-consumption is published. An hour whose published record carries no energy
+ * has its `obtainMethod` set.
  *
  * Every energy figure is in kWh, rounded to 3 decimals.
  *
@@ -921,12 +939,8 @@ export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof g
  * only: the power term, access tolls, charges and electricity tax are all excluded, and
  * VAT is applied only where the resolved tariff carries a rate. `tariffSource` says
  * where the prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`
- * for the supply's contracted tariff. An hour with no self-consumption, and an hour with
- * no stored record at all, reports `0.00`.
- *
- * Datadis publishes a month's self-consumption around the 10th of the following
- * month, so the current month has no self-consumption data yet and its savings
- * come back as zero.
+ * for the supply's contracted tariff. An hour whose published self-consumption is
+ * zero, and an hour without data, reports `0.00`.
  * @summary Retrieves hourly consumption data for a specific supply
  */
 export const getSupplyHourlyConsumption = (
@@ -1042,14 +1056,15 @@ export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof 
  * Data is aggregated by month within the specified date range. Every energy figure
  * is in kWh, rounded to 3 decimals.
  *
- * **Source and freshness:** each month is read from a monthly total pre-aggregated
- * from the supply's hourly records. That total is rewritten once a day for every
- * month in the Datadis sync window (by default, the current month and the 12 before
- * it), and on demand through
- * `POST /api/v1/communities/{communityId}/consumption/datadis/sync/monthly`. Nothing
- * else refreshes it: in particular, synchronising the hourly records does not. Until
- * the next refresh, a month can therefore lag the energy metrics, which sum the
- * hourly records when they are read.
+ * **Source:** each month is summed from the supply's hourly records when the series
+ * is read, so it is as fresh as the energy metrics.
+ *
+ * **Months with data only:** Datadis publishes a month's self-consumption around the
+ * 10th of the following month; until then the supply's records carry consumption
+ * but no self-consumption. A month is returned only when the records carrying
+ * self-consumption cover at least 90 % of the month's hours inside the period. A
+ * month below that is omitted, as is a month without any record, so an unpublished
+ * month never reads as zero self-consumption.
  *
  * **Time zone:** each month covers the local calendar month of the time zone the
  * application is configured with, not the UTC one, so its total includes the first
@@ -1085,17 +1100,14 @@ export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof 
  * counted as expected. Energy metrics report the clipped end in `period`, and a series
  * emits no bucket starting at or after it.
  *
- * The bounds select pre-aggregated points by the instant each one is stamped at,
- * which is local midnight on the first day of its month. Pass them with the zone's offset to
- * select the months intended: local `2023-01-01T00:00:00+01:00` is
- * `2022-12-31T23:00:00Z`, so a bound expressed in UTC can select one month too few
- * or too many.
+ * A month is selected if and only if its local midnight on the first day falls
+ * inside the half-open bounds. Pass them with the zone's offset to select the months
+ * intended: local `2023-01-01T00:00:00+01:00` is `2022-12-31T23:00:00Z`, so a bound
+ * expressed in UTC can select one month too few or too many.
  *
- * **Whole months only.** A month is included if and only if its day-1 timestamp
- * falls inside the half-open bounds, and once included it always carries the whole
- * month's energy and the whole month's savings -- bounds falling mid-month never
- * trim it. A request ending on the 15th therefore still returns that month in
- * full.
+ * **Months cut by the end bound.** A month the end bound falls inside covers only
+ * its hours before that bound, energy and savings alike: a request ending on the
+ * 15th returns that month's first half.
  *
  * **Savings:** `savingsEur` is an **estimate** of what the bucket's self-consumed
  * energy was worth. It prices the **energy term before taxes** only: the power
@@ -1103,12 +1115,8 @@ export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof 
  * applied only where the resolved tariff carries a rate. `tariffSource` says where
  * the prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`
  * for the supply's contracted tariff -- and a single estimated stretch of the
- * bucket makes the whole amount an estimate. A bucket with no self-consumption,
- * and a bucket with no stored record at all, reports `0.00`.
- *
- * Datadis publishes a month's self-consumption around the 10th of the following
- * month, so the current month has no self-consumption data yet and its savings
- * come back as zero.
+ * bucket makes the whole amount an estimate. A month whose published
+ * self-consumption is zero reports `0.00`.
  * @summary Retrieves monthly consumption data for a specific supply
  */
 export const getSupplyMonthlyConsumption = (
@@ -2009,7 +2017,10 @@ export function useGetPartitionCoefficientAtTimestamp<TData = Awaited<ReturnType
 
 
 /**
+ * Deprecated: use `getSupplyEnergyMetrics` and the supply consumption series (`assignedProductionKWh`).
+ *
  * This endpoint retrieves daily energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community. **Required: the supply owner or a Community Admin of the supply's community.**
+ * @deprecated
  * @summary Retrieves daily production data assigned to a specific supply
  */
 export const getSupplyDailyProduction = (
@@ -2088,6 +2099,7 @@ export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof ge
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * @deprecated
  * @summary Retrieves daily production data assigned to a specific supply
  */
 
@@ -2110,7 +2122,10 @@ export function useGetSupplyDailyProduction<TData = Awaited<ReturnType<typeof ge
 
 
 /**
+ * Deprecated: use `getSupplyEnergyMetrics` and the supply consumption series (`assignedProductionKWh`).
+ *
  * This endpoint retrieves hourly energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community. **Required: the supply owner or a Community Admin of the supply's community.**
+ * @deprecated
  * @summary Retrieves hourly production data assigned to a specific supply
  */
 export const getSupplyHourlyProduction = (
@@ -2189,6 +2204,7 @@ export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof g
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * @deprecated
  * @summary Retrieves hourly production data assigned to a specific supply
  */
 
@@ -2211,7 +2227,10 @@ export function useGetSupplyHourlyProduction<TData = Awaited<ReturnType<typeof g
 
 
 /**
+ * Deprecated: use `getSupplyEnergyMetrics` and the supply consumption series (`assignedProductionKWh`).
+ *
  * This endpoint retrieves monthly energy production data assigned to a specific supply point within a given date interval. The production values are calculated by multiplying the total production by the supply's partition coefficient. This endpoint is useful for tracking the energy production allocated to individual supply points in the energy community. **Required: the supply owner or a Community Admin of the supply's community.**
+ * @deprecated
  * @summary Retrieves monthly production data assigned to a specific supply
  */
 export const getSupplyMonthlyProduction = (
@@ -2290,6 +2309,7 @@ export function useGetSupplyMonthlyProduction<TData = Awaited<ReturnType<typeof 
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
+ * @deprecated
  * @summary Retrieves monthly production data assigned to a specific supply
  */
 

@@ -8,7 +8,10 @@
 import type { CreatePlantBodyInverterProvider } from './createPlantBodyInverterProvider';
 
 export interface CreatePlantBody {
-  /** @minLength 1 */
+  /**
+     * @minLength 1
+     * @maxLength 250
+     */
   address: string;
   /** The CIL (Codigo de la Instalacion de produccion a efectos de Liquidacion): the Spanish settlement code of the plant, assigned by the distribution company. 25 alphanumeric characters, normalised to upper case with all whitespace removed, and unique across the platform. Omitted, empty or blank means no CIL. */
   cil?: string;

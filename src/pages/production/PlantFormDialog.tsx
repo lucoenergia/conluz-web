@@ -23,7 +23,7 @@ import {
 import { useActiveCommunity } from "../../context/community.context";
 import { useErrorDispatch } from "../../context/error.context";
 import { normaliseCil } from "../../errors/plantCil";
-import { plantSaveRefusalOf } from "../../errors/plantErrors";
+import { plantSaveRefusalOf, type PlantSaveRefusalField } from "../../errors/plantErrors";
 import { useCommunityActions, usePlantActions } from "../../hooks/actions";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
 import { communityLabel, useActiveCommunityName } from "../../hooks/useActiveCommunityName";
@@ -211,7 +211,7 @@ const PlantFormOverlay: FC<PlantFormOverlayProps> = ({
   // state locks the overlay and the inputs (UI-OVL-002).
   const savingRef = useRef(false);
   const [saving, setSaving] = useState(false);
-  const inputRefs: Record<PlantFormField, RefObject<HTMLInputElement | null>> = {
+  const inputRefs: Record<PlantFormField, RefObject<HTMLInputElement | HTMLTextAreaElement | null>> = {
     providerCode: useRef(null),
     cil: useRef(null),
     name: useRef(null),
@@ -221,14 +221,14 @@ const PlantFormOverlay: FC<PlantFormOverlayProps> = ({
     nominalPowerKW: useRef(null),
   };
 
-  // A refused CIL takes focus once the inputs are editable again.
-  const [refusedCil, setRefusedCil] = useState(false);
-  const cilRef = inputRefs.cil;
+  // A refused input takes focus once the inputs are editable again.
+  const [refusedField, setRefusedField] = useState<PlantSaveRefusalField | null>(null);
+  const refusedRef = refusedField ? inputRefs[refusedField] : null;
   useEffect(() => {
-    if (saving || !refusedCil) return;
-    cilRef.current?.focus();
-    setRefusedCil(false);
-  }, [saving, refusedCil, cilRef]);
+    if (saving || !refusedRef) return;
+    refusedRef.current?.focus();
+    setRefusedField(null);
+  }, [saving, refusedRef]);
 
   const selectedSupply = selectedSupplyOf(supplies, values?.supplyCode ?? null);
   const dirty =
@@ -272,11 +272,12 @@ const PlantFormOverlay: FC<PlantFormOverlayProps> = ({
     }
     // The form stays as it was typed. The refusal is worded by its code
     // (UI-ERR-001, UI-ERR-005); without one, the generic text. A refused CIL
-    // is said on its input, the one the admin can fix (UI-PLS-010).
+    // (UI-PLS-010) or a too long address (#411) is said on its input, the one
+    // the admin can fix.
     const refusal = plantSaveRefusalOf(outcome.error, generic);
     if ("field" in refusal) {
-      setFieldErrors({ cil: refusal.message });
-      setRefusedCil(true);
+      setFieldErrors({ [refusal.field]: refusal.message });
+      setRefusedField(refusal.field);
     } else {
       errorDispatch(refusal.form);
     }

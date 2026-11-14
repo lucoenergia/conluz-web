@@ -7,6 +7,7 @@
  */
 
 export interface CreateDefaultAdminUserBody {
+  /** @maxLength 250 */
   address?: string;
   /** @minLength 1 */
   email: string;

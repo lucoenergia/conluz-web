@@ -119,10 +119,24 @@ const PERIOD_TOO_LONG: ApiErrorTemplate = (params) => {
 };
 
 /** A whole number from 1 up, given as a number or as its digits; otherwise undefined. */
-function positiveCount(value: unknown): number | undefined {
+export function positiveCount(value: unknown): number | undefined {
   const count = typeof value === "number" ? value : typeof value === "string" && /^\d+$/.test(value) ? Number(value) : NaN;
   return Number.isInteger(count) && count >= 1 ? count : undefined;
 }
+
+/**
+ * A value longer than its limit (lucoenergia/conluz#574; #411). One code for
+ * every field, so the text states the limit and the length its params carry,
+ * and names the address, the one field that sends it today.
+ */
+const FIELD_TOO_LONG: ApiErrorTemplate = (params) => {
+  const raw = params as Record<string, unknown> | undefined;
+  const maxLength = positiveCount(raw?.maxLength);
+  const length = positiveCount(raw?.n);
+  if (maxLength === undefined || length === undefined) return "El texto es demasiado largo.";
+  const subject = params?.field === "address" ? "La dirección" : "Este campo";
+  return `${subject} puede tener como máximo ${maxLength} caracteres. Ahora tiene ${length}.`;
+};
 
 const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, ApiErrorTemplate>> = {
   SHARING_AGREEMENT_NOT_DRAFT: "Este acuerdo ya no está en borrador, así que esta acción no está disponible.",
@@ -377,6 +391,9 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   ENERGY_METRICS_PERIOD_START_IN_FUTURE: "Este periodo todavía no ha empezado.",
   ENERGY_METRICS_PERIOD_TOO_LONG: PERIOD_TOO_LONG,
 
+  // A value longer than its limit, by any create or edit (#411).
+  FIELD_TOO_LONG,
+
   // Creating or editing a community whose code or NIF another community
   // already has (#232). params.field names which: `code` or `legalId`. A
   // function template, so a missing or other value words both.
@@ -416,6 +433,14 @@ function extractRestError(error: unknown): RestError | undefined {
  */
 export function getFirstApiErrorCode(error: unknown): RestErrorDetailCode | undefined {
   return extractRestError(error)?.errors?.[0]?.code ?? undefined;
+}
+
+/**
+ * The `field` param of the first error detail, which names the input a code
+ * such as COMMUNITY_ALREADY_EXISTS is about. `undefined` when it is absent.
+ */
+export function getFirstApiErrorField(error: unknown): string | undefined {
+  return extractRestError(error)?.errors?.[0]?.params?.field;
 }
 
 /**

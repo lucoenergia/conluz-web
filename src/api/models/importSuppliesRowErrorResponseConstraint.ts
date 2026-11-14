@@ -7,7 +7,7 @@
  */
 
 /**
- * The rule broken: REQUIRED if a required value is empty or blank; INVALID_CUPS if the code, once upper-cased, holds whitespace or is neither 20 nor 22 characters long. A newer server may add rules, so a client must also handle one it does not know.
+ * The rule broken: REQUIRED if a required value is empty or blank; INVALID_CUPS if the code, once upper-cased, holds whitespace or is neither 20 nor 22 characters long; FIELD_TOO_LONG if the value has more than `params.maxLength` characters. A newer server may add rules, so a client must also handle one it does not know.
  */
 export type ImportSuppliesRowErrorResponseConstraint = typeof ImportSuppliesRowErrorResponseConstraint[keyof typeof ImportSuppliesRowErrorResponseConstraint];
 
@@ -15,4 +15,5 @@ export type ImportSuppliesRowErrorResponseConstraint = typeof ImportSuppliesRowE
 export const ImportSuppliesRowErrorResponseConstraint = {
   REQUIRED: 'REQUIRED',
   INVALID_CUPS: 'INVALID_CUPS',
+  FIELD_TOO_LONG: 'FIELD_TOO_LONG',
 } as const;

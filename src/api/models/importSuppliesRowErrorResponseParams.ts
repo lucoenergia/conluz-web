@@ -7,6 +7,6 @@
  */
 
 /**
- * The rule's parameters, keyed in camelCase for use as i18n interpolation variables and formatted without a locale. Empty if the rule has none, as both rules today.
+ * The rule's parameters, keyed in camelCase for use as i18n interpolation variables and formatted without a locale: `field`, `maxLength` and `n` (the value's length) for FIELD_TOO_LONG. Empty if the rule has none.
  */
 export type ImportSuppliesRowErrorResponseParams = {[key: string]: string};

@@ -6,6 +6,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { alpha } from "@mui/material/styles";
 import "dayjs/locale/es";
 import type { SupplyResponse } from "../../api/models";
+import { AddressField } from "../AddressField";
 import { fontSizes } from "../../theme/tokens";
 import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 import { type PlantFieldValues, type PlantFormField } from "./plantFields";
@@ -25,7 +26,7 @@ interface PlantFormFieldsProps {
   /** While a save is in flight, nothing can be changed. */
   readOnly?: boolean;
   /** The inputs an error can be shown on, so the screen can focus one. */
-  inputRefs?: Partial<Record<PlantFormField, Ref<HTMLInputElement>>>;
+  inputRefs?: Partial<Record<PlantFormField, Ref<HTMLInputElement | HTMLTextAreaElement>>>;
 }
 
 /** The plant's inputs, controlled by the screen that holds them. */
@@ -134,20 +135,17 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
       )}
     />
 
-    <TextField
+    <AddressField
       id="address"
       label="Dirección"
-      type="text"
       name="address"
       inputRef={inputRefs.address}
       error={fieldErrors.address !== undefined}
       helperText={fieldErrors.address}
       value={values.address}
-      onChange={(e) => onChange("address", e.target.value)}
-      slotProps={{ htmlInput: { maxLength: 100, readOnly } }}
+      onValueChange={(value) => onChange("address", value)}
+      readOnly={readOnly}
       required
-      fullWidth
-      variant="outlined"
     />
 
     <TextField

@@ -9,6 +9,7 @@
 export interface UpdateMemberRecordBody {
   /**
      * The member's address, as this community records it. Omit it, or send null, an empty or a blank string, if there is none; one already recorded is then cleared.
+     * @maxLength 250
      * @nullable
      */
   address?: string | null;

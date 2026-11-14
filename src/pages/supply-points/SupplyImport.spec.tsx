@@ -418,6 +418,50 @@ describe("importing a file", () => {
   });
 });
 
+describe("a row refused for a too long value (#411)", () => {
+  /** One created row, one with a too long address, and one already in the community. */
+  const tooLongResult = (params: Record<string, string>): ImportSuppliesResponse => ({
+    created: 1,
+    failed: 2,
+    rows: [
+      { line: 2, outcome: "CREATED", code: null, message: null, errors: [] },
+      {
+        line: 3,
+        outcome: "FAILED",
+        code: "SUPPLY_IMPORT_ROW_INVALID",
+        message: "TEST-SERVER-MESSAGE",
+        errors: [{ column: "address", constraint: "FIELD_TOO_LONG", params }],
+      },
+      { line: 4, outcome: "FAILED", code: "SUPPLY_ALREADY_EXISTS", message: "TEST-SERVER-MESSAGE", errors: [] },
+    ],
+  });
+
+  async function failedRowsOf(result: ImportSuppliesResponse) {
+    const u = userEvent.setup();
+    serve(() => result);
+    await renderPage();
+    const dialog = await openImport(u);
+    await importFile(u, dialog);
+    await within(dialog).findByText("Se ha creado 1 punto de suministro. 2 filas tienen errores.", VISIBLE);
+    expect(within(dialog).queryByText(/TEST-SERVER-MESSAGE/)).not.toBeInTheDocument();
+    return failedRows(dialog);
+  }
+
+  it("UI-SUP-022 names the column and states the limit and the length, and the other rows read as before", async () => {
+    expect(await failedRowsOf(tooLongResult({ field: "address", maxLength: "250", n: "251" }))).toEqual([
+      "Línea 3: Dirección: puede tener como máximo 250 caracteres; tiene 251.",
+      "Línea 4: Ya hay un punto de suministro con este CUPS en la comunidad.",
+    ]);
+  });
+
+  it("UI-SUP-022 without readable params, names the column and says the text is too long", async () => {
+    expect(await failedRowsOf(tooLongResult({ field: "address" }))).toEqual([
+      "Línea 3: Dirección: el texto es demasiado largo.",
+      "Línea 4: Ya hay un punto de suministro con este CUPS en la comunidad.",
+    ]);
+  });
+});
+
 describe("a file refused as a whole", () => {
   it.each<[RestErrorDetailCode, Record<string, string> | undefined, RegExp]>([
     ["SUPPLY_IMPORT_INVALID_ENCODING", undefined, /No se ha podido leer el archivo\. .*«Texto Unicode» no sirve\./],

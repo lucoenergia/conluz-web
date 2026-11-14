@@ -5,7 +5,13 @@ import type {
   RestErrorDetailCode,
 } from "../../api/models";
 import { translateErrorDetail } from "../../errors/apiErrorCatalogue";
-import { columnLabel, csvTemplate, downloadCsvTemplate, type CsvImportColumn } from "../../components/CsvImportDialog/csvImport";
+import {
+  columnLabel,
+  csvTemplate,
+  downloadCsvTemplate,
+  fieldTooLongText,
+  type CsvImportColumn,
+} from "../../components/CsvImportDialog/csvImport";
 import { pluralize } from "../../utils/pluralize";
 
 /**
@@ -81,12 +87,14 @@ const ROW_FALLBACK = "No se ha podido crear.";
  * One broken rule of a row, in Spanish, or undefined for a constraint a newer
  * backend added, which the row then words from its `message`.
  */
-export function supplyConstraintText({ column, constraint }: ImportSuppliesRowErrorResponse): string | undefined {
+export function supplyConstraintText({ column, constraint, params }: ImportSuppliesRowErrorResponse): string | undefined {
   switch (constraint) {
     case "REQUIRED":
       return `${columnLabel(SUPPLY_IMPORT_COLUMNS, column)}: es obligatorio.`;
     case "INVALID_CUPS":
       return "CUPS: tiene que tener 20 o 22 caracteres, sin espacios.";
+    case "FIELD_TOO_LONG":
+      return fieldTooLongText(columnLabel(SUPPLY_IMPORT_COLUMNS, column), params);
     default:
       return undefined;
   }

@@ -1,5 +1,6 @@
 import type { FC, Ref } from "react";
 import { TextField, Autocomplete, CircularProgress } from "@mui/material";
+import { AddressField } from "../AddressField";
 import { selectedOwnerOf, type SupplyFieldValues, type SupplyFormField, type SupplyOwnerField } from "./supplyFields";
 
 interface SupplyFormFieldsProps {
@@ -14,6 +15,7 @@ interface SupplyFormFieldsProps {
   readOnly?: boolean;
   cupsInputRef?: Ref<HTMLInputElement>;
   ownerInputRef?: Ref<HTMLInputElement>;
+  addressInputRef?: Ref<HTMLTextAreaElement>;
 }
 
 /** The supply's inputs, controlled by the screen that holds them. */
@@ -26,6 +28,7 @@ export const SupplyFormFields: FC<SupplyFormFieldsProps> = ({
   readOnly = false,
   cupsInputRef,
   ownerInputRef,
+  addressInputRef,
 }) => {
   const ownerOptions = owner?.mode === "choose" ? owner.options : [];
   const selectedOwner = selectedOwnerOf(owner, values.ownerId);
@@ -126,17 +129,20 @@ export const SupplyFormFields: FC<SupplyFormFieldsProps> = ({
         variant="outlined"
       />
 
-      <TextField
+      <AddressField
         id="address"
         label="Dirección"
-        type="text"
         name="address"
         value={values.address}
-        onChange={(e) => onChange("address", e.target.value)}
-        slotProps={{ htmlInput: { maxLength: 50, readOnly } }}
+        onValueChange={(value) => {
+          onChange("address", value);
+          onFieldEdit?.("address");
+        }}
+        inputRef={addressInputRef}
+        error={!!fieldErrors.address}
+        helperText={fieldErrors.address}
+        readOnly={readOnly}
         required
-        fullWidth
-        variant="outlined"
       />
 
       <TextField

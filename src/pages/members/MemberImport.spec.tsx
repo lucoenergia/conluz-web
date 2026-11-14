@@ -333,6 +333,53 @@ describe("importing a file", () => {
   });
 });
 
+describe("a row refused for a too long value (#411)", () => {
+  /** One registered row, one with a too long address and a second broken rule, and one already a member. */
+  const tooLongResult = (params: Record<string, string>): ImportMembersResponse => ({
+    registered: 1,
+    failed: 2,
+    rows: [
+      { line: 2, outcome: "REGISTERED", code: null, message: null, errors: [] },
+      {
+        line: 3,
+        outcome: "FAILED",
+        code: "MEMBERSHIP_IMPORT_ROW_INVALID",
+        message: "TEST-SERVER-MESSAGE",
+        errors: [
+          { column: "memberNumber", constraint: "NOT_AN_INTEGER", params: {} },
+          { column: "address", constraint: "FIELD_TOO_LONG", params },
+        ],
+      },
+      { line: 4, outcome: "FAILED", code: "MEMBERSHIP_ALREADY_EXISTS", message: "TEST-SERVER-MESSAGE", errors: [] },
+    ],
+  });
+
+  async function failedRowsOf(result: ImportMembersResponse) {
+    const u = userEvent.setup();
+    serve({ import: () => result });
+    await renderPage();
+    const dialog = await openImport(u);
+    await importFile(u, dialog);
+    await within(dialog).findByText(/Se ha registrado 1 miembro\./, VISIBLE);
+    expect(within(dialog).queryByText(/TEST-SERVER-MESSAGE/)).not.toBeInTheDocument();
+    return failedRows(dialog);
+  }
+
+  it("UI-MBR-046 names the column and states the limit and the length, and the other rows read as before", async () => {
+    expect(await failedRowsOf(tooLongResult({ field: "address", maxLength: "250", n: "251" }))).toEqual([
+      "Línea 3: Número de miembro: tiene que ser un número entero. Dirección: puede tener como máximo 250 caracteres; tiene 251.",
+      "Línea 4: Ya es miembro de la comunidad.",
+    ]);
+  });
+
+  it("UI-MBR-046 without readable params, names the column and says the text is too long", async () => {
+    expect(await failedRowsOf(tooLongResult({ field: "address", maxLength: "many" }))).toEqual([
+      "Línea 3: Número de miembro: tiene que ser un número entero. Dirección: el texto es demasiado largo.",
+      "Línea 4: Ya es miembro de la comunidad.",
+    ]);
+  });
+});
+
 describe("a file refused as a whole", () => {
   it.each<[RestErrorDetailCode, Record<string, string> | undefined, RegExp]>([
     ["MEMBERSHIP_IMPORT_INVALID_ENCODING", undefined, /No se ha podido leer el archivo\. .*«Texto Unicode» no sirve\./],

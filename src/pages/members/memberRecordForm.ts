@@ -5,6 +5,7 @@ import type {
   UpdateMemberRecordBody,
 } from "../../api/models";
 import { getFirstApiErrorCode, getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
+import { addressTooLongMessage } from "../../errors/fieldTooLong";
 import { isValidEmail } from "../../utils/email";
 
 /** The record as the form edits it: every field as typed, the number included. */
@@ -152,14 +153,26 @@ const statusOf = (error: unknown) =>
   (error as { response?: { status?: number } } | null | undefined)?.response?.status;
 
 /**
- * Where a refused save is shown. Only MEMBERSHIP_WITHOUT_CONTACT_EMAIL names
- * a field: the backend's bean-validation 400 carries neither a code nor the
- * field, so it can only be shown for the whole form.
+ * A too long address (#411), on the address field. Shared by the record edit
+ * and the registration, which both send the address.
+ */
+function addressRefusalOf(error: unknown): MemberRecordRefusal | undefined {
+  const message = addressTooLongMessage(error, "La dirección es demasiado larga.");
+  return message ? { field: "address", message } : undefined;
+}
+
+/**
+ * Where a refused save is shown. MEMBERSHIP_WITHOUT_CONTACT_EMAIL names the
+ * contact email, and FIELD_TOO_LONG the address; the backend's other
+ * bean-validation 400s carry neither a code nor the field, so they can only be
+ * shown for the whole form.
  */
 export function refusalOf(error: unknown): MemberRecordRefusal {
   if (getFirstApiErrorCode(error) === "MEMBERSHIP_WITHOUT_CONTACT_EMAIL") {
     return { field: "contactEmail", message: getFirstApiErrorMessage(error, "Añade un email de contacto.") };
   }
+  const address = addressRefusalOf(error);
+  if (address) return address;
   switch (statusOf(error)) {
     case 403:
       return { form: "No tienes permiso para editar la ficha de este miembro." };
@@ -187,13 +200,15 @@ export function personalIdRefusalOf(error: unknown): MemberRecordRefusal | undef
 
 /**
  * Where a refused registration is shown. USER_PERSONAL_ID_INVALID goes on the
- * personal ID. Every other refusal is for the whole form:
- * MEMBERSHIP_ALREADY_EXISTS is about the person, not one field, and the
- * backend's validation errors name no field.
+ * personal ID, and FIELD_TOO_LONG on the address. Every other refusal is for
+ * the whole form: MEMBERSHIP_ALREADY_EXISTS is about the person, not one
+ * field, and the backend's other validation errors name no field.
  */
 export function registrationRefusalOf(error: unknown): MemberRecordRefusal {
   const personalId = personalIdRefusalOf(error);
   if (personalId) return personalId;
+  const address = addressRefusalOf(error);
+  if (address) return address;
   if (getFirstApiErrorCode(error) === "MEMBERSHIP_ALREADY_EXISTS") {
     return { form: getFirstApiErrorMessage(error, "Ya es miembro de la comunidad.") };
   }

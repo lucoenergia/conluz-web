@@ -7,6 +7,7 @@
  */
 
 export interface CreateCommunityBody {
+  /** @maxLength 250 */
   address?: string;
   /** @minLength 1 */
   code: string;

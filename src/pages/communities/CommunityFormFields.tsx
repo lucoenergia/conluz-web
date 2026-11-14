@@ -1,5 +1,6 @@
 import type { FC, Ref } from "react";
 import { TextField } from "@mui/material";
+import { AddressField } from "../../components/AddressField";
 import type { CommunityFieldValues, CommunityFormInput } from "./communityFields";
 
 interface CommunityFormFieldsProps {
@@ -10,7 +11,7 @@ interface CommunityFormFieldsProps {
   /** While a save is in flight, nothing can be changed. */
   readOnly?: boolean;
   /** The inputs an error can be shown on, so the screen can focus one. */
-  inputRefs?: Partial<Record<CommunityFormInput, Ref<HTMLInputElement>>>;
+  inputRefs?: Partial<Record<CommunityFormInput, Ref<HTMLInputElement | HTMLTextAreaElement>>>;
 }
 
 /** The community's inputs, controlled by the screen that holds them. */
@@ -52,13 +53,14 @@ export const CommunityFormFields: FC<CommunityFormFieldsProps> = ({
       helperText={fieldErrors.legalId}
       slotProps={{ htmlInput: { readOnly } }}
     />
-    <TextField
+    <AddressField
       label="Dirección"
-      fullWidth
       value={values.address}
-      onChange={(e) => onChange("address", e.target.value)}
+      onValueChange={(value) => onChange("address", value)}
       inputRef={inputRefs.address}
-      slotProps={{ htmlInput: { readOnly } }}
+      error={!!fieldErrors.address}
+      helperText={fieldErrors.address}
+      readOnly={readOnly}
     />
   </>
 );

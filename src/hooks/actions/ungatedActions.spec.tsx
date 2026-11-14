@@ -175,9 +175,7 @@ describe("useProfileActions", () => {
   it("saves through the endpoint that takes no user id", async () => {
     const { result } = renderHookWithProviders(() => useProfileActions());
 
-    await expect(result.current.actions.save.run(PROFILE_BODY)).resolves.toBe(
-      true,
-    );
+    await expect(result.current.actions.save.run(PROFILE_BODY)).resolves.toEqual({ ok: true });
     expect(mutateAsync).toHaveBeenCalledWith({ data: PROFILE_BODY });
   });
 
@@ -191,13 +189,12 @@ describe("useProfileActions", () => {
   });
 
   it("reports failure and leaves the cache alone", async () => {
-    mutateAsync.mockRejectedValue(new Error("boom"));
+    const failure = new Error("boom");
+    mutateAsync.mockRejectedValue(failure);
     const { result, queryClient } = renderHookWithProviders(() => useProfileActions());
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
-    await expect(result.current.actions.save.run(PROFILE_BODY)).resolves.toBe(
-      false,
-    );
+    await expect(result.current.actions.save.run(PROFILE_BODY)).resolves.toEqual({ ok: false, error: failure });
     expect(invalidateQueries).not.toHaveBeenCalled();
   });
 });

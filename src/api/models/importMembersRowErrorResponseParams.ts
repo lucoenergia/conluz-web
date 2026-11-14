@@ -7,6 +7,6 @@
  */
 
 /**
- * The rule's parameters, keyed in camelCase for use as i18n interpolation variables and formatted without a locale: `min` for MIN. Empty if the rule has none.
+ * The rule's parameters, keyed in camelCase for use as i18n interpolation variables and formatted without a locale: `min` for MIN; `field`, `maxLength` and `n` (the value's length) for FIELD_TOO_LONG. Empty if the rule has none.
  */
 export type ImportMembersRowErrorResponseParams = {[key: string]: string};

@@ -1,3 +1,4 @@
+import { positiveCount } from "../../errors/apiErrorCatalogue";
 import { triggerBrowserDownload } from "../../utils/triggerBrowserDownload";
 
 /**
@@ -30,4 +31,17 @@ export function downloadCsvTemplate(fileName: string, columns: readonly CsvImpor
 /** How a row reason names a column: by its label, or by its header when the guide does not list it. */
 export function columnLabel(columns: readonly CsvImportColumn[], header: string): string {
   return columns.find((column) => column.header === header)?.label ?? header;
+}
+
+/**
+ * A row's value longer than its column takes (FIELD_TOO_LONG, #411), worded
+ * the same by every import: the column, the limit and the length from
+ * `params`. Without readable params, the column and that the text is too long.
+ */
+export function fieldTooLongText(label: string, params: Record<string, string> | null | undefined): string {
+  const raw = params as Record<string, unknown> | null | undefined;
+  const maxLength = positiveCount(raw?.maxLength);
+  const length = positiveCount(raw?.n);
+  if (maxLength === undefined || length === undefined) return `${label}: el texto es demasiado largo.`;
+  return `${label}: puede tener como máximo ${maxLength} caracteres; tiene ${length}.`;
 }

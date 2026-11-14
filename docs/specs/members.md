@@ -8,7 +8,7 @@
 | **Roles** | A caller whose active community carries `canManageMemberships`; registration, the import, invitations, the send to selected members and the investment need their own capabilities (UI-MBR-008, UI-MBR-018, UI-MBR-012, UI-MBR-037, UI-MBR-043) |
 | **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-007, MEM-008, MEM-009, MEM-010, MEM-011, MEM-012, MEM-013, MEM-025, MEM-026, MEM-027, MEM-028, MEM-029, MEM-030, MEM-033, MEM-034, MEM-037, MEM-038, MEM-039, ACC-003, ACC-008, ACC-010 |
 | **Design reference** | The members page search and filters, screens A–D, mobile and desktop: https://claude.ai/artifact/RwsRYG1EqfMcnBmbysot93 (#331) |
-| **Last reviewed against code** | #370 |
+| **Last reviewed against code** | #411 |
 
 ## Purpose
 
@@ -17,8 +17,8 @@ invite them to join, one by one or several selected at once, see which members a
 the record the community keeps on each member, and suspend or reactivate a member's access to the
 community, and keep it from losing its last active admin; find a member, or the members in a
 given status or role, by searching and filtering the roster; and record the investment each member
-contributed. This document covers only the rules #272, #275, #276, #284, #309, #328, #331 and #358
-introduced; the rest of the members page is not covered yet.
+contributed. This document covers only the rules #272, #275, #276, #284, #309, #328, #331, #358
+and #411 introduced; the rest of the members page is not covered yet.
 
 ## Rules
 
@@ -58,14 +58,16 @@ introduced; the rest of the members page is not covered yet.
 - **Rule:**
   - A blank name, a number that is not an integer of 0 or more, and a contact email that is
     present but not an email MUST each be shown on their field, and MUST NOT send a request.
-  - A `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` refusal MUST be shown on the contact email field.
+  - A `MEMBERSHIP_WITHOUT_CONTACT_EMAIL` refusal MUST be shown on the contact email field, and a
+    `FIELD_TOO_LONG` refusal on the address on the address field (UI-ERR-007).
   - A 403, a 404 and any other refusal MUST each be shown for the whole form, with its own message.
   - After any refusal the dialog MUST stay open, with the values as typed.
 - **Rationale:** An admin's membership must keep a contact email; the field it is about is where
-  the admin will look. The backend's validation errors name no field, so only the client's own
-  checks, and this one code, can be placed on one.
-- **Implements:** MEM-028
-- **Source:** #272
+  the admin will look. A too-long address names its field, and is fixed there. The backend's other
+  validation errors name no field, so only the client's own checks and these two codes can be
+  placed on one.
+- **Implements:** MEM-028, API-004
+- **Source:** #272; changed in #411 (a too-long address on the address field)
 
 ### UI-MBR-004 — A pending invitation says where its next resend goes
 
@@ -370,6 +372,20 @@ introduced; the rest of the members page is not covered yet.
   corrected in one pass.
 - **Implements:** MEM-030
 - **Source:** #284
+
+### UI-MBR-046 — A row refused for a too-long value states the limit and the length
+
+- **Status:** Active
+- **Rule:**
+  - A failed member import row with constraint `FIELD_TOO_LONG` MUST name its column and state the
+    `maxLength` and `n` it carries: "<Columna>: puede tener como máximo {maxLength} caracteres;
+    tiene {n}.".
+  - Without readable params, it MUST read "<Columna>: el texto es demasiado largo.".
+- **Rationale:** The backend uses one generic code for every length limit, so the admin needs the
+  limit and the length to fix the file; without them, the row still says what is wrong, not only
+  that the value is invalid. The supply import words it the same way (UI-SUP-022).
+- **Implements:** MEM-030, API-004
+- **Source:** #411, lucoenergia/conluz#574
 
 ### UI-MBR-024 — After an import, the roster is refreshed and the result says how to invite
 

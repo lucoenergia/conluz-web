@@ -8,7 +8,7 @@
 | **Roles** | Any member of the active community reads them. Deleting: a caller to whom the supply reports `canDelete`. Creating and importing, and seeing each supply's owner in the list: a caller to whom the active community reports `canManage`. Editing: a caller to whom the supply reports `canEdit`. The supply's figures and "Ver análisis completo": a caller to whom the supply reports `canRead` |
 | **Domain rules** | `lucoenergia/conluz`: SUP-001, SUP-002, SUP-004, SUP-005, SUP-006, SUP-007, MEM-026, EPR-003, SEM-001 (lucoenergia/conluz#408) |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `FilterChipsBar` (the list; its shared rules are `record-lists.md`); the detail page's latest published month reuses `src/components/EnergyFigures/` (`PeriodHeader`, `PeriodUsageCard`, `PeriodTotals`), as the historical analysis page does |
-| **Last reviewed against code** | #406 |
+| **Last reviewed against code** | #411 |
 
 ## Purpose
 
@@ -30,7 +30,8 @@ Make the supply detail page the supply's record: what it is, its coefficients, a
 saved in its latest published month, with the same figures the historical analysis page shows for
 it, and a way into that page for whoever may read them.
 
-This document covers only the rules #290, #302, #324, #339, #348, #252, #388 and #372 introduced.
+This document covers only the rules #290, #302, #324, #339, #348, #252, #388, #372 and #411
+introduced.
 
 ## Rules
 
@@ -166,6 +167,21 @@ This document covers only the rules #290, #302, #324, #339, #348, #252, #388 and
 - **Implements:** SUP-005, SUP-006, SUP-007
 - **Source:** #339, lucoenergia/conluz#532
 
+### UI-SUP-022 — A row refused for a too-long value states the limit and the length
+
+- **Status:** Active
+- **Rule:**
+  - A failed supply import row with constraint `FIELD_TOO_LONG` MUST name its column and state the
+    `maxLength` and `n` it carries: "<Columna>: puede tener como máximo {maxLength} caracteres;
+    tiene {n}.".
+  - Without readable params, it MUST read "<Columna>: el texto es demasiado largo.", never the row's
+    `message`.
+- **Rationale:** The backend uses one generic code for every length limit, so the admin needs the
+  limit and the length to fix the file. The constraint is a known one now, so it is worded by the
+  app like the others (UI-SUP-008), with or without its params.
+- **Implements:** API-004
+- **Source:** #411, lucoenergia/conluz#574
+
 ### UI-SUP-009 — A supply refused for its CUPS or its owner is corrected on that input
 
 - **Status:** Active
@@ -176,6 +192,8 @@ This document covers only the rules #290, #302, #324, #339, #348, #252, #388 and
   - A create refused with `SUPPLY_OWNER_NOT_FOUND` MUST do the same on the owner input
     ("Propietario"). The edit form cannot change the owner and sends none, so the code does not
     reach it.
+  - A refusal with `FIELD_TOO_LONG` on the address MUST do the same on the address input
+    (UI-ERR-007).
   - Any other refusal MUST keep the generic message, and MUST keep the overlay open with the values
     typed.
 - **Rationale:** The admin can fix these, and "try later" hides the cause. Focus goes to the input
@@ -183,7 +201,7 @@ This document covers only the rules #290, #302, #324, #339, #348, #252, #388 and
   input may sit outside the sheet's visible part.
 - **Implements:** SUP-002, SUP-006, SUP-007
 - **Source:** #339, lucoenergia/conluz#532; changed in #372 (the form moved into the overlay; focus
-  on the refused input)
+  on the refused input); changed in #411 (a too-long address on the address input)
 
 ### UI-SUP-010 — A supply is named by its name, else its address, else its CUPS
 
