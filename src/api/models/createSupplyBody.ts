@@ -7,7 +7,10 @@
  */
 
 export interface CreateSupplyBody {
-  /** @minLength 1 */
+  /**
+     * @minLength 1
+     * @maxLength 250
+     */
   address: string;
   addressRef?: string;
   /** @minLength 1 */

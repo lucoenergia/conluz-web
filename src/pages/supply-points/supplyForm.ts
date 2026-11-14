@@ -1,8 +1,9 @@
 import type { RestErrorDetailCode } from "../../api/models";
 import { getFirstApiErrorCode, getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
+import { addressTooLongMessage } from "../../errors/fieldTooLong";
 
 /** The supply form's inputs an API refusal can name. */
-export type SupplyField = "cups" | "personalId";
+export type SupplyField = "cups" | "personalId" | "address";
 
 export type SupplyRefusal = { field: SupplyField; message: string } | { form: string };
 
@@ -15,9 +16,10 @@ const CUPS_CODES: readonly RestErrorDetailCode[] = [
 
 /**
  * Where a refused supply create or edit is shown. A refusal about the CUPS
- * goes on the CUPS input, and SUPPLY_OWNER_NOT_FOUND on the owner input when
- * the form lets the admin choose one, each with its catalogue text. Every
- * other refusal keeps the page's own `generic` message.
+ * goes on the CUPS input, SUPPLY_OWNER_NOT_FOUND on the owner input when
+ * the form lets the admin choose one, and FIELD_TOO_LONG on the address input
+ * when it names the address (#411), each with its catalogue text. Every other
+ * refusal keeps the page's own `generic` message.
  */
 export function supplyRefusalOf(error: unknown, generic: string, { ownerField }: { ownerField: boolean }): SupplyRefusal {
   const code = getFirstApiErrorCode(error);
@@ -25,5 +27,7 @@ export function supplyRefusalOf(error: unknown, generic: string, { ownerField }:
   if (code === "SUPPLY_OWNER_NOT_FOUND" && ownerField) {
     return { field: "personalId", message: getFirstApiErrorMessage(error, generic) };
   }
+  const addressTooLong = addressTooLongMessage(error, generic);
+  if (addressTooLong) return { field: "address", message: addressTooLong };
   return { form: generic };
 }

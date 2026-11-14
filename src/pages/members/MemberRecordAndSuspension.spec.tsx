@@ -293,6 +293,75 @@ describe("editing a member record", () => {
   });
 });
 
+describe("editing a member's address (#411)", () => {
+  beforeEach(() => {
+    mockCustomInstance.mockReset();
+  });
+
+  const tooLong = (params: Record<string, string>) => ({
+    response: {
+      status: 400,
+      data: { status: 400, message: "refused", errors: [{ message: "refused", code: "FIELD_TOO_LONG", params }] },
+    },
+  });
+
+  it("UI-FRM-001 refuses the 251st character", async () => {
+    const u = user();
+    serve({ current: [ANA, ADA] });
+    await renderPage();
+
+    const dialog = await openRecordDialog(u, "Ana García");
+    const address = within(dialog).getByLabelText("Dirección");
+    await u.clear(address);
+    await u.paste("a".repeat(250));
+    await u.type(address, "b");
+
+    expect(address).toHaveValue("a".repeat(250));
+  });
+
+  it("UI-FRM-002 Enter in the address submits the form, and adds no line break", async () => {
+    const u = user();
+    const router = serve({ current: [ANA, ADA] }, { record: () => ({}) });
+    await renderPage();
+
+    const dialog = await openRecordDialog(u, "Ana García");
+    await u.type(within(dialog).getByLabelText("Dirección"), ", bajo{Enter}");
+
+    await waitFor(() => expect(requestsTo(router, "PUT", membershipUrl("u-ana", "record"))).toHaveLength(1));
+    expect(requestsTo(router, "PUT", membershipUrl("u-ana", "record"))[0].data).toMatchObject({
+      address: "Calle Mayor 1, bajo",
+    });
+  });
+
+  it("UI-ERR-002 UI-ERR-007 shows FIELD_TOO_LONG on the address field, keeps the form, and clears once the address is edited", async () => {
+    const u = user();
+    serve({ current: [ANA, ADA] }, {
+      record: () => {
+        throw tooLong({ field: "address", maxLength: "250", n: "251" });
+      },
+    });
+    await renderPage();
+
+    const dialog = await openRecordDialog(u, "Ana García");
+    await replace(u, within(dialog).getByLabelText(/Nombre completo/), "Ana García Pérez");
+    await u.click(within(dialog).getByRole("button", { name: "Guardar" }));
+
+    const address = within(dialog).getByLabelText("Dirección");
+    await waitFor(() => expect(address).toHaveAttribute("aria-invalid", "true"));
+    expect(address).toHaveAccessibleDescription("La dirección puede tener como máximo 250 caracteres. Ahora tiene 251.");
+    expect(within(dialog).queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBe(dialog);
+    expect(within(dialog).getByLabelText(/Nombre completo/)).toHaveValue("Ana García Pérez");
+    expect(address).toHaveValue("Calle Mayor 1");
+
+    await u.type(within(dialog).getByLabelText("Teléfono"), "1");
+    expect(address).toHaveAttribute("aria-invalid", "true");
+    await u.type(address, "X");
+    expect(address).toHaveAttribute("aria-invalid", "false");
+    expect(address).not.toHaveAccessibleDescription();
+  });
+});
+
 describe("suspending and reactivating a member", () => {
   beforeEach(() => {
     mockCustomInstance.mockReset();

@@ -324,6 +324,72 @@ describe("PlantFormDialog: creating", () => {
     });
   });
 
+  describe("the address (#411)", () => {
+    const address = () => screen.getByRole("textbox", { name: /^Dirección/ });
+
+    it("UI-FRM-001 refuses the 251st character", async () => {
+      const user = userEvent.setup();
+      setup();
+
+      await user.click(address());
+      await user.paste("a".repeat(250));
+      await user.type(address(), "b");
+
+      expect(address()).toHaveValue("a".repeat(250));
+    });
+
+    it("UI-FRM-002 Enter in the address submits the form, and adds no line break", async () => {
+      const user = userEvent.setup();
+      setup();
+      await fillValid(user);
+
+      await user.type(address(), "{Enter}");
+
+      await waitFor(() => expect(mockMutateAsync).toHaveBeenCalledTimes(1));
+      expect(mockMutateAsync.mock.calls[0][0].data.address).toBe("Calle Luna 3");
+    });
+
+    it("UI-ERR-002 UI-ERR-007 shows FIELD_TOO_LONG on the address input, focuses it, keeps every value and clears once edited", async () => {
+      mockMutateAsync.mockRejectedValue(
+        apiError(400, { code: "FIELD_TOO_LONG", params: { field: "address", maxLength: "250", n: "251" } }),
+      );
+      const user = userEvent.setup();
+      setup();
+      await fillValid(user);
+
+      await user.click(submit());
+
+      await waitFor(() =>
+        expect(address()).toHaveAccessibleDescription(
+          "La dirección puede tener como máximo 250 caracteres. Ahora tiene 251.",
+        ),
+      );
+      await waitFor(() => expect(address()).toHaveFocus());
+      expect(mockErrorDispatch).not.toHaveBeenCalled();
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByLabelText(/^Nombre/)).toHaveValue("Planta Oeste");
+      expect(supplyInput()).toHaveValue("Casa Este (ES0003)");
+      expect(address()).toHaveValue("Calle Luna 3");
+
+      await user.type(screen.getByLabelText(/^Nombre/), "s");
+      expect(address()).toBeInvalid();
+      await user.type(address(), "X");
+      expect(address()).toBeValid();
+    });
+
+    it("UI-OVL-002 the address is read-only while the save is in flight", async () => {
+      mockMutateAsync.mockReturnValue(new Promise(() => {}));
+      const user = userEvent.setup();
+      setup();
+      await fillValid(user);
+
+      await user.click(submit());
+
+      await screen.findByRole("button", { name: "Creando..." });
+      expect(address()).toHaveAttribute("readonly");
+    });
+  });
+
   describe("UI-PLS-007 the connection-date picker, in the sheet at a phone's width", () => {
     beforeEach(() => stubViewport(390));
     afterEach(() => vi.unstubAllGlobals());

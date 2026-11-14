@@ -260,6 +260,100 @@ describe("SupplyFormDialog: a refused creation", () => {
   });
 });
 
+describe("SupplyFormDialog: the address (#411)", () => {
+  const tooLong = (params: Record<string, string>) =>
+    apiError(400, { code: "FIELD_TOO_LONG", message: SERVER_MESSAGE, params });
+
+  async function fill(u: ReturnType<typeof userEvent.setup>) {
+    await u.type(nameInput(), "Casa");
+    await u.click(ownerInput());
+    await u.click(await screen.findByRole("option", { name: "Ana García (12345678Z)" }));
+    await u.type(cupsInput(), "ES0031300119158001DL0F");
+    await u.type(addressInput(), "Calle Mayor 1");
+  }
+
+  it("UI-FRM-001 refuses the 251st character", async () => {
+    const u = userEvent.setup();
+    render();
+
+    await u.click(addressInput());
+    await u.paste("a".repeat(250));
+    await u.type(addressInput(), "b");
+
+    expect(addressInput()).toHaveValue("a".repeat(250));
+  });
+
+  it("UI-FRM-002 Enter in the address submits the form, and adds no line break", async () => {
+    const u = userEvent.setup();
+    render();
+    await fill(u);
+
+    await u.type(addressInput(), "{Enter}");
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+    expect(mutateAsync.mock.calls[0][0].data.address).toBe("Calle Mayor 1");
+  });
+
+  it("UI-ERR-002 UI-ERR-007 shows FIELD_TOO_LONG on the address input, focuses it and keeps every typed value", async () => {
+    mutateAsync.mockRejectedValue(tooLong({ field: "address", maxLength: "250", n: "251" }));
+    const u = userEvent.setup();
+    render();
+
+    await fillAndSubmit(u);
+
+    await waitFor(() =>
+      expect(addressInput()).toHaveAccessibleDescription(
+        "La dirección puede tener como máximo 250 caracteres. Ahora tiene 251.",
+      ),
+    );
+    expect(addressInput()).toBeInvalid();
+    await waitFor(() => expect(addressInput()).toHaveFocus());
+    expect(cupsInput()).toBeValid();
+    expect(screen.queryByText(SERVER_MESSAGE)).not.toBeInTheDocument();
+    expect(mockErrorDispatch).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+    expectTypedValuesKept();
+  });
+
+  it("UI-ERR-002 clears the address error once the address is edited, not when another input is", async () => {
+    mutateAsync.mockRejectedValue(tooLong({ field: "address", maxLength: "250", n: "251" }));
+    const u = userEvent.setup();
+    render();
+    await fillAndSubmit(u);
+    await waitFor(() => expect(addressInput()).toBeInvalid());
+
+    await u.type(nameInput(), "s");
+    expect(addressInput()).toBeInvalid();
+
+    await u.type(addressInput(), "X");
+    expect(addressInput()).toBeValid();
+    expect(addressInput()).not.toHaveAccessibleDescription();
+  });
+
+  it("UI-ERR-007 keeps the generic message when FIELD_TOO_LONG names another field", async () => {
+    mutateAsync.mockRejectedValue(tooLong({ field: "name", maxLength: "100", n: "101" }));
+    const u = userEvent.setup();
+    render();
+
+    await fillAndSubmit(u);
+
+    await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalledWith(GENERIC));
+    expect(addressInput()).toBeValid();
+    expectTypedValuesKept();
+  });
+
+  it("UI-OVL-002 the address is read-only while the create is in flight", async () => {
+    mutateAsync.mockReturnValue(new Promise(() => {}));
+    const u = userEvent.setup();
+    render();
+
+    await fillAndSubmit(u);
+
+    await screen.findByRole("button", { name: "Creando..." });
+    expect(addressInput()).toHaveAttribute("readonly");
+  });
+});
+
 describe("UI-SUP-016 the owner options are the active community's memberships", () => {
   // One membership per state the backend accepts as owner (SUP-002); each
   // record names the person differently from any account.
@@ -496,6 +590,18 @@ describe("UI-SUP-021 a create in flight", () => {
     // Enter in a field submits the form whatever its button shows.
     fireEvent.submit(form);
     fireEvent.submit(form);
+
+    expect(mutateAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it("UI-SUP-021 Enter in the address while the create is in flight sends no second request", async () => {
+    const u = userEvent.setup();
+    const dialog = await sendAndHold(u);
+    await within(dialog).findByRole("button", { name: "Creando..." });
+
+    // The address submits its form on Enter (UI-FRM-002), read-only or not.
+    await u.click(addressInput());
+    await u.keyboard("{Enter}");
 
     expect(mutateAsync).toHaveBeenCalledTimes(1);
   });

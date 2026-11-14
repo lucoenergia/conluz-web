@@ -450,6 +450,44 @@ describe("UI-ERR-006 the too-long refusal states the limit it carries (#378)", (
   });
 });
 
+describe("UI-ERR-007 FIELD_TOO_LONG states the limit and the length it carries (#411)", () => {
+  const tooLong = (params: Record<string, string> | null) =>
+    getFirstApiErrorMessage(apiError(400, { code: "FIELD_TOO_LONG", params }), "fallback");
+
+  it("UI-ERR-007 names the address when the field is the address", () => {
+    expect(tooLong({ field: "address", maxLength: "250", n: "251" })).toBe(
+      "La dirección puede tener como máximo 250 caracteres. Ahora tiene 251.",
+    );
+  });
+
+  it.each<[string, Record<string, string>]>([
+    ["another field", { field: "name", maxLength: "100", n: "140" }],
+    ["a nested field", { field: "defaultAdminUser.address", maxLength: "100", n: "140" }],
+    ["no field", { maxLength: "100", n: "140" }],
+  ])("UI-ERR-007 with %s, speaks of the field", (_case, params) => {
+    expect(tooLong(params)).toBe("Este campo puede tener como máximo 100 caracteres. Ahora tiene 140.");
+  });
+
+  it("UI-ERR-007 reads params sent as numbers the same", () => {
+    // Off the contract, which types params as strings: a backend writing JSON numbers must still be read.
+    const params = { field: "address", maxLength: 250, n: 300 } as unknown as Record<string, string>;
+    expect(tooLong(params)).toBe("La dirección puede tener como máximo 250 caracteres. Ahora tiene 300.");
+  });
+
+  it.each<[string, Record<string, string> | null]>([
+    ["no params", null],
+    ["empty params", {}],
+    ["no length", { field: "address", maxLength: "250" }],
+    ["no limit", { field: "address", n: "251" }],
+    ["a limit that is not a number", { field: "address", maxLength: "abc", n: "251" }],
+    ["a limit of 0", { field: "address", maxLength: "0", n: "251" }],
+    ["a fractional length", { field: "address", maxLength: "250", n: "251.5" }],
+    ["a negative length", { field: "address", maxLength: "250", n: "-1" }],
+  ])("UI-ERR-007 with %s, the generic text, never the server's message", (_case, params) => {
+    expect(tooLong(params)).toBe("El texto es demasiado largo.");
+  });
+});
+
 describe("the last active admin refusal (#309)", () => {
   it("translates MEMBERSHIP_LAST_ACTIVE_ADMIN with the reason and the way forward", () => {
     expect(translateErrorDetail({ message: "raw", code: "MEMBERSHIP_LAST_ACTIVE_ADMIN" }, "fallback")).toBe(

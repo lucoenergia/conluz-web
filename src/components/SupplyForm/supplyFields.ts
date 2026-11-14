@@ -10,7 +10,7 @@ export type SupplyOwnerField =
   | { mode: "show"; fullName: string | null };
 
 /** The inputs an API refusal can be shown on. */
-export type SupplyFormField = "cups" | "personalId";
+export type SupplyFormField = "cups" | "personalId" | "address";
 
 /** What the fields hold. The owner is the chosen membership's id, `null` for none. */
 export interface SupplyFieldValues {

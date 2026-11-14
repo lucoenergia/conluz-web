@@ -6,15 +6,16 @@
 | **Status** | Active |
 | **Routes** | `/profile` |
 | **Roles** | Any signed-in caller |
-| **Domain rules** | `lucoenergia/conluz`: ACC-003, ACC-006 |
+| **Domain rules** | `lucoenergia/conluz`: ACC-003, ACC-006, API-003 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #272 |
+| **Last reviewed against code** | #411 |
 
 ## Purpose
 
 Let a signed-in user change their own contact details. This document covers only the rules #272
-introduced on the email field and the member-number chip; the rest of the profile is not covered
-yet.
+introduced on the email field and the member-number chip, and #411's on how a refused save is
+worded; the address input is [`forms.md`](forms.md)'s (UI-FRM-001, UI-FRM-002), and the rest of
+the profile is not covered yet.
 
 ## Rules
 
@@ -49,6 +50,19 @@ yet.
   state a number the member does not have.
 - **Implements:** ACC-006
 - **Source:** #272
+
+### UI-PRF-004 — A refused save is worded by its code
+
+- **Status:** Active
+- **Rule:** A refused profile save MUST show the catalogue's text for its error detail's code
+  (UI-ERR-001), else the server's message (UI-ERR-003), and "Error al actualizar el perfil. Por
+  favor, inténtalo de nuevo." only when the refusal carries neither. The form MUST keep every value
+  as typed.
+- **Rationale:** One fixed text hid why a save was refused, such as an address over the limit
+  (UI-ERR-007), and left the user to retry what would be refused again. The profile does not place
+  a refusal on an input; it says why where it shows errors.
+- **Implements:** API-003
+- **Source:** #411 (maintainer decision)
 
 ## States
 

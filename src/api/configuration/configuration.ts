@@ -30,6 +30,8 @@ import type { ErrorType } from '../../http/custom-instance';
  *
  * The body is validated: `defaultAdminUser` and its `personalId`, `fullName`, `email` and `password` are required, and a missing or invalid field is answered 400. The `password` must satisfy the password policy: between 15 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded; any character is accepted, including spaces and non-ASCII letters, and there are no composition rules. A password that breaks the policy is answered 400 with the `USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter naming the rule that failed: `TOO_SHORT`, `TOO_LONG` or `TOO_MANY_BYTES`.
  *
+ * An `address` longer than 250 characters is answered 400 with the `FIELD_TOO_LONG` code, whose params give the `field` (`defaultAdminUser.address`), its `maxLength` and the length `n` sent.
+ *
  * The application can only be initialised once: any later call is answered 403.
  * @summary Sets up the initial configuration for the app.
  */
