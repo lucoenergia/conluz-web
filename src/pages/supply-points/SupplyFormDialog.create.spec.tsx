@@ -594,6 +594,18 @@ describe("UI-SUP-021 a create in flight", () => {
     expect(mutateAsync).toHaveBeenCalledTimes(1);
   });
 
+  it("UI-SUP-021 Enter in the address while the create is in flight sends no second request", async () => {
+    const u = userEvent.setup();
+    const dialog = await sendAndHold(u);
+    await within(dialog).findByRole("button", { name: "Creando..." });
+
+    // The address submits its form on Enter (UI-FRM-002), read-only or not.
+    await u.click(addressInput());
+    await u.keyboard("{Enter}");
+
+    expect(mutateAsync).toHaveBeenCalledTimes(1);
+  });
+
   it("UI-OVL-002 stays open on Escape, the backdrop and back while the create runs", async () => {
     const u = userEvent.setup();
     const dialog = await sendAndHold(u);
