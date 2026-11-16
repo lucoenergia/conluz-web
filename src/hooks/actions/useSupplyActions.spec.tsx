@@ -5,17 +5,22 @@ import {
   useDeleteSupply,
   useDisableSupply,
   useEnableSupply,
+  useTransferSupplyOwnership,
   useUpdateSupply,
 } from "../../api/supplies/supplies";
 import { getGetAllPlantsQueryKey, useCreatePlant } from "../../api/plants/plants";
 import { getGetSuppliesByUserIdQueryKey } from "../../api/users/users";
 import { getGetAllCommunitiesQueryKey, getGetCommunityByIdQueryKey } from "../../api/communities/communities";
 import {
+  getGetMembershipDailyConsumptionQueryKey,
   getGetMembershipEnergyMetricsQueryKey,
+  getGetMembershipHourlyConsumptionQueryKey,
+  getGetMembershipHourlyProfileQueryKey,
   getGetMembershipMonthlyConsumptionQueryKey,
+  getGetMembershipPaybackQueryKey,
 } from "../../api/memberships/memberships";
 import { apiError } from "../../test/apiError";
-import { buildSupply, buildSupplyCapabilities } from "../../test/fixtures";
+import { buildMembership, buildSupply, buildSupplyCapabilities } from "../../test/fixtures";
 import { mutation } from "../../test/queryState";
 import { renderHookWithProviders } from "../../test/renderWithProviders";
 import { useSupplyActions } from "./useSupplyActions";
@@ -44,6 +49,7 @@ vi.mock(import("../../api/supplies/supplies"), async (importOriginal) => ({
   useEnableSupply: vi.fn(),
   useDisableSupply: vi.fn(),
   useDeleteSupply: vi.fn(),
+  useTransferSupplyOwnership: vi.fn(),
 }));
 vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -76,6 +82,7 @@ beforeEach(() => {
   vi.mocked(useDisableSupply).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useDeleteSupply).mockReturnValue(mutation.idle({ mutateAsync }));
   vi.mocked(useCreatePlant).mockReturnValue(mutation.idle({ mutateAsync }));
+  vi.mocked(useTransferSupplyOwnership).mockReturnValue(mutation.idle({ mutateAsync }));
 });
 
 describe("useSupplyActions", () => {
@@ -87,8 +94,10 @@ describe("useSupplyActions", () => {
     expect(result.current.actions.disable).toBeUndefined();
     expect(result.current.actions.createPlant).toBeUndefined();
     expect(result.current.actions.remove).toBeUndefined();
+    expect(result.current.actions.transferOwnership).toBeUndefined();
     expect(result.current.outcomes.edit).toEqual({ state: "denied" });
     expect(result.current.outcomes.remove).toEqual({ state: "denied" });
+    expect(result.current.outcomes.transferOwnership).toEqual({ state: "denied" });
   });
 
   it("withholds every action and reports pending while the supply has not arrived", () => {
@@ -260,6 +269,91 @@ describe("useSupplyActions", () => {
       expect(removeQueries).toHaveBeenCalledWith({ queryKey: getGetSupplyQueryKey(SUPPLY_ID), type: "inactive" });
       expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllSuppliesQueryKey(COMMUNITY_ID) });
       expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetSuppliesByUserIdQueryKey(OWNER_ID) });
+    });
+  });
+
+  describe("transferOwnership", () => {
+    const NEW_OWNER = buildMembership({ id: "TEST-NEW-MEMBERSHIP-ID", user: { id: "TEST-NEW-OWNER-ID" }, personalId: "TEST-NEW-PERSONAL-ID" });
+    const REQUEST = { newOwner: NEW_OWNER, effectiveDate: "2026-03-01" };
+
+    it("UI-SUP-024 is handed back only for the supply's own canTransferOwnership", () => {
+      // canEdit and canDelete are other answers: a community admin holds them
+      // too, but they do not stand in for this one.
+      expect(render(supplyWith({ canEdit: true, canDelete: true })).result.current.actions.transferOwnership).toBeUndefined();
+
+      const { result } = render(supplyWith({ canTransferOwnership: true }));
+      expect(result.current.actions.transferOwnership).toBeDefined();
+      expect(result.current.outcomes.transferOwnership).toEqual({ state: "allowed" });
+      expect(result.current.actions.edit).toBeUndefined();
+    });
+
+    it("sends the new owner's personal ID and the effective date, and hands back the transferred supply", async () => {
+      const transferred = buildSupply({ id: SUPPLY_ID, user: { id: NEW_OWNER.user.id } });
+      mutateAsync.mockResolvedValue(transferred);
+      const { result } = render(supplyWith({ canTransferOwnership: true }));
+
+      await expect(result.current.actions.transferOwnership?.run(REQUEST)).resolves.toEqual({ ok: true, supply: transferred });
+      expect(mutateAsync).toHaveBeenCalledWith({
+        supplyId: SUPPLY_ID,
+        data: { newOwnerPersonalId: "TEST-NEW-PERSONAL-ID", effectiveDate: "2026-03-01" },
+      });
+    });
+
+    it.each([
+      ["previous", OWNER_ID],
+      ["new", "TEST-NEW-OWNER-ID"],
+    ])("UI-SUP-028 refreshes every read of the %s owner's supplies and figures", async (_, ownerId) => {
+      const { result, queryClient } = render(supplyWith({ canTransferOwnership: true }));
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await result.current.actions.transferOwnership?.run(REQUEST);
+
+      for (const queryKey of [
+        getGetSuppliesByUserIdQueryKey(ownerId),
+        // Prefixes over every period.
+        getGetMembershipEnergyMetricsQueryKey(COMMUNITY_ID, ownerId),
+        getGetMembershipMonthlyConsumptionQueryKey(COMMUNITY_ID, ownerId),
+        getGetMembershipDailyConsumptionQueryKey(COMMUNITY_ID, ownerId),
+        getGetMembershipHourlyConsumptionQueryKey(COMMUNITY_ID, ownerId),
+        getGetMembershipHourlyProfileQueryKey(COMMUNITY_ID, ownerId),
+        getGetMembershipPaybackQueryKey(COMMUNITY_ID, ownerId),
+      ]) {
+        expect(invalidateQueries).toHaveBeenCalledWith({ queryKey });
+      }
+    });
+
+    it("UI-SUP-028 refreshes the supply and the community's supply list", async () => {
+      const { result, queryClient } = render(supplyWith({ canTransferOwnership: true }));
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await result.current.actions.transferOwnership?.run(REQUEST);
+
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetSupplyQueryKey(SUPPLY_ID) });
+      // No params, so the key is a prefix and every page and filter variant matches.
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllSuppliesQueryKey(COMMUNITY_ID) });
+    });
+
+    it("UI-SUP-028 refreshes only the new owner's reads for a supply that had no owner", async () => {
+      const { result, queryClient } = render(
+        buildSupply({ id: SUPPLY_ID, user: null, capabilities: buildSupplyCapabilities({ canTransferOwnership: true }) }),
+      );
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await result.current.actions.transferOwnership?.run(REQUEST);
+
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetSuppliesByUserIdQueryKey("TEST-NEW-OWNER-ID") });
+      // The supply, the community's list, and seven reads of the new owner.
+      expect(invalidateQueries).toHaveBeenCalledTimes(9);
+    });
+
+    it("hands back the refusal and leaves the cache alone", async () => {
+      const refusal = apiError(409, { code: "SUPPLY_ALREADY_OWNED_BY_USER" });
+      mutateAsync.mockRejectedValue(refusal);
+      const { result, queryClient } = render(supplyWith({ canTransferOwnership: true }));
+      const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+      await expect(result.current.actions.transferOwnership?.run(REQUEST)).resolves.toEqual({ error: refusal });
+      expect(invalidateQueries).not.toHaveBeenCalled();
     });
   });
 });

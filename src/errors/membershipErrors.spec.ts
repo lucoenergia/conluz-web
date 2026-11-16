@@ -166,6 +166,19 @@ describe("the last active admin (#309)", () => {
       "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo. Para eliminarlo, cambia antes el titular de sus puntos de suministro.",
     );
   });
+
+  // The transfer is the way out of the refusal (#423); one "Para eliminarlo"
+  // sentence names it, and the page links to nothing.
+  it.each([
+    ["UI-MBR-015", "member"],
+    ["UI-MBR-029", "admin"],
+  ] as const)("%s tells the %s's removal to change the holder of their supplies first, once", (_, subject) => {
+    const message = removalRefusalMessage(apiError(409, { code: "MEMBERSHIP_OWNS_SUPPLIES" }), subject);
+
+    expect(message).toContain("Para eliminarlo, cambia antes el titular de sus puntos de suministro.");
+    expect(message.match(/para eliminarlo/gi)).toHaveLength(1);
+    expect(message).not.toMatch(/eliminar sus suministros/);
+  });
 });
 
 const refusal = (code: SendInvitationResultResponse["code"], params: Record<string, string> = {}) =>
