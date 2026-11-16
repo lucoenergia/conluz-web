@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { Box, Skeleton, Typography } from "@mui/material";
+import { Box, Skeleton, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
 import WbSunnyRoundedIcon from "@mui/icons-material/WbSunnyRounded";
@@ -9,8 +9,23 @@ import { HomeCard } from "../HomeCard";
 import { NeutralNotice } from "../../../components/EnergyFigures/NeutralNotice";
 import { BestHoursChart } from "./BestHoursChart";
 import { ENERGY_COLORS, swatch } from "../../../components/EnergyFigures/energyColors";
-import { BEST_HOURS_LABEL, CONSUMPTION_SERIES, PRODUCTION_SERIES, toHourlyProfileView, type HourlyProfileView } from "./hourlyProfile";
+import {
+  BEST_HOURS_LABEL,
+  BEST_HOUR_TEXT,
+  CONSUMPTION_SERIES,
+  HOUR_ROWS_LABEL,
+  HOUR_SEGMENTS,
+  NO_SAMPLE_TEXT,
+  PRODUCTION_SERIES,
+  hourBarMark,
+  hourDetail,
+  hourFigure,
+  hourRowName,
+  toHourlyProfileView,
+  type HourlyProfileView,
+} from "./hourlyProfile";
 import { SeriesLegend } from "../../../components/evolution/SeriesLegend";
+import { EnergyEvolutionRows } from "../../../components/evolution/EvolutionRows";
 import { useHourlyProfile } from "./useHourlyProfile";
 
 /** The heading says what the hours are best for; it also names the block's region. */
@@ -48,6 +63,36 @@ const ProfileTable: FC<{ view: Profile }> = ({ view }) => (
   </Box>
 );
 
+/** Wide enough for the figure column's heading, "Tu consumo". */
+const CONSUMPTION_FIGURE_WIDTH = 72;
+
+/**
+ * Below sm, the hours as rows (UI-CHT-001, UI-HOM-015): consumption, with the
+ * assigned energy beneath it, each bar with its own ring or dot; a best hour
+ * carries the lead's sun and says so in its name, never by its tint alone.
+ */
+const ProfileRows: FC<{ view: Profile }> = ({ view }) => (
+  <EnergyEvolutionRows
+    slots={view.rows.slots}
+    look={{ segments: HOUR_SEGMENTS }}
+    scaleEnd={view.rows.scale}
+    header={CONSUMPTION_SERIES}
+    listLabel={HOUR_ROWS_LABEL}
+    detail={hourDetail}
+    value={hourFigure}
+    name={hourRowName}
+    valueWidth={CONSUMPTION_FIGURE_WIDTH}
+    barMark={hourBarMark}
+    gapText={NO_SAMPLE_TEXT}
+    rowMark={{
+      applies: ({ hour }) => hour.best,
+      icon: <WbSunnyRoundedIcon sx={{ fontSize: 14, color: colors.success.main }} />,
+      text: BEST_HOUR_TEXT,
+      tint: ENERGY_COLORS.bestHours,
+    }}
+  />
+);
+
 /**
  * Average consumption against average assigned production across the hours of
  * the day (#201), so the advice to move consumption to sunlit hours can be
@@ -56,6 +101,8 @@ const ProfileTable: FC<{ view: Profile }> = ({ view }) => (
  * member chose it. Loads, fails and retries on its own.
  */
 export const BestHours: FC = () => {
+  const theme = useTheme();
+  const isWide = useMediaQuery(theme.breakpoints.up("sm"), { noSsr: true });
   const { profile, isLoading, isError, retry } = useHourlyProfile();
 
   if (isError) return <LoadErrorAlert message="No se pudieron cargar tus mejores horas." onRetry={retry} />;
@@ -104,7 +151,8 @@ export const BestHours: FC = () => {
           ...(view.hasBestHours ? [{ label: BEST_HOURS_LABEL, swatch: swatch.band }] : []),
         ]}
       />
-      <BestHoursChart view={view} />
+      {/* Below sm the chart is not mounted at all: hidden, it would still draw its bars. */}
+      {isWide ? <BestHoursChart view={view} /> : <ProfileRows view={view} />}
       <ProfileTable view={view} />
     </HomeCard>
   );
