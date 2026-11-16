@@ -38,8 +38,9 @@ scrolling sideways and without missing the part of the series that does not fit.
 
 - **Status:** Active
 - **Rule:** Bar-chart rows MUST be built from the shared rows components in
-  `src/components/evolution/`. A module MAY import `react-apexcharts` only if it is on the lint
-  allowlist with its reason.
+  `src/components/evolution/`. A module MAY import `react-apexcharts`, or import `apexcharts` as a
+  value, only if it is on the lint allowlist with its reason. A type-only import of `apexcharts` is
+  allowed anywhere.
 - **Rationale:** One pattern for every chart, so a phone shows a gap, a measured zero or a partial
   slot the same way everywhere. Each screen used to decide its own mobile layout, which is how the
   member home came to scroll sideways. The allowlist means a new chart module is reviewed before it
