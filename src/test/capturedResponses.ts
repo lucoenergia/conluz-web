@@ -100,6 +100,7 @@ export const CAPTURED_SUPPLIES_BY_USER_ID: SupplyResponse[] = [
       canDelete: true,
       canReadPartitionCoefficients: true,
       canCreatePlant: true,
+      canTransferOwnership: false,
     },
     ownerRecord: {
       fullName: "Member 0",
@@ -146,6 +147,7 @@ export const CAPTURED_SUPPLIES_BY_USER_ID: SupplyResponse[] = [
       canDelete: true,
       canReadPartitionCoefficients: true,
       canCreatePlant: true,
+      canTransferOwnership: false,
     },
     ownerRecord: {
       fullName: "Member 0",

@@ -175,6 +175,7 @@ export const OWNER_SUPPLY_CAPABILITIES = {
   canDelete: false,
   canReadPartitionCoefficients: true,
   canCreatePlant: false,
+  canTransferOwnership: false,
 };
 
 /** The same supply as an admin of its community sees it. */
@@ -541,6 +542,7 @@ export const FIXED_SHARING_AGREEMENTS = [
     name: "Reparto vecinos bloque A",
     notes: "Coeficientes acordados en la asamblea anual de la comunidad.",
     status: "PUBLISHED",
+    distributorFileSentOn: null,
     nominalPowerKW: 120.5,
     createdAt: "2024-06-15T10:00:00Z",
     createdBy: FIXED_COMMUNITY_ADMIN_USER.id,
@@ -553,6 +555,7 @@ export const FIXED_SHARING_AGREEMENTS = [
     name: "Reparto ampliación bloque B",
     notes: "Pendiente de revisión antes de publicarse.",
     status: "DRAFT",
+    distributorFileSentOn: null,
     nominalPowerKW: 45,
     createdAt: "2024-09-01T09:30:00Z",
     createdBy: FIXED_COMMUNITY_ADMIN_USER.id,
@@ -565,6 +568,7 @@ export const FIXED_SHARING_AGREEMENTS = [
     name: "Reparto original 2022",
     notes: "Sustituido por el acuerdo vigente tras la ampliación de potencia.",
     status: "SUPERSEDED",
+    distributorFileSentOn: null,
     nominalPowerKW: 80,
     createdAt: "2022-02-01T08:00:00Z",
     createdBy: null,
@@ -591,6 +595,7 @@ export const SECOND_IN_FORCE_AGREEMENT = {
   name: "Reparto bloque C",
   notes: null,
   status: "PUBLISHED",
+  distributorFileSentOn: null,
   nominalPowerKW: 60,
   createdAt: "2025-03-01T09:00:00Z",
   createdBy: FIXED_COMMUNITY_ADMIN_USER.id,
@@ -1691,6 +1696,7 @@ export const MANAGEMENT_PUBLISHED_AGREEMENT: SharingAgreementResponse = {
   name: "Reparto vecinos bloque A",
   notes: null,
   status: "PUBLISHED",
+  distributorFileSentOn: null,
   nominalPowerKW: 120.5,
   createdAt: "2024-06-15T10:00:00Z",
   createdBy: FIXED_COMMUNITY_ADMIN_USER.id,
