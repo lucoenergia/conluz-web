@@ -188,7 +188,7 @@ export const PlatformPage: FC = () => {
             gates, so each is mounted on the same answer that route requires:
             offering one that redirects home is worse than offering nothing. */}
         {(createCommunity || mayListPlatformAdmins) && (
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={sxStyles.pageContainer}>
             {createCommunity && (
               <Button
                 variant="contained"
@@ -321,18 +321,8 @@ export const PlatformPage: FC = () => {
   }
 
   return (
-    <Box
-      sx={{
-        ...sxStyles.pageContainer,
-        p: { xs: 2, sm: 3, md: 4 },
-        maxWidth: 1200,
-        mx: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: { xs: 2, sm: 3 },
-      }}
-    >
-      <Box>
+    <Box sx={sxStyles.pageRoot}>
+      <Box sx={sxStyles.pageContainer}>
         <Typography variant="h4" component="h1" gutterBottom sx={{ color: colors.text.primary }}>
           Administración de plataforma
         </Typography>

@@ -57,12 +57,14 @@ export const SupplyDetailPage: FC = () => {
   // a second that would say which of the two it was.
   if (isSupplyNotFound) {
     return (
-      <Box sx={sxStyles.pageContainer}>
-        <EmptyState
-          icon={SearchOffIcon}
-          title="Punto de suministro no encontrado"
-          subtitle="Este punto de suministro no existe o no tienes acceso a su comunidad."
-        />
+      <Box sx={sxStyles.pageRoot}>
+        <Box sx={sxStyles.pageContainer}>
+          <EmptyState
+            icon={SearchOffIcon}
+            title="Punto de suministro no encontrado"
+            subtitle="Este punto de suministro no existe o no tienes acceso a su comunidad."
+          />
+        </Box>
       </Box>
     );
   }

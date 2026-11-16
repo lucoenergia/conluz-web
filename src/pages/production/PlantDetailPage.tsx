@@ -61,12 +61,14 @@ export const PlantDetailPage: FC = () => {
   // A plant outside the active community is withheld.
   if (isPlantNotFound) {
     return (
-      <Box sx={sxStyles.pageContainer}>
-        <EmptyState
-          icon={SearchOffIcon}
-          title="Planta no encontrada"
-          subtitle="Esta planta no existe o no tienes acceso a su comunidad."
-        />
+      <Box sx={sxStyles.pageRoot}>
+        <Box sx={sxStyles.pageContainer}>
+          <EmptyState
+            icon={SearchOffIcon}
+            title="Planta no encontrada"
+            subtitle="Esta planta no existe o no tienes acceso a su comunidad."
+          />
+        </Box>
       </Box>
     );
   }
