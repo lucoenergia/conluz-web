@@ -352,7 +352,7 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   // Removing a member who owns supplies in the community (lucoenergia/conluz#412).
   // The way out is changing the holder of their supplies first (#423).
   MEMBERSHIP_OWNS_SUPPLIES:
-    "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo. Para eliminarlo, cambia antes el titular de sus puntos de suministro.",
+    "Este miembro es titular de puntos de suministro en esta comunidad. Si quieres que deje de tener acceso, suspéndelo. Para eliminarlo, cambia antes el titular de sus puntos de suministro.",
   // Demoting or removing the community's last active admin
   // (lucoenergia/conluz#449, #309).
   MEMBERSHIP_LAST_ACTIVE_ADMIN: LAST_ACTIVE_ADMIN_EXPLANATION,

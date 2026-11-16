@@ -30,7 +30,7 @@ export const WithHelperText = () => (
 
 export const NoValue = () => (
   <Form>
-    <ReadOnlyField label="Propietario" value="-" helperText="El propietario no se puede cambiar" />
+    <ReadOnlyField label="Propietario" value="-" helperText="Para cambiarlo, usa «Cambiar titular» en el menú del punto de suministro." />
     <EditableEmail />
   </Form>
 );

@@ -401,16 +401,16 @@ This document covers only the rules #290, #302, #324, #339, #348, #252, #388, #3
 - **Implements:** n/a
 - **Source:** #372
 
-### UI-SUP-023 — The edit form says the owner cannot be changed
+### UI-SUP-023 — The edit form says where the owner is changed
 
 - **Status:** Active
-- **Rule:** The edit form's "Propietario" MUST show the visible helper text "El propietario no se
-  puede cambiar", with an owner and with none ("-").
+- **Rule:** The edit form's "Propietario" MUST show the visible helper text "Para cambiarlo, usa
+  «Cambiar titular» en el menú del punto de suministro.", with an owner and with none ("-").
 - **Rationale:** The update the edit form sends cannot change a supply's owner; the owner changes
-  only through the transfer (UI-SUP-024), so the form says why the field is locked. Blocking
-  reasons are visible text, never tooltips, which a phone cannot show.
+  only through the transfer (UI-SUP-024), so the form points to it instead of calling the field
+  unchangeable. Blocking reasons are visible text, never tooltips, which a phone cannot show.
 - **Implements:** n/a
-- **Source:** #416; rationale changed in #423 (the owner can now change, through the transfer)
+- **Source:** #416; changed in #423 (the owner can now change, through the transfer)
 
 ### UI-SUP-024 — "Cambiar titular" is offered from the supply's own `canTransferOwnership`, in its own overlay
 
@@ -542,7 +542,7 @@ The edit form in the overlay (UI-SUP-019):
 | State | Rendered | Actions available |
 | --- | --- | --- |
 | Loading | Progress in the overlay's body | Cancelar |
-| Form | The supply's values, with the owner in the read-only presentation (UI-FRM-003) and why it cannot be changed (UI-SUP-023); the owner stays read-only, and changes only through the transfer (UI-SUP-024) | Guardar, Cancelar |
+| Form | The supply's values, with the owner in the read-only presentation (UI-FRM-003) and where it is changed (UI-SUP-023); the owner stays read-only, and changes only through the transfer (UI-SUP-024) | Guardar, Cancelar |
 | Not found | The supply detail page's not-found state | Cancelar |
 | Error | The supply detail page's load error | Reintentar, Cancelar |
 

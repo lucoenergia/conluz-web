@@ -124,7 +124,7 @@ export function selectedInvitationsRefusalMessage(error: unknown): string {
  * member first (#309).
  */
 const ADMIN_OWNS_SUPPLIES =
-  "Este administrador es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, primero cámbiale el rol a miembro y después suspéndelo. Para eliminarlo, cambia antes el titular de sus puntos de suministro.";
+  "Este administrador es titular de puntos de suministro en esta comunidad. Si quieres que deje de tener acceso, primero cámbiale el rol a miembro y después suspéndelo. Para eliminarlo, cambia antes el titular de sus puntos de suministro.";
 
 /**
  * Why removing a membership was refused: the reason when the backend gives one

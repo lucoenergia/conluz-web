@@ -68,9 +68,9 @@ export const SupplyFormFields: FC<SupplyFormFieldsProps> = ({
 
       {owner?.mode === "show" && (
         // The owner of an existing supply cannot be changed here, and the form
-        // says so; it is the supply's member record in its community
+        // says where it is; it is the supply's member record in its community
         // (UI-SUP-005, UI-SUP-023).
-        <ReadOnlyField id="owner" label="Propietario" value={owner.fullName || "-"} helperText="El propietario no se puede cambiar" />
+        <ReadOnlyField id="owner" label="Propietario" value={owner.fullName || "-"} helperText="Para cambiarlo, usa «Cambiar titular» en el menú del punto de suministro." />
       )}
 
       <TextField

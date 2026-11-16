@@ -505,7 +505,7 @@ describe("member registration and invitation refusals (#275)", () => {
     ["MEMBERSHIP_INVITATION_UNAVAILABLE", "Ahora mismo no se pueden enviar invitaciones. Inténtalo más tarde."],
     [
       "MEMBERSHIP_OWNS_SUPPLIES",
-      "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo. Para eliminarlo, cambia antes el titular de sus puntos de suministro.",
+      "Este miembro es titular de puntos de suministro en esta comunidad. Si quieres que deje de tener acceso, suspéndelo. Para eliminarlo, cambia antes el titular de sus puntos de suministro.",
     ],
   ] as const)("translates %s", (code, message) => {
     expect(translateErrorDetail({ message: "raw", code }, "fallback")).toBe(message);

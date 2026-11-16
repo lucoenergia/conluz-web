@@ -270,11 +270,11 @@ describe("SupplyFormDialog: the owner", () => {
   it.each([
     ["an owner record", buildMemberRecord({ fullName: "Lucía Martínez Soler" })],
     ["no owner record", null],
-  ])("UI-SUP-023 says under the owner, with %s, that it cannot be changed", (_, ownerRecord) => {
+  ])("UI-SUP-023 says under the owner, with %s, where it is changed", (_, ownerRecord) => {
     setup({ canEdit: true }, { ownerRecord });
 
-    expect(ownerInput()).toHaveAccessibleDescription("El propietario no se puede cambiar");
-    expect(screen.getByText("El propietario no se puede cambiar")).toBeVisible();
+    expect(ownerInput()).toHaveAccessibleDescription("Para cambiarlo, usa «Cambiar titular» en el menú del punto de suministro.");
+    expect(screen.getByText("Para cambiarlo, usa «Cambiar titular» en el menú del punto de suministro.")).toBeVisible();
   });
 
   it("UI-FRM-003 the owner is reached by Tab, and typing, deleting or pasting leaves it unchanged", async () => {
