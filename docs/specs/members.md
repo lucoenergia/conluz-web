@@ -8,7 +8,7 @@
 | **Roles** | A caller whose active community carries `canManageMemberships`; registration, the import, invitations, the send to selected members and the investment need their own capabilities (UI-MBR-008, UI-MBR-018, UI-MBR-012, UI-MBR-037, UI-MBR-043) |
 | **Domain rules** | `lucoenergia/conluz`: MEM-004, MEM-005, MEM-007, MEM-008, MEM-009, MEM-010, MEM-011, MEM-012, MEM-013, MEM-025, MEM-026, MEM-027, MEM-028, MEM-029, MEM-030, MEM-033, MEM-034, MEM-037, MEM-038, MEM-039, ACC-003, ACC-008, ACC-010 |
 | **Design reference** | The members page search and filters, screens A–D, mobile and desktop: https://claude.ai/artifact/RwsRYG1EqfMcnBmbysot93 (#331) |
-| **Last reviewed against code** | #411 |
+| **Last reviewed against code** | #423 |
 
 ## Purpose
 
@@ -17,8 +17,8 @@ invite them to join, one by one or several selected at once, see which members a
 the record the community keeps on each member, and suspend or reactivate a member's access to the
 community, and keep it from losing its last active admin; find a member, or the members in a
 given status or role, by searching and filtering the roster; and record the investment each member
-contributed. This document covers only the rules #272, #275, #276, #284, #309, #328, #331, #358
-and #411 introduced; the rest of the members page is not covered yet.
+contributed. This document covers only the rules #272, #275, #276, #284, #309, #328, #331, #358,
+#411 and #423 introduced or changed; the rest of the members page is not covered yet.
 
 ## Rules
 
@@ -255,13 +255,17 @@ and #411 introduced; the rest of the members page is not covered yet.
 - **Status:** Active
 - **Rule:** When removing a member is refused with `MEMBERSHIP_OWNS_SUPPLIES`, the page MUST say
   that the member owns supplies in this community, recommend suspending them to stop their access,
-  and say their supplies must be deleted first to remove them. The member MUST stay in the roster.
+  and say, in one sentence, that to remove them the holder of their supplies must be changed first
+  (UI-SUP-024). It MUST NOT link to the transfer. The member MUST stay in the roster.
   This applies to a row whose role is `COMMUNITY_MEMBER`; an admin's refusal is UI-MBR-029.
 - **Rationale:** The generic error gave the admin no way forward. Suspending stops the member's
   access in this community without deleting anything, and needs nothing done first, so it is the
-  step the message recommends; deleting the supplies is not done from this page.
+  step the message recommends. Since the transfer exists, changing the holder of their supplies is
+  the way to remove them that keeps the supplies and their history; neither step is done from this
+  page.
 - **Implements:** MEM-029
-- **Source:** #275 (maintainer decision; lucoenergia/conluz#412); #309 (scoped to a member's row)
+- **Source:** #275 (maintainer decision; lucoenergia/conluz#412); #309 (scoped to a member's row);
+  changed in #423 (the way out is the transfer)
 
 ### UI-MBR-016 — The page reads no user list and links no existing account
 
@@ -472,13 +476,14 @@ and #411 introduced; the rest of the members page is not covered yet.
 - **Status:** Active
 - **Rule:** When removing a row whose role is `COMMUNITY_ADMIN` is refused with
   `MEMBERSHIP_OWNS_SUPPLIES`, the page MUST say that the admin owns supplies in this community,
-  recommend changing their role to member and then suspending them to stop their access, and say
-  their supplies must be deleted first to remove them. The admin MUST stay in the roster.
+  recommend changing their role to member and then suspending them to stop their access, and say,
+  in one sentence, that to remove them the holder of their supplies must be changed first
+  (UI-SUP-024). It MUST NOT link to the transfer. The admin MUST stay in the roster.
 - **Rationale:** A community admin cannot suspend another admin, so the member's wording
   (UI-MBR-015) recommended a step the caller cannot take; once demoted, the person can be suspended.
   The removed row's role picks the wording: it is the target's data, not the caller's authorization.
 - **Implements:** MEM-029, MEM-034
-- **Source:** #309, lucoenergia/conluz#449
+- **Source:** #309, lucoenergia/conluz#449; changed in #423 (the way out is the transfer)
 
 ### UI-MBR-030 — Each membership shows one derived status
 
