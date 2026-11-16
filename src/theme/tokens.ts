@@ -114,6 +114,10 @@ export const colors = {
     paper:    "#ffffff",
     surface:  "#f8fafc", // lighter table-header / code-block surface
     inactive: "#f9fafb", // inactive dropzone / input background
+    // The fill of a value that can never be edited from its screen (UI-FRM-003).
+    // 1.23:1 against background.paper, so it reads as a fill inside a white card
+    // or overlay; text.primary on it is 11.87:1, full contrast as type.
+    readOnly: "#e2e8f0",
     errorFaint: "#fef2f2", // very-light error tint
   },
   // Accent hues: stat figures, provider marks, and the member home's assigned

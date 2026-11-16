@@ -109,6 +109,7 @@ call-site opt-in. `.light` is the vivid tone — never put small text on it.
 | `colors.background.paper` | `#ffffff` | Card / modal surface |
 | `colors.background.surface` | `#f8fafc` | Table header / code block |
 | `colors.background.inactive` | `#f9fafb` | Inactive dropzone / input |
+| `colors.background.readOnly` | `#e2e8f0` | Fill of a field never editable from its screen (`ReadOnlyField`, UI-FRM-003). 1.23:1 against `background.paper`; `text.primary` on it is 11.87:1 |
 | `colors.background.errorFaint` | `#fef2f2` | Very-light error tint (hover) |
 
 ### Accent

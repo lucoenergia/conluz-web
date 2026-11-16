@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../test/renderWithProviders";
 import { mutation, query } from "../test/queryState";
 import { apiError } from "../test/apiError";
+import { expectReadOnlyFieldContract, usesReadOnlyPresentation } from "../test/readOnlyField";
 import { buildCurrentUser, buildUserCapabilities } from "../test/fixtures";
 import { CommunityRole } from "../hooks/permissions";
 import type { CurrentUserResponse } from "../api/models";
@@ -274,6 +275,26 @@ describe("ProfilePage identity fields", () => {
     const field = screen.getByLabelText(label);
     expect(field).toHaveValue(value);
     expect(field).toHaveAttribute("readonly");
+  });
+
+  it.each([
+    ["Nombre completo", "Ana García"],
+    ["DNI/NIF", "11111111A"],
+  ])("UI-FRM-003 draws %s read-only, reached by Tab and unchanged by typing, with no helper text", async (label, value) => {
+    const user = userEvent.setup();
+    renderWithProviders(<ProfilePage />);
+
+    const field = screen.getByRole("textbox", { name: label });
+    await expectReadOnlyFieldContract(user, field, value);
+    expect(field).not.toHaveAccessibleDescription();
+  });
+
+  it("UI-FRM-003 leaves the editable inputs of the profile in their own look", () => {
+    renderWithProviders(<ProfilePage />);
+
+    for (const label of ["Email", "Dirección", "Número de teléfono"]) {
+      expect(usesReadOnlyPresentation(screen.getByRole("textbox", { name: label }))).toBe(false);
+    }
   });
 
   it("says how the identity fields are changed, rather than leaving it a mystery", () => {
