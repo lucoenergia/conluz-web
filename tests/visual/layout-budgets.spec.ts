@@ -1616,3 +1616,58 @@ test.describe("#369: the add-supply picker on the shared overlay", () => {
     expect(onTop, "the search field is covered after scrolling the list").toBe(true);
   });
 });
+
+test.describe("#416: a value never editable from its screen", () => {
+  /** A token as getComputedStyle reports it: "rgb(r, g, b)". */
+  const rgb = (hex: string) => `rgb(${[1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)).join(", ")})`;
+
+  // The fill and the border are below the screenshot threshold (profile-page.png
+  // does not change with them), and Vitest reads declared styles without the
+  // cascade, so only a real browser shows the opt-out beats the theme's
+  // MuiOutlinedInput hover and focus highlight.
+  test("UI-FRM-003 the profile's name is filled, caret-less, keeps its border on hover and focus, and rings inside on focus", async ({
+    page,
+  }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+    await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+    await page.goto("/profile");
+
+    const name = page.getByRole("textbox", { name: "Nombre completo" });
+    const email = page.getByRole("textbox", { name: "Email" });
+    // The served user, not an empty field: an unloaded page would measure nothing real.
+    await expect(name).toHaveValue(FIXED_MEMBER_USER.fullName);
+    await stabilizePage(page);
+
+    const styles = (input: typeof name) =>
+      input.evaluate((element) => {
+        const root = element.closest(".MuiOutlinedInput-root");
+        const outline = root?.querySelector("fieldset");
+        if (!root || !outline) throw new Error("not an outlined input");
+        return {
+          background: getComputedStyle(root).backgroundColor,
+          caret: getComputedStyle(element).caretColor,
+          border: getComputedStyle(outline).borderColor,
+          shadow: getComputedStyle(root).boxShadow,
+        };
+      });
+    const border = rgb(colors.border.inactive);
+
+    await page.mouse.move(0, 0);
+    const atRest = await styles(name);
+    expect(atRest.background).toBe(rgb(colors.background.readOnly));
+    expect(atRest.caret).toBe("rgba(0, 0, 0, 0)");
+    expect(atRest.border).toBe(border);
+
+    await name.hover();
+    expect((await styles(name)).border).toBe(border);
+
+    await page.mouse.move(0, 0);
+    await name.focus();
+    const focused = await styles(name);
+    expect(focused.border).toBe(border);
+    expect(focused.shadow).toBe(`${rgb(colors.secondary.main)} 0px 0px 0px 3px inset`);
+
+    expect((await styles(email)).background).not.toBe(rgb(colors.background.readOnly));
+  });
+});
