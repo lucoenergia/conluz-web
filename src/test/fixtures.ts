@@ -153,6 +153,7 @@ export function buildSupplyCapabilities(
     canDelete: false,
     canReadPartitionCoefficients: false,
     canCreatePlant: false,
+    canTransferOwnership: false,
     ...overrides,
   };
 }
@@ -474,6 +475,7 @@ export function buildSharingAgreement(overrides: Partial<SharingAgreementRespons
       updatedAt: null,
       updatedBy: null,
       file: null,
+      distributorFileSentOn: null,
       capabilities: buildSharingAgreementCapabilities(),
     } satisfies SharingAgreementResponse),
     ...overrides,

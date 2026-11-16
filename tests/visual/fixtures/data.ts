@@ -175,6 +175,7 @@ export const OWNER_SUPPLY_CAPABILITIES = {
   canDelete: false,
   canReadPartitionCoefficients: true,
   canCreatePlant: false,
+  canTransferOwnership: false,
 };
 
 /** The same supply as an admin of its community sees it. */
@@ -183,6 +184,7 @@ export const COMMUNITY_ADMIN_SUPPLY_CAPABILITIES = {
   canEdit: true,
   canDelete: true,
   canCreatePlant: true,
+  canTransferOwnership: true,
 };
 
 /**
@@ -1697,6 +1699,7 @@ export const MANAGEMENT_PUBLISHED_AGREEMENT: SharingAgreementResponse = {
   updatedAt: null,
   updatedBy: null,
   file: null,
+  distributorFileSentOn: null,
   capabilities: SHARING_AGREEMENT_CAPABILITIES,
 };
 
