@@ -6,8 +6,12 @@ import { swatch } from "../EnergyFigures/energyColors";
 import { SeriesLegend, type LegendItem } from "./SeriesLegend";
 import { EnergyEvolutionChart, SavingsEvolutionChart } from "./EvolutionCharts";
 import { EnergyEvolutionRows, SavingsEvolutionRows } from "./EvolutionRows";
+import { slotDetail } from "./evolutionChartOptions";
 import { StateMark, type StateMarkKind } from "./StateMark";
 import type { EvolutionCopy, EvolutionView, SeriesLook } from "./evolutionSeries";
+
+/** A slot's noun, in the rows' list names: "Tu energía por día". */
+const UNIT = { hourly: "hora", daily: "día", monthly: "mes" } as const;
 
 /** A legend group: its heading, then its swatches. */
 const LegendGroup: FC<{ heading: string; items: LegendItem[] }> = ({ heading, items }) => (
@@ -91,7 +95,14 @@ export const Evolution: FC<EvolutionProps> = ({ view, look, copy, extraLines, pr
       {isWide ? (
         <EnergyEvolutionChart view={view} look={look} extraLines={extraLines} />
       ) : (
-        <EnergyEvolutionRows view={view} look={look} copy={copy} extraLines={extraLines} />
+        <EnergyEvolutionRows
+          slots={view.slots}
+          look={look}
+          scaleEnd={view.rowScale.energyKWh}
+          header={copy.rowHeader}
+          listLabel={copy.rowsLabel(UNIT[view.granularity])}
+          detail={(slot) => slotDetail(slot, look, extraLines)}
+        />
       )}
       {savings && (
         <>
@@ -100,7 +111,12 @@ export const Evolution: FC<EvolutionProps> = ({ view, look, copy, extraLines, pr
           {isWide ? (
             <SavingsEvolutionChart view={view} look={look} savings={savings} extraLines={extraLines} />
           ) : (
-            <SavingsEvolutionRows view={view} savings={savings} copy={copy} />
+            <SavingsEvolutionRows
+              slots={view.slots}
+              color={savings.color}
+              scaleEnd={view.rowScale.savingsEur}
+              listLabel={copy.savingsRowsLabel(UNIT[view.granularity])}
+            />
           )}
         </>
       )}

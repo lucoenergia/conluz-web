@@ -364,7 +364,7 @@ export function groupsOf<K extends string>(segments: readonly SegmentDefinition<
 }
 
 /** A group's segments added up on a slot, or null on a gap. */
-export function groupSum<K extends string>(slot: EvolutionSlot<K>, group: readonly SegmentDefinition<K>[]): number | null {
+export function groupSum<K extends string>(slot: Pick<EvolutionSlot<K>, "state" | "values">, group: readonly SegmentDefinition<K>[]): number | null {
   if (slot.state.kind === "gap") return null;
   return group.reduce((sum, { key }) => sum + (slot.values[key] ?? 0), 0);
 }

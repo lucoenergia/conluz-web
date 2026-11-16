@@ -23,16 +23,19 @@ export interface SlotFigure {
   value: string;
 }
 
+/** A slot in words: its title, its lines, and its figures. */
+export interface SlotDetail {
+  title: string;
+  lines: string[];
+  figures: SlotFigure[];
+}
+
 /**
  * A slot in words: its date, its state, the page's own lines about the scope
  * (`extraLines`), and its figures when it has any. The tooltip and, below sm,
  * a row's detail (UI-HIS-026) both say exactly this.
  */
-export function slotDetail<K extends string>(
-  slot: EvolutionSlot<K>,
-  look: SeriesLook<K>,
-  extraLines: readonly string[],
-): { title: string; lines: string[]; figures: SlotFigure[] } {
+export function slotDetail<K extends string>(slot: EvolutionSlot<K>, look: SeriesLook<K>, extraLines: readonly string[]): SlotDetail {
   const rows: [string, string | undefined, string, string | null][] = [
     ...look.segments.map(({ key, label, technicalTerm, color }) => [label, technicalTerm, color, slot.texts[key]] as [string, string | undefined, string, string | null]),
     ...(look.savings ? [[look.savings.label, undefined, look.savings.color, slot.savingsText] as [string, undefined, string, string | null]] : []),
