@@ -83,10 +83,11 @@ describe("SharingAgreementFormDialog", () => {
       name: "Reparto 2025",
       notes: "Primer reparto del año",
       nominalPowerKW: 12.5,
+      distributorFileSentOn: null,
     });
   });
 
-  test("UI-AGR-009 edit mode is seeded with the agreement's current values and sends all three fields on submit", async () => {
+  test("UI-AGR-009 edit mode is seeded with the agreement's current values and sends every field on submit", async () => {
     const onSubmit = vi.fn();
     const user = userEvent.setup();
     renderWithProviders(
@@ -112,6 +113,7 @@ describe("SharingAgreementFormDialog", () => {
       name: "Reparto 2024 (revisado)",
       notes: "Nota original",
       nominalPowerKW: 8,
+      distributorFileSentOn: null,
     });
   });
 

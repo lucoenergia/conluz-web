@@ -127,7 +127,7 @@ describe("SharingAgreementDetailHeader", () => {
       const user = userEvent.setup();
       renderHeader();
 
-      const toggle = screen.getByRole("button", { name: "Ver 2 datos más" });
+      const toggle = screen.getByRole("button", { name: "Ver 3 datos más" });
       expect(toggle).toHaveAttribute("aria-expanded", "false");
       expect(screen.queryByText("Revisión anual pendiente")).not.toBeInTheDocument();
 

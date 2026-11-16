@@ -15,3 +15,10 @@ export const MISSING_CAU_MESSAGE = "La planta no tiene configurado el CAU. Añá
 export function hasPlantRegulatoryCode(regulatoryCode: string | null | undefined): regulatoryCode is string {
   return !!regulatoryCode?.trim();
 }
+
+/**
+ * A distributor file sent date after today, said the same way whether the form
+ * catches it before sending or the backend refuses it
+ * (SHARING_AGREEMENT_DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE, #417).
+ */
+export const DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE_MESSAGE = "La fecha de envío no puede ser futura";

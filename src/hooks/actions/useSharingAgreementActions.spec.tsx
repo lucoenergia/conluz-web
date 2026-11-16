@@ -245,13 +245,13 @@ describe("useSharingAgreementActions", () => {
       const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
       const { result } = renderActions(agreement(), queryClient);
 
-      const success = await result.current.actions.update!.run({ name: "Nuevo nombre", nominalPowerKW: 45 });
+      const outcome = await result.current.actions.update!.run({ name: "Nuevo nombre", nominalPowerKW: 45 });
 
-      expect(success).toBe(true);
+      expect(outcome).toEqual({ ok: true });
       expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
         plantId: "plant-1",
         sharingAgreementId: "agreement-1",
-        data: { name: "Nuevo nombre", nominalPowerKW: 45 },
+        data: { name: "Nuevo nombre", notes: undefined, nominalPowerKW: 45, distributorFileSentOn: null },
       });
       expect(invalidateSpy).toHaveBeenCalledWith({
         queryKey: getGetSharingAgreementByIdQueryKey("plant-1", "agreement-1"),
@@ -259,12 +259,13 @@ describe("useSharingAgreementActions", () => {
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: getGetSharingAgreementsQueryKey("plant-1") });
     });
 
-    it("dispatches an error toast and returns false when updating fails", async () => {
-      mockUpdateMutateAsync.mockRejectedValue(new Error("network error"));
+    it("returns the refusal when updating fails, for the screen to place", async () => {
+      const error = new Error("network error");
+      mockUpdateMutateAsync.mockRejectedValue(error);
       const { result } = renderActions();
 
-      expect(await result.current.actions.update!.run({ name: "x", nominalPowerKW: 45 })).toBe(false);
-      await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalled());
+      expect(await result.current.actions.update!.run({ name: "x", nominalPowerKW: 45 })).toEqual({ error });
+      expect(mockErrorDispatch).not.toHaveBeenCalled();
     });
   });
 
