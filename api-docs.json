@@ -48,7 +48,7 @@
       "ActivateCoefficientsBody" : {
         "properties" : {
           "appliedOn" : {
-            "description" : "The date the distributor applied these coefficients (or the corrected date, if any of them are already active). Backdating is allowed; future dates are rejected.",
+            "description" : "First day the coefficient applies; stored as validFrom. The date the distributor applied these coefficients (or the corrected date, if any of them are already active). Backdating is allowed; future dates are rejected.",
             "example" : "2026-03-01",
             "format" : "date",
             "type" : "string"
@@ -90,7 +90,7 @@
       "CloseCoefficientsBody" : {
         "properties" : {
           "closedOn" : {
-            "description" : "The date this coefficient's coverage ends (the exit case: the supply left the distribution), or the corrected date if it was already closed by an earlier call.",
+            "description" : "First day the coefficient no longer applies (exclusive); stored as validTo. Used for the exit case (the supply left the distribution), or as the corrected date if it was already closed by an earlier call.",
             "example" : "2026-03-01",
             "format" : "date",
             "type" : "string"
@@ -1155,8 +1155,8 @@
             "description" : "The agreement that authored the coefficient currently in force. May be the agreement being viewed, or an earlier one."
           },
           "validFrom" : {
-            "description" : "When this coefficient took effect (inclusive)",
-            "example" : "2024-05-23T00:00:00Z",
+            "description" : "First day the coefficient applies (inclusive), at local midnight in the application time zone.",
+            "example" : "2024-05-22T22:00:00Z",
             "format" : "date-time",
             "type" : "string"
           }
@@ -1576,6 +1576,9 @@
               "SUPPLY_IMPORT_ROW_MALFORMED",
               "SUPPLY_HAS_PLANTS",
               "SUPPLY_HAS_PARTITION_COEFFICIENTS",
+              "SUPPLY_ALREADY_OWNED_BY_USER",
+              "SUPPLY_TRANSFER_DATE_IN_FUTURE",
+              "SUPPLY_TRANSFER_DATE_NOT_AFTER_PREVIOUS",
               "SHARING_AGREEMENT_NOT_DRAFT",
               "SHARING_AGREEMENT_HAS_NO_COEFFICIENTS",
               "SHARING_AGREEMENT_NOT_REVERTIBLE",
@@ -1585,6 +1588,7 @@
               "SHARING_AGREEMENT_NOT_PUBLISHED",
               "SHARING_AGREEMENT_COEFFICIENT_NOT_IN_AGREEMENT",
               "SHARING_AGREEMENT_DATE_IN_FUTURE",
+              "SHARING_AGREEMENT_DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE",
               "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
               "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR",
               "SHARING_AGREEMENT_COEFFICIENT_HAS_SUCCESSOR",
@@ -1812,6 +1816,9 @@
               "SUPPLY_IMPORT_ROW_MALFORMED",
               "SUPPLY_HAS_PLANTS",
               "SUPPLY_HAS_PARTITION_COEFFICIENTS",
+              "SUPPLY_ALREADY_OWNED_BY_USER",
+              "SUPPLY_TRANSFER_DATE_IN_FUTURE",
+              "SUPPLY_TRANSFER_DATE_NOT_AFTER_PREVIOUS",
               "SHARING_AGREEMENT_NOT_DRAFT",
               "SHARING_AGREEMENT_HAS_NO_COEFFICIENTS",
               "SHARING_AGREEMENT_NOT_REVERTIBLE",
@@ -1821,6 +1828,7 @@
               "SHARING_AGREEMENT_NOT_PUBLISHED",
               "SHARING_AGREEMENT_COEFFICIENT_NOT_IN_AGREEMENT",
               "SHARING_AGREEMENT_DATE_IN_FUTURE",
+              "SHARING_AGREEMENT_DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE",
               "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
               "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR",
               "SHARING_AGREEMENT_COEFFICIENT_HAS_SUCCESSOR",
@@ -3161,8 +3169,8 @@
             "description" : "Supply this coefficient belongs to"
           },
           "validFrom" : {
-            "description" : "Start of the period during which this coefficient is active (inclusive). Null means this is a pending coefficient, materialised but not yet activated.",
-            "example" : "2024-05-23T00:00:00Z",
+            "description" : "First day the coefficient applies (inclusive), at local midnight in the application time zone. Null means this is a pending coefficient, materialised but not yet activated.",
+            "example" : "2024-05-22T22:00:00Z",
             "format" : "date-time",
             "type" : [
               "string",
@@ -3170,8 +3178,8 @@
             ]
           },
           "validTo" : {
-            "description" : "End of the period (exclusive). Null means the period is still open; combined with a non-null validFrom that makes this the currently active coefficient for its plant.",
-            "example" : "2025-01-01T00:00:00Z",
+            "description" : "First day the coefficient no longer applies (exclusive end of a half-open period [validFrom, validTo)). Null when the period is open; combined with a non-null validFrom that makes this the currently active coefficient for its plant.",
+            "example" : "2024-12-31T23:00:00Z",
             "format" : "date-time",
             "type" : [
               "string",
@@ -4097,6 +4105,9 @@
               "SUPPLY_IMPORT_ROW_MALFORMED",
               "SUPPLY_HAS_PLANTS",
               "SUPPLY_HAS_PARTITION_COEFFICIENTS",
+              "SUPPLY_ALREADY_OWNED_BY_USER",
+              "SUPPLY_TRANSFER_DATE_IN_FUTURE",
+              "SUPPLY_TRANSFER_DATE_NOT_AFTER_PREVIOUS",
               "SHARING_AGREEMENT_NOT_DRAFT",
               "SHARING_AGREEMENT_HAS_NO_COEFFICIENTS",
               "SHARING_AGREEMENT_NOT_REVERTIBLE",
@@ -4106,6 +4117,7 @@
               "SHARING_AGREEMENT_NOT_PUBLISHED",
               "SHARING_AGREEMENT_COEFFICIENT_NOT_IN_AGREEMENT",
               "SHARING_AGREEMENT_DATE_IN_FUTURE",
+              "SHARING_AGREEMENT_DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE",
               "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
               "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR",
               "SHARING_AGREEMENT_COEFFICIENT_HAS_SUCCESSOR",
@@ -4279,6 +4291,9 @@
               "SUPPLY_IMPORT_ROW_MALFORMED",
               "SUPPLY_HAS_PLANTS",
               "SUPPLY_HAS_PARTITION_COEFFICIENTS",
+              "SUPPLY_ALREADY_OWNED_BY_USER",
+              "SUPPLY_TRANSFER_DATE_IN_FUTURE",
+              "SUPPLY_TRANSFER_DATE_NOT_AFTER_PREVIOUS",
               "SHARING_AGREEMENT_NOT_DRAFT",
               "SHARING_AGREEMENT_HAS_NO_COEFFICIENTS",
               "SHARING_AGREEMENT_NOT_REVERTIBLE",
@@ -4288,6 +4303,7 @@
               "SHARING_AGREEMENT_NOT_PUBLISHED",
               "SHARING_AGREEMENT_COEFFICIENT_NOT_IN_AGREEMENT",
               "SHARING_AGREEMENT_DATE_IN_FUTURE",
+              "SHARING_AGREEMENT_DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE",
               "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
               "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR",
               "SHARING_AGREEMENT_COEFFICIENT_HAS_SUCCESSOR",
@@ -4528,8 +4544,8 @@
             ]
           },
           "endDate" : {
-            "description" : "The effective end of this coefficient's coverage. Present only when endState is DERIVED or CLOSED.",
-            "example" : "2025-01-01T00:00:00Z",
+            "description" : "The effective end of this coefficient's coverage: the first day the coefficient no longer applies (exclusive end of a half-open period [validFrom, endDate)). Present only when endState is DERIVED or CLOSED.",
+            "example" : "2024-12-31T23:00:00Z",
             "format" : "date-time",
             "type" : [
               "string",
@@ -4552,8 +4568,8 @@
             "description" : "Supply this coefficient belongs to"
           },
           "validFrom" : {
-            "description" : "Start of the period during which this coefficient is active (inclusive). Null means this is a pending coefficient, materialised but not yet activated.",
-            "example" : "2024-05-23T00:00:00Z",
+            "description" : "First day the coefficient applies (inclusive), at local midnight in the application time zone. Null means this is a pending coefficient, materialised but not yet activated.",
+            "example" : "2024-05-22T22:00:00Z",
             "format" : "date-time",
             "type" : [
               "string",
@@ -4561,8 +4577,8 @@
             ]
           },
           "validTo" : {
-            "description" : "End of the period (exclusive), as stored. Null unless explicitly closed.",
-            "example" : "2025-01-01T00:00:00Z",
+            "description" : "First day the coefficient no longer applies (exclusive end of a half-open period [validFrom, validTo)), as stored. Null when the period is open.",
+            "example" : "2024-12-31T23:00:00Z",
             "format" : "date-time",
             "type" : [
               "string",
@@ -4628,6 +4644,14 @@
           "createdBy" : {
             "description" : "Identifier of the user who created the agreement. Null means it was created by the system (a migration), not by a person",
             "format" : "uuid",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "distributorFileSentOn" : {
+            "description" : "Day the agreement's distributor file was sent to the distributor (local date). Optional. Lower bound from which the distributor is expected to apply the coefficients.",
+            "format" : "date",
             "type" : [
               "string",
               "null"
@@ -4702,6 +4726,7 @@
           "capabilities",
           "createdAt",
           "createdBy",
+          "distributorFileSentOn",
           "file",
           "id",
           "name",
@@ -4736,6 +4761,10 @@
           "canReadPartitionCoefficients" : {
             "description" : "Whether the caller may read this supply's partition coefficients. The same access reading the supply requires -- the coefficients describe the owner's own share.",
             "type" : "boolean"
+          },
+          "canTransferOwnership" : {
+            "description" : "Whether the caller may transfer this supply to another owner (POST /api/v1/supplies/{supplyId}/ownership/transfer). Only a community admin of the supply's community may; its owner may not.",
+            "type" : "boolean"
           }
         },
         "required" : [
@@ -4743,7 +4772,8 @@
           "canDelete",
           "canEdit",
           "canRead",
-          "canReadPartitionCoefficients"
+          "canReadPartitionCoefficients",
+          "canTransferOwnership"
         ],
         "type" : "object"
       },
@@ -5526,6 +5556,26 @@
         },
         "type" : "object"
       },
+      "TransferSupplyOwnershipBody" : {
+        "properties" : {
+          "effectiveDate" : {
+            "description" : "The date the new owner became the supply's holder at the distributor. It cannot be later than today, and must be later than the date of the supply's previous transfer.",
+            "example" : "2026-03-01",
+            "format" : "date",
+            "type" : "string"
+          },
+          "newOwnerPersonalId" : {
+            "description" : "The DNI/NIE/NIF of the member who becomes the supply's owner. It is normalised before the owner is looked up: whitespace (including the no-break space), dots and hyphens are removed and letters are upper-cased, so 12.345.678-a and 12345678A are the same identifier.",
+            "minLength" : 1,
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "effectiveDate",
+          "newOwnerPersonalId"
+        ],
+        "type" : "object"
+      },
       "UpdateCommunityBody" : {
         "properties" : {
           "address" : {
@@ -5692,6 +5742,15 @@
       },
       "UpdateSharingAgreementBody" : {
         "properties" : {
+          "distributorFileSentOn" : {
+            "description" : "Day the agreement's distributor file was sent to the distributor (local date). Optional. Lower bound from which the distributor is expected to apply the coefficients.",
+            "example" : "2026-03-01",
+            "format" : "date",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
           "name" : {
             "description" : "Human-readable label for the agreement",
             "example" : "Reparto 2025-2026",
@@ -18626,7 +18685,7 @@
         ]
       },
       "put" : {
-        "description" : "This endpoint replaces the name, notes and nominal power of a sharing agreement,\nregardless of its status: DRAFT, PUBLISHED and SUPERSEDED agreements can all be\nedited this way. All three fields must be provided; this is a full replacement of\nthe updatable fields, not a partial update. Its status, plant and creation metadata\ncan never be changed through this endpoint. The acting user and the time of the\nedit are recorded as updatedBy/updatedAt on the returned agreement.\n\n**Required: Community Admin**\n\nReturns 404 if the plant or the agreement does not exist, does not belong to this\nplant, or the caller is not a member of its community, to avoid leaking existence.\n\nAuthentication is required using a Bearer token.\n",
+        "description" : "This endpoint replaces the name, notes, nominal power and distributor file sent date\nof a sharing agreement, regardless of its status: DRAFT, PUBLISHED and SUPERSEDED\nagreements can all be edited this way. This is a full replacement of the updatable\nfields, not a partial update: name and nominal power must be provided, and notes or\nthe distributor file sent date, when omitted or null, are cleared. A distributor file\nsent date after today, in the application time zone, is rejected with 400\n(SHARING_AGREEMENT_DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE). Its status, plant and creation metadata\ncan never be changed through this endpoint. The acting user and the time of the\nedit are recorded as updatedBy/updatedAt on the returned agreement.\n\n**Required: Community Admin**\n\nReturns 404 if the plant or the agreement does not exist, does not belong to this\nplant, or the caller is not a member of its community, to avoid leaking existence.\n\nAuthentication is required using a Bearer token.\n",
         "operationId" : "updateSharingAgreement",
         "parameters" : [
           {
@@ -18764,7 +18823,7 @@
             "bearerToken" : [ ]
           }
         ],
-        "summary" : "Replaces a sharing agreement's name, notes and nominal power",
+        "summary" : "Replaces a sharing agreement's name, notes, nominal power and distributor file sent date",
         "tags" : [
           "Sharing agreements"
         ]
@@ -22875,6 +22934,187 @@
           }
         ],
         "summary" : "Retrieves aggregated energy metrics for a specific supply",
+        "tags" : [
+          "Supplies"
+        ]
+      }
+    },
+    "/api/v1/supplies/{supplyId}/ownership/transfer" : {
+      "post" : {
+        "description" : "Makes another member of the supply's community its owner, for example when the holder of the supply changes at the distributor. The new owner receives the supply's whole history: every read through the supply, and every figure of the new owner's membership, includes the periods before the transfer. The previous owner stops reading the supply, and their membership's figures no longer include it, also for the periods they owned it. Every transfer is recorded with the previous and the new owner, the effective date, who made it and when.\n\n**Required: Community Admin of the supply's community.** The supply's owner is answered 403. Anyone who cannot see the supply, a platform admin included, is answered 404.\n\nThe new owner identified by `newOwnerPersonalId` must have a membership in the supply's community, in any state: pending and disabled memberships count. A new owner who has none is reported as not found (404, `SUPPLY_OWNER_NOT_FOUND`), exactly like a `newOwnerPersonalId` that matches no user. Transferring the supply to its current owner is answered 409 `SUPPLY_ALREADY_OWNED_BY_USER`.\n\nThe `effectiveDate` cannot be later than today in the community's time zone (400 `SUPPLY_TRANSFER_DATE_IN_FUTURE`), and must be later than the effective date of the supply's previous transfer (409 `SUPPLY_TRANSFER_DATE_NOT_AFTER_PREVIOUS`). When the request is refused, nothing is changed.\n\nFrom the next Datadis synchronisation, the supply's consumption is requested with the new owner's DNI/NIE/NIF.\n",
+        "operationId" : "transferSupplyOwnership",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "supplyId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TransferSupplyOwnershipBody"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SupplyResponse"
+                }
+              }
+            },
+            "description" : "Supply transferred successfully. The response is the supply with its new owner."
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The request contains invalid data.",
+                  "status" : 400,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The request contains invalid data."
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "You are not authorized to make this request.",
+                  "status" : 401,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request."
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Not authorized" : {
+                    "description" : "Not authorized",
+                    "value" : {
+                      "message" : "You are not authorized to make this request.",
+                      "status" : 403,
+                      "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Password change required" : {
+                    "description" : "Password change required",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "USER_PASSWORD_CHANGE_REQUIRED",
+                          "message" : "You must change your password before you can continue.",
+                          "params" : null
+                        }
+                      ],
+                      "message" : "You must change your password before you can continue.",
+                      "status" : 403,
+                      "timestamp" : "2026-10-06T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request, or your password must be changed first (`USER_PASSWORD_CHANGE_REQUIRED`): while `mustChangePassword` is true on `GET /api/v1/users/current`, every request other than reading the current user, changing the password and logging out is refused."
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The requested data can not be found. Please check you are authorised or this content exists.",
+                  "status" : 404,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "409" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Already owned by the user" : {
+                    "description" : "Already owned by the user",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "SUPPLY_ALREADY_OWNED_BY_USER",
+                          "message" : "This member already owns the supply, so there is nothing to transfer.",
+                          "params" : { }
+                        }
+                      ],
+                      "message" : "This member already owns the supply, so there is nothing to transfer.",
+                      "status" : 409,
+                      "timestamp" : "2026-10-17T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Date not after the previous transfer" : {
+                    "description" : "Date not after the previous transfer",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "SUPPLY_TRANSFER_DATE_NOT_AFTER_PREVIOUS",
+                          "message" : "The transfer date must be later than the date of the previous transfer of the supply.",
+                          "params" : { }
+                        }
+                      ],
+                      "message" : "The transfer date must be later than the date of the previous transfer of the supply.",
+                      "status" : 409,
+                      "timestamp" : "2026-10-17T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "The new owner already owns the supply, or the effective date is not later than the date of the supply's previous transfer. Nothing is changed."
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "There was a problem processing your request.",
+                  "status" : 500,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "There was a problem processing your request."
+          }
+        },
+        "security" : [
+          {
+            "bearerToken" : [ ]
+          }
+        ],
+        "summary" : "Transfers a supply to another member of its community",
         "tags" : [
           "Supplies"
         ]

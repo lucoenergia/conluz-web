@@ -20,4 +20,6 @@ export interface SupplyCapabilitiesResponse {
   canRead: boolean;
   /** Whether the caller may read this supply's partition coefficients. The same access reading the supply requires -- the coefficients describe the owner's own share. */
   canReadPartitionCoefficients: boolean;
+  /** Whether the caller may transfer this supply to another owner (POST /api/v1/supplies/{supplyId}/ownership/transfer). Only a community admin of the supply's community may; its owner may not. */
+  canTransferOwnership: boolean;
 }

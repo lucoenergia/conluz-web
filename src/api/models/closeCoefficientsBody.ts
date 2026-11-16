@@ -7,7 +7,7 @@
  */
 
 export interface CloseCoefficientsBody {
-  /** The date this coefficient's coverage ends (the exit case: the supply left the distribution), or the corrected date if it was already closed by an earlier call. */
+  /** First day the coefficient no longer applies (exclusive); stored as validTo. Used for the exit case (the supply left the distribution), or as the corrected date if it was already closed by an earlier call. */
   closedOn: string;
   /**
      * The coefficients to close or correct, all belonging to this agreement.

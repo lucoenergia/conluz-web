@@ -12,6 +12,6 @@ export interface CurrentCoefficientResponse {
   coefficient: number;
   /** The agreement that authored the coefficient currently in force. May be the agreement being viewed, or an earlier one. */
   sharingAgreement: SharingAgreementReferenceResponse;
-  /** When this coefficient took effect (inclusive) */
+  /** First day the coefficient applies (inclusive), at local midnight in the application time zone. */
   validFrom: string;
 }

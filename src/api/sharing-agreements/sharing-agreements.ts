@@ -556,10 +556,13 @@ export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof get
 
 
 /**
- * This endpoint replaces the name, notes and nominal power of a sharing agreement,
- * regardless of its status: DRAFT, PUBLISHED and SUPERSEDED agreements can all be
- * edited this way. All three fields must be provided; this is a full replacement of
- * the updatable fields, not a partial update. Its status, plant and creation metadata
+ * This endpoint replaces the name, notes, nominal power and distributor file sent date
+ * of a sharing agreement, regardless of its status: DRAFT, PUBLISHED and SUPERSEDED
+ * agreements can all be edited this way. This is a full replacement of the updatable
+ * fields, not a partial update: name and nominal power must be provided, and notes or
+ * the distributor file sent date, when omitted or null, are cleared. A distributor file
+ * sent date after today, in the application time zone, is rejected with 400
+ * (SHARING_AGREEMENT_DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE). Its status, plant and creation metadata
  * can never be changed through this endpoint. The acting user and the time of the
  * edit are recorded as updatedBy/updatedAt on the returned agreement.
  *
@@ -569,7 +572,7 @@ export function useGetSharingAgreementById<TData = Awaited<ReturnType<typeof get
  * plant, or the caller is not a member of its community, to avoid leaking existence.
  *
  * Authentication is required using a Bearer token.
- * @summary Replaces a sharing agreement's name, notes and nominal power
+ * @summary Replaces a sharing agreement's name, notes, nominal power and distributor file sent date
  */
 export const updateSharingAgreement = (
     plantId: string,
@@ -625,7 +628,7 @@ const {mutation: mutationOptions} = options ?
     export type UpdateSharingAgreementMutationVariables = {plantId: string;sharingAgreementId: string;data: UpdateSharingAgreementBody}
 
     /**
- * @summary Replaces a sharing agreement's name, notes and nominal power
+ * @summary Replaces a sharing agreement's name, notes, nominal power and distributor file sent date
  */
 export const useUpdateSharingAgreement = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSharingAgreement>>, TError,UpdateSharingAgreementMutationVariables, TContext>, }
