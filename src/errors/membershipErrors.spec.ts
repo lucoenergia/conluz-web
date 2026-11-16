@@ -117,7 +117,7 @@ describe("resendLimitMessage", () => {
 describe("removalRefusalMessage", () => {
   it("UI-MBR-015 gives the reason a supply owner cannot be removed, recommending suspension", () => {
     expect(removalRefusalMessage(apiError(409, { code: "MEMBERSHIP_OWNS_SUPPLIES" }))).toBe(
-      "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.",
+      "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo. Para eliminarlo, cambia antes el titular de sus puntos de suministro.",
     );
   });
 
@@ -129,7 +129,7 @@ describe("removalRefusalMessage", () => {
 describe("the last active admin (#309)", () => {
   const REASON = "Es el último administrador activo de la comunidad. Primero haz administrador a otro miembro activo.";
   const ADMIN_OWNS_SUPPLIES =
-    "Este administrador es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, primero cámbiale el rol a miembro y después suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.";
+    "Este administrador es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, primero cámbiale el rol a miembro y después suspéndelo. Para eliminarlo, cambia antes el titular de sus puntos de suministro.";
 
   it("UI-MBR-028 counts the refusal as a stale row for the role change and the removal", () => {
     expect(STALE_ROW_CODES.changeRole).toContain("MEMBERSHIP_LAST_ACTIVE_ADMIN");
@@ -163,7 +163,7 @@ describe("the last active admin (#309)", () => {
 
   it("UI-MBR-015 keeps the supplies wording for a member", () => {
     expect(removalRefusalMessage(apiError(409, { code: "MEMBERSHIP_OWNS_SUPPLIES" }), "member")).toBe(
-      "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.",
+      "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo. Para eliminarlo, cambia antes el titular de sus puntos de suministro.",
     );
   });
 });
