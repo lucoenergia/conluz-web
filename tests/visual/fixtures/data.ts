@@ -662,7 +662,7 @@ export const FIXED_COEFFICIENTS_MIXED = [
     applicationState: "APPLIED",
     validFrom: "2022-01-01T00:00:00Z",
     endState: "DERIVED",
-    endDate: "2023-12-31T00:00:00Z",
+    endDate: "2023-01-01T00:00:00Z",
     currentCoefficient: { coefficient: 0.1, validFrom: "2023-01-01T00:00:00Z", sharingAgreement: IN_FORCE_AGREEMENT_REF },
   },
   {
