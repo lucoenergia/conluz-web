@@ -1,8 +1,17 @@
 import type { ApexOptions } from "apexcharts";
 import type { MembershipHourlyProfileBucketResponse, MembershipHourlyProfileResponse } from "../../../api/models";
-import { formatAverageKilowattHours, formatHourOfDay, formatMonth } from "../../../utils/formatEnergyFigures";
+import {
+  formatAverageKilowattHourAmount,
+  formatAverageKilowattHours,
+  formatHourOfDay,
+  formatMonth,
+} from "../../../utils/formatEnergyFigures";
 import { colors } from "../../../theme/tokens";
 import { ENERGY_COLORS } from "../../../components/EnergyFigures/energyColors";
+import type { RowSlot } from "../../../components/evolution/EvolutionRows";
+import type { SlotDetail } from "../../../components/evolution/evolutionChartOptions";
+import { scaleEnd, type SegmentDefinition } from "../../../components/evolution/evolutionSeries";
+import type { StateMarkKind } from "../../../components/evolution/StateMark";
 import { isPartialMonth } from "./memberHomeMessage";
 
 /** One series at one hour: no sample at all, or an average over its own samples. */
@@ -24,6 +33,14 @@ export interface HourView {
   best: boolean;
 }
 
+/** The bars of an hour's row, below sm: its consumption, and its assigned energy beneath it. */
+export type HourSegment = "consumption" | "assigned";
+
+/** An hour as a row, below sm (UI-CHT-001), with the hour it was read from. */
+export interface HourRow extends RowSlot<HourSegment> {
+  hour: HourView;
+}
+
 export type HourlyProfileView =
   | { kind: "nothing-yet" }
   | {
@@ -41,18 +58,29 @@ export type HourlyProfileView =
       series: { name: string; data: (number | null)[] }[];
       colors: string[];
       annotations: ApexOptions["annotations"];
+      /** Below sm, the same hours as rows (UI-CHT-001), both bars on one scale. */
+      rows: { slots: HourRow[]; scale: number };
     };
 
 export const CONSUMPTION_SERIES = "Tu consumo";
 export const PRODUCTION_SERIES = "Energía asignada";
 export const NO_SAMPLE_TEXT = "Sin registros";
 export const BEST_HOURS_LABEL = "Mejores horas";
+/** Below sm, the name of the rows' list, and what a best hour's row adds to its name. */
+export const HOUR_ROWS_LABEL = "Tu consumo por hora";
+export const BEST_HOUR_TEXT = "mejor hora";
 
 /** How many hours the best-hours lead names: those with the most assigned energy. */
 export const BEST_HOURS_COUNT = 4;
 
 const CONSUMPTION_COLOR = ENERGY_COLORS.consumption;
 const PRODUCTION_COLOR = ENERGY_COLORS.assigned;
+
+/** The rows' bars, in the hourly chart's colours: consumption, and the assigned energy as the thin bar beneath it. */
+export const HOUR_SEGMENTS: readonly SegmentDefinition<HourSegment>[] = [
+  { key: "consumption", label: CONSUMPTION_SERIES, color: CONSUMPTION_COLOR, group: "consumption" },
+  { key: "assigned", label: PRODUCTION_SERIES, color: PRODUCTION_COLOR, group: "assigned" },
+];
 
 /**
  * A series' value at one hour, from that series' own average and own count.
@@ -151,6 +179,63 @@ function baselineMarker(hour: HourView, value: HourlyValue, seriesIndex: number,
 }
 
 /**
+ * An hour as a row. It is a gap only when neither series has a sample: with
+ * one of them, the other's bar carries its own ring (`hourBarMark`).
+ */
+function rowOf(hour: HourView): HourRow {
+  const gap = hour.consumption.kind === "no-sample" && hour.production.kind === "no-sample";
+  return {
+    hour,
+    key: String(hour.hour),
+    name: hour.label,
+    rowLabel: hour.label,
+    startsMonthOrYear: false,
+    endsWeek: false,
+    state: gap ? { kind: "gap" } : { kind: "complete" },
+    values: { consumption: plotted(hour.consumption), assigned: plotted(hour.production) },
+    total: plotted(hour.consumption),
+    savingsEur: null,
+    savingsZero: false,
+  };
+}
+
+/** The mark before each bar of an hour's row, series by series: a ring with no sample, a dot on an average of zero. */
+export function hourBarMark({ hour }: HourRow, groupIndex: number): StateMarkKind | null {
+  const value = groupIndex === 0 ? hour.consumption : hour.production;
+  if (value.kind === "no-sample") return "ring";
+  return value.kWh === 0 ? "dot" : null;
+}
+
+/**
+ * An hour's figure: its average consumption, bare, since the scale names the
+ * unit, and written as the tooltip writes it, so an average too small to show
+ * is not passed off as a measured zero. None when consumption has no sample:
+ * the ring says so.
+ */
+export function hourFigure({ hour, state }: HourRow): string {
+  if (state.kind === "gap") return "—";
+  if (hour.consumption.kind === "no-sample") return "";
+  return formatAverageKilowattHourAmount(hour.consumption.kWh);
+}
+
+/** An hour's row name: both series in words, each with its own sample count or its absence. */
+export function hourRowName({ hour }: HourRow): string {
+  return `${hour.label}: ${CONSUMPTION_SERIES} ${hour.consumptionText}, ${PRODUCTION_SERIES} ${hour.productionText}`;
+}
+
+/** What an open hour row says beneath it: what the chart's tooltip says. */
+export function hourDetail({ hour }: HourRow): SlotDetail {
+  return {
+    title: hour.label,
+    lines: [],
+    figures: [
+      { term: CONSUMPTION_SERIES, swatch: CONSUMPTION_COLOR, value: hour.consumptionText },
+      { term: PRODUCTION_SERIES, swatch: PRODUCTION_COLOR, value: hour.productionText },
+    ],
+  };
+}
+
+/**
  * The hourly profile (#201), every decision about what is drawn made here:
  * which hours are gaps and which are measured zeros, series by series, which
  * hours are the best ones (#231), and the words for each. The chart and its
@@ -183,6 +268,10 @@ export function toHourlyProfileView(response: MembershipHourlyProfileResponse): 
         ...baselineMarker(hour, hour.consumption, 0, CONSUMPTION_COLOR),
         ...baselineMarker(hour, hour.production, 1, PRODUCTION_COLOR),
       ]),
+    },
+    rows: {
+      slots: hours.map(rowOf),
+      scale: scaleEnd(Math.max(0, ...hours.flatMap((hour) => [plotted(hour.consumption) ?? 0, plotted(hour.production) ?? 0]))),
     },
   };
 }

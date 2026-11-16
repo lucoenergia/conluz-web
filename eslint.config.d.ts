@@ -17,3 +17,9 @@ export declare const OVERLAY_IMPORT_RESTRICTION: Record<string, unknown>;
 
 /** The pages allowed to cap their single form panel (UI-LAY-001), read by src/contracts/pageLayout.spec.ts. */
 export declare const PAGE_WIDTH_CAP_EXEMPTIONS: string[];
+
+/** Modules allowed to import ApexCharts, each with why it complies with UI-CHT-001, read by src/contracts/chartImports.spec.ts. */
+export declare const CHART_MODULE_ALLOWLIST: string[];
+
+/** The options of the bar-chart import restriction (`@typescript-eslint/no-restricted-imports`). */
+export declare const CHART_IMPORT_RESTRICTION: Record<string, unknown>;

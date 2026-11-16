@@ -37,6 +37,7 @@ import { query } from "../../test/queryState";
 import { declaredStyle } from "../../test/declaredStyle";
 import { colors } from "../../theme/tokens";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { stubViewport } from "../../test/overlay";
 import { MemberHomePage } from "./MemberHomePage";
 import { ENERGY_COLORS, SAVINGS_COLOR } from "../../components/EnergyFigures/energyColors";
 import { answerCommunities } from "./homeViews.mocks";
@@ -275,6 +276,9 @@ const advice = () => screen.queryAllByRole("region", { name: "Qué puedes hacer"
 describe("MemberHomePage (#199)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // From sm up the blocks draw their charts; below it, rows (UI-CHT-001,
+    // in the .rows specs). jsdom has no matchMedia of its own.
+    stubViewport(1440);
     vi.mocked(useLoggedUser).mockReturnValue(
       buildCurrentUser({ id: USER_ID, memberships: { [COMMUNITY_ID]: CommunityRole.COMMUNITY_MEMBER } }),
     );
@@ -286,6 +290,7 @@ describe("MemberHomePage (#199)", () => {
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     expect(customInstance).not.toHaveBeenCalled();
   });
 

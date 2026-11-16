@@ -8,7 +8,7 @@
 | **Roles** | Every signed-in caller |
 | **Domain rules** | n/a |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #406 |
+| **Last reviewed against code** | #425 |
 
 ## Purpose
 
@@ -27,8 +27,10 @@ values a screen shows.
   `formatKilowatts`, `formatPercentage`, `formatEuros`, `formatEurosPerKilowattHour`). Components MUST
   NOT format a displayed figure with `toFixed` or by interpolating the raw number. This includes chart
   axis labels and tooltips. A figure whose unit is stated once for its column, in a table header,
-  MUST be formatted through the amount helpers (`formatKilowattHourAmount`, `formatEuroAmount`), which
-  write the number exactly as the unit-bearing helpers do, without the unit.
+  MUST be formatted through the amount helpers (`formatKilowattHourAmount`,
+  `formatAverageKilowattHourAmount`, `formatEuroAmount`), which write the number exactly as the
+  unit-bearing helpers do, without the unit: an hourly average too small to show reads "menos de
+  0,01", as "menos de 0,01 kWh" does with its unit.
 - **Rationale:** One formatting path keeps the decimal separator, the precision and the unit spacing
   consistent: a figure built by hand rendered "12.57 kWh" where the shared formatter writes "12,57 kWh". It is
   also the single place to make locale-aware later. A helper's input scale is part of its contract:
@@ -36,7 +38,7 @@ values a screen shows.
   figure written by hand would drift from the same figure written with its unit elsewhere on the
   page.
 - **Implements:** n/a
-- **Source:** #255, #361
+- **Source:** #255, #361, #425
 
 ### UI-FMT-002 — Dates and chart time labels are in the app time zone
 

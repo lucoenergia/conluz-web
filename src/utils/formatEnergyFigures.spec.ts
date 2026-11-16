@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  formatAverageKilowattHourAmount,
   formatAverageKilowattHours,
   formatCalendarDay,
   formatCalendarMonth,
@@ -101,6 +102,21 @@ describe("formatAverageKilowattHours (#201)", () => {
   it("shows an average that rounds up to the second decimal as that figure", () => {
     expect(formatAverageKilowattHours(0.005)).toBe("0,01 kWh");
     expect(formatAverageKilowattHours(0.011)).toBe("0,01 kWh");
+  });
+});
+
+describe("formatAverageKilowattHourAmount (#425)", () => {
+  it.each([0.42, 0.5, 0.567, 0, 0.0002, 0.0049, 0.005, 0.011, 12.5])(
+    "UI-FMT-001 writes %s exactly as formatAverageKilowattHours does, without the unit",
+    (value) => {
+      expect(`${formatAverageKilowattHourAmount(value)} kWh`).toBe(formatAverageKilowattHours(value));
+    },
+  );
+
+  it("UI-FMT-001 never rounds a positive average into a bare zero, and keeps a measured zero", () => {
+    expect(formatAverageKilowattHourAmount(0.0049)).toBe("menos de 0,01");
+    expect(formatAverageKilowattHourAmount(0)).toBe("0");
+    expect(formatAverageKilowattHourAmount(0.42)).toBe("0,42");
   });
 });
 

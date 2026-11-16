@@ -118,6 +118,22 @@ const chartTable = (card: ReturnType<Page["getByRole"]>) => card.getByRole("tabl
 // keeps a capture from catching the card before the chart has drawn.
 const drawnCharts = (card: ReturnType<Page["getByRole"]>) => card.locator("svg.apexcharts-svg");
 
+/**
+ * What a block draws: from sm up its charts, below it its rows and no chart
+ * (UI-CHT-001). Waiting for either keeps a capture from catching the card
+ * before it has drawn.
+ */
+async function expectDrawn(card: ReturnType<Page["getByRole"]>, isMobile: boolean, charts: number, rowLists: string[]) {
+  if (!isMobile) {
+    await expect(drawnCharts(card)).toHaveCount(charts);
+    return;
+  }
+  for (const name of rowLists) await expect(card.getByRole("list", { name })).toBeVisible();
+  await expect(drawnCharts(card)).toHaveCount(0);
+}
+const MONTH_ROWS = ["Tu energía por mes", "Tu ahorro por mes"];
+const HOUR_ROWS = ["Tu consumo por hora"];
+
 test.describe("Visual baselines", () => {
   test("member home view, priced with the estimate", async ({ page }) => {
     await openMemberHome(page);
@@ -202,18 +218,18 @@ test.describe("Visual baselines", () => {
     }
   });
 
-  test("member home view, twelve months with data", async ({ page }) => {
+  test("member home view, twelve months with data", async ({ page, isMobile }) => {
     await openMemberHome(page);
     await expect(twelveMonthsCard(page)).toContainText("De septiembre de 2025 a agosto de 2026: 12 de 12 meses con datos.");
     await expect(chartTable(twelveMonthsCard(page))).toContainText("18,15 €");
-    await expect(drawnCharts(twelveMonthsCard(page))).toHaveCount(2);
+    await expectDrawn(twelveMonthsCard(page), isMobile, 2, MONTH_ROWS);
     await stabilizePage(page);
 
     // Component subject: the twelve-month block alone, with the app bar hidden.
     await expect(twelveMonthsCard(page)).toHaveScreenshot("home-member-twelve-months-data.png", await hideAppBar(page));
   });
 
-  test("member home view, twelve months with a gap, a measured zero and an incomplete month", async ({ page }) => {
+  test("member home view, twelve months with a gap, a measured zero and an incomplete month", async ({ page, isMobile }) => {
     await openMemberHome(page, { monthly: MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE });
     await expect(twelveMonthsCard(page)).toContainText("11 de 12 meses con datos.");
     await expect(chartTable(twelveMonthsCard(page)).getByRole("row", { name: /diciembre de 2025/ })).toContainText("Sin datos");
@@ -221,7 +237,7 @@ test.describe("Visual baselines", () => {
     await expect(chartTable(twelveMonthsCard(page)).getByRole("row", { name: /febrero de 2026/ })).toContainText(
       "Incompleto: 1 de 2 suministros",
     );
-    await expect(drawnCharts(twelveMonthsCard(page))).toHaveCount(2);
+    await expectDrawn(twelveMonthsCard(page), isMobile, 2, MONTH_ROWS);
     await stabilizePage(page);
 
     // Component subject: the twelve-month block alone, with the app bar hidden.
@@ -229,36 +245,36 @@ test.describe("Visual baselines", () => {
     await expect(twelveMonthsCard(page)).toHaveScreenshot("home-member-twelve-months-gap-incomplete.png", options);
   });
 
-  test("member home view, best hours with data", async ({ page }) => {
+  test("member home view, best hours with data", async ({ page, isMobile }) => {
     await openMemberHome(page);
     await expect(bestHoursCard(page)).toContainText("Media de cada hora en agosto de 2026, el último mes que ha publicado la distribuidora.");
     await expect(chartTable(bestHoursCard(page)).getByRole("row", { name: /^12 h/ })).toContainText("0,58 kWh (media de 62 registros)");
-    await expect(drawnCharts(bestHoursCard(page))).toHaveCount(1);
+    await expectDrawn(bestHoursCard(page), isMobile, 1, HOUR_ROWS);
     await stabilizePage(page);
 
     // Component subject: the best-hours block alone, with the app bar hidden.
     await expect(bestHoursCard(page)).toHaveScreenshot("home-member-best-hours-data.png", await hideAppBar(page));
   });
 
-  test("member home view, best hours with hours without samples", async ({ page }) => {
+  test("member home view, best hours with hours without samples", async ({ page, isMobile }) => {
     await openMemberHome(page, { hourly: MEMBER_HOURLY_PROFILE_GAPS });
     await expect(chartTable(bestHoursCard(page)).getByRole("row", { name: /^3 h/ })).toContainText("Sin registrosSin registros");
     await expect(chartTable(bestHoursCard(page)).getByRole("row", { name: /^20 h/ })).toContainText(
       "0,55 kWh (media de 62 registros)Sin registros",
     );
-    await expect(drawnCharts(bestHoursCard(page))).toHaveCount(1);
+    await expectDrawn(bestHoursCard(page), isMobile, 1, HOUR_ROWS);
     await stabilizePage(page);
 
     // Component subject: the best-hours block alone, with the app bar hidden.
     await expect(bestHoursCard(page)).toHaveScreenshot("home-member-best-hours-gaps.png", await hideAppBar(page));
   });
 
-  test("member home view, best hours when no hour received assigned energy", async ({ page }) => {
+  test("member home view, best hours when no hour received assigned energy", async ({ page, isMobile }) => {
     await openMemberHome(page, { hourly: MEMBER_HOURLY_PROFILE_NO_BEST_HOUR });
     await expect(
       bestHoursCard(page).getByText("Mejores horas: este mes no te llegó energía de la comunidad en ninguna hora."),
     ).toBeVisible();
-    await expect(drawnCharts(bestHoursCard(page))).toHaveCount(1);
+    await expectDrawn(bestHoursCard(page), isMobile, 1, HOUR_ROWS);
     await stabilizePage(page);
 
     // Component subject: the best-hours block alone, with the app bar hidden.

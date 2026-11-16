@@ -8,7 +8,7 @@
 | **Roles** | A caller who may read the active community (`canRead`): members and community admins |
 | **Domain rules** | EPR-001, EPR-003, EPR-004 (lucoenergia/conluz#409); EPR-005 (lucoenergia/conluz#545, #546); SEM-001 (lucoenergia/conluz#408); SEM-002, SEM-003, SEM-004, ENM-006, ENM-007, ENM-008 (lucoenergia/conluz#411); MCS-001, MCS-002 (lucoenergia/conluz#410); SCS-001 (lucoenergia/conluz#545); MCS-003 (lucoenergia/conluz#546); ADR-0005 in lucoenergia/conluz |
 | **Design reference** | Claude Design round 2 copy deck; round 3 copy deck for the period (#248); the member consumption analysis design, option A, for the evolution charts (#250) and the data table and CSV (#251); its round 3, for the mobile charts and the paired terms (#361) |
-| **Last reviewed against code** | #401 |
+| **Last reviewed against code** | #425 |
 
 Scope: the page shell, its menu entry and its supply selector (#247), the period: its anchor,
 selector, custom range picker, header and query string (#248), the period's card and totals
@@ -509,8 +509,8 @@ here too, and opens another member's supply from its detail page, one at a time.
   already draws. The bucket carries no total, so the client computes it, under the accepted
   exception to UI-HIS-010 recorded below. The figure is bare, because the scale above the rows names
   the unit.
-- **Implements:** MCS-001 and MCS-002 (lucoenergia/conluz#410), through the slot states of
-  UI-HIS-015.
+- **Implements:** UI-CHT-001, the rule every bar chart follows below `sm`; MCS-001 and MCS-002
+  (lucoenergia/conluz#410), through the slot states of UI-HIS-015.
 - **Source:** #361, the member consumption analysis design (copy deck `chart.mobile`); #378
 
 ### UI-HIS-026 — Below sm, activating an energy row opens its detail beneath it

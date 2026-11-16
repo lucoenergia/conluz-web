@@ -20,6 +20,7 @@ import {
 } from "../../../test/fixtures";
 import { query } from "../../../test/queryState";
 import { renderWithProviders } from "../../../test/renderWithProviders";
+import { stubViewport } from "../../../test/overlay";
 import { ENERGY_COLORS, SAVINGS_COLOR } from "../../../components/EnergyFigures/energyColors";
 import { TwelveMonthSeries } from "./TwelveMonthSeries";
 
@@ -145,6 +146,9 @@ const tableRow = (monthName: string) => text(within(table()).getByRole("rowheade
 describe("TwelveMonthSeries (#201)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // From sm up the blocks draw their charts; below it, rows (UI-CHT-001,
+    // in the .rows specs). jsdom has no matchMedia of its own.
+    stubViewport(1440);
     vi.mocked(useLoggedUser).mockReturnValue(
       buildCurrentUser({ id: USER_ID, memberships: { [COMMUNITY_ID]: CommunityRole.COMMUNITY_MEMBER } }),
     );
@@ -152,6 +156,7 @@ describe("TwelveMonthSeries (#201)", () => {
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     expect(customInstance).not.toHaveBeenCalled();
   });
 
