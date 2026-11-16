@@ -54,4 +54,18 @@ describe("CloseCoefficientConfirmationModal", () => {
       ),
     ).toBeInTheDocument();
   });
+
+  test("UI-AGR-019 names the chosen date as the first day without the coefficient and the day before as the last day with it", () => {
+    renderModal([orphan("c1", "Local C")]);
+
+    const statement = screen.getByText(/^A partir de la fecha indicada, este suministro dejará de recibir/);
+    expect(statement).toHaveTextContent(/El último día en que recibe su coeficiente es el día anterior\.$/);
+  });
+
+  test("UI-AGR-019 names the same first and last days when several supplies are closed together", () => {
+    renderModal([orphan("c1", "Local C"), orphan("c2", "Nave D")]);
+
+    const statement = screen.getByText(/^A partir de la fecha indicada, estos suministros dejarán de recibir/);
+    expect(statement).toHaveTextContent(/El último día en que reciben su coeficiente es el día anterior\.$/);
+  });
 });
