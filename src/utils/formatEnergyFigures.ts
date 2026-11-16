@@ -44,7 +44,20 @@ export function formatMonth(isoDateTime: string): string {
   return formatCalendarDate(isoDateTime, { day: undefined, month: "long", year: "numeric" });
 }
 
-const ZERO_KILOWATT_HOURS = formatKilowattHours(0);
+const ZERO_KILOWATT_HOUR_AMOUNT = formatKilowattHourAmount(0);
+
+/**
+ * An hourly average without its unit, for a column whose header or scale
+ * names the unit once, written as formatAverageKilowattHours writes it:
+ * "0,42", "menos de 0,01".
+ */
+export function formatAverageKilowattHourAmount(value: number): string {
+  const formatted = formatKilowattHourAmount(value);
+  if (value > 0 && formatted === ZERO_KILOWATT_HOUR_AMOUNT) {
+    return `menos de ${formatKilowattHourAmount(0.01)}`;
+  }
+  return formatted;
+}
 
 /**
  * An hourly average in kWh, which is often a fraction of a kWh, written as
@@ -54,11 +67,7 @@ const ZERO_KILOWATT_HOURS = formatKilowattHours(0);
  * "menos de 0,01 kWh".
  */
 export function formatAverageKilowattHours(value: number): string {
-  const formatted = formatKilowattHours(value);
-  if (value > 0 && formatted === ZERO_KILOWATT_HOURS) {
-    return `menos de ${formatKilowattHours(0.01)}`;
-  }
-  return formatted;
+  return `${formatAverageKilowattHourAmount(value)} kWh`;
 }
 
 /** From this mass on, in kg, a mass is written in tonnes. */

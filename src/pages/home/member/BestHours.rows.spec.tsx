@@ -204,7 +204,7 @@ describe("UI-HOM-015 below sm, the best-hours rows (#425)", () => {
     open();
 
     expect(figureOf(row(12))).toBe("0,37");
-    expect(figureOf(row(TINY_HOUR))).toBe("<0,01");
+    expect(figureOf(row(TINY_HOUR))).toBe("menos de 0,01");
   });
 
   it("UI-HOM-015 activating an hour opens what the chart's tooltip says beneath it", async () => {

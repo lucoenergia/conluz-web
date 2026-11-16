@@ -63,8 +63,8 @@ const ProfileTable: FC<{ view: Profile }> = ({ view }) => (
   </Box>
 );
 
-/** Wide enough for the figure column's heading, "Tu consumo". */
-const CONSUMPTION_FIGURE_WIDTH = 72;
+/** Wide enough for the figure column's heading, "Tu consumo", and for its widest figure, "menos de 0,01". */
+const CONSUMPTION_FIGURE_WIDTH = 88;
 
 /**
  * Below sm, the hours as rows (UI-CHT-001, UI-HOM-015): consumption, with the

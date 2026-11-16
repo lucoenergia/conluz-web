@@ -1,9 +1,9 @@
 import type { ApexOptions } from "apexcharts";
 import type { MembershipHourlyProfileBucketResponse, MembershipHourlyProfileResponse } from "../../../api/models";
 import {
+  formatAverageKilowattHourAmount,
   formatAverageKilowattHours,
   formatHourOfDay,
-  formatKilowattHourAmount,
   formatMonth,
 } from "../../../utils/formatEnergyFigures";
 import { colors } from "../../../theme/tokens";
@@ -208,15 +208,14 @@ export function hourBarMark({ hour }: HourRow, groupIndex: number): StateMarkKin
 
 /**
  * An hour's figure: its average consumption, bare, since the scale names the
- * unit. None when consumption has no sample, the ring says so; "<0,01" for an
- * average too small to show, which "0" would pass off as a measured zero.
+ * unit, and written as the tooltip writes it, so an average too small to show
+ * is not passed off as a measured zero. None when consumption has no sample:
+ * the ring says so.
  */
 export function hourFigure({ hour, state }: HourRow): string {
   if (state.kind === "gap") return "—";
   if (hour.consumption.kind === "no-sample") return "";
-  const { kWh } = hour.consumption;
-  const amount = formatKilowattHourAmount(kWh);
-  return kWh > 0 && amount === formatKilowattHourAmount(0) ? `<${formatKilowattHourAmount(0.01)}` : amount;
+  return formatAverageKilowattHourAmount(hour.consumption.kWh);
 }
 
 /** An hour's row name: both series in words, each with its own sample count or its absence. */
