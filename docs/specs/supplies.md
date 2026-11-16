@@ -8,7 +8,7 @@
 | **Roles** | Any member of the active community reads them. Deleting: a caller to whom the supply reports `canDelete`. Creating and importing, and seeing each supply's owner in the list: a caller to whom the active community reports `canManage`. Editing: a caller to whom the supply reports `canEdit`. The supply's figures and "Ver análisis completo": a caller to whom the supply reports `canRead` |
 | **Domain rules** | `lucoenergia/conluz`: SUP-001, SUP-002, SUP-004, SUP-005, SUP-006, SUP-007, MEM-026, EPR-003, SEM-001 (lucoenergia/conluz#408) |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `FilterChipsBar` (the list; its shared rules are `record-lists.md`); the detail page's latest published month reuses `src/components/EnergyFigures/` (`PeriodHeader`, `PeriodUsageCard`, `PeriodTotals`), as the historical analysis page does |
-| **Last reviewed against code** | #411 |
+| **Last reviewed against code** | #416 |
 
 ## Purpose
 
@@ -30,7 +30,7 @@ Make the supply detail page the supply's record: what it is, its coefficients, a
 saved in its latest published month, with the same figures the historical analysis page shows for
 it, and a way into that page for whoever may read them.
 
-This document covers only the rules #290, #302, #324, #339, #348, #252, #388, #372 and #411
+This document covers only the rules #290, #302, #324, #339, #348, #252, #388, #372, #411 and #416
 introduced.
 
 ## Rules
@@ -100,10 +100,12 @@ introduced.
 
 - **Status:** Active
 - **Rule:**
-  - The supply detail's "Propietario", the edit form's read-only "Propietario" and the deletion
+  - The supply detail's "Propietario", the edit form's "Propietario" and the deletion
     confirmation's owner (UI-SUP-002) MUST be the full name of the supply's `ownerRecord`: the
     owner's member record in the supply's community. The supply's `user` carries the owner's id
     only.
+  - The edit form's "Propietario" MUST be a read-only field (UI-FRM-003), never a selector. The
+    detail and the deletion confirmation are unchanged.
   - When `ownerRecord` is null — the supply has no owner, or its owner has no membership in its
     community — the detail and the edit form MUST show no owner ("-") and the confirmation MUST
     name none.
@@ -112,7 +114,8 @@ introduced.
   the community may show, and falling back to the account would disclose it. The edit form used to
   resolve the owner against the user listing instead (#388).
 - **Implements:** MEM-026
-- **Source:** #302, lucoenergia/conluz#448; #388 (extended to the edit form)
+- **Source:** #302, lucoenergia/conluz#448; #388 (extended to the edit form); #416 (the edit form's
+  owner uses the shared read-only presentation)
 
 ### UI-SUP-006 — A consumption period that has not started yet is shown as empty
 
@@ -390,6 +393,16 @@ introduced.
 - **Implements:** n/a
 - **Source:** #372
 
+### UI-SUP-023 — The edit form says the owner cannot be changed
+
+- **Status:** Active
+- **Rule:** The edit form's "Propietario" MUST show the visible helper text "El propietario no se
+  puede cambiar", with an owner and with none ("-").
+- **Rationale:** The API does not allow changing a supply's owner, so the form says why the field
+  is locked. Blocking reasons are visible text, never tooltips, which a phone cannot show.
+- **Implements:** n/a
+- **Source:** #416
+
 ## States
 
 The supply list follows the states of `record-lists.md`. What is particular to it:
@@ -425,7 +438,7 @@ The edit form in the overlay (UI-SUP-019):
 | State | Rendered | Actions available |
 | --- | --- | --- |
 | Loading | Progress in the overlay's body | Cancelar |
-| Form | The supply's values, with the owner read-only | Guardar, Cancelar |
+| Form | The supply's values, with the owner in the read-only presentation (UI-FRM-003) and why it cannot be changed (UI-SUP-023) | Guardar, Cancelar |
 | Not found | The supply detail page's not-found state | Cancelar |
 | Error | The supply detail page's load error | Reintentar, Cancelar |
 
