@@ -15,6 +15,7 @@ import { isValidEmail } from "../utils/email";
 import { Notice } from "../components/Notice";
 import { ActionStatus } from "../components/ActionStatus";
 import { AddressField } from "../components/AddressField";
+import { ReadOnlyField } from "../components/ReadOnlyField";
 
 const PROFILE_SAVED_MESSAGE = "Perfil actualizado correctamente";
 const PROFILE_SAVE_FAILED_MESSAGE = "Error al actualizar el perfil. Por favor, inténtalo de nuevo.";
@@ -204,8 +205,8 @@ export const ProfilePage: FC = () => {
                 </Box>
               )}
 
-              <TextField label="Nombre completo" value={currentUser?.fullName ?? ""} slotProps={{ input: { readOnly: true } }} fullWidth variant="outlined" />
-              <TextField label="DNI/NIF" value={currentUser?.personalId ?? ""} slotProps={{ input: { readOnly: true } }} fullWidth variant="outlined" />
+              <ReadOnlyField label="Nombre completo" value={currentUser?.fullName ?? ""} />
+              <ReadOnlyField label="DNI/NIF" value={currentUser?.personalId ?? ""} />
               <Typography variant="body2" sx={{ color: colors.text.subtle, mt: -1 }}>
                 Nombre, DNI y número de miembro te identifican ante la comunidad y la distribuidora.
                 Para cambiarlos, contacta con la administración de tu comunidad.

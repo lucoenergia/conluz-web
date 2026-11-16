@@ -58,6 +58,10 @@ community context the dialogs read. There is no signed-in user, so community-sco
 - A guide, an explanation or a confirmation is a `Notice` (a note; the result of an action is also
   announced through an `ActionStatus` mounted before it), never a `Mui.Alert`: an `Alert` is announced as urgent, so it is kept for errors and
   warnings the user must act on now.
+- A value shown in a form that can never be edited there (a name or ID set elsewhere, a supply's
+  owner) is a `ReadOnlyField`: grey fill, full-contrast value, no caret, still focusable, with the
+  reason as its helper text when the screen gives one. Never a `Mui.TextField` with `disabled`, and
+  never for inputs that are read-only only while a save is in flight: those keep the editable look.
 - Components that take API records (`PlantDetailHeader`, the coefficient
   rows…) need realistic objects: their shapes are in `guidelines/data-shapes.md`.
   `selectSharingAgreementNextStep` / `selectSharingAgreementLifecycleView` derive the

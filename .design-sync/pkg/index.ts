@@ -61,6 +61,7 @@ export { Notice } from "../../src/components/Notice/Notice";
 export { PaginationOutlined } from "../../src/components/Pagination/Pagination";
 export { PlantDetailHeader } from "../../src/components/PlantDetailHeader/PlantDetailHeader";
 export { PlatformKpiCard } from "../../src/components/PlatformKpiCard/PlatformKpiCard";
+export { ReadOnlyField } from "../../src/components/ReadOnlyField/ReadOnlyField";
 export { RecordList } from "../../src/components/RecordList/RecordList";
 export { ResponsiveRecordList } from "../../src/components/ResponsiveRecordList/ResponsiveRecordList";
 export { ListPagination } from "../../src/components/ListPagination/ListPagination";
