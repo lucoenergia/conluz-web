@@ -1,6 +1,19 @@
-import { radii, shadows } from "./tokens";
+import { colors, radii, shadows } from "./tokens";
 
 export const sxStyles = {
+  // The root of every page under the authenticated layout: one full-width column
+  // on the page plane (UI-LAY-001, UI-LAY-002). No maxWidth, ever. A page that
+  // needs more (overflow: "hidden") adds it in an sx array.
+  pageRoot: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: { xs: 2, sm: 3 },
+    p: { xs: 0, sm: 2, md: 3 },
+    minHeight: "100vh",
+    background: colors.background.default,
+    width: "100%",
+    boxSizing: "border-box" as const,
+  },
   // Responsive horizontal padding: mobile indent removed at sm breakpoint.
   pageContainer: {
     px: { xs: 2, sm: 0 },

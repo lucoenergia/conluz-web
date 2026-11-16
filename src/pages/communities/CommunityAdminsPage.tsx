@@ -16,7 +16,7 @@ import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import SendIcon from "@mui/icons-material/Send";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
-import { colors, fontSizes } from "../../theme/tokens";
+import { fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList, type RecordListItem } from "../../components/RecordList";
 import { ListTable, RowActionsMenu } from "../../components/ListTable";
@@ -137,19 +137,7 @@ export const CommunityAdminsPage: FC = () => {
   const pendingCount = admins.filter((admin) => membershipStatusOf(admin).status === "pending").length;
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: { xs: 2, sm: 3 },
-        p: { xs: 0, sm: 2, md: 3 },
-        minHeight: "100vh",
-        background: colors.background.default,
-        width: "100%",
-        maxWidth: "100%",
-        boxSizing: "border-box",
-      }}
-    >
+    <Box sx={sxStyles.pageRoot}>
       <BreadCrumb
         steps={[
           { label: "Inicio", href: "/" },

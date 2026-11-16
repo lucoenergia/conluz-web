@@ -192,19 +192,7 @@ export const CommunitiesPage: FC = () => {
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: { xs: 2, sm: 3 },
-        p: { xs: 0, sm: 2, md: 3 },
-        minHeight: "100vh",
-        background: colors.background.default,
-        width: "100%",
-        maxWidth: "100%",
-        boxSizing: "border-box",
-      }}
-    >
+    <Box sx={sxStyles.pageRoot}>
       <BreadCrumb
         steps={[
           { label: "Inicio", href: "/" },
