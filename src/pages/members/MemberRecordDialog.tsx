@@ -1,5 +1,5 @@
 import { useState, type FC, type FormEvent } from "react";
-import { Alert, Button, TextField } from "@mui/material";
+import { Alert, Button } from "@mui/material";
 import type { MembershipResponse, UpdateMemberRecordBody } from "../../api/models";
 import type { Action, EditMemberRecordResult } from "../../hooks/actions";
 import { CommunityScopeHeader } from "../../components/CommunityScopeHeader";
@@ -18,6 +18,7 @@ import { MemberRecordFields } from "./MemberRecordFields";
 import { Notice } from "../../components/Notice";
 import { AppModal } from "../../components/Modals/AppModal";
 import { ModalCancelButton } from "../../components/Modals/ModalCancelButton";
+import { ReadOnlyField } from "../../components/ReadOnlyField";
 
 interface MemberRecordDialogProps {
   membership: MembershipResponse;
@@ -98,12 +99,10 @@ export const MemberRecordDialog: FC<MemberRecordDialogProps> = ({
           reenvío irá a la nueva dirección.
         </Notice>
       )}
-      <TextField
+      <ReadOnlyField
         label="DNI/NIE"
         value={membership.personalId}
         helperText="Identifica su cuenta, así que no se cambia desde aquí."
-        slotProps={{ input: { readOnly: true } }}
-        fullWidth
       />
       <MemberRecordFields values={values} errors={errors} onChange={change} readOnly={editRecord.isPending} />
     </AppModal>

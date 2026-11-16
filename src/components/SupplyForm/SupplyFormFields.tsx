@@ -1,6 +1,7 @@
 import type { FC, Ref } from "react";
 import { TextField, Autocomplete, CircularProgress } from "@mui/material";
 import { AddressField } from "../AddressField";
+import { ReadOnlyField } from "../ReadOnlyField";
 import { selectedOwnerOf, type SupplyFieldValues, type SupplyFormField, type SupplyOwnerField } from "./supplyFields";
 
 interface SupplyFormFieldsProps {
@@ -97,17 +98,10 @@ export const SupplyFormFields: FC<SupplyFormFieldsProps> = ({
       )}
 
       {owner?.mode === "show" && (
-        // The owner of an existing supply cannot be changed here; it is the
-        // supply's member record in its community (UI-SUP-005).
-        <TextField
-          id="owner"
-          label="Propietario"
-          type="text"
-          value={owner.fullName || "-"}
-          slotProps={{ htmlInput: { readOnly: true } }}
-          fullWidth
-          variant="outlined"
-        />
+        // The owner of an existing supply cannot be changed here, and the form
+        // says so; it is the supply's member record in its community
+        // (UI-SUP-005, UI-SUP-023).
+        <ReadOnlyField id="owner" label="Propietario" value={owner.fullName || "-"} helperText="El propietario no se puede cambiar" />
       )}
 
       <TextField
