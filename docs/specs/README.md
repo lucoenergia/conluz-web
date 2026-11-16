@@ -54,3 +54,4 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-COM` | Communities: creating and editing a community over the communities list and the platform page | [`communities.md`](communities.md) |
 | `UI-FRM` | Forms: the address input every record form shares | [`forms.md`](forms.md) |
 | `UI-CAN` | Community energy: the community's production, where it went, its estimated income, the CO₂ avoided, its evolution and its plants, for every member | [`community-analysis.md`](community-analysis.md) |
+| `UI-LAY` | Page layout: the shared page root every authenticated page uses, and the full width it fills | [`layout.md`](layout.md) |
