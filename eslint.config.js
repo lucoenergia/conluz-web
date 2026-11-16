@@ -363,6 +363,45 @@ const OVERLAY_PRIMITIVE_ALLOWLIST = [
   "src/components/period/CustomRangePicker.tsx", // permanent: a picker, not a flow
 ];
 
+// ─── Bar-chart guard rail ─────────────────────────────────────────────────────
+// Below sm every bar chart renders as rows from src/components/evolution/,
+// and nothing scrolls sideways (UI-CHT-001). A module that imports ApexCharts
+// draws a chart at every width unless it decides otherwise, which is how the
+// member home's charts came to scroll on phones (#425). So it may only be
+// imported by a module on CHART_MODULE_ALLOWLIST, each entry saying why it
+// complies (UI-CHT-002).
+//
+// The typescript-eslint rule, for the overlay guard rail's reasons: a
+// type-only import (`ApexOptions`) stays legal, and the core
+// no-restricted-imports blocks above keep their options. The two guard rails
+// share the rule, so a block that sets it for some files replaces the other's
+// options for them: each allowlist block re-states the other restriction, and
+// a file on both allowlists would be the only one to get "off".
+const CHART_MESSAGE =
+  "Below sm, a bar chart renders as rows from src/components/evolution/ (UI-CHT-001). Import ApexCharts only from a module on CHART_MODULE_ALLOWLIST, with its reason. See docs/specs/charts.md (UI-CHT-002).";
+
+const CHART_IMPORT_RESTRICTION = {
+  paths: [
+    { name: "react-apexcharts", message: CHART_MESSAGE },
+    { name: "apexcharts", message: CHART_MESSAGE, allowTypeImports: true },
+  ],
+};
+
+// Modules allowed to import ApexCharts. src/contracts/chartImports.spec.ts
+// fails on an entry that no longer imports it.
+const CHART_MODULE_ALLOWLIST = [
+  "src/components/evolution/EvolutionCharts.tsx", // mounted only from sm up: Evolution renders rows below it
+  "src/pages/home/member/TwelveMonthChart.tsx", // mounted only from sm up: TwelveMonthSeries renders rows below it
+  "src/pages/home/member/BestHoursChart.tsx", // mounted only from sm up: BestHours renders rows below it
+  "src/pages/production/plantDetail/InverterTodayChart.tsx", // not a bar chart: an area chart
+];
+
+/** Both guard rails at once, for every file on neither allowlist. */
+const OVERLAY_AND_CHART_IMPORT_RESTRICTION = {
+  paths: [...OVERLAY_IMPORT_RESTRICTION.paths, ...CHART_IMPORT_RESTRICTION.paths],
+  patterns: OVERLAY_IMPORT_RESTRICTION.patterns,
+};
+
 export default tseslint.config([
   // .design-sync/ holds the claude.ai/design sync inputs (previews import from a
   // virtual "conluz-web" package); .ds-sync/ and ds-bundle/ are its tooling and output.
@@ -483,16 +522,29 @@ export default tseslint.config([
     },
   },
   {
-    // Overlay guard rail, specs included: a spec has no reason to build an
-    // overlay of its own. ResponsiveOverlay is the one place that wraps them.
+    // Overlay and bar-chart guard rails, specs included: a spec has no reason
+    // to build an overlay of its own, nor to draw a chart.
     files: ["src/**/*.{ts,tsx}"],
-    ignores: ["src/api/**", "src/components/ResponsiveOverlay/**"],
-    rules: { "@typescript-eslint/no-restricted-imports": ["error", OVERLAY_IMPORT_RESTRICTION] },
+    ignores: ["src/api/**"],
+    rules: { "@typescript-eslint/no-restricted-imports": ["error", OVERLAY_AND_CHART_IMPORT_RESTRICTION] },
   },
   {
-    // The overlay allowlist: the one override block for it.
+    // ResponsiveOverlay is the one place that wraps the overlay primitives.
+    // The chart restriction is re-stated, since this block replaces the above.
+    files: ["src/components/ResponsiveOverlay/**/*.{ts,tsx}"],
+    rules: { "@typescript-eslint/no-restricted-imports": ["error", CHART_IMPORT_RESTRICTION] },
+  },
+  {
+    // The overlay allowlist: the one override block for it. It keeps the
+    // chart restriction.
     files: OVERLAY_PRIMITIVE_ALLOWLIST,
-    rules: { "@typescript-eslint/no-restricted-imports": "off" },
+    rules: { "@typescript-eslint/no-restricted-imports": ["error", CHART_IMPORT_RESTRICTION] },
+  },
+  {
+    // The chart allowlist: the one override block for it. It keeps the
+    // overlay restriction.
+    files: CHART_MODULE_ALLOWLIST,
+    rules: { "@typescript-eslint/no-restricted-imports": ["error", OVERLAY_IMPORT_RESTRICTION] },
   },
 ]);
 
@@ -508,6 +560,10 @@ export { COMMUNITY_SCOPE_WRAPPERS };
 // Read by src/contracts/overlayImports.spec.ts, which fails on a stale entry
 // and lints probes against the restriction.
 export { OVERLAY_PRIMITIVE_ALLOWLIST, OVERLAY_IMPORT_RESTRICTION };
+
+// Read by src/contracts/chartImports.spec.ts, which fails on a stale entry and
+// lints probes against the restriction.
+export { CHART_MODULE_ALLOWLIST, CHART_IMPORT_RESTRICTION };
 
 // Read by src/contracts/pageLayout.spec.ts, which lints probes against the page
 // layout rules and holds the exemption list to the one the spec document names.

@@ -27,6 +27,7 @@ import { colors } from "../../src/theme/tokens";
 import {
   test,
   expect,
+  BAR_SERIES,
   communityCapabilitiesFor,
   COMMUNITY_ADMIN_SUPPLY_CAPABILITIES,
   COMMUNITY_DAILY_SERIES,
@@ -264,17 +265,12 @@ test.describe("Visual baselines", () => {
     expect(box?.height).toBeLessThanOrEqual(140);
   });
 
-  /**
-   * #201 AC10. The member home's two charts need more width than a phone has.
-   * They must scroll inside their own containers: the page must not scroll
-   * sideways, and the axis must not be squeezed to fit. A screenshot of either
-   * block cannot show this -- it captures the block, not the page's width --
-   * and a hidden table once widened the whole page to 615 px with every
-   * capture still looking plausible.
-   */
-  test("#201 AC10: the member home's charts scroll inside their containers at 390px, never the page", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "mobile", "AC10 is specified against a 390px viewport.");
+  const MEMBER_HOME_ROWS: [region: string, lists: string[]][] = [
+    ["Tus últimos 12 meses", ["Tu energía por mes", "Tu ahorro por mes"]],
+    ["Tus mejores horas para autoconsumir", ["Tu consumo por hora"]],
+  ];
 
+  const openMemberHomeWithGaps = async (page: Page) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
     await mockAllApiRoutes(page, FIXED_MEMBER_USER);
@@ -283,28 +279,61 @@ test.describe("Visual baselines", () => {
       hourly: MEMBER_HOURLY_PROFILE_GAPS,
     });
     await page.goto("/home/member");
-    // Structural: ApexCharts' SVG has no role or name of its own.
-    await expect(page.locator("svg.apexcharts-svg")).toHaveCount(3);
+  };
+
+  /**
+   * UI-CHT-001 (#425, reversing #201 AC10, under which these blocks scrolled
+   * sideways inside their own containers). At phone width the member home's
+   * two bar charts are rows: neither the page nor a block scrolls sideways,
+   * and no bar series is drawn. Measured rather than captured: a screenshot
+   * of a block cannot show the page's width, and a hidden table once widened
+   * the whole page to 615 px with every capture still looking plausible.
+   */
+  test("UI-CHT-001: the member home at 390px has no sideways scroll and no bar chart", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "UI-CHT-001 is about phone width: the 390px viewport.");
+
+    await openMemberHomeWithGaps(page);
+    for (const [region, lists] of MEMBER_HOME_ROWS) {
+      for (const list of lists) {
+        await expect(page.getByRole("region", { name: region }).getByRole("list", { name: list })).toBeVisible();
+      }
+    }
     await stabilizePage(page);
 
+    expect(await page.locator(BAR_SERIES).count(), "bar series drawn").toBe(0);
     const widths = await page.evaluate(() => ({
       viewport: window.innerWidth,
       document: document.documentElement.scrollWidth,
     }));
     expect(widths).toEqual({ viewport: 390, document: 390 });
 
-    for (const name of ["Tus últimos 12 meses", "Tus mejores horas para autoconsumir"]) {
-      // Structural: the scroll container is the chart canvas's nearest scrolling ancestor.
-      const scroller = await page.getByRole("region", { name }).evaluate((region) => {
-        let el = region.querySelector(".apexcharts-canvas")?.parentElement ?? null;
-        while (el && getComputedStyle(el).overflowX !== "auto") el = el.parentElement;
-        return el && { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth, regionWidth: region.clientWidth };
-      });
-      expect(scroller, `${name} has a scroll container`).not.toBeNull();
-      // The chart keeps its width and scrolls, inside a block no wider than the page.
-      expect(scroller!.scrollWidth, `${name} keeps its chart wider than the screen`).toBeGreaterThan(scroller!.clientWidth);
-      expect(scroller!.regionWidth, `${name} fits the page`).toBeLessThanOrEqual(390);
+    for (const [name] of MEMBER_HOME_ROWS) {
+      // Structural: a sideways scroller is any element, the region included,
+      // whose computed overflow lets it scroll and whose content is wider.
+      const scrollers = await page.getByRole("region", { name }).evaluate((region) =>
+        [region, ...region.querySelectorAll("*")]
+          .filter((el) => ["auto", "scroll"].includes(getComputedStyle(el).overflowX) && el.scrollWidth > el.clientWidth)
+          .map((el) => `${el.tagName.toLowerCase()} ${el.scrollWidth} > ${el.clientWidth}`),
+      );
+      expect(scrollers, `${name} scrolls sideways`).toEqual([]);
     }
+  });
+
+  /**
+   * The noMobileBarCharts fixture asserts that a selector matches nothing on
+   * a phone, which a selector that matches nothing anywhere would pass too.
+   * This keeps it honest: from sm up the same page draws its bar charts, and
+   * the selector must find them.
+   */
+  test("UI-CHT-001: the bar-series selector the mobile check relies on still matches a drawn bar chart", async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop", "From sm up the member home draws its bar charts.");
+
+    await openMemberHomeWithGaps(page);
+    // Structural: ApexCharts' SVG has no role or name of its own.
+    await expect(page.locator("svg.apexcharts-svg")).toHaveCount(3);
+    expect(await page.locator(BAR_SERIES).count()).toBeGreaterThan(0);
   });
 
   /**
@@ -318,10 +347,14 @@ test.describe("Visual baselines", () => {
    * with the pointer elsewhere, and headless Chromium hides scrollbars unless
    * told not to. So these tests run with real scrollbars, move the pointer, and
    * measure (see the file-level test.use); the hidden-table defect on this
-   * screen (#201 AC10, above) was likewise invisible to every capture and only
-   * surfaced through a number.
+   * screen (#201) was likewise invisible to every capture and only surfaced
+   * through a number.
+   *
+   * From sm up only: below it the member home mounts no chart (UI-CHT-001).
    */
   test.describe("#220: the member home's charts hold still", () => {
+    test.skip(({ isMobile }) => isMobile, "UI-CHT-001: below sm the member home mounts no chart, only rows.");
+
     // The assertions below are soft: every chart is measured even after one
     // fails, so a failure says whether one chart regressed or both, and whether
     // the loop runs as well as the overflow that starts it.
@@ -352,8 +385,8 @@ test.describe("Visual baselines", () => {
 
     /**
      * Structural: the scroll container is the chart canvas's nearest
-     * horizontally scrolling ancestor, found as #201 AC10 finds it. Tagged so
-     * the measurements below can address it.
+     * horizontally scrolling ancestor. Tagged so the measurements below can
+     * address it.
      */
     const tagScroller = (page: Page, name: string) =>
       page.getByRole("region", { name }).evaluate((region) => {
@@ -543,32 +576,6 @@ test.describe("Visual baselines", () => {
         });
 
         await scroller.evaluate((el) => el.querySelector("[data-overflow-probe]")!.remove());
-      }
-    });
-
-    test("#220 AC3: at 390px the charts still scroll sideways inside their containers, and the page does not", async ({
-      page,
-    }, testInfo) => {
-      test.skip(testInfo.project.name !== "mobile", "AC3 is specified against a 390px viewport.");
-
-      await openMemberHome(page);
-
-      for (const name of CHARTS) {
-        expect(await tagScroller(page, name), `${name} has a scroll container`).toBe(true);
-        const scroller = page.getByRole("region", { name }).locator("[data-chart-scroller]");
-        await scroller.scrollIntoViewIfNeeded();
-
-        const box = (await scroller.boundingBox())!;
-        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-        await page.mouse.wheel(200, 0);
-
-        await expect
-          .poll(() => scroller.evaluate((el) => el.scrollLeft), { message: `${name} scrolls sideways` })
-          .toBeGreaterThan(0);
-        expect(
-          await page.evaluate(() => ({ scrollX: window.scrollX, document: document.documentElement.scrollWidth })),
-          `the page beside ${name}`,
-        ).toEqual({ scrollX: 0, document: 390 });
       }
     });
   });

@@ -90,6 +90,26 @@ export function describeDenial(response: Response): string {
   return `${response.request().method()} ${new URL(response.url()).pathname} -> ${response.status()}`;
 }
 
+/**
+ * A bar chart a `mobile` test may leave drawn, keyed on the path of the page
+ * the test ends on. Below sm every bar chart renders as rows (UI-CHT-001), so
+ * this starts empty, and an entry needs a reason as strong as ALLOWED_DENIALS'.
+ */
+interface AllowedMobileBarChart {
+  path: RegExp;
+  /** Why drawing a bar chart at phone width is right on this page. */
+  reason: string;
+}
+
+export const ALLOWED_MOBILE_BAR_CHARTS: AllowedMobileBarChart[] = [];
+
+// Structural: ApexCharts' SVG has no role or name of its own. Every bar
+// chart it draws puts its series in a group of this class, and no other
+// chart type does. Exported for the canary in layout-budgets.spec.ts, which
+// asserts it still matches a drawn bar chart: a selector nothing matches
+// would pass every page.
+export const BAR_SERIES = ".apexcharts-bar-series";
+
 /** Frames in a row with nothing loading before a page counts as settled. */
 const SETTLED_FRAMES = 5;
 
@@ -126,7 +146,12 @@ export async function waitForPageSettled(page: Page) {
   }
 }
 
-export const test = base.extend<{ noDeniedCalls: void; settledAfterGoto: void; noCaptureResize: void }>({
+export const test = base.extend<{
+  noDeniedCalls: void;
+  settledAfterGoto: void;
+  noCaptureResize: void;
+  noMobileBarCharts: void;
+}>({
   // `auto` rather than a fixture a test asks for, and rather than overriding
   // `page`: a spec gets the check by importing `test` from ./fixtures and
   // nothing else. An opt-in fixture would be missing from exactly the specs
@@ -205,6 +230,30 @@ export const test = base.extend<{ noDeniedCalls: void; settledAfterGoto: void; n
         );
       });
       await use();
+    },
+    { auto: true },
+  ],
+
+  // Below sm, a bar chart is rows and nothing scrolls sideways (UI-CHT-001).
+  // Checked after the body of every `mobile` test, on whatever page it ends
+  // on, so a new chart that draws bars on a phone fails the suite without a
+  // test written for it. Counted rather than awaited: a page that draws no
+  // bars passes at once, and one that does fails at once.
+  noMobileBarCharts: [
+    async ({ page }: { page: Page }, use, testInfo) => {
+      await use();
+      if (testInfo.project.name !== "mobile" || page.isClosed()) return;
+      const path = new URL(page.url()).pathname;
+      if (ALLOWED_MOBILE_BAR_CHARTS.some((entry) => entry.path.test(path))) return;
+
+      expect(
+        await page.locator(BAR_SERIES).count(),
+        `UI-CHT-001: ${path} draws an ApexCharts bar chart at phone width. Below sm, render it as rows ` +
+          "with the shared components in src/components/evolution/ (EnergyEvolutionRows, SavingsEvolutionRows) " +
+          'and mount the chart only from sm up, with useMediaQuery(theme.breakpoints.up("sm"), { noSsr: true }), ' +
+          "as Evolution does. Hiding it with CSS still draws its bars. If drawing bars here is right, add the page " +
+          "to ALLOWED_MOBILE_BAR_CHARTS with the reason why. See docs/specs/charts.md.",
+      ).toBe(0);
     },
     { auto: true },
   ],
