@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { Box, Skeleton, Typography } from "@mui/material";
+import { Box, Skeleton, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import BarChartRoundedIcon from "@mui/icons-material/BarChartRounded";
 import { LoadErrorAlert } from "../../../components/LoadErrorAlert";
@@ -7,15 +7,24 @@ import { colors } from "../../../theme/tokens";
 import { HomeCard } from "../HomeCard";
 import { NeutralNotice } from "../../../components/EnergyFigures/NeutralNotice";
 import {
+  ENERGY_ROWS_LABEL,
   GRID_IMPORT_SERIES,
+  MONTH_SEGMENTS,
   NOTHING_STORED_TEXT,
+  SAVINGS_ROWS_LABEL,
   SAVINGS_SERIES,
   SELF_CONSUMPTION_SERIES,
+  incompleteMarkText,
+  monthDetail,
+  monthEnergyRowName,
+  monthSavingsRowName,
   toMonthlySeriesView,
   type MonthlySeriesView,
 } from "./monthlySeries";
 import { ENERGY_COLORS, SAVINGS_COLOR, swatch } from "../../../components/EnergyFigures/energyColors";
 import { SeriesLegend } from "../../../components/evolution/SeriesLegend";
+import { EnergyEvolutionRows, SavingsEvolutionRows } from "../../../components/evolution/EvolutionRows";
+import { formatKilowattHourAmount } from "../../../utils/formatEnergyFigures";
 import { TwelveMonthChart } from "./TwelveMonthChart";
 import { useMemberEnergyMetrics, type ReferencePeriod } from "./useMemberEnergyMetrics";
 import { useTwelveMonthSeries } from "./useTwelveMonthSeries";
@@ -56,7 +65,49 @@ const SeriesTable: FC<{ view: MonthlySeriesView }> = ({ view }) => (
   </Box>
 );
 
+/** Wide enough for the figure column's heading, "De la comunidad". */
+const COMMUNITY_FIGURE_WIDTH = 92;
+
+/** An incomplete month's mark after its bars, as the chart draws it: "1 de 2". The row's name says it in words. */
+const incompleteMark = (state: { reported: number; total: number }) => (
+  <Typography aria-hidden component="span" variant="caption" sx={{ flex: "none", color: colors.text.body, whiteSpace: "nowrap" }}>
+    {incompleteMarkText(state)}
+  </Typography>
+);
+
+/**
+ * Below sm, the twelve months as rows (UI-CHT-001, UI-HOM-015): the energy
+ * rows, community energy stacked with grid energy and the community figure,
+ * each opening what the chart's tooltip says; then the savings rows.
+ */
+const SeriesRows: FC<{ view: MonthlySeriesView }> = ({ view }) => (
+  <>
+    <EnergyEvolutionRows
+      slots={view.rows.slots}
+      look={{ segments: MONTH_SEGMENTS }}
+      scaleEnd={view.rows.energyScale}
+      header={SELF_CONSUMPTION_SERIES}
+      listLabel={ENERGY_ROWS_LABEL}
+      detail={monthDetail}
+      value={({ month }) => (month.selfConsumptionKWh === null ? "—" : formatKilowattHourAmount(month.selfConsumptionKWh))}
+      name={monthEnergyRowName}
+      valueWidth={COMMUNITY_FIGURE_WIDTH}
+      partialMark={incompleteMark}
+    />
+    <SavingsEvolutionRows
+      slots={view.rows.slots}
+      color={SAVINGS_COLOR}
+      scaleEnd={view.rows.savingsScale}
+      listLabel={SAVINGS_ROWS_LABEL}
+      name={monthSavingsRowName}
+      partialMark={incompleteMark}
+    />
+  </>
+);
+
 const Series: FC<{ referencePeriod: ReferencePeriod }> = ({ referencePeriod }) => {
+  const theme = useTheme();
+  const isWide = useMediaQuery(theme.breakpoints.up("sm"), { noSsr: true });
   const { buckets, isLoading, isError, retry } = useTwelveMonthSeries(referencePeriod);
 
   if (isError) return <LoadErrorAlert message="No se pudieron cargar tus últimos 12 meses." onRetry={retry} />;
@@ -87,7 +138,8 @@ const Series: FC<{ referencePeriod: ReferencePeriod }> = ({ referencePeriod }) =
           { label: SAVINGS_SERIES, swatch: swatch.solid(SAVINGS_COLOR) },
         ]}
       />
-      <TwelveMonthChart view={view} />
+      {/* Below sm the chart is not mounted at all: hidden, it would still draw its bars. */}
+      {isWide ? <TwelveMonthChart view={view} /> : <SeriesRows view={view} />}
       <SeriesTable view={view} />
     </HomeCard>
   );
