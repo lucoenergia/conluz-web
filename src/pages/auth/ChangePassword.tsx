@@ -1,7 +1,7 @@
 import { useState, type FC, type FormEvent } from "react";
 import { Alert, Box, Button, Typography, Paper, Avatar } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { radii, shadows, alphas, fontSizes, colors } from "../../theme/tokens";
+import { radii, shadows, alphas, fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import KeyIcon from "@mui/icons-material/Key";
 import { useNavigate } from "react-router";
@@ -129,18 +129,7 @@ export const ChangePasswordPage: FC = () => {
   const labelSx = { display: "block", fontSize: fontSizes.md, fontWeight: 600, color: "text.primary", mb: 1 } as const;
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: { xs: 2, sm: 3 },
-        p: { xs: 0, sm: 2, md: 3 },
-        minHeight: "100vh",
-        background: colors.background.default,
-        maxWidth: "100%",
-        overflow: "hidden",
-      }}
-    >
+    <Box sx={[sxStyles.pageRoot, { overflow: "hidden" }]}>
       {!isForced && (
         <Box sx={sxStyles.pageContainerFull}>
           <BreadCrumb

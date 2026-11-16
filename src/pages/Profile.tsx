@@ -108,18 +108,7 @@ export const ProfilePage: FC = () => {
   const handleCloseSuccessMessage = () => { setSuccessMessage(false); };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: { xs: 2, sm: 3 },
-        p: { xs: 0, sm: 2, md: 3 },
-        minHeight: "100vh",
-        background: colors.background.default,
-        maxWidth: "100%",
-        overflow: "hidden",
-      }}
-    >
+    <Box sx={[sxStyles.pageRoot, { overflow: "hidden" }]}>
       <Box sx={sxStyles.pageContainerFull}>
         <BreadCrumb
           steps={[

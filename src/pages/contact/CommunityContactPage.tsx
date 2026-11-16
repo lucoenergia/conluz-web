@@ -11,7 +11,7 @@ import { useActiveCommunityCapabilities } from "../../hooks/permissions";
 import { useActiveCommunityName } from "../../hooks/useActiveCommunityName";
 import { useActiveCommunityResource } from "../../hooks/useActiveCommunityResource";
 import { sxStyles } from "../../theme/sx";
-import { alphas, colors, radii } from "../../theme/tokens";
+import { alphas, radii } from "../../theme/tokens";
 import { ContactInstruction } from "./ContactInstruction";
 import { ManagedContactChannels } from "./ManagedContactChannels";
 import { OperatorContact } from "./OperatorContact";
@@ -78,18 +78,7 @@ export const CommunityContactPage: FC = () => {
   }
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: { xs: 2, sm: 3 },
-        p: { xs: 0, sm: 2, md: 3 },
-        minHeight: "100vh",
-        background: colors.background.default,
-        width: "100%",
-        boxSizing: "border-box",
-      }}
-    >
+    <Box sx={sxStyles.pageRoot}>
       <Box sx={sxStyles.pageContainerFull}>
         <BreadCrumb
           steps={[

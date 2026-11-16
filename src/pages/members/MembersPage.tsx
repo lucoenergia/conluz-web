@@ -33,7 +33,7 @@ import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import SendIcon from "@mui/icons-material/Send";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import SavingsRoundedIcon from "@mui/icons-material/SavingsRounded";
-import { colors, fontSizes } from "../../theme/tokens";
+import { fontSizes } from "../../theme/tokens";
 import { sxStyles } from "../../theme/sx";
 import { RecordList, type RecordListItem } from "../../components/RecordList";
 import { ListTable, RowActionsMenu } from "../../components/ListTable";
@@ -349,19 +349,7 @@ export const MembersPage: FC = () => {
   const removePending = removeTargetRemove?.isPending ?? false;
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: { xs: 2, sm: 3 },
-        p: { xs: 0, sm: 2, md: 3 },
-        minHeight: "100vh",
-        background: colors.background.default,
-        width: "100%",
-        maxWidth: "100%",
-        boxSizing: "border-box",
-      }}
-    >
+    <Box sx={sxStyles.pageRoot}>
       <BreadCrumb
         steps={[
           { label: "Inicio", href: "/" },

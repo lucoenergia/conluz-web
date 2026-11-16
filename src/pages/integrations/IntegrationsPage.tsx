@@ -322,16 +322,7 @@ export const IntegrationsPage: FC = () => {
     cards.some(({ provider }) => loadingByProvider[provider.id]);
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: { xs: 2, sm: 3 },
-        p: { xs: 0, sm: 2, md: 3 },
-        minHeight: "calc(100vh - 64px)",
-        background: colors.background.default,
-      }}
-    >
+    <Box sx={sxStyles.pageRoot}>
       {/* Breadcrumb */}
       <Box sx={sxStyles.pageContainerFull}>
         <BreadCrumb
@@ -343,7 +334,7 @@ export const IntegrationsPage: FC = () => {
       </Box>
 
       {/* Hero Section */}
-      <Box sx={[sxStyles.pageContainerFull, { maxWidth: 960, mx: "auto" }]}>
+      <Box sx={sxStyles.pageContainerFull}>
         <Paper
           elevation={0}
           sx={{
@@ -370,7 +361,7 @@ export const IntegrationsPage: FC = () => {
       </Box>
 
       {/* Summary strip */}
-      <Box sx={[sxStyles.pageContainerFull, { maxWidth: 960, mx: "auto" }]}>
+      <Box sx={sxStyles.pageContainerFull}>
         <Paper
           elevation={0}
           sx={{
@@ -404,8 +395,6 @@ export const IntegrationsPage: FC = () => {
         sx={[
           sxStyles.pageContainerFull,
           {
-            maxWidth: 960,
-            mx: "auto",
             display: "flex",
             flexDirection: "column",
             gap: { xs: 2, sm: 2.5 },

@@ -1,6 +1,5 @@
 import { useEffect, useState, type FC } from "react";
 import { sxStyles } from "../../theme/sx";
-import { colors } from "../../theme/tokens";
 import { Box } from "@mui/material";
 import { useParams } from "react-router";
 import { useOverlayNavigate } from "../../components/ResponsiveOverlay";
@@ -58,31 +57,20 @@ export const SupplyDetailPage: FC = () => {
   // a second that would say which of the two it was.
   if (isSupplyNotFound) {
     return (
-      <Box sx={sxStyles.pageContainer}>
-        <EmptyState
-          icon={SearchOffIcon}
-          title="Punto de suministro no encontrado"
-          subtitle="Este punto de suministro no existe o no tienes acceso a su comunidad."
-        />
+      <Box sx={sxStyles.pageRoot}>
+        <Box sx={sxStyles.pageContainer}>
+          <EmptyState
+            icon={SearchOffIcon}
+            title="Punto de suministro no encontrado"
+            subtitle="Este punto de suministro no existe o no tienes acceso a su comunidad."
+          />
+        </Box>
       </Box>
     );
   }
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: { xs: 2, sm: 3 },
-        p: { xs: 0, sm: 2, md: 3 },
-        minHeight: "100vh",
-        background: colors.background.default,
-        width: "100%",
-        maxWidth: "100%",
-        boxSizing: "border-box",
-        overflow: "hidden",
-      }}
-    >
+    <Box sx={[sxStyles.pageRoot, { overflow: "hidden" }]}>
       {/* Breadcrumb */}
       <Box sx={sxStyles.pageContainer}>
         <BreadCrumb

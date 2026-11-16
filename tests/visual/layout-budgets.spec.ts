@@ -20,7 +20,7 @@
  * single number to assert.
  */
 
-import { type Page } from "@playwright/test";
+import { type Page, type Route } from "@playwright/test";
 import type { CommunityResponse, PlantResponse, SupplyResponse } from "../../src/api/models";
 import { theme } from "../../src/theme";
 import { colors } from "../../src/theme/tokens";
@@ -29,6 +29,9 @@ import {
   expect,
   communityCapabilitiesFor,
   COMMUNITY_ADMIN_SUPPLY_CAPABILITIES,
+  COMMUNITY_DAILY_SERIES,
+  COMMUNITY_ENERGY_METRICS,
+  DASHBOARD_COMMUNITIES,
   DRAFT_AGREEMENT,
   FIXED_COEFFICIENTS_EMPTY,
   FIXED_COEFFICIENTS_MIXED,
@@ -37,6 +40,7 @@ import {
   FIXED_COMMUNITY_ID,
   FIXED_MEMBER_USER,
   FIXED_MEMBERSHIPS,
+  FIXED_NO_COMMUNITY_USER,
   FIXED_PLANT,
   FIXED_PLANT_ID,
   FIXED_PLATFORM_ADMIN_USER,
@@ -45,13 +49,19 @@ import {
   FIXED_SUPPLY,
   FIXED_SUPPLY_2,
   FIXED_SUPPLY_ID,
+  freezeClock,
   injectAuthToken,
+  MANAGEMENT_PUBLISHED_AGREEMENT,
+  MEMBER_ENERGY_METRICS,
   MEMBER_HOURLY_PROFILE_GAPS,
   MEMBER_MONTHLY_SERIES_GAP_INCOMPLETE,
   mockAllApiRoutes,
   mockCommunityAdminsRoutes,
   mockPlatformAdminsRoutes,
+  mockCommunityEnergy,
   mockCommunityManagementRoutes,
+  mockHistoricalMembership,
+  mockManagementHome,
   mockMemberHome,
   mockSharingAgreementDetailRoutes,
   memberDailySeries,
@@ -1615,6 +1625,229 @@ test.describe("#369: the add-supply picker on the shared overlay", () => {
     });
     expect(onTop, "the search field is covered after scrolling the list").toBe(true);
   });
+});
+
+/**
+ * #415: every authenticated page is one column on the shared page root
+ * (UI-LAY-001, UI-LAY-002). Measured against the main region, so a change to
+ * what a panel holds cannot invalidate it.
+ *
+ * Every laid-out child of the page's root must span its content box: a cap on
+ * the root moves both edges, and a cap on a page-level panel or a section
+ * wrapper pulls that child's edges in, even while an uncapped sibling such as
+ * the breadcrumb still reaches the edge. So both the outermost and the
+ * innermost child edges are measured. Hidden live regions (absolutely
+ * positioned, or one pixel wide) are not content and are left out.
+ */
+test.describe("#415: pages fill the main content area on the shared page root", () => {
+  type Edges = {
+    mainLeft: number;
+    mainRight: number;
+    mainWidth: number;
+    rootWidth: number;
+    padLeft: number;
+    padRight: number;
+    /** The outermost child edges. */
+    left: number;
+    right: number;
+    /** The innermost child edges: equal to the outermost when every child spans the root. */
+    innerLeft: number;
+    innerRight: number;
+  };
+
+  const EDGE_TOLERANCE = 1;
+
+  async function measureEdges(page: Page): Promise<Edges> {
+    const heading = page.getByRole("main").getByRole("heading", { level: 1 });
+    await expect(heading).toBeVisible();
+    return heading.evaluate((h1) => {
+      // Structural: the page's root is the main region's child that holds the
+      // page's heading (as in the #211 test above); it has no role or name.
+      let root: HTMLElement = h1 as HTMLElement;
+      while (root.parentElement && root.parentElement.id !== "main-content") root = root.parentElement;
+      const main = root.parentElement as HTMLElement;
+      const mainRect = main.getBoundingClientRect();
+      const style = getComputedStyle(root);
+      const children = [...root.children].filter((child) => {
+        const rect = child.getBoundingClientRect();
+        const position = getComputedStyle(child).position;
+        return rect.width > 1 && rect.height > 1 && position !== "absolute" && position !== "fixed";
+      });
+      const rects = children.map((child) => child.getBoundingClientRect());
+      return {
+        mainLeft: mainRect.left,
+        mainRight: mainRect.right,
+        mainWidth: mainRect.width,
+        rootWidth: root.getBoundingClientRect().width,
+        padLeft: parseFloat(style.paddingLeft),
+        padRight: parseFloat(style.paddingRight),
+        left: Math.min(...rects.map((rect) => rect.left)),
+        right: Math.max(...rects.map((rect) => rect.right)),
+        innerLeft: Math.max(...rects.map((rect) => rect.left)),
+        innerRight: Math.min(...rects.map((rect) => rect.right)),
+      };
+    });
+  }
+
+  /** The seven pages #415 moved onto the shared root, each opened with the persona that reaches it. */
+  const FULL_WIDTH_PAGES: { name: string; open: (page: Page) => Promise<void> }[] = [
+    {
+      name: "/home/member",
+      open: async (page) => {
+        await injectAuthToken(page);
+        await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+        await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+        await mockMemberHome(page, FIXED_MEMBER_USER);
+        await page.goto("/home/member");
+        await expect(page.getByText("Datos de agosto de 2026")).toBeVisible();
+      },
+    },
+    {
+      name: "/home/management",
+      open: async (page) => {
+        await injectAuthToken(page);
+        await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+        await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+        await mockManagementHome(page, FIXED_COMMUNITY_ADMIN_USER, {
+          plants: [FIXED_PLANT],
+          agreementsByPlant: { [FIXED_PLANT.id]: [MANAGEMENT_PUBLISHED_AGREEMENT] },
+        });
+        await page.goto("/home/management");
+        await expect(page.getByRole("region", { name: "Acuerdos de reparto" })).toBeVisible();
+      },
+    },
+    {
+      name: "/community-analysis",
+      open: async (page) => {
+        await freezeClock(page);
+        await injectAuthToken(page);
+        await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+        await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+        await mockCommunityEnergy(page, { anchor: COMMUNITY_ENERGY_METRICS, period: COMMUNITY_ENERGY_METRICS, daily: COMMUNITY_DAILY_SERIES });
+        await page.goto("/community-analysis");
+        await expect(page.getByRole("heading", { name: "Datos de agosto de 2026" })).toBeVisible();
+      },
+    },
+    {
+      name: "/historical-analysis",
+      open: async (page) => {
+        await freezeClock(page);
+        await injectAuthToken(page);
+        await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+        await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+        await mockHistoricalMembership(page, FIXED_MEMBER_USER, { anchor: MEMBER_ENERGY_METRICS, period: MEMBER_ENERGY_METRICS });
+        await page.goto("/historical-analysis");
+        await expect(page.getByRole("heading", { name: "Datos de agosto de 2026" })).toBeVisible();
+      },
+    },
+    {
+      name: "/integrations",
+      open: async (page) => {
+        await injectAuthToken(page);
+        await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+        await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+        await mockCommunityManagementRoutes(page);
+        await page.goto("/integrations");
+        await expect(page.getByRole("textbox", { name: "Usuario" }).first()).toBeVisible();
+      },
+    },
+    {
+      name: "/platform",
+      open: async (page) => {
+        await injectAuthToken(page);
+        await mockAllApiRoutes(page, FIXED_PLATFORM_ADMIN_USER);
+        await page.route(
+          (url) => url.href.includes("/api/v1/communities") && !url.href.includes("/supplies"),
+          (route: Route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(DASHBOARD_COMMUNITIES) }),
+        );
+        await page.goto("/platform");
+        await expect(page.getByText("Requiere atención")).toBeVisible();
+      },
+    },
+    {
+      name: "/no-community",
+      open: async (page) => {
+        await injectAuthToken(page);
+        await mockAllApiRoutes(page, FIXED_NO_COMMUNITY_USER);
+        await page.goto("/no-community");
+      },
+    },
+  ];
+
+  /** Asserts that every child edge lies within the tolerance of the expected one. */
+  function expectEdges(edges: Edges, expected: { left: number; right: number }, what: string) {
+    for (const [name, value, target] of [
+      ["outermost left", edges.left, expected.left],
+      ["innermost left", edges.innerLeft, expected.left],
+      ["outermost right", edges.right, expected.right],
+      ["innermost right", edges.innerRight, expected.right],
+    ] as const) {
+      expect(Math.abs(value - target), `${what}: ${name} edge at ${value}, expected ${target}`).toBeLessThanOrEqual(EDGE_TOLERANCE);
+    }
+  }
+
+  for (const fullWidthPage of FULL_WIDTH_PAGES) {
+    // At the desktop project's 1440px the main area is narrower than some of
+    // the caps #415 removed, which then never bite: measured at the 2560px the
+    // issue reports, where the empty band was half the screen.
+    test(`UI-LAY-001 ${fullWidthPage.name} fills the main content area on a wide desktop`, async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name !== "desktop", "AC1 is specified against a desktop viewport.");
+
+      await page.setViewportSize({ width: 2560, height: 900 });
+      await fullWidthPage.open(page);
+      await stabilizePage(page);
+      const edges = await measureEdges(page);
+
+      expect(Math.abs(edges.rootWidth - edges.mainWidth), `${fullWidthPage.name} root width`).toBeLessThanOrEqual(EDGE_TOLERANCE);
+      expectEdges(edges, { left: edges.mainLeft + edges.padLeft, right: edges.mainRight - edges.padRight }, fullWidthPage.name);
+    });
+
+    // The plant list is the reference: the list and detail pages have used the
+    // shared root's block since before #415. It is opened in a second tab of the
+    // same context, measured after the page under test, so the two personas'
+    // sessions never overlap a measurement.
+    test(`UI-LAY-002 ${fullWidthPage.name} has the same content edges as /plants`, async ({ page, context }) => {
+      await fullWidthPage.open(page);
+      await stabilizePage(page);
+      const edges = await measureEdges(page);
+
+      const plants = await context.newPage();
+      await injectAuthToken(plants);
+      await seedActiveCommunity(plants, FIXED_COMMUNITY_ADMIN_USER.id);
+      await mockAllApiRoutes(plants, FIXED_COMMUNITY_ADMIN_USER);
+      await mockSharingAgreementsPlantRoutes(plants, FIXED_SHARING_AGREEMENTS);
+      await plants.goto("/plants");
+      await stabilizePage(plants);
+      const reference = await measureEdges(plants);
+      await plants.close();
+
+      expectEdges(reference, { left: reference.left, right: reference.right }, "/plants");
+      expectEdges(edges, { left: reference.left, right: reference.right }, `${fullWidthPage.name} against /plants`);
+    });
+  }
+
+  for (const [path, field] of [
+    ["/profile", "Nombre completo"],
+    ["/change-password", "Contraseña actual"],
+  ] as const) {
+    test(`UI-LAY-001 ${path} keeps its single form panel narrower than the main area`, async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name !== "desktop", "The panel is capped only where the main area is wider than it.");
+
+      await injectAuthToken(page);
+      await seedActiveCommunity(page, FIXED_MEMBER_USER.id);
+      await mockAllApiRoutes(page, FIXED_MEMBER_USER);
+      await page.goto(path);
+      await stabilizePage(page);
+      const edges = await measureEdges(page);
+
+      // Structural: the form panel is the MUI Paper around the form's first field; it has no role or name.
+      const panelWidth = await page
+        .getByRole("main")
+        .getByLabel(field)
+        .evaluate((input) => (input.closest(".MuiPaper-root") as HTMLElement).getBoundingClientRect().width);
+      expect(panelWidth, `${path} form panel`).toBeLessThan(edges.right - edges.left - EDGE_TOLERANCE);
+    });
+  }
 });
 
 test.describe("#416: a value never editable from its screen", () => {

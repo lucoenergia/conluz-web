@@ -7,7 +7,7 @@ import SearchOffIcon from "@mui/icons-material/SearchOff";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import { sxStyles } from "../../theme/sx";
-import { colors, interactiveTransition, motion} from "../../theme/tokens";
+import { interactiveTransition, motion} from "../../theme/tokens";
 import { BreadCrumb } from "../../components/Breadcrumb";
 import { EmptyState } from "../../components/EmptyState";
 import { DetailHeader } from "../../components/DetailHeader";
@@ -124,19 +124,7 @@ export const SharingAgreementsPage: FC = () => {
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: { xs: 2, sm: 3 },
-        p: { xs: 0, sm: 2, md: 3 },
-        minHeight: "100vh",
-        background: colors.background.default,
-        width: "100%",
-        maxWidth: "100%",
-        boxSizing: "border-box",
-      }}
-    >
+    <Box sx={sxStyles.pageRoot}>
       <Box sx={{ ...sxStyles.pageContainer, pt: { xs: 2, sm: 0 } }}>
         <BreadCrumb
           steps={[

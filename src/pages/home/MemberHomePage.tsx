@@ -33,11 +33,15 @@ import { useMemberPayback } from "./member/useMemberPayback";
  * renders.
  */
 export const MemberHomePage: FC = () => (
-  <Box sx={{ ...sxStyles.pageContainer, p: { xs: 2, sm: 4 }, maxWidth: 960, display: "flex", flexDirection: "column", gap: 3 }}>
-    <Typography variant="h4" component="h1" sx={{ color: colors.text.primary }}>
-      Tu energía
-    </Typography>
-    <HomeViewSwitch current="member" />
+  <Box sx={sxStyles.pageRoot}>
+    <Box sx={sxStyles.pageContainer}>
+      <Typography variant="h4" component="h1" sx={{ color: colors.text.primary }}>
+        Tu energía
+      </Typography>
+    </Box>
+    <Box sx={sxStyles.pageContainer}>
+      <HomeViewSwitch current="member" />
+    </Box>
     <ReferenceMonthHeader />
     {/* The figure the page leads with, beside the one block that asks something of the reader, which keeps its own height. */}
     <Box sx={{ ...ROW, alignItems: "flex-start", "& > *": { ...ROW["& > *"], flex: "2 1 300px", minWidth: 0 }, "& > :first-of-type": { flex: "3 1 480px" } }}>
@@ -115,7 +119,7 @@ const ReferenceMonthHeader: FC = () => {
 
   return (
     <>
-      <Box>
+      <Box sx={sxStyles.pageContainer}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <CalendarMonthRoundedIcon aria-hidden sx={{ color: colors.brand.main }} />
           <Typography variant="h6" component="p" sx={{ color: colors.text.primary }}>

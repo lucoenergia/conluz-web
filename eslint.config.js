@@ -132,6 +132,47 @@ const PERMISSION_HOOKS = [
   },
 ];
 
+// ─── Page layout guard rails ──────────────────────────────────────────────────
+// Every page under the authenticated layout is one full-width column (UI-LAY-001)
+// built on the shared root, sxStyles.pageRoot (UI-LAY-002). A page that caps its
+// own width or hand-builds its root drifts from the others, which is how seven
+// pages came to stop short of the right edge of the main area (#415).
+//
+// A cap is a `maxWidth` beside a layout token, in the same sx object (spread) or
+// in the same sx array. A `maxWidth` on a control -- a selector, a skeleton, the
+// home view tabs -- sits beside no token and stays allowed.
+const LAYOUT_TOKEN_NAMES = "/^(pageRoot|pageContainer|pageContainerFull|softPanel)$/";
+const LAYOUT_TOKEN = `MemberExpression[object.name='sxStyles'][property.name=${LAYOUT_TOKEN_NAMES}]`;
+// esquery's relative :has does not follow a second child step, so the spread's
+// token is matched through attribute paths on the SpreadElement itself.
+const LAYOUT_TOKEN_SPREAD = `SpreadElement[argument.object.name='sxStyles'][argument.property.name=${LAYOUT_TOKEN_NAMES}]`;
+const MAX_WIDTH = "Property:matches([key.name='maxWidth'], [key.value='maxWidth'])";
+const PAGE_WIDTH_MESSAGE =
+  "A page and its page-level panels fill the main content area: remove this maxWidth. Width limits belong on controls inside a panel. See docs/specs/layout.md (UI-LAY-001).";
+
+const PAGE_WIDTH_SELECTORS = [
+  { selector: `ObjectExpression:has(> ${LAYOUT_TOKEN_SPREAD}) > ${MAX_WIDTH}`, message: PAGE_WIDTH_MESSAGE },
+  { selector: `ArrayExpression:has(> ${LAYOUT_TOKEN}) > ObjectExpression > ${MAX_WIDTH}`, message: PAGE_WIDTH_MESSAGE },
+];
+
+// The viewport-high root is what makes a box a page root, so a page that sets it
+// is building its own root instead of using the shared one. Any height derived
+// from the viewport counts: `calc(100vh - 64px)` is a hand-built root too.
+const PAGE_ROOT_SELECTORS = [
+  {
+    selector: "Property:matches([key.name='minHeight'], [key.value='minHeight']) > Literal[value=/100vh/]",
+    message:
+      "Do not build a page root by hand: use sxStyles.pageRoot (src/theme/sx.ts), adding a local override in an sx array if the page needs one. See docs/specs/layout.md (UI-LAY-002).",
+  },
+];
+
+// The only pages that may cap a panel: each is a single short form that becomes
+// unreadable when stretched. They are exempt from the width-cap rule only.
+const PAGE_WIDTH_CAP_EXEMPTIONS = [
+  "src/pages/Profile.tsx", // permanent: a single centred form panel (UI-LAY-001)
+  "src/pages/auth/ChangePassword.tsx", // permanent: a single centred form panel (UI-LAY-001)
+];
+
 // ─── Community-scope guard rail ───────────────────────────────────────────────
 // A family of generated hooks is keyed by an entity id -- a plant or a supply --
 // with the community left implicit. The backend authorises them on membership,
@@ -364,6 +405,30 @@ export default tseslint.config([
     rules: { "no-restricted-syntax": ["error", ...STYLING_SELECTORS, ...NOTICE_SELECTORS] },
   },
   {
+    // Page layout guard rails. A later block replaces the rule's options for the
+    // files it shares with an earlier one, so every set the main block carries
+    // is re-stated here.
+    files: ["src/pages/**/*.{ts,tsx}"],
+    ignores: ["src/**/*.spec.{ts,tsx}", ...PAGE_WIDTH_CAP_EXEMPTIONS],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        ...STYLING_SELECTORS,
+        ...NOTICE_SELECTORS,
+        ...ROLE_SELECTORS,
+        ...PAGE_WIDTH_SELECTORS,
+        ...PAGE_ROOT_SELECTORS,
+      ],
+    },
+  },
+  {
+    // The width-cap exemptions keep every other set, the page-root rule included.
+    files: PAGE_WIDTH_CAP_EXEMPTIONS,
+    rules: {
+      "no-restricted-syntax": ["error", ...STYLING_SELECTORS, ...NOTICE_SELECTORS, ...ROLE_SELECTORS, ...PAGE_ROOT_SELECTORS],
+    },
+  },
+  {
     // The API barrel, for every file outside the generated client, specs included.
     files: ["**/*.{ts,tsx}"],
     ignores: ["src/api/**"],
@@ -443,3 +508,7 @@ export { COMMUNITY_SCOPE_WRAPPERS };
 // Read by src/contracts/overlayImports.spec.ts, which fails on a stale entry
 // and lints probes against the restriction.
 export { OVERLAY_PRIMITIVE_ALLOWLIST, OVERLAY_IMPORT_RESTRICTION };
+
+// Read by src/contracts/pageLayout.spec.ts, which lints probes against the page
+// layout rules and holds the exemption list to the one the spec document names.
+export { PAGE_WIDTH_CAP_EXEMPTIONS };

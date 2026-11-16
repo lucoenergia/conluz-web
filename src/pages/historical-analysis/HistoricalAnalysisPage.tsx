@@ -56,18 +56,24 @@ export const HistoricalAnalysisPage: FC = () => {
   }, [error, errorDispatch]);
 
   return (
-    <Box sx={{ ...sxStyles.pageContainer, p: { xs: 2, sm: 4 }, maxWidth: 960, display: "flex", flexDirection: "column", gap: 3 }}>
-      <Typography variant="h4" component="h1" sx={{ color: colors.text.primary }}>
-        Mi consumo y ahorro
-      </Typography>
-      {(isLoading || (noSupplyToShow && isResolving)) && <Skeleton variant="rounded" height={56} sx={{ maxWidth: 560 }} />}
+    <Box sx={sxStyles.pageRoot}>
+      <Box sx={sxStyles.pageContainer}>
+        <Typography variant="h4" component="h1" sx={{ color: colors.text.primary }}>
+          Mi consumo y ahorro
+        </Typography>
+      </Box>
+      {(isLoading || (noSupplyToShow && isResolving)) && (
+        <Box sx={sxStyles.pageContainer}>
+          <Skeleton variant="rounded" height={56} sx={{ maxWidth: 560 }} />
+        </Box>
+      )}
       {noSupplyToShow && !isResolving && lookupFailed && <LoadErrorAlert message={VIEWED_SUPPLY_ERROR} onRetry={retryLookup} />}
       {noSupplyToShow && !isResolving && !lookupFailed && (
         <NeutralNotice>No tienes puntos de suministro en esta comunidad</NeutralNotice>
       )}
       {supplies && (ownsSupplies || viewed !== null) && (
         <>
-          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: "flex-start", gap: 2 }}>
+          <Box sx={[sxStyles.pageContainer, { display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: "flex-start", gap: 2 }]}>
             <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
               <SupplySelector supplies={supplies} selected={selected} viewed={viewed} onSelect={select} />
             </Box>
@@ -113,7 +119,11 @@ const AnchoredContent: FC<{ anchor: HistoricalAnchor; period: HistoricalPeriodSt
       return (
         <>
           {period.clampNotice && <Notice severity="info">{period.clampNotice}</Notice>}
-          {resolved && <PeriodHeader anchor={anchor.anchor} resolution={resolved} publication={memberPublicationText} />}
+          {resolved && (
+            <Box sx={sxStyles.pageContainer}>
+              <PeriodHeader anchor={anchor.anchor} resolution={resolved} publication={memberPublicationText} />
+            </Box>
+          )}
           <HistoricalPeriodContext.Provider value={resolved?.period}>
             {/* The content region the figures land in. */}
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>

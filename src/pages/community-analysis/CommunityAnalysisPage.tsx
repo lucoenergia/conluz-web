@@ -54,19 +54,23 @@ export const CommunityAnalysisPage: FC = () => {
   });
 
   return (
-    <Box sx={{ ...sxStyles.pageContainer, p: { xs: 2, sm: 4 }, maxWidth: 960, display: "flex", flexDirection: "column", gap: 3 }}>
-      <Box>
+    <Box sx={sxStyles.pageRoot}>
+      <Box sx={sxStyles.pageContainer}>
         <Typography variant="h4" component="h1" sx={{ color: colors.text.primary }}>
           {PAGE_TITLE}
         </Typography>
         {anchorQuery.data && <CommunityHeader metrics={anchorQuery.data} />}
       </Box>
       {anchor.status === "loading" && (
-        <Skeleton variant="rounded" height={56} role="progressbar" aria-label={ANCHOR_LOADING_LABEL} sx={{ maxWidth: 560 }} />
+        <Box sx={sxStyles.pageContainer}>
+          <Skeleton variant="rounded" height={56} role="progressbar" aria-label={ANCHOR_LOADING_LABEL} sx={{ maxWidth: 560 }} />
+        </Box>
       )}
       {anchor.status === "ready" && (
-        <Box sx={{ maxWidth: 560 }}>
-          <PeriodSelector anchor={anchor.anchor} presets={COMMUNITY_PRESETS} selection={period.selection} onSelect={period.select} />
+        <Box sx={sxStyles.pageContainer}>
+          <Box sx={{ maxWidth: 560 }}>
+            <PeriodSelector anchor={anchor.anchor} presets={COMMUNITY_PRESETS} selection={period.selection} onSelect={period.select} />
+          </Box>
         </Box>
       )}
       {/* Mounted before the anchor resolves, so a clamp the page arrives with is announced. */}
@@ -92,7 +96,11 @@ const AnchoredContent: FC<{ anchor: HistoricalAnchor; period: HistoricalPeriodSt
       return (
         <>
           {period.clampNotice && <Notice severity="info">{period.clampNotice}</Notice>}
-          {resolved && <PeriodHeader anchor={anchor.anchor} resolution={resolved} publication={memberPublicationText} />}
+          {resolved && (
+            <Box sx={sxStyles.pageContainer}>
+              <PeriodHeader anchor={anchor.anchor} resolution={resolved} publication={memberPublicationText} />
+            </Box>
+          )}
           <HistoricalPeriodContext.Provider value={resolved?.period}>
             <PeriodContent />
           </HistoricalPeriodContext.Provider>

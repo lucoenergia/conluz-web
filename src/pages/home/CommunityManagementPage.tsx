@@ -25,11 +25,15 @@ import { usePlantSharingAgreements } from "./management/usePlantSharingAgreement
  * in place.
  */
 export const CommunityManagementPage: FC = () => (
-  <Box sx={{ ...sxStyles.pageContainer, p: { xs: 2, sm: 4 }, maxWidth: 960, display: "flex", flexDirection: "column", gap: 3 }}>
-    <Typography variant="h4" component="h1" sx={{ color: colors.text.primary }}>
-      Gestión de la comunidad
-    </Typography>
-    <HomeViewSwitch current="management" />
+  <Box sx={sxStyles.pageRoot}>
+    <Box sx={sxStyles.pageContainer}>
+      <Typography variant="h4" component="h1" sx={{ color: colors.text.primary }}>
+        Gestión de la comunidad
+      </Typography>
+    </Box>
+    <Box sx={sxStyles.pageContainer}>
+      <HomeViewSwitch current="management" />
+    </Box>
     <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 3 }}>
       <MemberCountCard />
       <SupplyPointCountCard />

@@ -2,7 +2,7 @@ import { useMemo, useState, type FC, type MouseEvent } from "react";
 import { Box, Button, Paper } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { sxStyles } from "../../theme/sx";
-import { colors, interactiveTransition, motion} from "../../theme/tokens";
+import { interactiveTransition, motion} from "../../theme/tokens";
 import { useGetAllPlants } from "../../api/plants/plants";
 import type { PlantResponse } from "../../api/models";
 import { BreadCrumb } from "../../components/Breadcrumb";
@@ -100,20 +100,7 @@ export const PlantsPage: FC = () => {
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: { xs: 2, sm: 3 },
-        p: { xs: 0, sm: 2, md: 3 },
-        minHeight: "100vh",
-        background: colors.background.default,
-        width: "100%",
-        maxWidth: "100%",
-        boxSizing: "border-box",
-        overflow: "hidden",
-      }}
-    >
+    <Box sx={[sxStyles.pageRoot, { overflow: "hidden" }]}>
       {/* Breadcrumb */}
       <Box sx={sxStyles.pageContainer}>
         <BreadCrumb
