@@ -381,6 +381,13 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   SUPPLY_REGISTERED_IN_ANOTHER_COMMUNITY: "Este CUPS ya está registrado en otra comunidad.",
   SUPPLY_OWNER_NOT_FOUND: "No hay ningún miembro de la comunidad con ese DNI/NIE/NIF.",
 
+  // A supply transfer refused for its new owner or its date
+  // (lucoenergia/conluz#585, #423).
+  SUPPLY_ALREADY_OWNED_BY_USER: "Este miembro ya es el titular del punto.",
+  SUPPLY_TRANSFER_DATE_IN_FUTURE: "La fecha del cambio no puede ser posterior a hoy.",
+  SUPPLY_TRANSFER_DATE_NOT_AFTER_PREVIOUS:
+    "La fecha tiene que ser posterior a la del último cambio de titular de este punto.",
+
   // A refused energy metrics or consumption period (#324). Only TOO_LONG
   // carries params, the limit it enforces (#378). CONFLICTING and INCOMPLETE
   // come from how a screen built the request, never from anything the user
