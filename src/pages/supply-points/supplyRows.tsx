@@ -26,7 +26,7 @@ export interface SupplyRowOptions {
  * does not count, because the row's title already links to the detail.
  */
 export function offersSupplyRowActions({ actions }: SupplyRowActions): boolean {
-  return !!(actions.edit || actions.disable || actions.enable || actions.remove);
+  return !!(actions.edit || actions.transferOwnership || actions.disable || actions.enable || actions.remove);
 }
 
 export const supplyHref = (supply: SupplyResponse) => `/supply-points/${supply.id}`;

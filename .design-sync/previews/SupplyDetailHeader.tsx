@@ -33,6 +33,16 @@ export const Deletable = () => (
   </Mui.Box>
 );
 
+/**
+ * For a community admin, to whom the supply reports canTransferOwnership and canDelete: the menu holds
+ * "Cambiar titular", then "Eliminar punto de suministro" below a divider.
+ */
+export const Transferable = () => (
+  <Mui.Box sx={{ width: "100%" }}>
+    <SupplyDetailHeader supplyPoint={supply} onTransferRequest={() => {}} onDeleteRequest={() => {}} />
+  </Mui.Box>
+);
+
 export const Inactive = () => (
   <Mui.Box sx={{ width: "100%" }}>
     <SupplyDetailHeader

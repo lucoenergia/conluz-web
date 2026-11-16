@@ -67,3 +67,12 @@ export function localIsoAt(instantMs: number): string {
   const { year, month, day, hour, minute, second } = wallTimeAt(instantMs);
   return `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:${pad(second)}${offsetText(offsetMinutesAt(instantMs))}`;
 }
+
+/**
+ * Today's calendar date in the app's time zone ("2026-11-16"), whatever the
+ * device's zone: the date the backend checks a "not after today" against.
+ */
+export function appToday(nowMs: number = Date.now()): string {
+  const { year, month, day } = wallTimeAt(nowMs);
+  return `${year}-${pad(month)}-${pad(day)}`;
+}
