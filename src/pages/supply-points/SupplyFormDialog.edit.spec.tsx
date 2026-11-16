@@ -5,7 +5,8 @@ import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { buildMemberRecord, buildSupply, buildSupplyCapabilities } from "../../test/fixtures";
 import { apiError } from "../../test/apiError";
-import type { RestErrorDetailCode, SupplyCapabilitiesResponse, SupplyResponse } from "../../api/models";
+import type { RestErrorDetailCode, SupplyCapabilitiesResponse, SupplyResponse, UpdateSupplyBody } from "../../api/models";
+import { expectReadOnlyFieldContract, usesReadOnlyPresentation } from "../../test/readOnlyField";
 
 const SUPPLY_ID = "supply-1";
 const COMMUNITY_ID = "community-a";
@@ -250,6 +251,51 @@ describe("SupplyFormDialog: the owner", () => {
     expect(ownerInput()).toHaveAttribute("readonly");
   });
 
+  it("UI-SUP-005 UI-FRM-003 shows the owner in the read-only presentation, as a text field and not a selector", () => {
+    setup({ canEdit: true }, { ownerRecord: buildMemberRecord({ fullName: "Lucía Martínez Soler" }) });
+
+    expect(usesReadOnlyPresentation(ownerInput())).toBe(true);
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Abrir" })).not.toBeInTheDocument();
+    expect(usesReadOnlyPresentation(screen.getByRole("textbox", { name: /^Nombre/ }))).toBe(false);
+  });
+
+  it("UI-SUP-005 UI-FRM-003 shows «-» in the read-only presentation when there is no owner record", () => {
+    setup({ canEdit: true }, { ownerRecord: null });
+
+    expect(ownerInput()).toHaveValue("-");
+    expect(usesReadOnlyPresentation(ownerInput())).toBe(true);
+  });
+
+  it.each([
+    ["an owner record", buildMemberRecord({ fullName: "Lucía Martínez Soler" })],
+    ["no owner record", null],
+  ])("UI-SUP-023 says under the owner, with %s, that it cannot be changed", (_, ownerRecord) => {
+    setup({ canEdit: true }, { ownerRecord });
+
+    expect(ownerInput()).toHaveAccessibleDescription("El propietario no se puede cambiar");
+    expect(screen.getByText("El propietario no se puede cambiar")).toBeVisible();
+  });
+
+  it("UI-FRM-003 the owner is reached by Tab, and typing, deleting or pasting leaves it unchanged", async () => {
+    const user = userEvent.setup();
+    setup({ canEdit: true }, { ownerRecord: buildMemberRecord({ fullName: "Lucía Martínez Soler" }) });
+
+    await expectReadOnlyFieldContract(user, ownerInput(), "Lucía Martínez Soler");
+  });
+
+  it("UI-SUP-005 sends only the fields of the supply update, with no owner", async () => {
+    setup({ canEdit: true }, { user: { id: "u-ana" }, ownerRecord: buildMemberRecord({ fullName: "Lucía Martínez Soler" }) });
+
+    await userEvent.click(saveButton());
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+    const { data } = mutateAsync.mock.calls[0][0] as { data: Record<string, unknown> };
+    const updateSupplyBodyKeys: (keyof UpdateSupplyBody)[] = ["address", "addressRef", "code", "name"];
+    expect(Object.keys(data).every((key) => (updateSupplyBodyKeys as string[]).includes(key))).toBe(true);
+    for (const owner of ["owner", "ownerId", "ownerRecord", "personalId", "user", "userId"]) expect(data).not.toHaveProperty(owner);
+  });
+
   it("UI-SUP-018 reads neither the platform-wide user listing nor the community's memberships", async () => {
     setup({ canEdit: true }, { ownerRecord: buildMemberRecord({ fullName: "Lucía Martínez Soler" }) });
 
@@ -281,6 +327,22 @@ describe("UI-SUP-020 the edit submit", () => {
 
     expect(await screen.findByRole("button", { name: "Guardando..." })).toBeDisabled();
     for (const field of screen.getAllByRole("textbox")) expect(field).toHaveAttribute("readonly");
+  });
+
+  it("UI-FRM-003 UI-SUP-021 a save in flight leaves the editable inputs' look as it was; only the owner is drawn read-only", async () => {
+    mutateAsync.mockReturnValue(new Promise(() => {}));
+    setup({ canEdit: true }, { ownerRecord: buildMemberRecord({ fullName: "Lucía Martínez Soler" }) });
+
+    await userEvent.click(saveButton());
+    await screen.findByRole("button", { name: "Guardando..." });
+
+    const fields = screen.getAllByRole("textbox");
+    const owner = screen.getByRole("textbox", { name: "Propietario" });
+    expect(fields.length).toBeGreaterThan(1);
+    for (const field of fields) {
+      expect(field).toHaveAttribute("readonly");
+      expect(usesReadOnlyPresentation(field)).toBe(field === owner);
+    }
   });
 });
 

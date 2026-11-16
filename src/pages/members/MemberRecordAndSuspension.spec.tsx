@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { routeRequests, type RequestConfig, type RequestRouter } from "../../test/requestRouter";
+import { expectReadOnlyFieldContract, usesReadOnlyPresentation } from "../../test/readOnlyField";
 import {
   buildCommunity,
   buildCommunityCapabilities,
@@ -359,6 +360,35 @@ describe("editing a member's address (#411)", () => {
     await u.type(address, "X");
     expect(address).toHaveAttribute("aria-invalid", "false");
     expect(address).not.toHaveAccessibleDescription();
+  });
+});
+
+describe("the member's DNI/NIE in the record edit (#416)", () => {
+  beforeEach(() => {
+    mockCustomInstance.mockReset();
+  });
+
+  it("UI-FRM-003 draws the DNI/NIE read-only, reached by Tab and unchanged by typing, with its helper text", async () => {
+    const u = user();
+    serve({ current: [ANA, ADA] });
+    await renderPage();
+
+    const dialog = await openRecordDialog(u, "Ana García");
+    const personalId = within(dialog).getByRole("textbox", { name: "DNI/NIE" });
+    await expectReadOnlyFieldContract(u, personalId, "11111111A");
+    expect(personalId).toHaveAccessibleDescription("Identifica su cuenta, así que no se cambia desde aquí.");
+  });
+
+  it("UI-FRM-003 leaves the record's editable inputs in their own look", async () => {
+    const u = user();
+    serve({ current: [ANA, ADA] });
+    await renderPage();
+
+    const dialog = await openRecordDialog(u, "Ana García");
+    const fields = within(dialog).getAllByRole("textbox");
+    const personalId = within(dialog).getByRole("textbox", { name: "DNI/NIE" });
+    expect(fields.length).toBeGreaterThan(1);
+    for (const field of fields) expect(usesReadOnlyPresentation(field)).toBe(field === personalId);
   });
 });
 
