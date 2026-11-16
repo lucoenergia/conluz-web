@@ -126,6 +126,7 @@
         "useEnableSupply",
         "useImportSupplies",
         "useSyncDatadisSupplies",
+        "useTransferSupplyOwnership",
         "useUpdateSupply"
       ]
     },

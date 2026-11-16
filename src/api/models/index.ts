@@ -243,6 +243,7 @@ export * from './syncYearlyDatadisConsumptionsBody';
 export * from './syncYearlyDatadisProductionBody';
 export * from './syncYearlyHuaweiProductionBody';
 export * from './token';
+export * from './transferSupplyOwnershipBody';
 export * from './updateCommunityBody';
 export * from './updateMemberRecordBody';
 export * from './updateMembershipRoleBody';

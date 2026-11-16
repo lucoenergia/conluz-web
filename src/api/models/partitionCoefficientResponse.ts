@@ -29,12 +29,12 @@ export interface PartitionCoefficientResponse {
   /** Supply this coefficient belongs to */
   supply: SupplyReferenceResponse;
   /**
-     * Start of the period during which this coefficient is active (inclusive). Null means this is a pending coefficient, materialised but not yet activated.
+     * First day the coefficient applies (inclusive), at local midnight in the application time zone. Null means this is a pending coefficient, materialised but not yet activated.
      * @nullable
      */
   validFrom: string | null;
   /**
-     * End of the period (exclusive). Null means the period is still open; combined with a non-null validFrom that makes this the currently active coefficient for its plant.
+     * First day the coefficient no longer applies (exclusive end of a half-open period [validFrom, validTo)). Null when the period is open; combined with a non-null validFrom that makes this the currently active coefficient for its plant.
      * @nullable
      */
   validTo: string | null;

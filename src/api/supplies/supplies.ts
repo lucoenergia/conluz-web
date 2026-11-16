@@ -50,6 +50,7 @@ import type {
   SupplyEnergyMetricsResponse,
   SupplyHourlyConsumptionBucketResponse,
   SupplyResponse,
+  TransferSupplyOwnershipBody,
   UpdateSupplyBody
 } from '../models';
 
@@ -1684,6 +1685,83 @@ export function useGetSupplyEnergyMetrics<TData = Awaited<ReturnType<typeof getS
 
 
 /**
+ * Makes another member of the supply's community its owner, for example when the holder of the supply changes at the distributor. The new owner receives the supply's whole history: every read through the supply, and every figure of the new owner's membership, includes the periods before the transfer. The previous owner stops reading the supply, and their membership's figures no longer include it, also for the periods they owned it. Every transfer is recorded with the previous and the new owner, the effective date, who made it and when.
+ *
+ * **Required: Community Admin of the supply's community.** The supply's owner is answered 403. Anyone who cannot see the supply, a platform admin included, is answered 404.
+ *
+ * The new owner identified by `newOwnerPersonalId` must have a membership in the supply's community, in any state: pending and disabled memberships count. A new owner who has none is reported as not found (404, `SUPPLY_OWNER_NOT_FOUND`), exactly like a `newOwnerPersonalId` that matches no user. Transferring the supply to its current owner is answered 409 `SUPPLY_ALREADY_OWNED_BY_USER`.
+ *
+ * The `effectiveDate` cannot be later than today in the community's time zone (400 `SUPPLY_TRANSFER_DATE_IN_FUTURE`), and must be later than the effective date of the supply's previous transfer (409 `SUPPLY_TRANSFER_DATE_NOT_AFTER_PREVIOUS`). When the request is refused, nothing is changed.
+ *
+ * From the next Datadis synchronisation, the supply's consumption is requested with the new owner's DNI/NIE/NIF.
+ * @summary Transfers a supply to another member of its community
+ */
+export const transferSupplyOwnership = (
+    supplyId: string,
+    transferSupplyOwnershipBody: TransferSupplyOwnershipBody,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<SupplyResponse>(
+      {url: `/api/v1/supplies/${supplyId}/ownership/transfer`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: transferSupplyOwnershipBody, signal
+    },
+      );
+    }
+
+
+
+
+export const getTransferSupplyOwnershipMutationKey = () => ['transferSupplyOwnership'] as const;
+
+export const getTransferSupplyOwnershipMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof transferSupplyOwnership>>, TError,TransferSupplyOwnershipMutationVariables, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof transferSupplyOwnership>>, TError,TransferSupplyOwnershipMutationVariables, TContext> => {
+
+const mutationKey = getTransferSupplyOwnershipMutationKey();
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof transferSupplyOwnership>>, TransferSupplyOwnershipMutationVariables> = (props) => {
+          const {supplyId,data} = props ?? {};
+
+          return  transferSupplyOwnership(supplyId,data,)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TransferSupplyOwnershipMutationResult = NonNullable<Awaited<ReturnType<typeof transferSupplyOwnership>>>
+    export type TransferSupplyOwnershipMutationBody = TransferSupplyOwnershipBody
+    export type TransferSupplyOwnershipMutationError = ErrorType<RestError>
+    export type TransferSupplyOwnershipMutationVariables = {supplyId: string;data: TransferSupplyOwnershipBody}
+
+    /**
+ * @summary Transfers a supply to another member of its community
+ */
+export const useTransferSupplyOwnership = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof transferSupplyOwnership>>, TError,TransferSupplyOwnershipMutationVariables, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof transferSupplyOwnership>>,
+        TError,
+        TransferSupplyOwnershipMutationVariables,
+        TContext
+      > => {
+      return useMutation(getTransferSupplyOwnershipMutationOptions(options), queryClient);
+    }
+    /**
  * Returns the coefficient periods of the supply, across every plant it participates in,
  * ordered by validFrom ascending.
  *
