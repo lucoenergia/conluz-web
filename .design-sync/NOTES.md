@@ -18,6 +18,8 @@
 - `src/components/EnergyFigures/` (`PeriodUsageCard`, `PeriodTotals`, `PeriodHeader`, `NeutralNotice`,
   `EstimatedPriceLabel`) renders with `ConluzProvider` alone, so it is eligible, but it is not synced
   yet: it moved out of the historical analysis and home pages in #252 without design-system work.
+- `MemberPicker` renders with `ConluzProvider` alone, so it is eligible, but it is not synced: it
+  came out of the supply form, which is not synced either, in #423, without design-system work.
 - `ConluzProvider` (`.design-sync/pkg/ConluzProvider.tsx`) mirrors `src/main.tsx`: ThemeProvider +
   StyledEngineProvider(enableCssLayer) + the shell's GlobalStyles + LocalizationProvider(dayjs, es) +
   MemoryRouter, plus an inert QueryClient and `CommunityProvider`. Without the last two, every
