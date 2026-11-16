@@ -8,10 +8,11 @@
 | **Roles** | A caller to whom the view is open (`useHomeViews`) |
 | **Domain rules** | `lucoenergia/conluz`: EPR-001, ENM-006, ENM-007, ENM-008, SEM-003 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #358 |
+| **Last reviewed against code** | #425 |
 
 Scope: the rules introduced in #280 for home states migrated from visual tests to Vitest, the
-month bounds of #324, and the self-consumption ratio's basis and status of #253. Not exhaustive: other home behaviour is not yet specified here.
+month bounds of #324, the self-consumption ratio's basis and status of #253, and the member home's
+blocks below `sm` (#425). Not exhaustive: other home behaviour is not yet specified here.
 
 ## Purpose
 
@@ -202,6 +203,26 @@ view may present a missing figure as a zero or a normal setup stage as a failure
 - **Implements:** n/a
 - **Source:** #358
 
+### UI-HOM-015 — Below sm, the twelve-month and best-hours blocks are rows
+
+- **Status:** Active
+- **Rule:**
+  - Below `sm`, the twelve-month and best-hours blocks MUST render as rows (UI-CHT-001). A best-hour
+    row MUST carry a visible mark and accessible text, never colour alone. In a month where best
+    hours cannot be worked out (UI-HOM-006), no row is marked.
+  - Each energy row MUST open, beneath it, what the block's chart tooltip says for that month or
+    hour. A twelve-month energy row's figure MUST be the month's community energy, as the response
+    gives it. A best-hours row's figure MUST be the hour's average consumption.
+  - An hour where only one series has no sample MUST NOT read as a gap: that series' bar carries
+    its ring, and the row's name gives both series in words.
+- **Rationale:** About 90 % of members use the home on a phone, where the vertical charts scrolled
+  sideways and hid most of the year and most of the day. The tap stands in for the hover a phone
+  lacks. The community figure is the response's own, since the twelve-month block shows no
+  figure the client adds up. A missing consumption sample does not erase the assigned energy that
+  did arrive in that hour.
+- **Implements:** UI-CHT-001
+- **Source:** #425
+
 ## States
 
 | State | Rendered | Actions available |
@@ -213,6 +234,7 @@ view may present a missing figure as a zero or a normal setup stage as a failure
 | Incomplete month | The comparison said to be affected (UI-HOM-004); no best hours named (UI-HOM-006) | — |
 | Management setup | No plant, or a plant without an agreement, explained without an alert (UI-HOM-009) | — |
 | A plant's own supply left out | The headline, its bar and the advice from the ratio's basis (UI-HOM-012), the supplies left out stated (UI-HOM-013) | — |
+| Below `sm` | The twelve-month and best-hours blocks as rows, each energy row opening its detail, best hours marked with the sun and in words (UI-HOM-015) | Activating a row for its detail |
 | Ratio not applicable | The neutral not-applicable text in place of the headline; no assigned-energy bar, no advice (UI-HOM-013) | — |
 | Nothing assigned | The nothing-assigned state, decided by the status (UI-HOM-012) | — |
 
