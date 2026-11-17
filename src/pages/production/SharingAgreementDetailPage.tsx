@@ -12,12 +12,17 @@ import { SharingAgreementCoefficientSet } from "../../components/SharingAgreemen
 import { SharingAgreementApplicationPanel } from "../../components/SharingAgreementApplicationPanel";
 import { SharingAgreementFilePanel } from "../../components/SharingAgreementFilePanel";
 import { SharingAgreementUploadDialog } from "../../components/SharingAgreementUploadDialog";
-import { SharingAgreementFormDialog, type SharingAgreementFormValues } from "../../components/SharingAgreementFormDialog";
+import {
+  SharingAgreementFormDialog,
+  type SharingAgreementFormFieldErrors,
+  type SharingAgreementFormValues,
+} from "../../components/SharingAgreementFormDialog";
 import { DeleteSharingAgreementConfirmationModal } from "../../components/Modals/DeleteSharingAgreementConfirmationModal";
 import { PublishSharingAgreementConfirmationModal } from "../../components/Modals/PublishSharingAgreementConfirmationModal";
 import { RevertSharingAgreementToDraftConfirmationModal } from "../../components/Modals/RevertSharingAgreementToDraftConfirmationModal";
 import { SharingAgreementResponseStatus } from "../../api/models";
 import { useErrorDispatch } from "../../context/error.context";
+import { sharingAgreementSaveRefusalOf } from "../../errors/sharingAgreementErrors";
 import { useSharingAgreementDetailData } from "./useSharingAgreementDetailData";
 import { useSharingAgreementActions, useSharingAgreementCoefficientActions } from "../../hooks/actions";
 import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep";
@@ -98,10 +103,21 @@ export const SharingAgreementDetailPage: FC = () => {
     }
   }, [error, errorDispatch]);
 
-  const handleEditSubmit = async (values: SharingAgreementFormValues) => {
+  const handleEditSubmit = async (values: SharingAgreementFormValues): Promise<SharingAgreementFormFieldErrors | void> => {
     if (!update) return;
-    const success = await update.run(values);
-    if (success) setIsEditDialogOpen(false);
+    const outcome = await update.run(values);
+    if ("ok" in outcome) {
+      setIsEditDialogOpen(false);
+      return;
+    }
+    // The form stays as it was typed. A sent date in the future is said on its
+    // input, the one the admin can fix (#417); any other refusal as before.
+    const refusal = sharingAgreementSaveRefusalOf(
+      outcome.error,
+      "Ha habido un problema al actualizar el acuerdo de reparto. Por favor, inténtalo más tarde",
+    );
+    if ("field" in refusal) return { [refusal.field]: refusal.message };
+    errorDispatch(refusal.form);
   };
 
   const handleDeleteConfirm = async () => {
@@ -252,6 +268,7 @@ export const SharingAgreementDetailPage: FC = () => {
             name: agreement.name,
             notes: agreement.notes ?? undefined,
             nominalPowerKW: agreement.nominalPowerKW,
+            distributorFileSentOn: agreement.distributorFileSentOn,
           }}
           hasCoefficients={coefficients.length > 0}
           isSubmitting={update.isPending}

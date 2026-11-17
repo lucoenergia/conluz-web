@@ -7,7 +7,7 @@
  */
 
 export interface ActivateCoefficientsBody {
-  /** The date the distributor applied these coefficients (or the corrected date, if any of them are already active). Backdating is allowed; future dates are rejected. */
+  /** First day the coefficient applies; stored as validFrom. The date the distributor applied these coefficients (or the corrected date, if any of them are already active). Backdating is allowed; future dates are rejected. */
   appliedOn: string;
   /**
      * The coefficients to activate or correct, all belonging to this agreement.

@@ -105,7 +105,12 @@ export const SharingAgreementsPage: FC = () => {
 
   const handleCreateSubmit = async (values: SharingAgreementFormValues) => {
     if (!createSharingAgreement) return;
-    const response = await createSharingAgreement.run(values);
+    // The create form offers no sent date: it is recorded once the file is sent (#417).
+    const response = await createSharingAgreement.run({
+      name: values.name,
+      notes: values.notes ?? undefined,
+      nominalPowerKW: values.nominalPowerKW,
+    });
     if (!response) return;
     setIsCreateDialogOpen(false);
     // `id` is optional on SharingAgreementResponse — the list query is already

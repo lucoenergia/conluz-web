@@ -19,6 +19,11 @@ export interface SharingAgreementResponse {
      * @nullable
      */
   createdBy: string | null;
+  /**
+     * Day the agreement's distributor file was sent to the distributor (local date). Optional. Lower bound from which the distributor is expected to apply the coefficients.
+     * @nullable
+     */
+  distributorFileSentOn: string | null;
   /** Metadata of the latest evidence file uploaded for this agreement. Null means no file has been uploaded, never that it wasn't loaded */
   file: SharingAgreementResponseFile;
   /** Internal unique identifier of the sharing agreement */

@@ -20,7 +20,7 @@ export interface SharingAgreementPartitionCoefficientResponse {
   /** The coefficient this supply is currently on in this agreement's plant -- what the value in this row would replace. Null when the supply has no active coefficient in this plant. */
   currentCoefficient: SharingAgreementPartitionCoefficientResponseCurrentCoefficient;
   /**
-     * The effective end of this coefficient's coverage. Present only when endState is DERIVED or CLOSED.
+     * The effective end of this coefficient's coverage: the first day the coefficient no longer applies (exclusive end of a half-open period [validFrom, endDate)). Present only when endState is DERIVED or CLOSED.
      * @nullable
      */
   endDate: string | null;
@@ -29,12 +29,12 @@ export interface SharingAgreementPartitionCoefficientResponse {
   /** Supply this coefficient belongs to */
   supply: SupplyReferenceResponse;
   /**
-     * Start of the period during which this coefficient is active (inclusive). Null means this is a pending coefficient, materialised but not yet activated.
+     * First day the coefficient applies (inclusive), at local midnight in the application time zone. Null means this is a pending coefficient, materialised but not yet activated.
      * @nullable
      */
   validFrom: string | null;
   /**
-     * End of the period (exclusive), as stored. Null unless explicitly closed.
+     * First day the coefficient no longer applies (exclusive end of a half-open period [validFrom, validTo)), as stored. Null when the period is open.
      * @nullable
      */
   validTo: string | null;

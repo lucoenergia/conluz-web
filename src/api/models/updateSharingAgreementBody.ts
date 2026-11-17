@@ -8,6 +8,11 @@
 
 export interface UpdateSharingAgreementBody {
   /**
+     * Day the agreement's distributor file was sent to the distributor (local date). Optional. Lower bound from which the distributor is expected to apply the coefficients.
+     * @nullable
+     */
+  distributorFileSentOn?: string | null;
+  /**
      * Human-readable label for the agreement
      * @minLength 1
      */

@@ -153,6 +153,7 @@ export function buildSupplyCapabilities(
     canDelete: false,
     canReadPartitionCoefficients: false,
     canCreatePlant: false,
+    canTransferOwnership: false,
     ...overrides,
   };
 }
@@ -467,6 +468,7 @@ export function buildSharingAgreement(overrides: Partial<SharingAgreementRespons
       plantId: "TEST-PLANT-ID",
       name: "TEST-AGREEMENT-NAME",
       notes: null,
+      distributorFileSentOn: null,
       status: SharingAgreementResponseStatus.DRAFT,
       nominalPowerKW: 90005,
       createdAt: "2001-01-01T00:00:00Z",
