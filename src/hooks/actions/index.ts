@@ -54,7 +54,13 @@ export {
   type SharingAgreementActions,
   type SharingAgreementRowActions,
   type SharingAgreementFileUploadResult,
+  type SharingAgreementUpdateResult,
 } from "./useSharingAgreementActions";
+export {
+  buildSharingAgreementUpdateBody,
+  type SharingAgreementMetadata,
+  type SharingAgreementMetadataEdits,
+} from "./sharingAgreementUpdateBody";
 export {
   useSharingAgreementCoefficientActions,
   type SharingAgreementCoefficientActions,

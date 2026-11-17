@@ -21,7 +21,7 @@ import {
 import { MenuTemplate } from "../Menu/MenuTemplate";
 import { DetailHeader, type DetailFact, type DetailKeyFacts } from "../DetailHeader";
 import { formatKilowatts } from "../../utils/formatKilowatts";
-import { formatCalendarDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
+import { formatCalendarDate, formatLocalDate, SHORT_CALENDAR_DATE } from "../../utils/formatCalendarDate";
 import { colors, radii } from "../../theme/tokens";
 import type { CoefficientSummable } from "../../pages/production/sharingAgreementCoefficientSums";
 import { selectSharingAgreementLifecycleView } from "../../pages/production/sharingAgreementLifecycle";
@@ -168,6 +168,16 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
    */
   const details: DetailFact[] = [
     { label: "CAU de la planta", value: plant?.regulatoryCode || "No disponible" },
+    // From this day the distributor is expected to apply the coefficients, in
+    // every state (UI-AGR-020). A local date, so no time zone may move it.
+    {
+      label: "Fichero enviado a la distribuidora",
+      value: (
+        <Box component="span" sx={{ color: agreement?.distributorFileSentOn ? undefined : colors.text.subtle }}>
+          {agreement?.distributorFileSentOn ? formatLocalDate(agreement.distributorFileSentOn) : "Sin registrar"}
+        </Box>
+      ),
+    },
     ...(agreement?.updatedAt
       ? [
           {

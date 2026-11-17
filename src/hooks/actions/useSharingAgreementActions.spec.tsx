@@ -245,13 +245,13 @@ describe("useSharingAgreementActions", () => {
       const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
       const { result } = renderActions(agreement(), queryClient);
 
-      const success = await result.current.actions.update!.run({ name: "Nuevo nombre", nominalPowerKW: 45 });
+      const outcome = await result.current.actions.update!.run({ name: "Nuevo nombre", nominalPowerKW: 45 });
 
-      expect(success).toBe(true);
+      expect(outcome).toEqual({ ok: true });
       expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
         plantId: "plant-1",
         sharingAgreementId: "agreement-1",
-        data: { name: "Nuevo nombre", nominalPowerKW: 45 },
+        data: { name: "Nuevo nombre", notes: undefined, nominalPowerKW: 45, distributorFileSentOn: null },
       });
       expect(invalidateSpy).toHaveBeenCalledWith({
         queryKey: getGetSharingAgreementByIdQueryKey("plant-1", "agreement-1"),
@@ -259,12 +259,45 @@ describe("useSharingAgreementActions", () => {
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: getGetSharingAgreementsQueryKey("plant-1") });
     });
 
-    it("dispatches an error toast and returns false when updating fails", async () => {
-      mockUpdateMutateAsync.mockRejectedValue(new Error("network error"));
+    it("UI-AGR-021 sends the stored distributor file sent date when only the name is edited", async () => {
+      mockUpdateMutateAsync.mockResolvedValue(undefined);
+      const { result } = renderActions(
+        buildSharingAgreement({
+          id: "agreement-1",
+          plantId: "plant-1",
+          name: "Reparto 2025",
+          notes: "Nota original",
+          nominalPowerKW: 45,
+          distributorFileSentOn: "2026-03-01",
+          capabilities: MANAGEABLE,
+        }),
+      );
+
+      await result.current.actions.update!.run({ name: "Nuevo nombre" });
+
+      expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
+        plantId: "plant-1",
+        sharingAgreementId: "agreement-1",
+        data: { name: "Nuevo nombre", notes: "Nota original", nominalPowerKW: 45, distributorFileSentOn: "2026-03-01" },
+      });
+    });
+
+    it("returns a future sent date refusal for the screen to place on the field, without a toast", async () => {
+      const error = apiError(400, { code: "SHARING_AGREEMENT_DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE" });
+      mockUpdateMutateAsync.mockRejectedValue(error);
       const { result } = renderActions();
 
-      expect(await result.current.actions.update!.run({ name: "x", nominalPowerKW: 45 })).toBe(false);
-      await waitFor(() => expect(mockErrorDispatch).toHaveBeenCalled());
+      expect(await result.current.actions.update!.run({ distributorFileSentOn: "2026-11-17" })).toEqual({ error });
+      expect(mockErrorDispatch).not.toHaveBeenCalled();
+    });
+
+    it("returns the refusal when updating fails, for the screen to place", async () => {
+      const error = new Error("network error");
+      mockUpdateMutateAsync.mockRejectedValue(error);
+      const { result } = renderActions();
+
+      expect(await result.current.actions.update!.run({ name: "x", nominalPowerKW: 45 })).toEqual({ error });
+      expect(mockErrorDispatch).not.toHaveBeenCalled();
     });
   });
 

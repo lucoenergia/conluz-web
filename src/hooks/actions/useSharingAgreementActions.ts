@@ -10,7 +10,7 @@ import {
   useUpdateSharingAgreement,
   useUploadSharingAgreementFile,
 } from "../../api/sharing-agreements/sharing-agreements";
-import type { SharingAgreementResponse, UpdateSharingAgreementBody } from "../../api/models";
+import type { SharingAgreementResponse } from "../../api/models";
 import { useErrorDispatch } from "../../context/error.context";
 import { useSuccessDispatch } from "../../context/success.context";
 import { getFirstApiErrorMessage, getGroupedApiErrorDetails, type GroupedApiErrors } from "../../errors/apiErrorCatalogue";
@@ -19,6 +19,7 @@ import { downloadSharingAgreementFile } from "../../components/SharingAgreementF
 import { triggerBrowserDownload } from "../../utils/triggerBrowserDownload";
 import { outcomeFromResource, type CapabilityOutcome } from "../permissions";
 import { grant, type MaybeAction } from "./action";
+import { buildSharingAgreementUpdateBody, type SharingAgreementMetadataEdits } from "./sharingAgreementUpdateBody";
 
 /**
  * Importing a TXT fails in two shapes the dialog renders differently: a 400
@@ -29,6 +30,14 @@ import { grant, type MaybeAction } from "./action";
 export type SharingAgreementFileUploadResult =
   | { success: true }
   | { success: false; groupedErrors: GroupedApiErrors | null };
+
+/**
+ * An agreement edit: success, or the refusal itself rather than a bare
+ * `false`, so the screen can place a refusal on the input it is about
+ * (SHARING_AGREEMENT_DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE on the sent date).
+ * Same shape as PlantEditResult.
+ */
+export type SharingAgreementUpdateResult = { ok: true } | { error: unknown };
 
 /**
  * What the caller may do with one sharing agreement.
@@ -50,7 +59,11 @@ export type SharingAgreementFileUploadResult =
  */
 export interface SharingAgreementRowActions {
   actions: {
-    update: MaybeAction<[UpdateSharingAgreementBody], boolean>;
+    /**
+     * Takes only what changed: the body is built from the agreement handed to
+     * forAgreement, so every request carries the fields the caller left alone.
+     */
+    update: MaybeAction<[SharingAgreementMetadataEdits], SharingAgreementUpdateResult>;
     remove: MaybeAction<[], boolean>;
     publish: MaybeAction<[], boolean>;
     revertToDraft: MaybeAction<[], boolean>;
@@ -106,20 +119,17 @@ export function useSharingAgreementActions(plantId: string): SharingAgreementAct
       const manage = outcomeFromResource(capabilities, "canManage");
       const read = outcomeFromResource(capabilities, "canRead");
 
-      const update = async (data: UpdateSharingAgreementBody) => {
+      const update = async (edits: SharingAgreementMetadataEdits): Promise<SharingAgreementUpdateResult> => {
+        // Granted only on canManage, which only a loaded agreement carries.
+        if (!agreement) return { error: undefined };
         try {
+          const data = buildSharingAgreementUpdateBody(agreement, edits);
           await updateMutation.mutateAsync({ plantId, sharingAgreementId, data });
           queryClient.invalidateQueries({ queryKey: getGetSharingAgreementByIdQueryKey(plantId, sharingAgreementId) });
           invalidateList();
-          return true;
+          return { ok: true };
         } catch (error) {
-          errorDispatch(
-            getFirstApiErrorMessage(
-              error,
-              "Ha habido un problema al actualizar el acuerdo de reparto. Por favor, inténtalo más tarde",
-            ),
-          );
-          return false;
+          return { error };
         }
       };
 

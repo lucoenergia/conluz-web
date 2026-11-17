@@ -2,7 +2,7 @@ import type { RestError, RestErrorDetail, RestErrorDetailCode } from "../api/mod
 import { isPasswordRule, PASSWORD_RULE_MESSAGES } from "../utils/passwordPolicy";
 import { PASSWORD_UNCHANGED_MESSAGE, throttledMessage } from "./authErrors";
 import { LAST_ACTIVE_ADMIN_EXPLANATION, resendLimitMessage } from "./membershipErrorMessages";
-import { MISSING_CAU_MESSAGE } from "./sharingAgreementFileCopy";
+import { DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE_MESSAGE, MISSING_CAU_MESSAGE } from "./sharingAgreementFileCopy";
 import { CIL_FORMAT_MESSAGE, CIL_IN_USE_MESSAGE } from "./plantCil";
 import { incompleteText, labelsForMissingFields, missingFieldNamesFrom } from "../utils/integrationStatus";
 import { CONTACT_CHANNEL_MESSAGES } from "../utils/contactChannelRules";
@@ -146,6 +146,8 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   SHARING_AGREEMENT_NOT_REVERTIBLE: "Este acuerdo no se puede volver a borrador.",
   SHARING_AGREEMENT_HAS_APPLIED_COEFFICIENTS:
     "Este acuerdo ya tiene coeficientes aplicados por la distribuidora, por lo que no se puede volver a borrador.",
+  // Said on the date input as well, by the edit form (#417).
+  SHARING_AGREEMENT_DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE: DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE_MESSAGE,
 
   // Line-level distributor-file errors (carry params.line, and usually params.cups).
   DISTRIBUTOR_FILE_LINE_MALFORMED: "Línea {line}: el formato de la línea no es válido.",

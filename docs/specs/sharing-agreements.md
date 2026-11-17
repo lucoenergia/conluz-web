@@ -8,11 +8,12 @@
 | **Roles** | A caller with the plant's `canListSharingAgreements`. Authoring and lifecycle actions: the capabilities each agreement and coefficient carries |
 | **Domain rules** | n/a |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `ListPagination` (the list; its shared rules are `record-lists.md`) |
-| **Last reviewed against code** | #407 |
+| **Last reviewed against code** | #417 |
 
 Scope: the rules introduced in #277 for sharing-agreement states migrated from visual tests to
 Vitest, the rules #350 introduced for the list's rows and for how a status is shown, and the
-coefficient history's layout (#369), and the create dialog's starting power (#407). Not
+coefficient history's layout (#369), the create dialog's starting power (#407), and how a
+coefficient's end date is shown and worded (#420), and the distributor file sent date (#417). Not
 exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
 list shares, the agreement list among them, are in [`record-lists.md`](record-lists.md).
 
@@ -254,6 +255,37 @@ is in force today.
   rule prevents. The edit dialog starts from the agreement's own value instead (UI-AGR-009).
 - **Implements:** n/a
 - **Source:** #407, lucoenergia/conluz#567
+
+### UI-AGR-019 — A coefficient's end date is exclusive and reads that way
+
+- **Status:** Active
+- **Rule:** Coefficient end dates MUST be displayed exclusive (the first day the coefficient no
+  longer applies), formatted in the application time zone, and their wording MUST NOT imply that
+  the shown day is included.
+- **Rationale:** The backend stores half-open periods (lucoenergia/conluz#581); wording that implies
+  an inclusive end leads admins to close a day early.
+- **Implements:** n/a
+- **Source:** #420
+
+### UI-AGR-020 — The distributor file sent date is shown and edited with the metadata
+
+- **Status:** Active
+- **Rule:** The agreement detail MUST show the distributor file sent date or "Sin registrar",
+  editable with the agreement metadata in any state.
+- **Rationale:** Admins need to know from when the distributor is expected to apply the
+  coefficients.
+- **Implements:** n/a
+- **Source:** #417
+
+### UI-AGR-021 — Every agreement update sends the current sent date
+
+- **Status:** Active
+- **Rule:** Every update of an agreement MUST send its current distributor file sent date; only an
+  explicit clear sends null in place of a stored date.
+- **Rationale:** updateSharingAgreement is a full replacement; omitting the field clears it
+  (conluz#580).
+- **Implements:** n/a
+- **Source:** #417
 
 ## States
 

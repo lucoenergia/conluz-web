@@ -279,6 +279,7 @@ const ACTION_COVERAGE: Record<string, Decision> = {
   useDisableSupply: { scope: "supply", capability: "canEdit", hook: "useSupplyActions", approximates: "as useEnableSupply" },
   // The capability the contract names for the endpoint (lucoenergia/conluz#412).
   useDeleteSupply: { scope: "supply", capability: "canDelete", hook: "useSupplyActions" },
+  // The capability the contract names for the endpoint (lucoenergia/conluz#585).
   useTransferSupplyOwnership: { scope: "supply", capability: "canTransferOwnership", hook: "useSupplyActions" },
   useSyncDatadisSupplies: { scope: "community", capability: "canManage", approximates: SYNC_JOB },
 

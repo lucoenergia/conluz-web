@@ -76,3 +76,13 @@ export function appToday(nowMs: number = Date.now()): string {
   const { year, month, day } = wallTimeAt(nowMs);
   return `${year}-${pad(month)}-${pad(day)}`;
 }
+
+/**
+ * Today in the app's time zone, as a local date ("2026-11-17"): the day the
+ * backend's "today" names when it rejects a date in the future. The device's
+ * own day can be another one.
+ */
+export function todayInAppTimeZone(): string {
+  const { year, month, day } = wallTimeAt(Date.now());
+  return `${year}-${pad(month)}-${pad(day)}`;
+}

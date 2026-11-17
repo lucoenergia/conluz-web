@@ -28,6 +28,32 @@ export function formatCalendarDate(isoDateTime: string | undefined, options?: In
   });
 }
 
+const LOCAL_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * Formats a local calendar date as the API writes it (`format: date`,
+ * "2026-03-01") in the same long form as `formatCalendarDate`. A local date
+ * names a day, not an instant, so no time zone may move it: the day is read
+ * from the text and formatted in UTC, where it was built. Any other shape
+ * renders "-".
+ */
+export function formatLocalDate(localDate: string | null | undefined, options?: Intl.DateTimeFormatOptions): string {
+  const match = localDate ? LOCAL_DATE.exec(localDate) : null;
+  if (!match) return "-";
+
+  const [, year, month, day] = match.map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return "-";
+
+  return date.toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    ...options,
+    timeZone: "UTC",
+  });
+}
+
 /**
  * Short form — "20 abr 2024". For the detail headers, where dates sit in a
  * key-fact strip cell and in a four-column grid and the long form ("20 de abril

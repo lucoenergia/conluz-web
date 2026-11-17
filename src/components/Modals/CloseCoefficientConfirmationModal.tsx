@@ -97,8 +97,8 @@ export const CloseCoefficientConfirmationModal: FC<CloseCoefficientConfirmationM
       )}
       <Typography sx={{ fontSize: fontSizes.lg, color: "text.secondary", lineHeight: 1.6, mb: 2 }}>
         {isBatch
-          ? "A partir de la fecha indicada, estos suministros dejarán de recibir atribución de producción en este acuerdo. El periodo hasta ese día queda cerrado."
-          : "A partir de la fecha indicada, este suministro dejará de recibir atribución de producción en este acuerdo. El periodo hasta ese día queda cerrado."}
+          ? "A partir de la fecha indicada, estos suministros dejarán de recibir atribución de producción en este acuerdo. El último día en que reciben su coeficiente es el día anterior."
+          : "A partir de la fecha indicada, este suministro dejará de recibir atribución de producción en este acuerdo. El último día en que recibe su coeficiente es el día anterior."}
       </Typography>
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
         <DesktopDatePicker
