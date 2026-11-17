@@ -17,7 +17,7 @@ import { useErrorDispatch } from "../../context/error.context";
 import { useSuccessDispatch } from "../../context/success.context";
 import { useSupplyActions } from "../../hooks/actions";
 import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
-import { appToday } from "../../utils/zonedTime";
+import { todayInAppTimeZone } from "../../utils/zonedTime";
 import {
   supplyTransferRefusalOf,
   TRANSFER_CONSEQUENCES,
@@ -57,7 +57,7 @@ export const SupplyTransferDialog: FC<SupplyTransferDialogProps> = ({ supplyId, 
 
   // Today in the app's time zone, fixed when the overlay opens: the backend
   // refuses a later date by that calendar, not the device's.
-  const [today] = useState(() => dayjs(appToday()));
+  const [today] = useState(() => dayjs(todayInAppTimeZone()));
   const [newOwnerId, setNewOwnerId] = useState<string | null>(null);
   const [date, setDate] = useState<Dayjs | null>(today);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<SupplyTransferField, string>>>({});
