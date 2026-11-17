@@ -326,7 +326,7 @@ describe("removing a supply owner, by the row's role (#309)", () => {
     await removeRefusedForOwningSupplies("Pablo Par", "u-pablo", PABLO_PEER);
 
     expect(mockErrorDispatch).toHaveBeenCalledWith(
-      "Este administrador es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, primero cámbiale el rol a miembro y después suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.",
+      "Este administrador es titular de puntos de suministro en esta comunidad. Si quieres que deje de tener acceso, primero cámbiale el rol a miembro y después suspéndelo. Para eliminarlo, cambia antes el titular de sus puntos de suministro.",
     );
   });
 
@@ -334,7 +334,7 @@ describe("removing a supply owner, by the row's role (#309)", () => {
     await removeRefusedForOwningSupplies("Marta Miembro", "u-marta", rosterRow("u-marta", "Marta Miembro", ACCEPTED));
 
     expect(mockErrorDispatch).toHaveBeenCalledWith(
-      "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.",
+      "Este miembro es titular de puntos de suministro en esta comunidad. Si quieres que deje de tener acceso, suspéndelo. Para eliminarlo, cambia antes el titular de sus puntos de suministro.",
     );
   });
 });

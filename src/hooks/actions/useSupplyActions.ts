@@ -5,16 +5,27 @@ import {
   useDeleteSupply,
   useDisableSupply,
   useEnableSupply,
+  useTransferSupplyOwnership,
   useUpdateSupply,
 } from "../../api/supplies/supplies";
 import { getGetAllPlantsQueryKey, useCreatePlant } from "../../api/plants/plants";
 import { getGetSuppliesByUserIdQueryKey } from "../../api/users/users";
 import { getGetAllCommunitiesQueryKey, getGetCommunityByIdQueryKey } from "../../api/communities/communities";
 import {
+  getGetMembershipDailyConsumptionQueryKey,
   getGetMembershipEnergyMetricsQueryKey,
+  getGetMembershipHourlyConsumptionQueryKey,
+  getGetMembershipHourlyProfileQueryKey,
   getGetMembershipMonthlyConsumptionQueryKey,
+  getGetMembershipPaybackQueryKey,
 } from "../../api/memberships/memberships";
-import type { CreatePlantBody, PlantResponse, SupplyResponse, UpdateSupplyBody } from "../../api/models";
+import type {
+  CreatePlantBody,
+  MembershipResponse,
+  PlantResponse,
+  SupplyResponse,
+  UpdateSupplyBody,
+} from "../../api/models";
 import { useActiveCommunity } from "../../context/community.context";
 import { outcomeFromResource, type CapabilityOutcome } from "../permissions";
 import { grant, type MaybeAction } from "./action";
@@ -37,6 +48,10 @@ import { supplyDeletionRefusal } from "../../errors/supplyErrors";
  * hands back the refusal rather than `false`: a supply with a plant or a
  * sharing agreement's coefficients is refused with a code the screen words on
  * its own (#290).
+ *
+ * `transferOwnership` gates on the supply's own `canTransferOwnership`
+ * (lucoenergia/conluz#585), which only a community admin of the supply's
+ * community holds -- never its owner.
  */
 export type SupplyDeleteResult = { ok: true } | { error: unknown };
 
@@ -47,6 +62,22 @@ export type SupplyDeleteResult = { ok: true } | { error: unknown };
  */
 export type SupplyEditResult = { ok: true } | { error: unknown };
 
+/**
+ * Making another member the supply's owner (lucoenergia/conluz#585, #423): the
+ * chosen membership, whose personal ID is sent and whose account's reads are
+ * refreshed, and the day the holder changed at the distributor (YYYY-MM-DD).
+ */
+export interface SupplyTransferRequest {
+  newOwner: Pick<MembershipResponse, "personalId" | "user">;
+  effectiveDate: string;
+}
+
+/**
+ * Transferring a supply: the supply with its new owner, or the refusal itself.
+ * A refused date or owner is shown on its input, so the screen needs the code.
+ */
+export type SupplyTransferResult = { ok: true; supply: SupplyResponse } | { error: unknown };
+
 export interface SupplyRowActions {
   actions: {
     edit: MaybeAction<[UpdateSupplyBody], SupplyEditResult>;
@@ -54,6 +85,7 @@ export interface SupplyRowActions {
     disable: MaybeAction<[], boolean>;
     createPlant: MaybeAction<[CreatePlantBody], PlantResponse | undefined>;
     remove: MaybeAction<[], SupplyDeleteResult>;
+    transferOwnership: MaybeAction<[SupplyTransferRequest], SupplyTransferResult>;
   };
   outcomes: {
     edit: CapabilityOutcome;
@@ -61,6 +93,7 @@ export interface SupplyRowActions {
     disable: CapabilityOutcome;
     createPlant: CapabilityOutcome;
     remove: CapabilityOutcome;
+    transferOwnership: CapabilityOutcome;
   };
 }
 
@@ -78,6 +111,7 @@ export function useSupplyActions(): SupplyActions {
   const disableMutation = useDisableSupply();
   const createPlantMutation = useCreatePlant();
   const deleteMutation = useDeleteSupply();
+  const transferMutation = useTransferSupplyOwnership();
 
   // The pages these replace call their own query's refetch() instead, which
   // only refreshes the list the caller happens to be looking at. Invalidating
@@ -117,6 +151,21 @@ export function useSupplyActions(): SupplyActions {
     }
   };
 
+  // Everything a transfer changes for one of the two owners: the supplies they
+  // own, and every figure of their membership, which counts the supply's whole
+  // history for its owner -- months before the transfer included.
+  const invalidateOwnerReads = (ownerId: string) => {
+    const communityId = activeCommunityId ?? "";
+    queryClient.invalidateQueries({ queryKey: getGetSuppliesByUserIdQueryKey(ownerId) });
+    // Prefixes over every period.
+    queryClient.invalidateQueries({ queryKey: getGetMembershipEnergyMetricsQueryKey(communityId, ownerId) });
+    queryClient.invalidateQueries({ queryKey: getGetMembershipMonthlyConsumptionQueryKey(communityId, ownerId) });
+    queryClient.invalidateQueries({ queryKey: getGetMembershipDailyConsumptionQueryKey(communityId, ownerId) });
+    queryClient.invalidateQueries({ queryKey: getGetMembershipHourlyConsumptionQueryKey(communityId, ownerId) });
+    queryClient.invalidateQueries({ queryKey: getGetMembershipHourlyProfileQueryKey(communityId, ownerId) });
+    queryClient.invalidateQueries({ queryKey: getGetMembershipPaybackQueryKey(communityId, ownerId) });
+  };
+
   const run = async (call: () => Promise<unknown>, supplyId: string, ownerId: string | undefined) => {
     try {
       await call();
@@ -136,6 +185,7 @@ export function useSupplyActions(): SupplyActions {
       const edit = outcomeFromResource(capabilities, "canEdit");
       const createPlant = outcomeFromResource(capabilities, "canCreatePlant");
       const remove = outcomeFromResource(capabilities, "canDelete");
+      const transferOwnership = outcomeFromResource(capabilities, "canTransferOwnership");
 
       return {
         actions: {
@@ -195,8 +245,28 @@ export function useSupplyActions(): SupplyActions {
             },
             deleteMutation.isPending,
           ),
+          transferOwnership: grant(
+            transferOwnership,
+            async ({ newOwner, effectiveDate }: SupplyTransferRequest): Promise<SupplyTransferResult> => {
+              try {
+                const transferred = await transferMutation.mutateAsync({
+                  supplyId,
+                  data: { newOwnerPersonalId: newOwner.personalId, effectiveDate },
+                });
+                // The previous owner is the one this supply was read with,
+                // before the request; both owners' reads change (#423).
+                invalidateSupply(supplyId, undefined);
+                if (ownerId) invalidateOwnerReads(ownerId);
+                invalidateOwnerReads(newOwner.user.id);
+                return { ok: true, supply: transferred };
+              } catch (error) {
+                return { error };
+              }
+            },
+            transferMutation.isPending,
+          ),
         },
-        outcomes: { edit, enable: edit, disable: edit, createPlant, remove },
+        outcomes: { edit, enable: edit, disable: edit, createPlant, remove, transferOwnership },
       };
     },
   };

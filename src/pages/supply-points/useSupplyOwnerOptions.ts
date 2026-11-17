@@ -19,7 +19,7 @@ function byFullName(a: MembershipResponse, b: MembershipResponse): number {
  * supply's community, in any state (SUP-002), so the options are exactly its
  * memberships (UI-SUP-016).
  */
-export function useSupplyOwnerOptions(): SupplyOwnerField {
+export function useSupplyOwnerOptions(): Extract<SupplyOwnerField, { mode: "choose" }> {
   const activeCommunityId = useActiveCommunity();
   const canListMembers = useActiveCommunityCapabilities("canManageMemberships");
   const memberships = useGetMemberships(activeCommunityId ?? "", {

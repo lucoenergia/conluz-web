@@ -182,6 +182,7 @@ import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import SolarPowerOutlinedIcon from "@mui/icons-material/SolarPowerOutlined";
 import SolarPowerRoundedIcon from "@mui/icons-material/SolarPowerRounded";
 import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
+import SwapHorizOutlinedIcon from "@mui/icons-material/SwapHorizOutlined";
 import TableRowsRoundedIcon from "@mui/icons-material/TableRowsRounded";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
@@ -383,6 +384,7 @@ export const Icons = {
   SolarPowerOutlined: SolarPowerOutlinedIcon,
   SolarPowerRounded: SolarPowerRoundedIcon,
   SupportAgentRounded: SupportAgentRoundedIcon,
+  SwapHorizOutlined: SwapHorizOutlinedIcon,
   TableRowsRounded: TableRowsRoundedIcon,
   TrendingDown: TrendingDownIcon,
   TrendingUp: TrendingUpIcon,

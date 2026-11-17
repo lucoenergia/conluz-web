@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Divider, ListItemIcon, ListItemText, MenuItem } from "@mui/material";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import SwapHorizOutlinedIcon from "@mui/icons-material/SwapHorizOutlined";
 import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -22,6 +23,8 @@ export interface SupplyRowMenuProps {
   onEnable: () => void;
   /** Opens the supply form over the list (UI-SUP-019). */
   onEdit: () => void;
+  /** Opens the ownership transfer over the list (UI-SUP-024). */
+  onTransfer: () => void;
   onDelete: () => void;
 }
 
@@ -38,6 +41,7 @@ export const SupplyRowMenu: FC<SupplyRowMenuProps> = ({
   onDisable,
   onEnable,
   onEdit,
+  onTransfer,
   onDelete,
 }) => {
   const disable = supply?.enabled ? actions.disable : undefined;
@@ -63,6 +67,14 @@ export const SupplyRowMenu: FC<SupplyRowMenuProps> = ({
             <EditOutlinedIcon fontSize="small" sx={{ color: "primary.main" }} />
           </ListItemIcon>
           <ListItemText>Editar</ListItemText>
+        </MenuItem>
+      )}
+      {supply && actions.transferOwnership && (
+        <MenuItem onClick={select(onTransfer)}>
+          <ListItemIcon>
+            <SwapHorizOutlinedIcon fontSize="small" sx={{ color: "primary.main" }} />
+          </ListItemIcon>
+          <ListItemText>Cambiar titular</ListItemText>
         </MenuItem>
       )}
       {(disable || enable || actions.remove) && <Divider />}

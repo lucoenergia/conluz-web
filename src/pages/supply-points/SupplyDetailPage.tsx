@@ -15,6 +15,8 @@ import { useSupplyActions } from "../../hooks/actions";
 import { SupplyDeletionDialog } from "./SupplyDeletionDialog";
 import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 import { SupplyLatestMonthSummary } from "./SupplyLatestMonthSummary";
+import { SupplyTransferDialog } from "./SupplyTransferDialog";
+import { useOverlayOpener } from "../../hooks/useOverlayOpener";
 
 /**
  * The supply's record (#252): its header, its coefficient history and a
@@ -34,8 +36,11 @@ export const SupplyDetailPage: FC = () => {
   // canEdit. Asking it here also keeps the history request from firing for a
   // supply the caller could not read in the first place.
   const canReadSupply = outcomeFromResource(supplyPoint?.capabilities, "canRead");
-  const { remove } = useSupplyActions().forSupply(supplyPoint).actions;
+  const { remove, transferOwnership } = useSupplyActions().forSupply(supplyPoint).actions;
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  // The ownership transfer, and the header's menu button focus returns to.
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
+  const transferOpener = useOverlayOpener(isTransferOpen);
   // Each navigation here leaves the page as an overlay closes (UI-OVL-004).
   const navigate = useOverlayNavigate();
   // A plant's detail opens only to whoever may manage that plant (#406). The
@@ -89,6 +94,13 @@ export const SupplyDetailPage: FC = () => {
           isLoading={supplyPointLoading}
           error={supplyPointError}
           onDeleteRequest={remove && (() => setIsDeleteOpen(true))}
+          onTransferRequest={
+            transferOwnership &&
+            ((opener) => {
+              transferOpener.record(opener);
+              setIsTransferOpen(true);
+            })
+          }
           plantHref={plantHref}
         />
       </Box>
@@ -101,6 +113,11 @@ export const SupplyDetailPage: FC = () => {
         // Replacing this page: one back must not land on a supply that is gone.
         onGone={() => navigate("/supply-points", { replace: true })}
       />
+
+      {/* Mounted on open, with the gate of the menu item that opens it. */}
+      {isTransferOpen && transferOwnership && (
+        <SupplyTransferDialog supplyId={supplyPointId} onClose={() => setIsTransferOpen(false)} />
+      )}
 
       {/* Coefficient history: contract information about the supply. */}
       <Can outcome={canReadSupply}>

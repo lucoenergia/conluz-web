@@ -1,8 +1,9 @@
 import type { FC, Ref } from "react";
-import { TextField, Autocomplete, CircularProgress } from "@mui/material";
+import { TextField } from "@mui/material";
 import { AddressField } from "../AddressField";
+import { MemberPicker } from "../MemberPicker";
 import { ReadOnlyField } from "../ReadOnlyField";
-import { selectedOwnerOf, type SupplyFieldValues, type SupplyFormField, type SupplyOwnerField } from "./supplyFields";
+import type { SupplyFieldValues, SupplyFormField, SupplyOwnerField } from "./supplyFields";
 
 interface SupplyFormFieldsProps {
   values: SupplyFieldValues;
@@ -31,18 +32,6 @@ export const SupplyFormFields: FC<SupplyFormFieldsProps> = ({
   ownerInputRef,
   addressInputRef,
 }) => {
-  const ownerOptions = owner?.mode === "choose" ? owner.options : [];
-  const selectedOwner = selectedOwnerOf(owner, values.ownerId);
-  const ownerLoading = owner?.mode === "choose" && owner.status === "loading";
-  const ownerNotice =
-    owner?.mode !== "choose"
-      ? undefined
-      : owner.status === "error"
-        ? "No se pudieron cargar los miembros de esta comunidad. Inténtalo más tarde."
-        : owner.status === "ready" && owner.options.length === 0
-          ? "Esta comunidad todavía no tiene miembros. Añádelos antes de crear un punto de suministro."
-          : undefined;
-
   return (
     <>
       <TextField
@@ -59,49 +48,29 @@ export const SupplyFormFields: FC<SupplyFormFieldsProps> = ({
       />
 
       {owner?.mode === "choose" && (
-        <Autocomplete
-          options={ownerOptions}
-          getOptionLabel={(option) => `${option.fullName} (${option.personalId})`}
-          // Two members may share a label; the membership is what identifies them.
-          getOptionKey={(option) => option.id}
-          isOptionEqualToValue={(option, value) => option.id === value.id}
-          value={selectedOwner}
-          onChange={(_, newValue) => {
-            onChange("ownerId", newValue?.id ?? null);
+        <MemberPicker
+          options={owner.options}
+          status={owner.status}
+          value={values.ownerId}
+          onChange={(membership) => {
+            onChange("ownerId", membership?.id ?? null);
             onFieldEdit?.("personalId");
           }}
-          loading={ownerLoading}
+          label="Propietario"
+          required
+          error={fieldErrors.personalId}
+          emptyText="Esta comunidad todavía no tiene miembros. Añádelos antes de crear un punto de suministro."
+          errorText="No se pudieron cargar los miembros de esta comunidad. Inténtalo más tarde."
           readOnly={readOnly}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Propietario"
-              required
-              variant="outlined"
-              inputRef={ownerInputRef}
-              error={!!fieldErrors.personalId || owner.status === "error"}
-              helperText={fieldErrors.personalId ?? ownerNotice}
-              slotProps={{
-                input: {
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {ownerLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                },
-              }}
-            />
-          )}
+          inputRef={ownerInputRef}
         />
       )}
 
       {owner?.mode === "show" && (
         // The owner of an existing supply cannot be changed here, and the form
-        // says so; it is the supply's member record in its community
+        // says where it is; it is the supply's member record in its community
         // (UI-SUP-005, UI-SUP-023).
-        <ReadOnlyField id="owner" label="Propietario" value={owner.fullName || "-"} helperText="El propietario no se puede cambiar" />
+        <ReadOnlyField id="owner" label="Propietario" value={owner.fullName || "-"} helperText="Para cambiarlo, usa «Cambiar titular» en el menú del punto de suministro." />
       )}
 
       <TextField

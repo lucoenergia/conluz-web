@@ -38,6 +38,7 @@ import { useActiveCommunityCapabilities } from "../../hooks/permissions";
 import { offersSupplyRowActions, supplyTableColumns, supplyTableTitle, toRecordListItem } from "./supplyRows";
 import { SupplyRowMenu } from "./SupplyRowMenu";
 import { SupplyFormDialog, type SupplyFormTarget } from "./SupplyFormDialog";
+import { SupplyTransferDialog } from "./SupplyTransferDialog";
 
 /** A disable or enable the caller has asked for, by supply id, and where it stands. */
 type StatusChange = { supplyId: string; kind: "disable" | "enable"; step: "confirm" | "done" };
@@ -61,6 +62,10 @@ export const SupplyPointsPage: FC = () => {
   // that opened an edit is gone by the time the form closes.
   const [supplyFormTarget, setSupplyFormTarget] = useState<SupplyFormTarget | null>(null);
   const supplyFormOpener = useOverlayOpener(!!supplyFormTarget);
+  // The ownership transfer open over the list (UI-SUP-024), by id, and the
+  // row's kebab that opened it.
+  const [transferSupplyId, setTransferSupplyId] = useState<string | null>(null);
+  const transferOpener = useOverlayOpener(!!transferSupplyId);
   const [searchParams] = useSearchParams();
   const personId = searchParams.get("personId");
 
@@ -406,6 +411,11 @@ export const SupplyPointsPage: FC = () => {
         onDisable={() => menuSupply && setStatusChange({ supplyId: menuSupply.id, kind: "disable", step: "confirm" })}
         onEnable={() => menuSupply && setStatusChange({ supplyId: menuSupply.id, kind: "enable", step: "confirm" })}
         onEdit={() => menuSupply && openSupplyForm({ kind: "edit", supplyId: menuSupply.id }, menuAnchor)}
+        onTransfer={() => {
+          if (!menuSupply) return;
+          transferOpener.record(menuAnchor);
+          setTransferSupplyId(menuSupply.id);
+        }}
         onDelete={() => menuSupply && setDeleteTargetId(menuSupply.id)}
       />
 
@@ -413,6 +423,12 @@ export const SupplyPointsPage: FC = () => {
           the gate of the control that opens it. */}
       {supplyFormTarget && (supplyFormTarget.kind === "edit" || communityActions.createSupply) && (
         <SupplyFormDialog target={supplyFormTarget} onClose={() => setSupplyFormTarget(null)} />
+      )}
+
+      {/* Mounted on open, so every opening starts from its own values, and with
+          the gate of the menu item that opens it. */}
+      {transferSupplyId && forSupply(supplyById(transferSupplyId)).actions.transferOwnership && (
+        <SupplyTransferDialog supplyId={transferSupplyId} onClose={() => setTransferSupplyId(null)} />
       )}
 
       <DisableConfirmationModal

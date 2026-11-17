@@ -301,7 +301,7 @@ describe("removing a member who owns supplies", () => {
     await waitFor(() => expect(requestsTo(router, "DELETE", removeUrl("u-ana"))).toHaveLength(1));
     await waitFor(() =>
       expect(mockErrorDispatch).toHaveBeenCalledWith(
-        "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.",
+        "Este miembro es titular de puntos de suministro en esta comunidad. Si quieres que deje de tener acceso, suspéndelo. Para eliminarlo, cambia antes el titular de sus puntos de suministro.",
       ),
     );
     expect(mockErrorDispatch).not.toHaveBeenCalledWith("Error al eliminar el miembro. Por favor, inténtalo de nuevo.");

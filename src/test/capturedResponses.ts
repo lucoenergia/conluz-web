@@ -91,6 +91,8 @@ export const CAPTURED_MEMBERSHIP_ENERGY_METRICS_LATEST_PUBLISHED_MONTH: Membersh
  * `GET /api/v1/users/{userId}/supplies` for a member who owns two supplies,
  * each in a different community and each a plant's own supply, captured from a
  * backend containing lucoenergia/conluz#411, which added `plant` (#247).
+ * `canTransferOwnership` added by hand for lucoenergia/conluz#585 (#423), true
+ * as for any caller holding `canEdit`; values otherwise unchanged.
  */
 export const CAPTURED_SUPPLIES_BY_USER_ID: SupplyResponse[] = [
   {
@@ -100,7 +102,7 @@ export const CAPTURED_SUPPLIES_BY_USER_ID: SupplyResponse[] = [
       canDelete: true,
       canReadPartitionCoefficients: true,
       canCreatePlant: true,
-      canTransferOwnership: false,
+      canTransferOwnership: true,
     },
     ownerRecord: {
       fullName: "Member 0",
@@ -147,7 +149,7 @@ export const CAPTURED_SUPPLIES_BY_USER_ID: SupplyResponse[] = [
       canDelete: true,
       canReadPartitionCoefficients: true,
       canCreatePlant: true,
-      canTransferOwnership: false,
+      canTransferOwnership: true,
     },
     ownerRecord: {
       fullName: "Member 0",

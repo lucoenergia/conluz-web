@@ -1,4 +1,5 @@
 import type { MembershipResponse } from "../../api/models";
+import { isMemberPickerUnavailable, type MemberPickerStatus } from "../MemberPicker";
 
 /**
  * The owner input, as the screen supplies it. The fields fetch nothing
@@ -6,7 +7,7 @@ import type { MembershipResponse } from "../../api/models";
  * editing only shows the owner the supply already has (UI-SUP-016, UI-SUP-018).
  */
 export type SupplyOwnerField =
-  | { mode: "choose"; status: "loading" | "ready" | "error"; options: MembershipResponse[] }
+  | { mode: "choose"; status: MemberPickerStatus; options: MembershipResponse[] }
   | { mode: "show"; fullName: string | null };
 
 /** The inputs an API refusal can be shown on. */
@@ -43,5 +44,5 @@ export function selectedOwnerOf(owner: SupplyOwnerField | undefined, ownerId: st
  * owner to offer, so the form cannot be sent (UI-SUP-017).
  */
 export function isOwnerUnavailable(owner: SupplyOwnerField | undefined): boolean {
-  return owner?.mode === "choose" && (owner.status !== "ready" || owner.options.length === 0);
+  return owner?.mode === "choose" && isMemberPickerUnavailable(owner.status, owner.options);
 }

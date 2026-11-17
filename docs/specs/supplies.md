@@ -4,11 +4,11 @@
 | --- | --- |
 | **Prefix** | `UI-SUP` |
 | **Status** | Active |
-| **Routes** | `/supply-points`, `/supply-points?personId=…` (a member's supplies), `/supply-points/:supplyPointId`; creating and editing a supply open in the shared overlay over the list |
-| **Roles** | Any member of the active community reads them. Deleting: a caller to whom the supply reports `canDelete`. Creating and importing, and seeing each supply's owner in the list: a caller to whom the active community reports `canManage`. Editing: a caller to whom the supply reports `canEdit`. The supply's figures and "Ver análisis completo": a caller to whom the supply reports `canRead` |
-| **Domain rules** | `lucoenergia/conluz`: SUP-001, SUP-002, SUP-004, SUP-005, SUP-006, SUP-007, MEM-026, EPR-003, SEM-001 (lucoenergia/conluz#408) |
+| **Routes** | `/supply-points`, `/supply-points?personId=…` (a member's supplies), `/supply-points/:supplyPointId`; creating and editing a supply open in the shared overlay over the list, and changing its holder over the list or the detail page |
+| **Roles** | Any member of the active community reads them. Deleting: a caller to whom the supply reports `canDelete`. Creating and importing, and seeing each supply's owner in the list: a caller to whom the active community reports `canManage`. Editing: a caller to whom the supply reports `canEdit`. Changing its holder: a caller to whom the supply reports `canTransferOwnership`. The supply's figures and "Ver análisis completo": a caller to whom the supply reports `canRead` |
+| **Domain rules** | `lucoenergia/conluz`: SUP-001, SUP-002, SUP-004, SUP-005, SUP-006, SUP-007, SUP-008, SUP-009, SUP-010, MEM-026, EPR-003, SEM-001 (lucoenergia/conluz#408) |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `FilterChipsBar` (the list; its shared rules are `record-lists.md`); the detail page's latest published month reuses `src/components/EnergyFigures/` (`PeriodHeader`, `PeriodUsageCard`, `PeriodTotals`), as the historical analysis page does |
-| **Last reviewed against code** | #416 |
+| **Last reviewed against code** | #423 |
 
 ## Purpose
 
@@ -26,12 +26,17 @@ List a community's supplies, or one member's, with only what the supply itself s
 named, its CUPS, its owner for whoever manages the community, whether a plant produces onto it, and
 whether it has left the community.
 
+Let a community admin make another member of the community a supply's holder, for example when
+the holder changes at the distributor, saying beforehand what the change does to the history, to
+the previous holder and to the data that keeps arriving. A member who owns supplies cannot be
+removed (UI-MBR-015), so this is the other step that makes removing them possible.
+
 Make the supply detail page the supply's record: what it is, its coefficients, and what it used and
 saved in its latest published month, with the same figures the historical analysis page shows for
 it, and a way into that page for whoever may read them.
 
-This document covers only the rules #290, #302, #324, #339, #348, #252, #388, #372, #411 and #416
-introduced.
+This document covers only the rules #290, #302, #324, #339, #348, #252, #388, #372, #411, #416 and
+#423 introduced.
 
 ## Rules
 
@@ -194,7 +199,8 @@ introduced.
     show the catalogue text on the CUPS input, and move focus to the CUPS input.
   - A create refused with `SUPPLY_OWNER_NOT_FOUND` MUST do the same on the owner input
     ("Propietario"). The edit form cannot change the owner and sends none, so the code does not
-    reach it.
+    reach it: the owner changes only through the transfer overlay (UI-SUP-024), where the code shows
+    on the picker (UI-SUP-027).
   - A refusal with `FIELD_TOO_LONG` on the address MUST do the same on the address input
     (UI-ERR-007).
   - Any other refusal MUST keep the generic message, and MUST keep the overlay open with the values
@@ -204,7 +210,8 @@ introduced.
   input may sit outside the sheet's visible part.
 - **Implements:** SUP-002, SUP-006, SUP-007
 - **Source:** #339, lucoenergia/conluz#532; changed in #372 (the form moved into the overlay; focus
-  on the refused input); changed in #411 (a too-long address on the address input)
+  on the refused input); changed in #411 (a too-long address on the address input); changed in #423
+  (the owner changes only through the transfer)
 
 ### UI-SUP-010 — A supply is named by its name, else its address, else its CUPS
 
@@ -334,13 +341,14 @@ introduced.
 ### UI-SUP-018 — The supply forms do not read the platform-wide user listing
 
 - **Status:** Active
-- **Rule:** The supply forms MUST NOT read the platform-wide user listing (`getAllUsers`). The edit
-  form shows the owner from `ownerRecord` (UI-SUP-005) and reads no owner listing at all.
-- **Rationale:** Data minimisation: the create form needs one community's members at most, and the
-  edit form needs none. The user listing spans every community the caller administers, and carries
+- **Rule:** The supply forms and the transfer overlay MUST NOT read the platform-wide user listing
+  (`getAllUsers`). The edit form shows the owner from `ownerRecord` (UI-SUP-005) and reads no owner
+  listing at all. The transfer overlay reads the roster only through `getMemberships` (UI-SUP-025).
+- **Rationale:** Data minimisation: the create form and the transfer need one community's members
+  at most, and the edit form needs none. The user listing spans every community the caller administers, and carries
   the personal ID of everyone in them.
 - **Implements:** n/a
-- **Source:** #388
+- **Source:** #388; changed in #423 (the transfer overlay)
 
 ### UI-SUP-019 — Creating and editing a supply open over the supply list
 
@@ -393,15 +401,111 @@ introduced.
 - **Implements:** n/a
 - **Source:** #372
 
-### UI-SUP-023 — The edit form says the owner cannot be changed
+### UI-SUP-023 — The edit form says where the owner is changed
 
 - **Status:** Active
-- **Rule:** The edit form's "Propietario" MUST show the visible helper text "El propietario no se
-  puede cambiar", with an owner and with none ("-").
-- **Rationale:** The API does not allow changing a supply's owner, so the form says why the field
-  is locked. Blocking reasons are visible text, never tooltips, which a phone cannot show.
+- **Rule:** The edit form's "Propietario" MUST show the visible helper text "Para cambiarlo, usa
+  «Cambiar titular» en el menú del punto de suministro.", with an owner and with none ("-").
+- **Rationale:** The update the edit form sends cannot change a supply's owner; the owner changes
+  only through the transfer (UI-SUP-024), so the form points to it instead of calling the field
+  unchangeable. Blocking reasons are visible text, never tooltips, which a phone cannot show.
 - **Implements:** n/a
-- **Source:** #416
+- **Source:** #416; changed in #423 (the owner can now change, through the transfer)
+
+### UI-SUP-024 — "Cambiar titular" is offered from the supply's own `canTransferOwnership`, in its own overlay
+
+- **Status:** Active
+- **Rule:**
+  - "Cambiar titular" MUST be offered on a supply's row menu, after "Editar", and in the supply
+    detail header's menu, before the deletion, only when that supply's
+    `capabilities.canTransferOwnership` is `true`. Otherwise it MUST NOT be rendered, not even
+    disabled.
+  - A row or a header whose only action is the transfer MUST still offer its menu.
+  - It MUST open its own overlay, titled "Cambiar titular", over the page it was chosen on, and never
+    the edit form. The overlay MUST show the current holder (`ownerRecord`'s full name, "-" when
+    there is none) in the read-only presentation (UI-FRM-003).
+  - Closing it with a new holder chosen or the date changed MUST ask first (UI-OVL-003), and back
+    MUST close it. No second dialog asks for confirmation: the consequences (UI-SUP-026) and the
+    submit are the confirmation.
+  - After it closes, focus MUST return to the menu button that opened it.
+- **Rationale:** An action guaranteed to fail is not rendered. Only a community admin of the
+  supply's community may transfer it, never its owner, and the backend says so per supply. The
+  edit form's update cannot change the owner, so the transfer is a flow of its own.
+- **Implements:** SUP-008
+- **Source:** #423, lucoenergia/conluz#585
+
+### UI-SUP-025 — The transfer picker offers the community's other members, in any state
+
+- **Status:** Active
+- **Rule:**
+  - "Nuevo titular" MUST offer the memberships of the active community in any state, except the
+    supply's current owner (the membership whose account is the supply's owner), ordered as
+    UI-SUP-016 orders the create form's owners.
+  - A pending membership MUST be labelled "Pendiente" and a suspended one "Suspendido", their
+    top-level state (UI-MBR-030), and an active one MUST carry no label. A pending sub-state MUST
+    NOT be shown.
+  - The roster MUST be read only through `getMemberships`.
+  - When nobody is left to offer, or the roster fails to load, the picker MUST say so in visible text
+    and the transfer MUST NOT be submittable (as UI-SUP-017 for the create form).
+  - The chosen membership's personal ID is what the transfer sends.
+- **Rationale:** The picker mirrors the backend rule: the new owner must be a member of the
+  supply's community, whatever the membership's state, and cannot be its current owner. A no-op
+  option is never offered. The state tells the admin that the new holder does not have access yet,
+  or has lost it, without the invitation detail the members page owns.
+- **Implements:** SUP-009
+- **Source:** #423, lucoenergia/conluz#585
+
+### UI-SUP-026 — The transfer states its consequences before it is sent
+
+- **Status:** Active
+- **Rule:** The transfer overlay MUST show, above its submit, as visible neutral text (no warning or
+  error colouring, never a tooltip), these four lines:
+  - "El nuevo titular verá todo el histórico de este punto: consumo, ahorro y coeficientes."
+  - "El titular anterior dejará de ver este punto y sus cifras dejarán de incluirlo, también las de
+    meses pasados."
+  - "Para que sigan llegando sus datos, el nuevo titular debe autorizar a la comunidad en Datadis."
+  - "La inversión no se traspasa. Si corresponde, regístrala en la ficha del nuevo titular."
+- **Rationale:** The transfer changes figures and access irreversibly in effect: the whole history
+  moves with the supply, including the months before the change. The admin reads that before
+  sending. Nothing has gone wrong, so the text is not an alert.
+- **Implements:** SUP-008
+- **Source:** #423
+
+### UI-SUP-027 — The transfer date is today or earlier, and a refusal is shown on its field
+
+- **Status:** Active
+- **Rule:**
+  - "Fecha del cambio en la distribuidora" MUST default to today in the app's time zone (Madrid),
+    whatever the device's zone, and MUST NOT offer a later day. A later date, or an empty or
+    invalid one, MUST say so in visible text on the field and MUST NOT be submittable.
+  - A transfer refused with `SUPPLY_TRANSFER_DATE_IN_FUTURE` or
+    `SUPPLY_TRANSFER_DATE_NOT_AFTER_PREVIOUS` MUST show its catalogue text on the date field, and one
+    refused with `SUPPLY_ALREADY_OWNED_BY_USER` or `SUPPLY_OWNER_NOT_FOUND` on the picker. The
+    refused field MUST take focus, and the overlay MUST stay open with what was chosen.
+  - Any other refusal MUST keep the generic message, with the overlay open.
+  - While the transfer is in flight, it MUST NOT be sent again, its inputs MUST be read-only and the
+    overlay MUST NOT close (UI-OVL-002).
+- **Rationale:** Errors are visible and attached to their field, where the admin can fix them. The
+  backend checks "not later than today" in the community's time zone, which is the application's
+  one (`APP_TIME_ZONE`, Madrid) for every community, so a device behind or ahead of Madrid must not
+  move the default to a day it would refuse.
+- **Implements:** SUP-009, SUP-010
+- **Source:** #423, lucoenergia/conluz#585
+
+### UI-SUP-028 — After a transfer, every read of the supply and of both owners shows the new holder
+
+- **Status:** Active
+- **Rule:** After a successful transfer, the overlay MUST close, a success message MUST name the
+  supply and its new holder, and without a reload:
+  - the supply's own read and the community's supply list MUST show the new holder;
+  - for both the previous owner (the supply's owner before the request) and the new one, their
+    supplies (`?personId=`, "Todos mis puntos", the home views) and every figure of their membership
+    (energy metrics, consumption series, hourly profile, payback) MUST be read again.
+- **Rationale:** The transfer moves the supply, with its whole history, from one owner's figures to
+  the other's. Invalidation follows the same precedent as UI-SUP-003: every read that showed the
+  supply, or counted it, is refreshed.
+- **Implements:** n/a
+- **Source:** #423
 
 ## States
 
@@ -438,9 +542,21 @@ The edit form in the overlay (UI-SUP-019):
 | State | Rendered | Actions available |
 | --- | --- | --- |
 | Loading | Progress in the overlay's body | Cancelar |
-| Form | The supply's values, with the owner in the read-only presentation (UI-FRM-003) and why it cannot be changed (UI-SUP-023) | Guardar, Cancelar |
+| Form | The supply's values, with the owner in the read-only presentation (UI-FRM-003) and where it is changed (UI-SUP-023); the owner stays read-only, and changes only through the transfer (UI-SUP-024) | Guardar, Cancelar |
 | Not found | The supply detail page's not-found state | Cancelar |
 | Error | The supply detail page's load error | Reintentar, Cancelar |
+
+The transfer overlay (UI-SUP-024 to UI-SUP-027):
+
+| State | Rendered | Actions available |
+| --- | --- | --- |
+| Loading | Progress in the overlay's body | Cancelar |
+| Ready | The current holder, read-only; "Nuevo titular" with the other members; the date, today by default; the four consequences | Cambiar titular (once a holder is chosen and the date is valid), Cancelar |
+| No one to offer | "No hay ningún otro miembro en esta comunidad al que cambiar el titular." on the picker | Cancelar; "Cambiar titular" is disabled |
+| Roster error | "No se pudieron cargar los miembros de esta comunidad. Inténtalo más tarde." on the picker | Cancelar; "Cambiar titular" is disabled |
+| In flight | "Cambiando titular...", the inputs read-only | None; the overlay cannot be closed |
+| Refused | The refusal on its field, or the generic message | As in Ready |
+| Not found / Error | The supply detail page's not-found state, or its load error | Reintentar (on error), Cancelar |
 
 The import dialog, as the member import's (`members.md`):
 

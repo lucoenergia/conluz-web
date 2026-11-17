@@ -352,8 +352,9 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   MEMBERSHIP_NOT_FOUND: "Ya no forma parte de esta comunidad.",
 
   // Removing a member who owns supplies in the community (lucoenergia/conluz#412).
+  // The way out is changing the holder of their supplies first (#423).
   MEMBERSHIP_OWNS_SUPPLIES:
-    "Este miembro es titular de suministros en esta comunidad. Si quieres que deje de tener acceso, suspéndelo; para eliminarlo, antes hay que eliminar sus suministros.",
+    "Este miembro es titular de puntos de suministro en esta comunidad. Si quieres que deje de tener acceso, suspéndelo. Para eliminarlo, cambia antes el titular de sus puntos de suministro.",
   // Demoting or removing the community's last active admin
   // (lucoenergia/conluz#449, #309).
   MEMBERSHIP_LAST_ACTIVE_ADMIN: LAST_ACTIVE_ADMIN_EXPLANATION,
@@ -382,6 +383,13 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   SUPPLY_ALREADY_EXISTS: "Ya hay un punto de suministro con este CUPS en la comunidad.",
   SUPPLY_REGISTERED_IN_ANOTHER_COMMUNITY: "Este CUPS ya está registrado en otra comunidad.",
   SUPPLY_OWNER_NOT_FOUND: "No hay ningún miembro de la comunidad con ese DNI/NIE/NIF.",
+
+  // A supply transfer refused for its new owner or its date
+  // (lucoenergia/conluz#585, #423).
+  SUPPLY_ALREADY_OWNED_BY_USER: "Este miembro ya es el titular del punto.",
+  SUPPLY_TRANSFER_DATE_IN_FUTURE: "La fecha del cambio no puede ser posterior a hoy.",
+  SUPPLY_TRANSFER_DATE_NOT_AFTER_PREVIOUS:
+    "La fecha tiene que ser posterior a la del último cambio de titular de este punto.",
 
   // A refused energy metrics or consumption period (#324). Only TOO_LONG
   // carries params, the limit it enforces (#378). CONFLICTING and INCOMPLETE

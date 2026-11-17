@@ -184,6 +184,7 @@ export const COMMUNITY_ADMIN_SUPPLY_CAPABILITIES = {
   canEdit: true,
   canDelete: true,
   canCreatePlant: true,
+  canTransferOwnership: true,
 };
 
 /**
