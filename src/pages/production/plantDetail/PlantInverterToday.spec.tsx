@@ -195,6 +195,16 @@ describe("UI-PLT-012 stale (#406)", () => {
   });
 });
 
+describe("UI-TDY-008 one staleness threshold across plant and supply views (#432)", () => {
+  it("UI-TDY-008 states the 15-minute threshold in the plant's stale copy, and no other", () => {
+    renderBlock(STALE);
+
+    const note = within(block()).getByText(/^Sin datos nuevos desde las 10:15,/);
+    expect(note).toHaveTextContent("hace más de 15 minutos");
+    expect(within(block()).queryByText(/1 hora|una hora|60 minutos/)).not.toBeInTheDocument();
+  });
+});
+
 describe("UI-PLT-013 production is gold, and gold is never text (#406)", () => {
   it("UI-PLT-013 AC15 draws the curve in ENERGY_COLORS.assigned and the Ahora mark in brand.main", () => {
     renderBlock(WITH_GAP);
