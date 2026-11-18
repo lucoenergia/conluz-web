@@ -17,6 +17,7 @@ import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 import { SupplyLatestMonthSummary } from "./SupplyLatestMonthSummary";
 import { SupplyTransferDialog } from "./SupplyTransferDialog";
 import { useOverlayOpener } from "../../hooks/useOverlayOpener";
+import { SUPPLY_ID_PARAM, TODAY_PATH } from "../../utils/routes";
 
 /**
  * The supply's record (#252): its header, its coefficient history and a
@@ -49,6 +50,12 @@ export const SupplyDetailPage: FC = () => {
   const plantId = supplyPoint?.plant?.id;
   const canOpenPlant = usePlantCapabilities(plantId, "canManage", { enabled: !!plantId }).state === "allowed";
   const plantHref = canOpenPlant && plantId ? `/plants/${plantId}` : undefined;
+  // "Datos de hoy" (#432) opens to whoever may read the supply, but a plant's
+  // own supply receives no share of the plant's production, so it has none.
+  const todayHref =
+    supplyPoint && canReadSupply.state === "allowed" && !supplyPoint.plant
+      ? `${TODAY_PATH}?${new URLSearchParams({ [SUPPLY_ID_PARAM]: supplyPoint.id })}`
+      : undefined;
 
   useEffect(() => {
     if (supplyPointError)
@@ -102,6 +109,7 @@ export const SupplyDetailPage: FC = () => {
             })
           }
           plantHref={plantHref}
+          todayHref={todayHref}
         />
       </Box>
 

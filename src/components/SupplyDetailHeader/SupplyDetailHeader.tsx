@@ -1,11 +1,12 @@
 import { useState, type FC, type MouseEvent } from "react";
-import { Box, Chip, Divider, IconButton, MenuItem, Typography } from "@mui/material";
+import { Box, Button, Chip, Divider, IconButton, MenuItem, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router";
 import ElectricMeterIcon from "@mui/icons-material/ElectricMeter";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import SwapHorizOutlinedIcon from "@mui/icons-material/SwapHorizOutlined";
+import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
 import type { SupplyResponse } from "../../api/models";
 import { DetailHeader, type DetailFact, type DetailKeyFacts } from "../DetailHeader";
 import { MenuTemplate } from "../Menu/MenuTemplate";
@@ -32,6 +33,12 @@ export interface SupplyDetailHeaderProps {
    * Without it a plant's own supply is still tagged, as plain text.
    */
   plantHref?: string;
+  /**
+   * Where today's data of this supply opens ("Datos de hoy", #432). Given only
+   * when the caller may read the supply and it does not back a plant; without
+   * it the header offers no such action.
+   */
+  todayHref?: string;
 }
 
 const PLANT_TAG_SX = { fontWeight: 600, bgcolor: colors.brand.surface, color: "primary.main" } as const;
@@ -43,6 +50,7 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
   onDeleteRequest,
   onTransferRequest,
   plantHref,
+  todayHref,
 }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
 
@@ -155,6 +163,20 @@ export const SupplyDetailHeader: FC<SupplyDetailHeaderProps> = ({
       }
       keyFacts={keyFacts}
       details={details}
+      actions={
+        todayHref && (
+          <Button
+            component={RouterLink}
+            to={todayHref}
+            variant="outlined"
+            size="small"
+            startIcon={<TodayRoundedIcon />}
+            sx={{ "@media (pointer: coarse)": { minHeight: 44 } }}
+          >
+            Ver datos de hoy
+          </Button>
+        )
+      }
       menu={menu || undefined}
       isLoading={isLoading}
       error={error}

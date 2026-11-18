@@ -43,6 +43,13 @@ export const Transferable = () => (
   </Mui.Box>
 );
 
+/** For a caller who may read the supply, which backs no plant: "Ver datos de hoy" sits beside the menu (#432). */
+export const WithTodayData = () => (
+  <Mui.Box sx={{ width: "100%" }}>
+    <SupplyDetailHeader supplyPoint={supply} todayHref="/today?supplyId=sup-1" onDeleteRequest={() => {}} />
+  </Mui.Box>
+);
+
 export const Inactive = () => (
   <Mui.Box sx={{ width: "100%" }}>
     <SupplyDetailHeader

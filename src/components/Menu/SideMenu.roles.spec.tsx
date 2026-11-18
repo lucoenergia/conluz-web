@@ -73,12 +73,18 @@ describe("SideMenu visibility", () => {
     hides("Integraciones");
   });
 
-  test("UI-HIS-004 offers Mi consumo y ahorro with the community's canRead, right after Inicio", () => {
+  test("UI-HIS-004 offers Mi consumo y ahorro with the community's canRead, right after Datos de hoy", () => {
     setup(menuFor(MEMBER));
     const entries = within(screen.getByRole("list", { name: "Comunidad" })).getAllByRole("link");
 
-    expect(entries.map((entry) => entry.textContent)).toEqual(["Inicio", "Mi consumo y ahorro", "Energía de la comunidad", "Puntos de suministro"]);
-    expect(entries[1]).toHaveAttribute("href", "/historical-analysis");
+    expect(entries.map((entry) => entry.textContent)).toEqual([
+      "Inicio",
+      "Datos de hoy",
+      "Mi consumo y ahorro",
+      "Energía de la comunidad",
+      "Puntos de suministro",
+    ]);
+    expect(entries[2]).toHaveAttribute("href", "/historical-analysis");
   });
 
   test("UI-PLT-010 AC1 offers Plantas only with the community's canManage, leading to /plants", () => {
