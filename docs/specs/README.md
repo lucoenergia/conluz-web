@@ -56,3 +56,4 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-CAN` | Community energy: the community's production, where it went, its estimated income, the CO₂ avoided, its evolution and its plants, for every member | [`community-analysis.md`](community-analysis.md) |
 | `UI-LAY` | Page layout: the shared page root every authenticated page uses, and the full width it fills | [`layout.md`](layout.md) |
 | `UI-CHT` | Charts: how every bar chart renders below `sm`, and which modules may draw one | [`charts.md`](charts.md) |
+| `UI-TDY` | Datos de hoy: today's energy reaching a supply point from the plant, its menu entry, selector and admin view, its states, the energy-flow hero and its refresh, and the inverter staleness threshold | [`today-page.md`](today-page.md) |

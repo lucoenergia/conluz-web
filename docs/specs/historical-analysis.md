@@ -8,7 +8,7 @@
 | **Roles** | A caller who may read the active community (`canRead`): members and community admins |
 | **Domain rules** | EPR-001, EPR-003, EPR-004 (lucoenergia/conluz#409); EPR-005 (lucoenergia/conluz#545, #546); SEM-001 (lucoenergia/conluz#408); SEM-002, SEM-003, SEM-004, ENM-006, ENM-007, ENM-008 (lucoenergia/conluz#411); MCS-001, MCS-002 (lucoenergia/conluz#410); SCS-001 (lucoenergia/conluz#545); MCS-003 (lucoenergia/conluz#546); ADR-0005 in lucoenergia/conluz |
 | **Design reference** | Claude Design round 2 copy deck; round 3 copy deck for the period (#248); the member consumption analysis design, option A, for the evolution charts (#250) and the data table and CSV (#251); its round 3, for the mobile charts and the paired terms (#361) |
-| **Last reviewed against code** | #425 |
+| **Last reviewed against code** | #432 |
 
 Scope: the page shell, its menu entry and its supply selector (#247), the period: its anchor,
 selector, custom range picker, header and query string (#248), the period's card and totals
@@ -115,16 +115,17 @@ here too, and opens another member's supply from its detail page, one at a time.
 - **Source:** #247; changed in #385 (a community admin who owns no supplies opens a supply of the
   community)
 
-### UI-HIS-004 — The community menu leads here right after Inicio
+### UI-HIS-004 — The community menu leads here right after Datos de hoy
 
 - **Status:** Active
-- **Rule:** The community menu MUST list "Mi consumo y ahorro" right after "Inicio", requiring the
-  active community's `canRead`, as the route does. The `/supply-points` entry MUST read "Puntos de
-  suministro".
-- **Rationale:** This page is the caller's own analysis, second only to the home. With it in the
-  menu, "Consumo" no longer described the supply list, which manages supply points.
+- **Rule:** The community menu MUST list "Mi consumo y ahorro" right after "Datos de hoy", which
+  follows "Inicio" (UI-TDY-001). The entry requires the active community's `canRead`, as the route
+  does. The `/supply-points` entry MUST read "Puntos de suministro".
+- **Rationale:** This page is the caller's own analysis. Today's data, the most frequent check,
+  comes before it (#432). With it in the menu, "Consumo" no longer described the supply list, which
+  manages supply points.
 - **Implements:** n/a
-- **Source:** #247
+- **Source:** #247, #432
 
 ### UI-HIS-005 — Periods end at the latest month published for the selected scope, never at the device clock
 
