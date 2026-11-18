@@ -123,11 +123,10 @@ A community admin can look at any supply of the community the same way, from its
 ### UI-TDY-008 — One staleness threshold
 
 - **Status:** Active
-- **Rule:** Inverter staleness copy MUST state the 15-minute threshold wherever it is shown.
+- **Rule:** Inverter staleness copy that names a threshold MUST name 15 minutes.
   - "Hoy, según el inversor" on the plant detail says "hace más de 15 minutos" (UI-PLT-012).
-  - The "Datos de hoy" stale notice names the time of the last data and states no threshold, as the
-    design's copy has it.
-- **Rationale:** It keeps one threshold across plant and supply views.
+- **Rationale:** The 60-minute copy must not survive the backend change to 15 minutes. Copy that names
+  only the time of the last data, like the "Datos de hoy" notice, is compliant.
 - **Implements:** n/a
 - **Source:** #432
 
