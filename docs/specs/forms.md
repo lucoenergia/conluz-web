@@ -8,7 +8,7 @@
 | **Roles** | Whoever may open each form; this document adds no gate |
 | **Domain rules** | `lucoenergia/conluz`: API-003, API-004 |
 | **Design reference** | Design system: `AddressField`, `ReadOnlyField` (forms group) |
-| **Last reviewed against code** | #416 |
+| **Last reviewed against code** | #431 |
 
 <!-- Domain rules are cited by ID; the prefix registry in lucoenergia/conluz → docs/specs/README.md maps each prefix to its file. -->
 
@@ -16,8 +16,8 @@
 
 Let a user type, read and check a whole address before saving it, on a phone as on a desktop, in
 every record form that asks for one. Let a user tell at a glance a value they can change from one
-they cannot. This document covers only the rules #411 introduced, on the address input, and #416,
-on values that can never be edited from their screen; where a refused save is shown is
+they cannot. This document covers only the rules #411 introduced, on the address input, and #416
+and #431, on values that can never be edited from their screen; where a refused save is shown is
 [`api-errors.md`](api-errors.md)'s (UI-ERR-007).
 
 ## Rules
@@ -51,20 +51,24 @@ on values that can never be edited from their screen; where a refused save is sh
 - **Status:** Active
 - **Rule:**
   - An input whose value can never be edited from its screen MUST use the shared read-only
-    presentation: a grey fill, the value at full contrast, no hover or focus border highlight, and
-    no text caret. It keeps its label and any helper text.
-  - It MUST remain keyboard-focusable, with a visible focus indication that is not the editable
-    inputs' border highlight, and its value MUST NOT change; it can be selected and copied.
+    presentation: a filled field with its label inside, no outline border or underline, a grey fill
+    that does not change on hover or focus, the value at full contrast, the label at 4.5:1 or more
+    on the fill, and no text caret. It keeps any helper text.
+  - It MUST remain keyboard-focusable, with an inset focus ring that is not the editable inputs'
+    highlight, and its value MUST NOT change; it can be selected and copied.
   - Inputs read-only only while a save is in flight (UI-OVL-002) MUST NOT use it.
-  - Today: the supply edit form's "Propietario" (UI-SUP-005), the member record's "DNI/NIE" and the
-    profile's "Nombre completo" and "DNI/NIF".
+  - Today: the supply edit form's "Propietario" (UI-SUP-005), the member record's "DNI/NIE", the
+    profile's "Nombre completo" and "DNI/NIF", and the supply transfer dialog's "Titular actual".
 - **Rationale:** A locked value must look locked: these inputs looked editable, took a caret and
   highlighted their border, so a user tried to change them and got no feedback. The value stays at
   full contrast, never the disabled style, because most use is on a phone, often outdoors. It stays
   focusable so keyboard and screen-reader users still reach its label and value. The in-flight state
-  is transient and must not repaint the form on every save.
+  is transient and must not repaint the form on every save. The outlined variant floated the label
+  over a filled notch, which gave it low contrast at rest and let the focus ring strike through it.
+  A filled field removes the notch, and it differs from editable inputs by shape, not only by
+  colour.
 - **Implements:** n/a
-- **Source:** #416
+- **Source:** #416; #431 (filled variant, label inside)
 
 ## States
 
@@ -73,7 +77,7 @@ on values that can never be edited from their screen; where a refused save is sh
 | Empty or short address | One line, at the height of the other inputs | Type; Enter submits the form |
 | Long address | Up to four lines, then it scrolls | The same |
 | Save in flight (overlay forms) | The same, read-only (UI-OVL-002), in the editable look | None |
-| A value never editable from its screen | The read-only presentation, with its label and any helper text (UI-FRM-003) | Focus it, select and copy its value |
+| A value never editable from its screen | The read-only presentation: a filled field with its label inside and any helper text below (UI-FRM-003) | Focus it, select and copy its value |
 | Refused for its length | The refusal on the address input in the overlay forms, where the profile shows errors on its own page (UI-ERR-007, UI-PRF-004) | Edit the address, which clears an error on it |
 
 ## Accepted exceptions
