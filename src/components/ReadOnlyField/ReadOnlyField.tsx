@@ -1,6 +1,6 @@
 import type { FC, ReactNode } from "react";
 import { TextField } from "@mui/material";
-import { colors } from "../../theme/tokens";
+import { colors, radii } from "../../theme/tokens";
 
 export interface ReadOnlyFieldProps {
   label: string;
@@ -12,9 +12,15 @@ export interface ReadOnlyFieldProps {
 
 /**
  * A value shown in a form that can never be edited from its screen
- * (UI-FRM-003): a grey fill, the value at full contrast, no caret and none of
- * the editable inputs' hover or focus border. It stays focusable, so Tab and a
- * screen reader reach its label and value, and the value can be selected.
+ * (UI-FRM-003): a filled field with its label inside, no outline or underline,
+ * a grey fill that holds on hover and focus, the value at full contrast and no
+ * caret. It differs from the outlined editable inputs by its shape, not only by
+ * its colour. It stays focusable, so Tab and a screen reader reach its label
+ * and value, and the value can be selected.
+ *
+ * The label is `secondary.main`: it reads at 4.5:1 or more on the fill, where
+ * MUI's default label colour does not, and stays distinct from the value. It
+ * never turns to the editable inputs' focus colour.
  *
  * Only for a value that is never editable. An input read-only while its save
  * is in flight keeps the editable look (UI-OVL-002), so a save does not repaint
@@ -27,21 +33,22 @@ export const ReadOnlyField: FC<ReadOnlyFieldProps> = ({ label, value, helperText
     value={value}
     helperText={helperText}
     fullWidth
-    variant="outlined"
-    slotProps={{ input: { readOnly: true } }}
+    variant="filled"
+    slotProps={{ input: { readOnly: true, disableUnderline: true } }}
     sx={{
-      "& .MuiOutlinedInput-root": {
-        bgcolor: colors.background.readOnly,
-        // Opts out of the theme's hover and focus border, which marks an
-        // input that can be typed into.
-        "& fieldset, &:hover fieldset, &.Mui-focused fieldset": {
-          borderColor: colors.border.inactive,
-          borderWidth: 1,
+      "& .MuiFilledInput-root": {
+        borderRadius: radii.default,
+        backgroundColor: colors.background.readOnly,
+        // Opts out of MUI's filled hover and focus fill, which marks an input
+        // that can be typed into.
+        "&:hover": {
+          backgroundColor: colors.background.readOnly,
         },
         // Focus is drawn inside the field's own box, so no overlay container
-        // can clip it; the 1px border covers the outer pixel of the 3px ring.
+        // can clip it, and it never crosses the label, which sits inside too.
         "&.Mui-focused": {
-          boxShadow: `inset 0 0 0 3px ${colors.secondary.main}`,
+          backgroundColor: colors.background.readOnly,
+          boxShadow: `inset 0 0 0 2px ${colors.secondary.main}`,
         },
       },
       "& .MuiInputBase-input": {
@@ -49,8 +56,12 @@ export const ReadOnlyField: FC<ReadOnlyFieldProps> = ({ label, value, helperText
         cursor: "default",
         caretColor: "transparent",
       },
-      "& .MuiInputLabel-root.Mui-focused": {
-        color: "text.secondary",
+      // Beats the theme's focused label colour, kept for editable inputs.
+      "& .MuiInputLabel-root": {
+        color: colors.secondary.main,
+        "&.Mui-focused": {
+          color: colors.secondary.main,
+        },
       },
     }}
   />

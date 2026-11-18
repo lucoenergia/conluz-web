@@ -19,7 +19,7 @@ export function fieldStyles(input: HTMLElement): [selector: string, property: st
 export function usesReadOnlyPresentation(input: HTMLElement): boolean {
   return fieldStyles(input).some(
     ([selector, property, value]) =>
-      /\.MuiOutlinedInput-root$/.test(selector) && property === "background-color" && value === colors.background.readOnly,
+      /\.MuiFilledInput-root$/.test(selector) && property === "background-color" && value === colors.background.readOnly,
   );
 }
 
