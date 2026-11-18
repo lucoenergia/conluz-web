@@ -15,7 +15,7 @@ type ObservationStatus = CoefficientObservationResponseStatus;
  * the registered agreement is something to look at, not a failure, and the
  * warning tone is the app's style for an anomaly.
  */
-export type ObservationTone = "applied" | "dates" | "pending" | "neutral" | "warning";
+export type ObservationTone = "applied" | "dates" | "pending" | "neutral" | "warning" | "observed" | "proposed";
 
 export const TONE_SX: Record<ObservationTone, { bgcolor: string; color: string; border?: string }> = {
   applied: { bgcolor: colors.success.surface, color: colors.success.main },
@@ -23,6 +23,10 @@ export const TONE_SX: Record<ObservationTone, { bgcolor: string; color: string; 
   pending: { bgcolor: colors.brand.surface, color: colors.brand.main },
   neutral: { bgcolor: colors.background.surface, color: colors.secondary.main, border: `1px solid ${colors.border.light}` },
   warning: { bgcolor: colors.warning.surface, color: colors.warning.main },
+  observed: { bgcolor: colors.brand.surface, color: colors.brand.main },
+  // A proposed date is not evidence: outlined with a dashed line, never filled
+  // like an observed one (UI-AGR-027).
+  proposed: { bgcolor: colors.background.paper, color: colors.text.body, border: `1px dashed ${colors.text.subtle}` },
 };
 
 export const COEFFICIENT_STATUS_LABEL: Record<ObservationStatus, string> = {

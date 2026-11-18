@@ -233,6 +233,7 @@ const COMMUNITY_SCOPE_WRAPPERS = [
   "src/pages/production/useSharingAgreementsData.ts",
   "src/pages/production/useSharingAgreementDetailData.ts",
   "src/pages/production/observedSharing/usePlantSharingObservationData.ts",
+  "src/pages/production/observedSharing/useSharingAgreementObservationData.ts",
   "src/pages/supply-points/useSupplyInActiveCommunity.ts",
   // Filters its own response through selectPeriodsInCommunity -- the original
   // and still correct way to scope an entity-keyed response.

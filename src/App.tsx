@@ -53,6 +53,10 @@ const PlantObservedSharingPage = lazyPage(
   () => import("./pages/production/observedSharing/PlantObservedSharingPage"),
   "PlantObservedSharingPage",
 );
+const SharingAgreementObservationPage = lazyPage(
+  () => import("./pages/production/observedSharing/SharingAgreementObservationPage"),
+  "SharingAgreementObservationPage",
+);
 
 const IntegrationsPage = lazyPage(() => import("./pages/integrations/IntegrationsPage"), "IntegrationsPage");
 const MembersPage = lazyPage(() => import("./pages/members/MembersPage"), "MembersPage");
@@ -150,6 +154,10 @@ function App() {
               <Route
                 path="sharing-agreements/observed"
                 element={<CapabilityRoute require={{ scope: "plant", capability: "canListSharingAgreements" }}><PlantObservedSharingPage /></CapabilityRoute>}
+              />
+              <Route
+                path="sharing-agreements/observed/:sharingAgreementId"
+                element={<CapabilityRoute require={{ scope: "plant", capability: "canListSharingAgreements" }}><SharingAgreementObservationPage /></CapabilityRoute>}
               />
               <Route
                 path="sharing-agreements/:sharingAgreementId"
