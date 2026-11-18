@@ -1861,10 +1861,11 @@ test.describe("#416: a value never editable from its screen", () => {
   /** A token as getComputedStyle reports it: "rgb(r, g, b)". */
   const rgb = (hex: string) => `rgb(${[1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)).join(", ")})`;
 
-  // The fill is below the screenshot threshold (profile-page.png does not
-  // change with it), and Vitest reads declared styles without the cascade, so
-  // only a real browser shows the opt-out beats MUI's filled hover and focus fill.
-  test("UI-FRM-003 the profile's name is filled, caret-less, keeps its fill on hover and focus, and rings inside on focus", async ({
+  // The fill and the label colour are below the screenshot threshold
+  // (profile-page.png does not change with them), and Vitest reads declared
+  // styles without the cascade, so only a real browser shows the opt-out beats
+  // MUI's filled hover and focus fill and the theme's focused label colour.
+  test("UI-FRM-003 the profile's name is a filled field whose fill, label and caret hold on hover and focus, with an inset ring on focus", async ({
     page,
   }) => {
     await injectAuthToken(page);
@@ -1878,34 +1879,50 @@ test.describe("#416: a value never editable from its screen", () => {
     await expect(name).toHaveValue(FIXED_MEMBER_USER.fullName);
     await stabilizePage(page);
 
-    // Structural: the fill is painted by MUI's input root, which has no role or name.
+    // Structural: the fill, the underline and the label are painted by MUI's
+    // input root, its pseudo-elements and its label, none of which has a role or name.
     const styles = (input: typeof name) =>
       input.evaluate((element) => {
         const root = element.closest(".MuiInputBase-root");
-        if (!root) throw new Error("not a MUI input");
+        const label = element.closest(".MuiFormControl-root")?.querySelector("label");
+        if (!root || !label) throw new Error("not a labelled MUI input");
+        const underline = (pseudo: "::before" | "::after") => {
+          const style = getComputedStyle(root, pseudo);
+          return style.borderBottomStyle === "none" || style.borderBottomWidth === "0px" ? "none" : style.borderBottom;
+        };
         return {
           filled: root.classList.contains("MuiFilledInput-root"),
           background: getComputedStyle(root).backgroundColor,
           caret: getComputedStyle(element).caretColor,
           shadow: getComputedStyle(root).boxShadow,
+          underline: [underline("::before"), underline("::after")],
+          label: getComputedStyle(label).color,
         };
       });
     const fill = rgb(colors.background.readOnly);
+    const labelColour = rgb(colors.secondary.main);
 
     await page.mouse.move(0, 0);
     const atRest = await styles(name);
     expect(atRest.filled).toBe(true);
     expect(atRest.background).toBe(fill);
     expect(atRest.caret).toBe("rgba(0, 0, 0, 0)");
+    expect(atRest.underline).toEqual(["none", "none"]);
+    expect(atRest.label).toBe(labelColour);
 
     await name.hover();
-    expect((await styles(name)).background).toBe(fill);
+    const hovered = await styles(name);
+    expect(hovered.background).toBe(fill);
+    expect(hovered.underline).toEqual(["none", "none"]);
 
     await page.mouse.move(0, 0);
     await name.focus();
     const focused = await styles(name);
     expect(focused.background).toBe(fill);
-    expect(focused.shadow).toBe(`${rgb(colors.secondary.main)} 0px 0px 0px 2px inset`);
+    expect(focused.caret).toBe("rgba(0, 0, 0, 0)");
+    expect(focused.underline).toEqual(["none", "none"]);
+    expect(focused.shadow).toBe(`${labelColour} 0px 0px 0px 2px inset`);
+    expect(focused.label).toBe(labelColour);
 
     expect((await styles(email)).background).not.toBe(rgb(colors.background.readOnly));
   });

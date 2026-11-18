@@ -36,20 +36,40 @@ const declared = (input: HTMLElement, selector: RegExp, property: string) =>
     .map(([, , value]) => value);
 
 describe("UI-FRM-003 the read-only presentation", () => {
+  it("UI-FRM-003 is a filled field with its label inside, with no outline border or underline", () => {
+    const { readOnly } = renderForm();
+
+    // Structural: the variant and its underline are only visible as MUI's classes on the input root.
+    const root = readOnly.closest(".MuiInputBase-root");
+    expect(root).toHaveClass("MuiFilledInput-root");
+    expect(root).not.toHaveClass("MuiFilledInput-underline");
+    expect(readOnly.closest(".MuiFormControl-root")?.querySelector("fieldset")).toBeNull();
+    expect(screen.getByText("DNI/NIE", { selector: "label" })).toHaveClass("MuiInputLabel-filled");
+  });
+
+  it("UI-FRM-003 keeps the fill at rest, on hover and with focus", () => {
+    const { readOnly } = renderForm();
+
+    for (const state of [/\.MuiFilledInput-root$/, /\.MuiFilledInput-root:hover$/, /\.MuiFilledInput-root\.Mui-focused$/]) {
+      expect(declared(readOnly, state, "background-color"), String(state)).toEqual([colors.background.readOnly]);
+    }
+  });
+
+  it("UI-FRM-003 colours the label secondary at rest and with focus, never the editable highlight", () => {
+    const { readOnly } = renderForm();
+
+    for (const state of [/\.MuiInputLabel-root$/, /\.MuiInputLabel-root\.Mui-focused$/]) {
+      const label = declared(readOnly, state, "color");
+      expect(label, String(state)).toEqual([colors.secondary.main]);
+      expect(label).not.toContain(colors.brand.main);
+    }
+  });
+
   it("UI-FRM-003 fills the field in grey and shows the value at full contrast", () => {
     const { readOnly } = renderForm();
 
     expect(declared(readOnly, /\.MuiFilledInput-root$/, "background-color")).toEqual([colors.background.readOnly]);
     expect(declared(readOnly, /\.MuiInputBase-input$/, "color")).toEqual([colors.text.primary]);
-  });
-
-  it("UI-FRM-003 keeps the resting fill on hover and focus, never the editable highlight", () => {
-    const { readOnly } = renderForm();
-
-    for (const state of [/\.MuiFilledInput-root:hover$/, /\.MuiFilledInput-root\.Mui-focused$/]) {
-      expect(declared(readOnly, state, "background-color")).toEqual([colors.background.readOnly]);
-    }
-    expect(declared(readOnly, /\.MuiInputLabel-root\.Mui-focused$/, "color")).not.toContain(colors.brand.main);
   });
 
   it("UI-FRM-003 shows no text caret and the default cursor", () => {
