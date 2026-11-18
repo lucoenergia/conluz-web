@@ -68,6 +68,10 @@ const ROUTE_ACCESS: Record<string, Access> = {
   "/plants/:plantId/sharing-agreements/:sharingAgreementId": {
     require: { scope: "plant", capability: "canListSharingAgreements" },
   },
+  // The observed sharing reads the plant's agreements, under the same guard (#418).
+  "/plants/:plantId/sharing-agreements/observed": {
+    require: { scope: "plant", capability: "canListSharingAgreements" },
+  },
 
   "/integrations": { require: { scope: "community", capability: "canManage" } },
   "/members": { require: { scope: "community", capability: "canManageMemberships" } },
