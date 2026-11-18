@@ -11,6 +11,7 @@ import { PlantIntegrationsSection } from "./PlantIntegrationsSection";
 import { PlantSummary } from "./plantDetail/PlantSummary";
 import { PlantNextStep } from "./plantDetail/PlantNextStep";
 import { PlantAgreementsSection } from "./plantDetail/PlantAgreementsSection";
+import { PlantObservedSharingSection } from "./plantDetail/PlantObservedSharingSection";
 import { usePlantIntegrationStatus } from "./plantDetail/usePlantIntegrationStatus";
 import { PlantPeriodProduction } from "./plantDetail/PlantPeriodProduction";
 import { PlantInverterToday } from "./plantDetail/PlantInverterToday";
@@ -126,6 +127,14 @@ export const PlantDetailPage: FC = () => {
       <Box sx={{ ...sxStyles.pageContainer, "&:empty": { display: "none" } }}>
         <PlantSummary plant={plant} integrationStatus={integrationStatus} />
       </Box>
+
+      {/* The way to the observed sharing, under the summary that leads to it.
+          It asks for nothing: the analysis is requested from its own pages. */}
+      {plant?.capabilities.canListSharingAgreements && (
+        <Box sx={sxStyles.pageContainer}>
+          <PlantObservedSharingSection plant={plant} />
+        </Box>
+      )}
 
       {/* Today's inverter production, apart from the distributor's: only for a
           plant with an enabled inverter integration (UI-PLT-012). */}

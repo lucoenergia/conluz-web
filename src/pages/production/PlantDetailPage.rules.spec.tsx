@@ -179,6 +179,7 @@ describe("PlantDetailPage rules (#260)", () => {
       const rows = within(summary()!).getAllByRole("button");
       expect(rows.map((row) => row.getAttribute("aria-label"))).toEqual([
         "Acuerdos de reparto: Ninguno en vigor",
+        "Reparto observado",
         "Integración Huawei: Activa",
       ]);
       expect(screen.getByRole("heading", { name: "Acuerdos de reparto" })).toBeVisible();
@@ -190,8 +191,9 @@ describe("PlantDetailPage rules (#260)", () => {
     it("UI-PLT-002 each capability brings only its own row and section", () => {
       setup({ capabilities: { canListSharingAgreements: true } });
 
-      expect(within(summary()!).getAllByRole("button")).toHaveLength(1);
+      expect(within(summary()!).getAllByRole("button")).toHaveLength(2);
       expect(within(summary()!).getByRole("button", { name: /^Acuerdos de reparto/ })).toBeVisible();
+      expect(within(summary()!).getByRole("button", { name: "Reparto observado" })).toBeVisible();
       expect(screen.queryByRole("heading", { name: "Integraciones" })).not.toBeInTheDocument();
       expect(nextStep()).not.toBeInTheDocument();
     });
