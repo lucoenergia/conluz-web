@@ -180,11 +180,11 @@ describe("UI-PLT-012 not producing yet (#406)", () => {
 });
 
 describe("UI-PLT-012 stale (#406)", () => {
-  it("UI-PLT-012 AC13 says in words that nothing new arrived for more than an hour, in neutral styling", () => {
+  it("UI-PLT-012 AC13 says in words that nothing new arrived for more than 15 minutes, in neutral styling", () => {
     renderBlock(STALE);
 
     const note = within(block()).getByText(
-      "Sin datos nuevos desde las 10:15, hace más de 1 hora. La cifra y la curva llegan hasta esa hora.",
+      "Sin datos nuevos desde las 10:15, hace más de 15 minutos. La cifra y la curva llegan hasta esa hora.",
     );
     expect(note.closest("[role='note']")).toBeInTheDocument();
     expect(within(block()).queryByRole("alert")).not.toBeInTheDocument();

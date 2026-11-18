@@ -58,7 +58,7 @@ test.describe("Visual baselines", () => {
 
   test("today's inverter production, stale", async ({ page }) => {
     await openPlantDetail(page, FIXED_COMMUNITY_ADMIN_USER, {}, { inverter: FIXED_INVERTER_STALE });
-    await expect(today(page).getByText(/^Sin datos nuevos desde las 10:15, hace más de 1 hora\./)).toBeVisible();
+    await expect(today(page).getByText(/^Sin datos nuevos desde las 10:15, hace más de 15 minutos\./)).toBeVisible();
     await stabilizePage(page);
 
     await expect(today(page)).toHaveScreenshot("plant-today-stale.png", await hideAppBar(page));
