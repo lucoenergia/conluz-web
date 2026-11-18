@@ -111,6 +111,13 @@ export interface DetailVariantProps {
   details?: readonly DetailFact[];
   /** The "⋯" trigger and its menu. Visibility stays the consumer's business. */
   menu?: ReactNode;
+  /**
+   * Controls that lead somewhere from the entity, such as a link to another
+   * view of it. From sm they sit in the identity row, left of the menu; on a
+   * phone, on a line of their own under the title and its badges. Visibility
+   * stays the consumer's business, as for the menu.
+   */
+  actions?: ReactNode;
   isLoading?: boolean;
   error?: unknown;
 }
@@ -138,6 +145,7 @@ export interface ListVariantProps {
   details?: never;
   status?: never;
   menu?: never;
+  actions?: never;
   titleRef?: never;
   subtitleIcon?: never;
   /** No list page gates its header: counters render as soon as they compute. */
@@ -285,6 +293,7 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
   keyFacts,
   details,
   menu,
+  actions,
   isLoading = false,
   error = null,
 }) => {
@@ -459,8 +468,15 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
               )}
             </Box>
           )}
+
+          {isResolved && isCompact && actions && (
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1.5 }}>{actions}</Box>
+          )}
         </Box>
 
+        {isResolved && !isCompact && actions && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>{actions}</Box>
+        )}
         {isResolved && menu && <Box sx={{ flexShrink: 0 }}>{menu}</Box>}
       </Box>
 

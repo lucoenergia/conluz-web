@@ -45,6 +45,28 @@ export const SupplyDetail = () => (
   </Mui.Box>
 );
 
+// A control that leads to another view of the entity: beside the menu from sm,
+// on a line of its own under the title on a phone.
+export const WithActions = () => (
+  <Mui.Box sx={{ width: "100%" }}>
+    <DetailHeader
+      icon={<Icons.ElectricMeter />}
+      title="Casa de Lucía"
+      subtitle="Calle del Sol 14, 46900 Torrent, Valencia"
+      subtitleIcon={<Icons.LocationOn />}
+      status={activeChip}
+      keyFacts={supplyFacts}
+      details={supplyDetails}
+      actions={
+        <Mui.Button variant="outlined" size="small">
+          Ver datos de hoy
+        </Mui.Button>
+      }
+      menu={menu}
+    />
+  </Mui.Box>
+);
+
 export const DetailsOpen = () => {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
