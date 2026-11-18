@@ -69,6 +69,29 @@
         ],
         "type" : "object"
       },
+      "ActivateCoefficientsResponse" : {
+        "properties" : {
+          "coefficients" : {
+            "description" : "Every coefficient actually touched by this call -- the requested targets and any predecessor cascaded as a result, plus the leavingClosures. Empty when the whole batch was a no-op.",
+            "items" : {
+              "$ref" : "#/components/schemas/PartitionCoefficientResponse"
+            },
+            "type" : "array"
+          },
+          "leavingClosures" : {
+            "description" : "The subset of coefficients closed because their supply is absent from the agreement: on the agreement's first activation, the coefficient in force on appliedOn of every supply of the plant that has no coefficient in it, closed on appliedOn. Empty on any other activation.",
+            "items" : {
+              "$ref" : "#/components/schemas/PartitionCoefficientResponse"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [
+          "coefficients",
+          "leavingClosures"
+        ],
+        "type" : "object"
+      },
       "ChangePasswordBody" : {
         "properties" : {
           "currentPassword" : {
@@ -158,6 +181,73 @@
           "plant",
           "supply",
           "timestamp"
+        ],
+        "type" : "object"
+      },
+      "CoefficientObservationResponse" : {
+        "properties" : {
+          "coefficient" : {
+            "description" : "Registered coefficient, on a 0-1 scale",
+            "example" : 0.030763,
+            "type" : "number"
+          },
+          "coefficientId" : {
+            "description" : "Identifier of the coefficient row",
+            "example" : "b3d1a2f0-1234-5678-abcd-000000000001",
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "observedDate" : {
+            "$ref" : "#/components/schemas/ObservedDateResponse",
+            "description" : "When the distributor was observed to start applying it. Null when not observed.",
+            "type" : [
+              "object",
+              "null"
+            ]
+          },
+          "proposedDate" : {
+            "$ref" : "#/components/schemas/ObservedDateResponse",
+            "description" : "For NOT_DISTINGUISHABLE, the agreement's most frequent observed application date. Null otherwise, or when nothing of the agreement was observed.",
+            "type" : [
+              "object",
+              "null"
+            ]
+          },
+          "status" : {
+            "description" : "How its observed application compares with what is stored",
+            "enum" : [
+              "APPLIED_SAME_DATE",
+              "APPLIED_DIFFERENT_DATE",
+              "PENDING_APPLICATION",
+              "NOT_DISTINGUISHABLE",
+              "NOT_OBSERVED",
+              "NO_DATA"
+            ],
+            "example" : "APPLIED_SAME_DATE",
+            "type" : "string"
+          },
+          "storedValidFrom" : {
+            "description" : "Local day the coefficient is stored to start applying. Null when pending.",
+            "example" : "2024-05-10",
+            "format" : "date",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "supply" : {
+            "$ref" : "#/components/schemas/SupplyReferenceResponse",
+            "description" : "Supply the coefficient belongs to"
+          }
+        },
+        "required" : [
+          "coefficient",
+          "coefficientId",
+          "observedDate",
+          "proposedDate",
+          "status",
+          "storedValidFrom",
+          "supply"
         ],
         "type" : "object"
       },
@@ -1579,6 +1669,7 @@
               "SUPPLY_ALREADY_OWNED_BY_USER",
               "SUPPLY_TRANSFER_DATE_IN_FUTURE",
               "SUPPLY_TRANSFER_DATE_NOT_AFTER_PREVIOUS",
+              "SHARING_AGREEMENT_NOT_FOUND",
               "SHARING_AGREEMENT_NOT_DRAFT",
               "SHARING_AGREEMENT_HAS_NO_COEFFICIENTS",
               "SHARING_AGREEMENT_NOT_REVERTIBLE",
@@ -1589,13 +1680,13 @@
               "SHARING_AGREEMENT_COEFFICIENT_NOT_IN_AGREEMENT",
               "SHARING_AGREEMENT_DATE_IN_FUTURE",
               "SHARING_AGREEMENT_DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE",
-              "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
               "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR",
               "SHARING_AGREEMENT_COEFFICIENT_HAS_SUCCESSOR",
               "SHARING_AGREEMENT_COEFFICIENT_NOT_ACTIVE",
               "SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT",
               "SHARING_AGREEMENT_CLOSURE_DATE_NOT_AFTER_ACTIVATION",
               "SHARING_AGREEMENT_COEFFICIENT_PERIOD_OVERLAP",
+              "SHARING_AGREEMENT_NOT_OBSERVABLE",
               "DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID",
               "DISTRIBUTOR_FILE_PLANT_REGULATORY_CODE_MISSING",
               "DISTRIBUTOR_FILE_FILENAME_REGULATORY_CODE_MISMATCH",
@@ -1819,6 +1910,7 @@
               "SUPPLY_ALREADY_OWNED_BY_USER",
               "SUPPLY_TRANSFER_DATE_IN_FUTURE",
               "SUPPLY_TRANSFER_DATE_NOT_AFTER_PREVIOUS",
+              "SHARING_AGREEMENT_NOT_FOUND",
               "SHARING_AGREEMENT_NOT_DRAFT",
               "SHARING_AGREEMENT_HAS_NO_COEFFICIENTS",
               "SHARING_AGREEMENT_NOT_REVERTIBLE",
@@ -1829,13 +1921,13 @@
               "SHARING_AGREEMENT_COEFFICIENT_NOT_IN_AGREEMENT",
               "SHARING_AGREEMENT_DATE_IN_FUTURE",
               "SHARING_AGREEMENT_DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE",
-              "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
               "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR",
               "SHARING_AGREEMENT_COEFFICIENT_HAS_SUCCESSOR",
               "SHARING_AGREEMENT_COEFFICIENT_NOT_ACTIVE",
               "SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT",
               "SHARING_AGREEMENT_CLOSURE_DATE_NOT_AFTER_ACTIVATION",
               "SHARING_AGREEMENT_COEFFICIENT_PERIOD_OVERLAP",
+              "SHARING_AGREEMENT_NOT_OBSERVABLE",
               "DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID",
               "DISTRIBUTOR_FILE_PLANT_REGULATORY_CODE_MISSING",
               "DISTRIBUTOR_FILE_FILENAME_REGULATORY_CODE_MISMATCH",
@@ -2067,6 +2159,78 @@
         "required" : [
           "confirmationCode",
           "platformAdmin"
+        ],
+        "type" : "object"
+      },
+      "LeavingObservationResponse" : {
+        "properties" : {
+          "observedLeavingDate" : {
+            "$ref" : "#/components/schemas/ObservedDateResponse",
+            "description" : "When the distributor was observed to stop giving the supply production. Null when not observed.",
+            "type" : [
+              "object",
+              "null"
+            ]
+          },
+          "previousCoefficient" : {
+            "description" : "The supply's coefficient in the previous agreement, on a 0-1 scale",
+            "example" : 0.05,
+            "type" : "number"
+          },
+          "previousCoefficientId" : {
+            "description" : "Identifier of the supply's coefficient row in the previous agreement",
+            "example" : "b3d1a2f0-1234-5678-abcd-000000000001",
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "previousSharingAgreement" : {
+            "$ref" : "#/components/schemas/SharingAgreementReferenceResponse",
+            "description" : "Agreement observed applied for the supply before this one"
+          },
+          "proposedDate" : {
+            "$ref" : "#/components/schemas/ObservedDateResponse",
+            "description" : "For NOT_DISTINGUISHABLE, the agreement's most frequent observed application date. Null otherwise, or when nothing of the agreement was observed.",
+            "type" : [
+              "object",
+              "null"
+            ]
+          },
+          "status" : {
+            "description" : "How the observed leaving compares with the stored end of the previous coefficient",
+            "enum" : [
+              "APPLIED_SAME_DATE",
+              "APPLIED_DIFFERENT_DATE",
+              "PENDING_APPLICATION",
+              "NOT_DISTINGUISHABLE",
+              "NOT_OBSERVED",
+              "NO_DATA"
+            ],
+            "example" : "APPLIED_DIFFERENT_DATE",
+            "type" : "string"
+          },
+          "storedValidTo" : {
+            "description" : "Local day the previous coefficient is stored to stop applying (exclusive end). Null when its period is open.",
+            "example" : "2025-04-01",
+            "format" : "date",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "supply" : {
+            "$ref" : "#/components/schemas/SupplyReferenceResponse",
+            "description" : "Supply leaving the distribution"
+          }
+        },
+        "required" : [
+          "observedLeavingDate",
+          "previousCoefficient",
+          "previousCoefficientId",
+          "previousSharingAgreement",
+          "proposedDate",
+          "status",
+          "storedValidTo",
+          "supply"
         ],
         "type" : "object"
       },
@@ -2989,6 +3153,79 @@
         ],
         "type" : "object"
       },
+      "ObservationStatusCountsResponse" : {
+        "properties" : {
+          "appliedDifferentDate" : {
+            "description" : "Rows observed applied on another date than the stored one, or without one",
+            "example" : 3,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "appliedSameDate" : {
+            "description" : "Rows observed applied on their stored date",
+            "example" : 12,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "noData" : {
+            "description" : "Rows of supplies without any valid day",
+            "example" : 1,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "notDistinguishable" : {
+            "description" : "Rows whose value equals the supply's value in the agreement observed before, so their application cannot be observed",
+            "example" : 5,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "notObserved" : {
+            "description" : "Rows not observed, of an agreement whose distributor file was not sent",
+            "example" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "pendingApplication" : {
+            "description" : "Rows not observed, of an agreement whose distributor file was sent",
+            "example" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [
+          "appliedDifferentDate",
+          "appliedSameDate",
+          "noData",
+          "notDistinguishable",
+          "notObserved",
+          "pendingApplication"
+        ],
+        "type" : "object"
+      },
+      "ObservedDateResponse" : {
+        "properties" : {
+          "from" : {
+            "description" : "Earliest possible local day. Null when open: the observation starts on the first valid day of the data, so it may have started earlier.",
+            "example" : "2024-05-08",
+            "format" : "date",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "to" : {
+            "description" : "Latest possible local day: the first day the observation rests on.",
+            "example" : "2024-05-10",
+            "format" : "date",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "from",
+          "to"
+        ],
+        "type" : "object"
+      },
       "OperatorContactResponse" : {
         "properties" : {
           "email" : {
@@ -3478,7 +3715,7 @@
             ]
           },
           "stale" : {
-            "description" : "True when the latest inverter snapshot of today is more than 60 minutes old; one exactly 60 minutes old is not stale. Null unless the status is AVAILABLE.",
+            "description" : "True when the latest inverter snapshot of today is more than 15 minutes old; one exactly 15 minutes old is not stale. Null unless the status is AVAILABLE.",
             "example" : false,
             "type" : [
               "boolean",
@@ -3666,6 +3903,41 @@
           "providerCode",
           "regulatoryCode",
           "supply"
+        ],
+        "type" : "object"
+      },
+      "PlantSharingObservationResponse" : {
+        "properties" : {
+          "analysis" : {
+            "$ref" : "#/components/schemas/SharingObservationAnalysisResponse",
+            "description" : "What could be analysed"
+          },
+          "consecutiveDays" : {
+            "description" : "The consecutive valid days a run must last to be observed, and an anomaly to be reported",
+            "example" : 3,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "sharingAgreements" : {
+            "description" : "The plant's PUBLISHED and SUPERSEDED agreements, in registered order",
+            "items" : {
+              "$ref" : "#/components/schemas/SharingAgreementObservationSummaryResponse"
+            },
+            "type" : "array"
+          },
+          "unattributedAnomalies" : {
+            "description" : "Anomalies attributed to no agreement: observed before anything was observed applied for the supply",
+            "items" : {
+              "$ref" : "#/components/schemas/SharingAnomalyResponse"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [
+          "analysis",
+          "consecutiveDays",
+          "sharingAgreements",
+          "unattributedAnomalies"
         ],
         "type" : "object"
       },
@@ -4108,6 +4380,7 @@
               "SUPPLY_ALREADY_OWNED_BY_USER",
               "SUPPLY_TRANSFER_DATE_IN_FUTURE",
               "SUPPLY_TRANSFER_DATE_NOT_AFTER_PREVIOUS",
+              "SHARING_AGREEMENT_NOT_FOUND",
               "SHARING_AGREEMENT_NOT_DRAFT",
               "SHARING_AGREEMENT_HAS_NO_COEFFICIENTS",
               "SHARING_AGREEMENT_NOT_REVERTIBLE",
@@ -4118,13 +4391,13 @@
               "SHARING_AGREEMENT_COEFFICIENT_NOT_IN_AGREEMENT",
               "SHARING_AGREEMENT_DATE_IN_FUTURE",
               "SHARING_AGREEMENT_DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE",
-              "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
               "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR",
               "SHARING_AGREEMENT_COEFFICIENT_HAS_SUCCESSOR",
               "SHARING_AGREEMENT_COEFFICIENT_NOT_ACTIVE",
               "SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT",
               "SHARING_AGREEMENT_CLOSURE_DATE_NOT_AFTER_ACTIVATION",
               "SHARING_AGREEMENT_COEFFICIENT_PERIOD_OVERLAP",
+              "SHARING_AGREEMENT_NOT_OBSERVABLE",
               "DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID",
               "DISTRIBUTOR_FILE_PLANT_REGULATORY_CODE_MISSING",
               "DISTRIBUTOR_FILE_FILENAME_REGULATORY_CODE_MISMATCH",
@@ -4294,6 +4567,7 @@
               "SUPPLY_ALREADY_OWNED_BY_USER",
               "SUPPLY_TRANSFER_DATE_IN_FUTURE",
               "SUPPLY_TRANSFER_DATE_NOT_AFTER_PREVIOUS",
+              "SHARING_AGREEMENT_NOT_FOUND",
               "SHARING_AGREEMENT_NOT_DRAFT",
               "SHARING_AGREEMENT_HAS_NO_COEFFICIENTS",
               "SHARING_AGREEMENT_NOT_REVERTIBLE",
@@ -4304,13 +4578,13 @@
               "SHARING_AGREEMENT_COEFFICIENT_NOT_IN_AGREEMENT",
               "SHARING_AGREEMENT_DATE_IN_FUTURE",
               "SHARING_AGREEMENT_DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE",
-              "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
               "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR",
               "SHARING_AGREEMENT_COEFFICIENT_HAS_SUCCESSOR",
               "SHARING_AGREEMENT_COEFFICIENT_NOT_ACTIVE",
               "SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT",
               "SHARING_AGREEMENT_CLOSURE_DATE_NOT_AFTER_ACTIVATION",
               "SHARING_AGREEMENT_COEFFICIENT_PERIOD_OVERLAP",
+              "SHARING_AGREEMENT_NOT_OBSERVABLE",
               "DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID",
               "DISTRIBUTOR_FILE_PLANT_REGULATORY_CODE_MISSING",
               "DISTRIBUTOR_FILE_FILENAME_REGULATORY_CODE_MISMATCH",
@@ -4511,6 +4785,132 @@
           "filename",
           "id",
           "uploadedAt"
+        ],
+        "type" : "object"
+      },
+      "SharingAgreementObservationResponse" : {
+        "properties" : {
+          "analysis" : {
+            "$ref" : "#/components/schemas/SharingObservationAnalysisResponse",
+            "description" : "What could be analysed for the plant"
+          },
+          "coefficients" : {
+            "description" : "Its coefficient rows of the analysed supplies, ordered by supply code",
+            "items" : {
+              "$ref" : "#/components/schemas/CoefficientObservationResponse"
+            },
+            "type" : "array"
+          },
+          "consecutiveDays" : {
+            "description" : "The consecutive valid days a run must last to be observed, and an anomaly to be reported",
+            "example" : 3,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "leavingRows" : {
+            "description" : "Supplies absent from it that had a non-zero value in the agreement observed before, ordered by supply code",
+            "items" : {
+              "$ref" : "#/components/schemas/LeavingObservationResponse"
+            },
+            "type" : "array"
+          },
+          "summary" : {
+            "$ref" : "#/components/schemas/SharingAgreementObservationSummaryResponse",
+            "description" : "The agreement's summary, the same as its item in the plant's observed sharing"
+          }
+        },
+        "required" : [
+          "analysis",
+          "coefficients",
+          "consecutiveDays",
+          "leavingRows",
+          "summary"
+        ],
+        "type" : "object"
+      },
+      "SharingAgreementObservationSummaryResponse" : {
+        "properties" : {
+          "anomalies" : {
+            "description" : "Anomalies attributed to the agreement",
+            "items" : {
+              "$ref" : "#/components/schemas/SharingAnomalyResponse"
+            },
+            "type" : "array"
+          },
+          "anomalyCounts" : {
+            "$ref" : "#/components/schemas/SharingAnomalyCountsResponse",
+            "description" : "Number of anomalies attributed to the agreement, per type"
+          },
+          "coefficientStatusCounts" : {
+            "$ref" : "#/components/schemas/ObservationStatusCountsResponse",
+            "description" : "Number of its coefficient rows in each status"
+          },
+          "distributorFileSentOn" : {
+            "description" : "Local day the agreement's distributor file was sent. Null when not recorded.",
+            "example" : "2024-04-25",
+            "format" : "date",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "earliestObservedDate" : {
+            "$ref" : "#/components/schemas/ObservedDateResponse",
+            "description" : "Earliest observed application date of its coefficients. Null when none was observed.",
+            "type" : [
+              "object",
+              "null"
+            ]
+          },
+          "leavingStatusCounts" : {
+            "$ref" : "#/components/schemas/ObservationStatusCountsResponse",
+            "description" : "Number of its leaving rows in each status"
+          },
+          "mostFrequentObservedDate" : {
+            "$ref" : "#/components/schemas/ObservedDateResponse",
+            "description" : "Most frequent observed application date of its coefficients. Null when none was observed.",
+            "type" : [
+              "object",
+              "null"
+            ]
+          },
+          "recommendations" : {
+            "description" : "What to do with the agreement, in this order: SET_DATES, DEACTIVATE, REVIEW_ANOMALIES; NONE when none applies. Empty when the plant is not computable. Never a coefficient value.",
+            "items" : {
+              "enum" : [
+                "SET_DATES",
+                "DEACTIVATE",
+                "REVIEW_ANOMALIES",
+                "NONE"
+              ],
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "sharingAgreement" : {
+            "$ref" : "#/components/schemas/SharingAgreementReferenceResponse",
+            "description" : "The agreement"
+          },
+          "unallocatedShare" : {
+            "$ref" : "#/components/schemas/UnallocatedShareResponse",
+            "description" : "The production no supply with data received while the agreement was applied. Null when it was never observed applied, or no valid day falls while it was.",
+            "type" : [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required" : [
+          "anomalies",
+          "anomalyCounts",
+          "coefficientStatusCounts",
+          "distributorFileSentOn",
+          "earliestObservedDate",
+          "leavingStatusCounts",
+          "mostFrequentObservedDate",
+          "recommendations",
+          "sharingAgreement",
+          "unallocatedShare"
         ],
         "type" : "object"
       },
@@ -4736,6 +5136,187 @@
           "status",
           "updatedAt",
           "updatedBy"
+        ],
+        "type" : "object"
+      },
+      "SharingAnomalyCountsResponse" : {
+        "properties" : {
+          "appliedBeforeSent" : {
+            "description" : "Anomalies of type APPLIED_BEFORE_SENT",
+            "example" : 2,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "energyOutsideAgreement" : {
+            "description" : "Anomalies of type ENERGY_OUTSIDE_AGREEMENT",
+            "example" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "noEnergyInAgreement" : {
+            "description" : "Anomalies of type NO_ENERGY_IN_AGREEMENT",
+            "example" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "reverted" : {
+            "description" : "Anomalies of type REVERTED",
+            "example" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "unknownCoefficient" : {
+            "description" : "Anomalies of type UNKNOWN_COEFFICIENT",
+            "example" : 1,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [
+          "appliedBeforeSent",
+          "energyOutsideAgreement",
+          "noEnergyInAgreement",
+          "reverted",
+          "unknownCoefficient"
+        ],
+        "type" : "object"
+      },
+      "SharingAnomalyResponse" : {
+        "properties" : {
+          "end" : {
+            "description" : "Its last local day. Null when it lasts until the end of the analysed data.",
+            "example" : "2024-05-14",
+            "format" : "date",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "id" : {
+            "description" : "Identifier derived from the supply, the type and the first anomalous day: the same anomaly keeps it from one read to the next",
+            "example" : "5f0c2d4e-8a1b-3c9d-9e7f-1a2b3c4d5e6f",
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "start" : {
+            "$ref" : "#/components/schemas/ObservedDateResponse",
+            "description" : "When it started"
+          },
+          "supply" : {
+            "$ref" : "#/components/schemas/SupplyReferenceResponse",
+            "description" : "Supply the anomaly was observed on"
+          },
+          "type" : {
+            "description" : "Kind of anomaly",
+            "enum" : [
+              "UNKNOWN_COEFFICIENT",
+              "ENERGY_OUTSIDE_AGREEMENT",
+              "NO_ENERGY_IN_AGREEMENT",
+              "REVERTED",
+              "APPLIED_BEFORE_SENT"
+            ],
+            "example" : "UNKNOWN_COEFFICIENT",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "end",
+          "id",
+          "start",
+          "supply",
+          "type"
+        ],
+        "type" : "object"
+      },
+      "SharingObservationAnalysisResponse" : {
+        "properties" : {
+          "analysedFrom" : {
+            "description" : "First local day analysed: the day of the plant supply's first production record. Null when not computable.",
+            "example" : "2024-02-01",
+            "format" : "date",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "analysedTo" : {
+            "description" : "Last local day analysed: the end of the latest month published for the plant supply. Null when not computable.",
+            "example" : "2026-10-31",
+            "format" : "date",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "computable" : {
+            "description" : "False when nothing could be observed, because the plant supply has no data",
+            "type" : "boolean"
+          },
+          "notComputableReason" : {
+            "description" : "Why nothing could be observed. Null when computable.",
+            "enum" : [
+              "PLANT_SUPPLY_WITHOUT_DATA"
+            ],
+            "example" : "PLANT_SUPPLY_WITHOUT_DATA",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "notComputableSupplies" : {
+            "description" : "Supplies holding coefficients in this plant and in another one: the energy they receive cannot be attributed to this plant alone, so they are not analysed. A supply holding coefficients only in another plant is not part of this plant's analysis and is not listed anywhere.",
+            "items" : {
+              "$ref" : "#/components/schemas/SupplyReferenceResponse"
+            },
+            "type" : "array"
+          },
+          "suppliesWithValidDays" : {
+            "description" : "Analysed supplies with at least one valid day",
+            "items" : {
+              "$ref" : "#/components/schemas/SupplyReferenceResponse"
+            },
+            "type" : "array"
+          },
+          "suppliesWithoutValidDays" : {
+            "description" : "Analysed supplies without any valid day",
+            "items" : {
+              "$ref" : "#/components/schemas/SupplyReferenceResponse"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [
+          "analysedFrom",
+          "analysedTo",
+          "computable",
+          "notComputableReason",
+          "notComputableSupplies",
+          "suppliesWithValidDays",
+          "suppliesWithoutValidDays"
+        ],
+        "type" : "object"
+      },
+      "SupplyAssignedPowerPointResponse" : {
+        "properties" : {
+          "endsAt" : {
+            "description" : "Instant the 5-minute slot ends, with the offset in force in the community's time zone at that instant. Slots are fixed: they start at local midnight and every 5 minutes after it.",
+            "example" : "2026-09-15T08:05:00+02:00",
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "powerKW" : {
+            "description" : "Average power assigned to the supply point over the slot, in kW, rounded to 3 decimals: the assigned energy of the slot divided by its 5 minutes. Never negative. Null when the slot is overlapped by an interval between snapshots longer than 15 minutes, a gap in the snapshots, or is not fully covered by the snapshots of every plant summed.",
+            "example" : 0.48,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required" : [
+          "endsAt",
+          "powerKW"
         ],
         "type" : "object"
       },
@@ -5128,6 +5709,18 @@
         ],
         "type" : "object"
       },
+      "SupplyEnergyTodayResponse" : {
+        "properties" : {
+          "production" : {
+            "$ref" : "#/components/schemas/SupplyProductionTodayResponse",
+            "description" : "Today's production assigned to the supply point, derived from the inverter snapshots of the plants it has a partition coefficient in."
+          }
+        },
+        "required" : [
+          "production"
+        ],
+        "type" : "object"
+      },
       "SupplyHourlyConsumptionBucketResponse" : {
         "properties" : {
           "assignedProductionKWh" : {
@@ -5210,6 +5803,95 @@
           "surplusKWh",
           "tariffSource",
           "time"
+        ],
+        "type" : "object"
+      },
+      "SupplyProductionTodayResponse" : {
+        "properties" : {
+          "assignedEnergyKWh" : {
+            "description" : "Energy assigned to the supply point today, from local midnight in the community's time zone, in kWh, rounded to 3 decimals: the energy the inverter counted in each interval between snapshots multiplied by the supply's partition coefficient in force at the interval's start, summed. Intervals longer than 15 minutes, the gaps of assignedPowerCurve, are included. This is derived from gross inverter output, which may differ from the distributor's figures. Null unless the status is AVAILABLE.",
+            "example" : 12.345,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "assignedPowerCurve" : {
+            "description" : "The power assigned to the supply point in each fixed 5-minute slot of today, from local midnight, in time order, up to the last slot that ends at or before lastUpdatedAt. Null unless the status is AVAILABLE.",
+            "items" : {
+              "$ref" : "#/components/schemas/SupplyAssignedPowerPointResponse"
+            },
+            "type" : [
+              "array",
+              "null"
+            ]
+          },
+          "currentAssignedPowerKW" : {
+            "description" : "The power of the last point of assignedPowerCurve, in kW, rounded to 3 decimals; null when that point is null or the curve is empty. Null unless the status is AVAILABLE.",
+            "example" : 0.48,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "currentPlantPowerKW" : {
+            "description" : "The power the plants produced in the same slot as currentAssignedPowerKW, before applying any partition coefficient, in kW, rounded to 3 decimals, summed over the plants used; null when that slot has no value or the curve is empty. Null unless the status is AVAILABLE.",
+            "example" : 12.5,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "lastUpdatedAt" : {
+            "description" : "Instant of the latest inverter snapshot of today across the plants used, with the offset in force in the community's time zone at that instant. Null unless the status is AVAILABLE.",
+            "example" : "2026-09-15T13:05:00+02:00",
+            "format" : "date-time",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "partitionCoefficient" : {
+            "description" : "With a single plant, the supply's partition coefficient in force now in that plant, on the 0-1 scale, 0 when none is in force now. With several plants, null, because the figures are summed over them. Null unless the status is AVAILABLE.",
+            "example" : 0.0425,
+            "format" : "double",
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
+          "stale" : {
+            "description" : "True when lastUpdatedAt is more than 15 minutes old; one exactly 15 minutes old is not stale. Null unless the status is AVAILABLE.",
+            "example" : false,
+            "type" : [
+              "boolean",
+              "null"
+            ]
+          },
+          "status" : {
+            "description" : "Whether today's assigned production can be shown, the first that applies of: NO_COEFFICIENT_TODAY: the supply has no partition coefficient in force at any instant of today so far, in any plant. NOT_AVAILABLE: none of the plants where it has one has an enabled Huawei configuration. NO_DATA_TODAY: at least one of them has an enabled configuration, but none has an inverter snapshot of today. AVAILABLE otherwise. Every other field is null unless the status is AVAILABLE.",
+            "enum" : [
+              "NO_COEFFICIENT_TODAY",
+              "NOT_AVAILABLE",
+              "NO_DATA_TODAY",
+              "AVAILABLE"
+            ],
+            "example" : "AVAILABLE",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "assignedEnergyKWh",
+          "assignedPowerCurve",
+          "currentAssignedPowerKW",
+          "currentPlantPowerKW",
+          "lastUpdatedAt",
+          "partitionCoefficient",
+          "stale",
+          "status"
         ],
         "type" : "object"
       },
@@ -5573,6 +6255,34 @@
         "required" : [
           "effectiveDate",
           "newOwnerPersonalId"
+        ],
+        "type" : "object"
+      },
+      "UnallocatedShareResponse" : {
+        "properties" : {
+          "days" : {
+            "description" : "Number of the plant's valid days the figures rest on",
+            "example" : 184,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "registeredShareWithoutData" : {
+            "description" : "The share the agreement registers for the supplies without data on each day, on a 0-1 scale, weighted by the plant's daily production",
+            "example" : 0.0533,
+            "format" : "double",
+            "type" : "number"
+          },
+          "unallocated" : {
+            "description" : "1 − Σβ: the production no supply with data received, on a 0-1 scale, weighted by the plant's daily production",
+            "example" : 0.0565,
+            "format" : "double",
+            "type" : "number"
+          }
+        },
+        "required" : [
+          "days",
+          "registeredShareWithoutData",
+          "unallocated"
         ],
         "type" : "object"
       },
@@ -17374,7 +18084,7 @@
     },
     "/api/v1/plants/{plantId}/inverter-production/today" : {
       "get" : {
-        "description" : "Derives today's energy and a power curve from the real-time snapshots the plant's Huawei\ninverter reports about every 5 minutes. \"Today\" is the current local day in the community's\ntime zone. No station code, provider code or credential of the integration is reported.\n\nThis is inverter data: the gross output the inverter measures. It may differ from the\ndistributor's figures, which measure the energy exported at the connection point, and it is\nnever summed with the energy metrics or energy series figures.\n\n- `status`: `NOT_AVAILABLE` when the plant has no Huawei configuration or it is disabled,\n  `NO_DATA_TODAY` when it is enabled but no snapshot of today is stored, and `AVAILABLE`\n  otherwise. Every other field is `null` unless the status is `AVAILABLE`.\n- `todayEnergyKWh`: the latest inverter day counter of today. The counter resets at local\n  midnight, but a snapshot taken at the boundary can still carry the previous day's total:\n  the leading run of today's snapshots equal to the previous day's last value, when that is\n  greater than 0, is carry-over and counts as 0 kWh. The run ends at the first different\n  value. When every snapshot of today is carry-over, today's energy is 0.\n- `powerCurve`: one point per pair of consecutive snapshots of today, at the later one: the\n  energy counted between them divided by their real time apart, never negative. An interval\n  longer than 15 minutes is a gap: its point is `null`, and nothing is interpolated across\n  it. A single missing snapshot, about 10 minutes, is averaged.\n- `lastUpdatedAt`: when the latest snapshot of today was taken.\n- `stale`: whether that snapshot is more than 60 minutes old.\n\nEnergy and power are rounded to 3 decimals, after computing.\n\n**Required: the caller can manage the plant** (the plant's `canManage` capability):\nan active community admin of the plant's community. A member of that community who is\nnot an admin is answered 403, and every other caller, a platform admin who is not a\nmember included, 404.\n",
+        "description" : "Derives today's energy and a power curve from the real-time snapshots the plant's Huawei\ninverter reports about every 5 minutes. \"Today\" is the current local day in the community's\ntime zone. No station code, provider code or credential of the integration is reported.\n\nThis is inverter data: the gross output the inverter measures. It may differ from the\ndistributor's figures, which measure the energy exported at the connection point, and it is\nnever summed with the energy metrics or energy series figures.\n\n- `status`: `NOT_AVAILABLE` when the plant has no Huawei configuration or it is disabled,\n  `NO_DATA_TODAY` when it is enabled but no snapshot of today is stored, and `AVAILABLE`\n  otherwise. Every other field is `null` unless the status is `AVAILABLE`.\n- `todayEnergyKWh`: the latest inverter day counter of today. The counter resets at local\n  midnight, but a snapshot taken at the boundary can still carry the previous day's total:\n  the leading run of today's snapshots equal to the previous day's last value, when that is\n  greater than 0, is carry-over and counts as 0 kWh. The run ends at the first different\n  value. When every snapshot of today is carry-over, today's energy is 0.\n- `powerCurve`: one point per pair of consecutive snapshots of today, at the later one: the\n  energy counted between them divided by their real time apart, never negative. An interval\n  longer than 15 minutes is a gap: its point is `null`, and nothing is interpolated across\n  it. A single missing snapshot, about 10 minutes, is averaged.\n- `lastUpdatedAt`: when the latest snapshot of today was taken.\n- `stale`: whether that snapshot is more than 15 minutes old; one exactly 15 minutes old is\n  not stale.\n\nEnergy and power are rounded to 3 decimals, after computing.\n\n**Required: the caller can manage the plant** (the plant's `canManage` capability):\nan active community admin of the plant's community. A member of that community who is\nnot an admin is answered 403, and every other caller, a platform admin who is not a\nmember included, 404.\n",
         "operationId" : "getPlantInverterProductionToday",
         "parameters" : [
           {
@@ -18405,6 +19115,133 @@
         ]
       }
     },
+    "/api/v1/plants/{plantId}/sharing-agreements/observation" : {
+      "get" : {
+        "description" : "Compares, day by day, the share of the plant's production each supply of its community\nreceived according to Datadis with the coefficients of the plant's PUBLISHED and SUPERSEDED\nagreements. For each agreement it reports when its coefficients were observed applied, how\nthat compares with the stored dates, the anomalies attributed to it and what to do with it.\nDRAFT agreements are ignored. Computed on every request from the stored daily data; nothing\nis written, and no coefficient is ever proposed.\n\nWhen the plant supply has no data, the response says the plant is not computable.\n\n**Required: community admin of the plant's community.**\n\nReturns 404 if the plant does not exist or if the caller is not a member of its community,\nto avoid leaking the existence of plants by ID. Returns 403 if the caller is an active member\nof the plant's community but not a community admin.\n\nAuthentication is required using a Bearer token.\n",
+        "operationId" : "getPlantSharingObservation",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "plantId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlantSharingObservationResponse"
+                }
+              }
+            },
+            "description" : "Observed sharing computed successfully"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The request contains invalid data.",
+                  "status" : 400,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The request contains invalid data."
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "You are not authorized to make this request.",
+                  "status" : 401,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request."
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Not authorized" : {
+                    "description" : "Not authorized",
+                    "value" : {
+                      "message" : "You are not authorized to make this request.",
+                      "status" : 403,
+                      "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Password change required" : {
+                    "description" : "Password change required",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "USER_PASSWORD_CHANGE_REQUIRED",
+                          "message" : "You must change your password before you can continue.",
+                          "params" : null
+                        }
+                      ],
+                      "message" : "You must change your password before you can continue.",
+                      "status" : 403,
+                      "timestamp" : "2026-10-06T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request, or your password must be changed first (`USER_PASSWORD_CHANGE_REQUIRED`): while `mustChangePassword` is true on `GET /api/v1/users/current`, every request other than reading the current user, changing the password and logging out is refused."
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The requested data can not be found. Please check you are authorised or this content exists.",
+                  "status" : 404,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "There was a problem processing your request.",
+                  "status" : 500,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "There was a problem processing your request."
+          }
+        },
+        "security" : [
+          {
+            "bearerToken" : [ ]
+          }
+        ],
+        "summary" : "Observes how the distributor applies the plant's sharing agreements",
+        "tags" : [
+          "Sharing agreements"
+        ]
+      }
+    },
     "/api/v1/plants/{plantId}/sharing-agreements/{sharingAgreementId}" : {
       "delete" : {
         "description" : "This endpoint removes a sharing agreement. Only DRAFT agreements can be deleted:\ndeleting a PUBLISHED agreement would destroy the historical basis of past billing.\n\n**Required: Community Admin**\n\nReturns 404 if the plant or the agreement does not exist, does not belong to this\nplant, or the caller is not a member of its community, to avoid leaking existence.\nReturns 409 if the agreement is not in DRAFT status.\n\nAuthentication is required using a Bearer token.\n",
@@ -19308,6 +20145,164 @@
         ]
       }
     },
+    "/api/v1/plants/{plantId}/sharing-agreements/{sharingAgreementId}/observation" : {
+      "get" : {
+        "description" : "One agreement's part of the plant's observed sharing (getPlantSharingObservation): the same\nsummary, with the observation of each of its coefficient rows and its leaving rows, the\nsupplies absent from it that had a non-zero value in the agreement observed before. Computed\non every request from the stored daily data; nothing is written.\n\n**Required: community admin of the plant's community.**\n\nReturns 404 if the plant does not exist, if the caller is not a member of its community, or if\nthe sharing agreement does not exist or does not belong to this plant, to avoid leaking the\nexistence of plants or agreements by ID. Returns 403 if the caller is an active member of the\nplant's community but not a community admin. Returns 409 with code\nSHARING_AGREEMENT_NOT_OBSERVABLE if the agreement is a DRAFT, which is not in force.\n\nAuthentication is required using a Bearer token.\n",
+        "operationId" : "getSharingAgreementObservation",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "plantId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "path",
+            "name" : "sharingAgreementId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SharingAgreementObservationResponse"
+                }
+              }
+            },
+            "description" : "Observed sharing of the agreement computed successfully"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The request contains invalid data.",
+                  "status" : 400,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The request contains invalid data."
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "You are not authorized to make this request.",
+                  "status" : 401,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request."
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Not authorized" : {
+                    "description" : "Not authorized",
+                    "value" : {
+                      "message" : "You are not authorized to make this request.",
+                      "status" : 403,
+                      "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Password change required" : {
+                    "description" : "Password change required",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "USER_PASSWORD_CHANGE_REQUIRED",
+                          "message" : "You must change your password before you can continue.",
+                          "params" : null
+                        }
+                      ],
+                      "message" : "You must change your password before you can continue.",
+                      "status" : 403,
+                      "timestamp" : "2026-10-06T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request, or your password must be changed first (`USER_PASSWORD_CHANGE_REQUIRED`): while `mustChangePassword` is true on `GET /api/v1/users/current`, every request other than reading the current user, changing the password and logging out is refused."
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The requested data can not be found. Please check you are authorised or this content exists.",
+                  "status" : 404,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "409" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "errors" : [
+                    {
+                      "code" : "SHARING_AGREEMENT_NOT_OBSERVABLE",
+                      "message" : "Sharing agreement 'ebbe60d1-f9db-455c-8c2d-c34ae7a1c23c' is DRAFT; only published and superseded agreements are observed."
+                    }
+                  ],
+                  "message" : "Sharing agreement 'ebbe60d1-f9db-455c-8c2d-c34ae7a1c23c' is DRAFT; only published and superseded agreements are observed.",
+                  "status" : 409,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "The agreement is a DRAFT, so it is not observed."
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "There was a problem processing your request.",
+                  "status" : 500,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "There was a problem processing your request."
+          }
+        },
+        "security" : [
+          {
+            "bearerToken" : [ ]
+          }
+        ],
+        "summary" : "Observes how the distributor applies one sharing agreement",
+        "tags" : [
+          "Sharing agreements"
+        ]
+      }
+    },
     "/api/v1/plants/{plantId}/sharing-agreements/{sharingAgreementId}/partition-coefficients" : {
       "get" : {
         "description" : "Returns one row per supply of the agreement's coefficient set, enriched with the\nsupply's CUPS code and name, and two server-computed fields (applicationState,\nendState) so callers never need to derive interval/successor logic themselves.\nOrdered by CUPS ascending. Works regardless of the agreement's status (DRAFT,\nPUBLISHED or SUPERSEDED).\n\n**Required: community admin of the plant's community.**\n\nReturns 404 if the plant does not exist, if the caller is not a member of its\ncommunity, or if the sharing agreement does not exist or does not belong to this\nplant, to avoid leaking the existence of plants or agreements by ID.\nReturns 403 if the caller is an active member of the plant's community but\nnot a community admin.\n\nAuthentication is required using a Bearer token.\n",
@@ -19603,7 +20598,7 @@
     },
     "/api/v1/plants/{plantId}/sharing-agreements/{sharingAgreementId}/partition-coefficients/activate" : {
       "post" : {
-        "description" : "Sets `validFrom` for each of the given coefficients to `appliedOn` (activation), or\ncorrects it if already set. Cascades: each coefficient's previously-open predecessor\nfor the same (plant, supply), if any, has its `validTo` set to `appliedOn` in the\nsame transaction.\n\n**Required: Community Admin**\n\nPUBLISHED or SUPERSEDED agreements only -- DRAFT is rejected (a DRAFT has not been\nfinalised, and a subsequent coefficient replacement would delete the activated row).\nThis is the one write allowed on a non-DRAFT agreement: it records WHEN the\ndistributor applied a coefficient, not WHICH coefficients exist (sealed at publish).\n\nIdempotent in effect: re-sending a batch that would produce no change is a no-op,\nnot an error. A failure on any item rejects the whole batch -- nothing is written.\n\nReturns 404 if the plant or the agreement does not exist, does not belong to this\nplant, or the caller is not a member of its community, to avoid leaking existence.\nReturns 409 if the agreement is DRAFT, or if any coefficient fails validation (does\nnot belong to this agreement, the date is in the future, or the date is not after\nthe resolved predecessor's own date / not before the coefficient's own end date).\n\nAuthentication is required using a Bearer token.\n",
+        "description" : "Sets `validFrom` for each of the given coefficients to `appliedOn` (activation), or\ncorrects it if already set. Each coefficient is placed chronologically within the\ntimeline of its (plant, supply), whatever order the agreements are activated in: it\nends where the next coefficient starts, or stays open if there is none, and the\nprevious coefficient's `validTo` is moved back to `appliedOn` in the same transaction\nwhen it is open or later. Placing a coefficient never extends a `validTo`: a close on\nor before `appliedOn` is kept, and so is the gap after it.\n\nCorrecting an active coefficient first joins its former neighbours, as `deactivate`\ndoes, then places it at the new date. A close set on the coefficient itself is kept,\nshortened to the next coefficient's start if that comes earlier.\n\nThe first activation of an agreement (none of its coefficients had a `validFrom`\nbefore the request) also closes on `appliedOn`, in the same transaction, the\ncoefficient in force on that day of every supply of the plant that has no coefficient\nin the agreement: a supply that leaves the distribution stops receiving production. A\ncoefficient that ended on or before `appliedOn`, or starts on or after it, is not\ntouched. Later activations of the agreement and corrections close nothing, and\ndeactivating the agreement does not reopen these closures: use `reopen`.\n`leavingClosures` is the subset of `coefficients` closed because their supply is absent\nfrom the agreement.\n\nDate writes on the same plant run one after another.\n\n**Required: Community Admin**\n\nPUBLISHED or SUPERSEDED agreements only -- DRAFT is rejected (a DRAFT has not been\nfinalised, and a subsequent coefficient replacement would delete the activated row).\nThis is the one write allowed on a non-DRAFT agreement: it records WHEN the\ndistributor applied a coefficient, not WHICH coefficients exist (sealed at publish).\n\nIdempotent in effect: re-sending a batch that would produce no change is a no-op,\nnot an error. A failure on any item rejects the whole batch -- nothing is written.\n\nReturns 404 if the plant or the agreement does not exist, does not belong to this\nplant, or the caller is not a member of its community, to avoid leaking existence.\nReturns 409 if the agreement is DRAFT, or if any coefficient fails validation: it does\nnot belong to this agreement, the date is in the future, another coefficient of the\nsame (plant, supply) already starts on that date, or a correction's date is not before\nthe close set on the coefficient itself.\n\nAuthentication is required using a Bearer token.\n",
         "operationId" : "activatePartitionCoefficients",
         "parameters" : [
           {
@@ -19640,7 +20635,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/CoefficientActivationResponse"
+                  "$ref" : "#/components/schemas/ActivateCoefficientsResponse"
                 }
               }
             },
@@ -22934,6 +23929,133 @@
           }
         ],
         "summary" : "Retrieves aggregated energy metrics for a specific supply",
+        "tags" : [
+          "Supplies"
+        ]
+      }
+    },
+    "/api/v1/supplies/{supplyId}/energy-today" : {
+      "get" : {
+        "description" : "Derives the share of today's production assigned to the supply point from the real-time\nsnapshots the Huawei inverters of its plants report about every 5 minutes, and from the\nsupply's partition coefficients. \"Today\" is the current local day in the community's time\nzone, from local midnight. The plants used are those where the supply has a partition\ncoefficient in force at some instant of today so far, an enabled Huawei configuration and\nat least one snapshot of today. No plant, station code, provider code or credential is\nreported.\n\nThis is derived from inverter data: the gross output the inverter measures. It may differ\nfrom the distributor's figures and is never summed with the energy metrics or energy series\nfigures.\n\n- `production.status`, the first that applies: `NO_COEFFICIENT_TODAY` when the supply has\n  no partition coefficient in force at any instant of today so far, in any plant;\n  `NOT_AVAILABLE` when none of those plants has an enabled Huawei configuration;\n  `NO_DATA_TODAY` when at least one has, but none has a snapshot of today; and `AVAILABLE`\n  otherwise. Every other field of `production` is `null` unless the status is `AVAILABLE`.\n- Intervals: per plant, one interval from local midnight to the first snapshot of today,\n  then one per pair of consecutive snapshots. Each interval's energy is counted from the\n  inverter day counter, with the same carry-over rule as `getPlantInverterProductionToday`,\n  and multiplied by the supply's partition coefficient in that plant in force at the\n  interval's start, 0 when none is.\n- `assignedEnergyKWh`: the sum over every interval of every plant used. Intervals longer\n  than 15 minutes, the gaps of the curve, are included.\n- `assignedPowerCurve`: one point per fixed 5-minute slot from local midnight, at the slot's\n  end, for every slot ending at or before `lastUpdatedAt`: the assigned energy of the slot\n  divided by its 5 minutes, in kW. An interval's energy is split over the slots it overlaps\n  in proportion to the time overlapped. A slot is `null` when an interval longer than 15\n  minutes overlaps it, or when the snapshots of a plant used do not cover all of it.\n- With several plants, energy and power are the sums over them.\n- `currentAssignedPowerKW` is the value of the last point of the curve, and\n  `currentPlantPowerKW` the power of the plants used in that same slot, before applying\n  any partition coefficient.\n- `lastUpdatedAt`: the latest snapshot of today across the plants used. `stale`: whether it\n  is more than 15 minutes old; one exactly 15 minutes old is not stale.\n\nEnergy and power are rounded to 3 decimals, after computing.\n\n**Required: the caller can read the supply** (the supply's `canRead` capability): its owner,\nwhile their membership in the supply's community is active, or an active community admin\nof that community. Every other caller, a member of the same community, a member of another\ncommunity and a platform admin who is not a member included, is answered 404, as is a\nsupply that does not exist.\n",
+        "operationId" : "getSupplyEnergyToday",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "supplyId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SupplyEnergyTodayResponse"
+                }
+              }
+            },
+            "description" : "Today's assigned production retrieved successfully"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The request contains invalid data.",
+                  "status" : 400,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The request contains invalid data."
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "You are not authorized to make this request.",
+                  "status" : 401,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request."
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Not authorized" : {
+                    "description" : "Not authorized",
+                    "value" : {
+                      "message" : "You are not authorized to make this request.",
+                      "status" : 403,
+                      "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Password change required" : {
+                    "description" : "Password change required",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "USER_PASSWORD_CHANGE_REQUIRED",
+                          "message" : "You must change your password before you can continue.",
+                          "params" : null
+                        }
+                      ],
+                      "message" : "You must change your password before you can continue.",
+                      "status" : 403,
+                      "timestamp" : "2026-10-06T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request, or your password must be changed first (`USER_PASSWORD_CHANGE_REQUIRED`): while `mustChangePassword` is true on `GET /api/v1/users/current`, every request other than reading the current user, changing the password and logging out is refused."
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The requested data can not be found. Please check you are authorised or this content exists.",
+                  "status" : 404,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "There was a problem processing your request.",
+                  "status" : 500,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "There was a problem processing your request."
+          }
+        },
+        "security" : [
+          {
+            "bearerToken" : [ ]
+          }
+        ],
+        "summary" : "Retrieves today's production assigned to a supply point.",
         "tags" : [
           "Supplies"
         ]
