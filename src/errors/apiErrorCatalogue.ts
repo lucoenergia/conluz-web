@@ -222,10 +222,6 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
     (cups) => `La fecha indicada no puede ser una fecha futura (afecta a ${cups}).`,
     "La fecha indicada no puede ser una fecha futura.",
   ),
-  SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR: withOptionalCups(
-    (cups) => `La fecha de activación debe ser posterior a la del coeficiente anterior de ${cups}.`,
-    "La fecha de activación debe ser posterior a la del coeficiente anterior de este suministro.",
-  ),
   SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR: withOptionalCups(
     (cups) => `La fecha de activación debe ser anterior a la del siguiente coeficiente de ${cups}.`,
     "La fecha de activación debe ser anterior a la del siguiente coeficiente de este suministro.",

@@ -267,7 +267,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
       response: {
         data: {
           errors: [
-            { message: "raw", code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR", params: { cups: "ES1111" } },
+            { message: "raw", code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR", params: { cups: "ES1111" } },
             { message: "raw", code: "SHARING_AGREEMENT_DATE_IN_FUTURE" },
           ],
         },
@@ -375,7 +375,7 @@ describe("SharingAgreementCoefficientSet (batch activation)", () => {
 
     mockActivateMutateAsync.mockRejectedValueOnce({
       response: {
-        data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR" }] },
+        data: { errors: [{ message: "raw", code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR" }] },
       },
     });
     // The dialog closed after the first rejection — a "fresh submission"
