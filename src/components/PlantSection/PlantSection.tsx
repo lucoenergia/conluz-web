@@ -1,13 +1,13 @@
 import type { FC, ReactNode } from "react";
 import { Box, type SvgIconProps } from "@mui/material";
-import { SectionHeading } from "../../../components/SectionHeading";
-import { sxStyles } from "../../../theme/sx";
-import { colors } from "../../../theme/tokens";
-import { sectionHeadingId, sectionScrollMarginSx, type PlantSectionId } from "./plantSections";
+import { SectionHeading } from "../SectionHeading";
+import { sxStyles } from "../../theme/sx";
+import { colors } from "../../theme/tokens";
+import { sectionHeadingId, sectionScrollMarginSx } from "./sectionAnchors";
 
 export interface PlantSectionProps {
   /** Set when something on the screen jumps to this section. */
-  id?: PlantSectionId;
+  id?: string;
   title: string;
   description: string;
   icon: FC<SvgIconProps>;

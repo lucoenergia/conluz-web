@@ -4,7 +4,7 @@ import type { PlantResponse } from "../../api/models";
 import { sxStyles } from "../../theme/sx";
 import { usePlantActions } from "../../hooks/actions";
 import { HuaweiIntegrationCard } from "./HuaweiIntegrationCard";
-import { PlantSection } from "./plantDetail/PlantSection";
+import { PlantSection } from "../../components/PlantSection";
 import { PLANT_SECTION_IDS } from "./plantDetail/plantSections";
 import { INTEGRATIONS_ICON } from "./plantDetail/sectionIcons";
 

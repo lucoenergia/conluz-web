@@ -18,6 +18,9 @@
 - `src/components/EnergyFigures/` (`PeriodUsageCard`, `PeriodTotals`, `PeriodHeader`, `NeutralNotice`,
   `EstimatedPriceLabel`) renders with `ConluzProvider` alone, so it is eligible, but it is not synced
   yet: it moved out of the historical analysis and home pages in #252 without design-system work.
+- `PlantSection` (`src/components/PlantSection/`), and `Swatch` and `LegendEntry` in
+  `src/components/EnergyFigures/`, render with `ConluzProvider` alone, so they are eligible, but they
+  are not synced: they moved out of the plant detail in #432 without design-system work.
 - `MemberPicker` renders with `ConluzProvider` alone, so it is eligible, but it is not synced: it
   came out of the supply form, which is not synced either, in #423, without design-system work.
 - `ConluzProvider` (`.design-sync/pkg/ConluzProvider.tsx`) mirrors `src/main.tsx`: ThemeProvider +
