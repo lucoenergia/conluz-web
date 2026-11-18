@@ -24,6 +24,8 @@ const TONE_COLOR: Record<StatusTone, string> = {
 
 interface SummaryRowProps {
   label: string;
+  /** A second line under the label, saying what the section is about. */
+  description?: string;
   /** The icon of the section the row leads to, so the two read as one. */
   icon: FC<SvgIconProps>;
   /** Absent while the status is unknown: the row then claims nothing. */
@@ -31,7 +33,7 @@ interface SummaryRowProps {
   target: PlantSectionId;
 }
 
-const SummaryRow: FC<SummaryRowProps> = ({ label, icon: Icon, status, target }) => (
+const SummaryRow: FC<SummaryRowProps> = ({ label, description, icon: Icon, status, target }) => (
   // A divider between rows, never above the first.
   <Box component="li" sx={{ "& + &": { borderTop: `1px solid ${colors.divider}` } }}>
     <ButtonBase
@@ -70,9 +72,20 @@ const SummaryRow: FC<SummaryRowProps> = ({ label, icon: Icon, status, target }) 
       </Box>
       {/* The label keeps its line; the status wraps between its parts instead,
           never narrower than its longest part. Both labels fit a 390px screen. */}
-      <Typography component="span" sx={{ flex: "1 0 auto", fontSize: fontSizes.lg, fontWeight: 600, color: colors.text.primary }}>
-        {label}
-      </Typography>
+      {description ? (
+        <Box component="span" sx={{ flex: "1 0 auto", display: "flex", flexDirection: "column" }}>
+          <Typography component="span" sx={{ fontSize: fontSizes.lg, fontWeight: 600, color: colors.text.primary }}>
+            {label}
+          </Typography>
+          <Typography component="span" variant="body2" sx={{ color: colors.text.subtle }}>
+            {description}
+          </Typography>
+        </Box>
+      ) : (
+        <Typography component="span" sx={{ flex: "1 0 auto", fontSize: fontSizes.lg, fontWeight: 600, color: colors.text.primary }}>
+          {label}
+        </Typography>
+      )}
       {status && (
         <Typography
           component="span"
