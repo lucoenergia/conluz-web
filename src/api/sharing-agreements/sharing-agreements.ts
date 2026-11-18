@@ -33,10 +33,12 @@ import type {
   GenerateDistributorFileBody,
   GetSharingAgreementsParams,
   PartitionCoefficientResponse,
+  PlantSharingObservationResponse,
   ReopenCoefficientsBody,
   ReplacePartitionCoefficientsBody,
   ReplacePartitionCoefficientsResponse,
   RestError,
+  SharingAgreementObservationResponse,
   SharingAgreementPartitionCoefficientResponse,
   SharingAgreementResponse,
   UpdateSharingAgreementBody,
@@ -370,6 +372,114 @@ export const useCreateSharingAgreement = <TError = ErrorType<RestError>,
       return useMutation(getCreateSharingAgreementMutationOptions(options), queryClient);
     }
     /**
+ * Compares, day by day, the share of the plant's production each supply of its community
+ * received according to Datadis with the coefficients of the plant's PUBLISHED and SUPERSEDED
+ * agreements. For each agreement it reports when its coefficients were observed applied, how
+ * that compares with the stored dates, the anomalies attributed to it and what to do with it.
+ * DRAFT agreements are ignored. Computed on every request from the stored daily data; nothing
+ * is written, and no coefficient is ever proposed.
+ *
+ * When the plant supply has no data, the response says the plant is not computable.
+ *
+ * **Required: community admin of the plant's community.**
+ *
+ * Returns 404 if the plant does not exist or if the caller is not a member of its community,
+ * to avoid leaking the existence of plants by ID. Returns 403 if the caller is an active member
+ * of the plant's community but not a community admin.
+ *
+ * Authentication is required using a Bearer token.
+ * @summary Observes how the distributor applies the plant's sharing agreements
+ */
+export const getPlantSharingObservation = (
+    plantId: string,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlantSharingObservationResponse>(
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/observation`, method: 'GET', signal
+    },
+      );
+    }
+
+
+
+
+export const getGetPlantSharingObservationQueryKey = (plantId: string,) => {
+    return [
+    `/api/v1/plants/${plantId}/sharing-agreements/observation`
+    ] as const;
+    }
+
+
+export const getGetPlantSharingObservationQueryOptions = <TData = Awaited<ReturnType<typeof getPlantSharingObservation>>, TError = ErrorType<RestError>>(plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantSharingObservation>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlantSharingObservationQueryKey(plantId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlantSharingObservation>>> = ({ signal }) => getPlantSharingObservation(plantId, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: plantId !== null && plantId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlantSharingObservation>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPlantSharingObservationQueryResult = NonNullable<Awaited<ReturnType<typeof getPlantSharingObservation>>>
+export type GetPlantSharingObservationQueryError = ErrorType<RestError>
+
+
+export function useGetPlantSharingObservation<TData = Awaited<ReturnType<typeof getPlantSharingObservation>>, TError = ErrorType<RestError>>(
+ plantId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantSharingObservation>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantSharingObservation>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantSharingObservation>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantSharingObservation<TData = Awaited<ReturnType<typeof getPlantSharingObservation>>, TError = ErrorType<RestError>>(
+ plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantSharingObservation>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantSharingObservation>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantSharingObservation>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantSharingObservation<TData = Awaited<ReturnType<typeof getPlantSharingObservation>>, TError = ErrorType<RestError>>(
+ plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantSharingObservation>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Observes how the distributor applies the plant's sharing agreements
+ */
+
+export function useGetPlantSharingObservation<TData = Awaited<ReturnType<typeof getPlantSharingObservation>>, TError = ErrorType<RestError>>(
+ plantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantSharingObservation>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPlantSharingObservationQueryOptions(plantId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
  * This endpoint removes a sharing agreement. Only DRAFT agreements can be deleted:
  * deleting a PUBLISHED agreement would destroy the historical basis of past billing.
  *
@@ -925,6 +1035,119 @@ export const useGenerateSharingAgreementDistributorFile = <TError = ErrorType<Re
       return useMutation(getGenerateSharingAgreementDistributorFileMutationOptions(options), queryClient);
     }
     /**
+ * One agreement's part of the plant's observed sharing (getPlantSharingObservation): the same
+ * summary, with the observation of each of its coefficient rows and its leaving rows, the
+ * supplies absent from it that had a non-zero value in the agreement observed before. Computed
+ * on every request from the stored daily data; nothing is written.
+ *
+ * **Required: community admin of the plant's community.**
+ *
+ * Returns 404 if the plant does not exist, if the caller is not a member of its community, or if
+ * the sharing agreement does not exist or does not belong to this plant, to avoid leaking the
+ * existence of plants or agreements by ID. Returns 403 if the caller is an active member of the
+ * plant's community but not a community admin. Returns 409 with code
+ * SHARING_AGREEMENT_NOT_OBSERVABLE if the agreement is a DRAFT, which is not in force.
+ *
+ * Authentication is required using a Bearer token.
+ * @summary Observes how the distributor applies one sharing agreement
+ */
+export const getSharingAgreementObservation = (
+    plantId: string,
+    sharingAgreementId: string,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<SharingAgreementObservationResponse>(
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/observation`, method: 'GET', signal
+    },
+      );
+    }
+
+
+
+
+export const getGetSharingAgreementObservationQueryKey = (plantId: string,
+    sharingAgreementId: string,) => {
+    return [
+    `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/observation`
+    ] as const;
+    }
+
+
+export const getGetSharingAgreementObservationQueryOptions = <TData = Awaited<ReturnType<typeof getSharingAgreementObservation>>, TError = ErrorType<RestError>>(plantId: string,
+    sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementObservation>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSharingAgreementObservationQueryKey(plantId,sharingAgreementId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSharingAgreementObservation>>> = ({ signal }) => getSharingAgreementObservation(plantId,sharingAgreementId, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: plantId !== null && plantId !== undefined && sharingAgreementId !== null && sharingAgreementId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementObservation>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSharingAgreementObservationQueryResult = NonNullable<Awaited<ReturnType<typeof getSharingAgreementObservation>>>
+export type GetSharingAgreementObservationQueryError = ErrorType<RestError>
+
+
+export function useGetSharingAgreementObservation<TData = Awaited<ReturnType<typeof getSharingAgreementObservation>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    sharingAgreementId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementObservation>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSharingAgreementObservation>>,
+          TError,
+          Awaited<ReturnType<typeof getSharingAgreementObservation>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSharingAgreementObservation<TData = Awaited<ReturnType<typeof getSharingAgreementObservation>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementObservation>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSharingAgreementObservation>>,
+          TError,
+          Awaited<ReturnType<typeof getSharingAgreementObservation>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSharingAgreementObservation<TData = Awaited<ReturnType<typeof getSharingAgreementObservation>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementObservation>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Observes how the distributor applies one sharing agreement
+ */
+
+export function useGetSharingAgreementObservation<TData = Awaited<ReturnType<typeof getSharingAgreementObservation>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    sharingAgreementId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSharingAgreementObservation>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSharingAgreementObservationQueryOptions(plantId,sharingAgreementId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
  * Returns one row per supply of the agreement's coefficient set, enriched with the
  * supply's CUPS code and name, and two server-computed fields (applicationState,
  * endState) so callers never need to derive interval/successor logic themselves.
@@ -1124,9 +1347,18 @@ export const useReplacePartitionCoefficients = <TError = ErrorType<RestError>,
     }
     /**
  * Sets `validFrom` for each of the given coefficients to `appliedOn` (activation), or
- * corrects it if already set. Cascades: each coefficient's previously-open predecessor
- * for the same (plant, supply), if any, has its `validTo` set to `appliedOn` in the
- * same transaction.
+ * corrects it if already set. Each coefficient is placed chronologically within the
+ * timeline of its (plant, supply), whatever order the agreements are activated in: it
+ * ends where the next coefficient starts, or stays open if there is none, and the
+ * previous coefficient's `validTo` is moved back to `appliedOn` in the same transaction
+ * when it is open or later. Placing a coefficient never extends a `validTo`: a close on
+ * or before `appliedOn` is kept, and so is the gap after it.
+ *
+ * Correcting an active coefficient first joins its former neighbours, as `deactivate`
+ * does, then places it at the new date. A close set on the coefficient itself is kept,
+ * shortened to the next coefficient's start if that comes earlier.
+ *
+ * Date writes on the same plant run one after another.
  *
  * **Required: Community Admin**
  *
@@ -1140,9 +1372,10 @@ export const useReplacePartitionCoefficients = <TError = ErrorType<RestError>,
  *
  * Returns 404 if the plant or the agreement does not exist, does not belong to this
  * plant, or the caller is not a member of its community, to avoid leaking existence.
- * Returns 409 if the agreement is DRAFT, or if any coefficient fails validation (does
- * not belong to this agreement, the date is in the future, or the date is not after
- * the resolved predecessor's own date / not before the coefficient's own end date).
+ * Returns 409 if the agreement is DRAFT, or if any coefficient fails validation: it does
+ * not belong to this agreement, the date is in the future, another coefficient of the
+ * same (plant, supply) already starts on that date, or a correction's date is not before
+ * the close set on the coefficient itself.
  *
  * Authentication is required using a Bearer token.
  * @summary Records or corrects the date the distributor applied a batch of coefficients
