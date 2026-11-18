@@ -39,17 +39,15 @@ describe("UI-FRM-003 the read-only presentation", () => {
   it("UI-FRM-003 fills the field in grey and shows the value at full contrast", () => {
     const { readOnly } = renderForm();
 
-    expect(declared(readOnly, /\.MuiOutlinedInput-root$/, "background-color")).toEqual([colors.background.readOnly]);
+    expect(declared(readOnly, /\.MuiFilledInput-root$/, "background-color")).toEqual([colors.background.readOnly]);
     expect(declared(readOnly, /\.MuiInputBase-input$/, "color")).toEqual([colors.text.primary]);
   });
 
-  it("UI-FRM-003 keeps the resting border on hover and focus, never the editable highlight", () => {
+  it("UI-FRM-003 keeps the resting fill on hover and focus, never the editable highlight", () => {
     const { readOnly } = renderForm();
 
-    for (const state of [/:hover fieldset/, /\.Mui-focused fieldset/]) {
-      const borders = declared(readOnly, state, "border-color");
-      expect(borders).toEqual([colors.border.inactive]);
-      expect(borders).not.toContain(colors.brand.main);
+    for (const state of [/\.MuiFilledInput-root:hover$/, /\.MuiFilledInput-root\.Mui-focused$/]) {
+      expect(declared(readOnly, state, "background-color")).toEqual([colors.background.readOnly]);
     }
     expect(declared(readOnly, /\.MuiInputLabel-root\.Mui-focused$/, "color")).not.toContain(colors.brand.main);
   });
@@ -64,8 +62,8 @@ describe("UI-FRM-003 the read-only presentation", () => {
   it("UI-FRM-003 draws a focus indication inside the field, not the primary border", () => {
     const { readOnly } = renderForm();
 
-    const focus = declared(readOnly, /\.MuiOutlinedInput-root\.Mui-focused$/, "box-shadow");
-    expect(focus).toEqual([`inset 0 0 0 3px ${colors.secondary.main}`]);
+    const focus = declared(readOnly, /\.MuiFilledInput-root\.Mui-focused$/, "box-shadow");
+    expect(focus).toEqual([`inset 0 0 0 2px ${colors.secondary.main}`]);
     expect(fieldStyles(readOnly).filter(([, property]) => property === "outline-offset")).toEqual([]);
   });
 
