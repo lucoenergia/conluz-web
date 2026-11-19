@@ -2,7 +2,12 @@ import { useEffect, useMemo, useState, type FC, type ReactNode } from "react";
 import { Box, Button, Chip, Link, Typography } from "@mui/material";
 import { Link as RouterLink, useLocation, useParams } from "react-router";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
-import { CoefficientObservationResponseStatus } from "../../../api/models";
+import {
+  CoefficientObservationResponseStatus,
+  type CoefficientObservationResponse,
+  type LeavingObservationResponse,
+  type SharingAgreementObservationResponse,
+} from "../../../api/models";
 import { BreadCrumb } from "../../../components/Breadcrumb";
 import { DetailHeader } from "../../../components/DetailHeader";
 import { EmptyState } from "../../../components/EmptyState";
@@ -41,7 +46,6 @@ import {
   NO_VALUE,
 } from "./observedSharingFormat";
 import { OBSERVED_ANOMALIES_ANCHOR, observedSharingPath } from "./observedSharingRoutes";
-import type { AgreementObservation, ObservedCoefficientRow, ObservedLeavingRow } from "./pendingObservationFields";
 import { RecommendationList } from "./RecommendationList";
 import { useSharingAgreementObservationData } from "./useSharingAgreementObservationData";
 
@@ -54,8 +58,8 @@ const INITIAL_ROWS = 10;
  * (UI-AGR-026). Only the backend's value is shown, never one computed here
  * (UI-AGR-031).
  */
-const ObservedBeta: FC<{ observed: number | null | undefined; registered: number }> = ({ observed, registered }) => {
-  const differs = observed !== null && observed !== undefined && !betaMatches(observed, registered);
+const ObservedBeta: FC<{ observed: number | null; registered: number }> = ({ observed, registered }) => {
+  const differs = observed !== null && !betaMatches(observed, registered);
   return (
     <Box component="span" sx={differs ? { color: colors.warning.main, fontWeight: 600 } : undefined}>
       {formatBeta(observed)}
@@ -69,9 +73,9 @@ const ObservedBeta: FC<{ observed: number | null | undefined; registered: number
  * place, never presented as observed (UI-AGR-027).
  */
 const RowDate: FC<{
-  status: ObservedCoefficientRow["status"];
-  observed: ObservedCoefficientRow["observedDate"];
-  proposed: ObservedCoefficientRow["proposedDate"];
+  status: CoefficientObservationResponse["status"];
+  observed: CoefficientObservationResponse["observedDate"];
+  proposed: CoefficientObservationResponse["proposedDate"];
 }> = ({ status, observed, proposed }) => {
   if (status === CoefficientObservationResponseStatus.NOT_DISTINGUISHABLE) {
     return (
@@ -134,17 +138,17 @@ const FilterChips: FC<{
 );
 
 const CoefficientRows: FC<{
-  rows: ObservedCoefficientRow[];
+  rows: CoefficientObservationResponse[];
   anomalyLabelsBySupply: Map<string, string[]>;
   header: ReactNode;
 }> = ({ rows, anomalyLabelsBySupply, header }) => {
   const [showAll, setShowAll] = useState(false);
   const shown = showAll ? rows : rows.slice(0, INITIAL_ROWS);
-  const anomalyLabels = (row: ObservedCoefficientRow) => anomalyLabelsBySupply.get(row.supply.id) ?? [];
-  const status = (row: ObservedCoefficientRow) => (
+  const anomalyLabels = (row: CoefficientObservationResponse) => anomalyLabelsBySupply.get(row.supply.id) ?? [];
+  const status = (row: CoefficientObservationResponse) => (
     <RowStatus label={COEFFICIENT_STATUS_LABEL[row.status]} tone={STATUS_TONE[row.status]} anomalyLabels={anomalyLabels(row)} />
   );
-  const fields = (row: ObservedCoefficientRow): RecordField[] => [
+  const fields = (row: CoefficientObservationResponse): RecordField[] => [
     { label: "β registrado", value: formatBeta(row.coefficient) },
     { label: "β observado", value: <ObservedBeta observed={row.observedBeta} registered={row.coefficient} /> },
     { label: "Periodo registrado", value: formatRegisteredPeriod(row.storedValidFrom, row.storedValidTo) },
@@ -170,7 +174,7 @@ const CoefficientRows: FC<{
         />
       }
       wide={
-        <ListTable<ObservedCoefficientRow>
+        <ListTable<CoefficientObservationResponse>
           rows={shown}
           getRowKey={(row) => row.coefficientId}
           isLoading={false}
@@ -219,14 +223,15 @@ const CoefficientRows: FC<{
   );
 };
 
-const LeavingRows: FC<{ rows: ObservedLeavingRow[] }> = ({ rows }) => {
-  const status = (row: ObservedLeavingRow) => (
+const LeavingRows: FC<{ rows: LeavingObservationResponse[] }> = ({ rows }) => {
+  const status = (row: LeavingObservationResponse) => (
     <RowStatus label={LEAVING_STATUS_LABEL[row.status]} tone={STATUS_TONE[row.status]} anomalyLabels={[]} />
   );
-  const leaving = (row: ObservedLeavingRow) => (
+  const leaving = (row: LeavingObservationResponse) => (
     <RowDate status={row.status} observed={row.observedLeavingDate} proposed={row.proposedDate} />
   );
-  const registeredEnd = (row: ObservedLeavingRow) => (row.storedValidTo ? formatDay(row.storedValidTo) : "Sin fecha de fin");
+  const registeredEnd = (row: LeavingObservationResponse) =>
+    row.storedValidTo ? formatDay(row.storedValidTo) : "Sin fecha de fin";
 
   return (
     <ResponsiveRecordList
@@ -249,7 +254,7 @@ const LeavingRows: FC<{ rows: ObservedLeavingRow[] }> = ({ rows }) => {
         />
       }
       wide={
-        <ListTable<ObservedLeavingRow>
+        <ListTable<LeavingObservationResponse>
           rows={rows}
           getRowKey={(row) => row.previousCoefficientId}
           isLoading={false}
@@ -273,7 +278,7 @@ const LeavingRows: FC<{ rows: ObservedLeavingRow[] }> = ({ rows }) => {
   );
 };
 
-const ObservedState: FC<{ plantId: string; observation: AgreementObservation }> = ({ plantId, observation }) => {
+const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservationResponse }> = ({ plantId, observation }) => {
   const { summary } = observation;
   const [filter, setFilter] = useState<ObservationFilter>("all");
   const all = useMemo(() => filterObservationRows(observation, "all"), [observation]);

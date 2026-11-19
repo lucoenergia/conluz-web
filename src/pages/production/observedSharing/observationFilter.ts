@@ -1,11 +1,16 @@
-import { CoefficientObservationResponseStatus, LeavingObservationResponseStatus } from "../../../api/models";
-import type { AgreementObservation, ObservedCoefficientRow, ObservedLeavingRow } from "./pendingObservationFields";
+import {
+  CoefficientObservationResponseStatus,
+  LeavingObservationResponseStatus,
+  type CoefficientObservationResponse,
+  type LeavingObservationResponse,
+  type SharingAgreementObservationResponse,
+} from "../../../api/models";
 
 export type ObservationFilter = "all" | "warnings";
 
 export interface FilteredRows {
-  coefficients: ObservedCoefficientRow[];
-  leavingRows: ObservedLeavingRow[];
+  coefficients: CoefficientObservationResponse[];
+  leavingRows: LeavingObservationResponse[];
   /** Every row shown, both kinds: what the filter's chip counts. */
   count: number;
 }
@@ -22,7 +27,7 @@ const COEFFICIENT_WARNINGS: ReadonlySet<CoefficientObservationResponseStatus> = 
  * agreement, and leaving rows that left on another date. "Todos" keeps every
  * row. Both keep the order the analysis returned them in.
  */
-export function filterObservationRows(observation: AgreementObservation, filter: ObservationFilter): FilteredRows {
+export function filterObservationRows(observation: SharingAgreementObservationResponse, filter: ObservationFilter): FilteredRows {
   const { coefficients, leavingRows } = observation;
   if (filter === "all") return { coefficients, leavingRows, count: coefficients.length + leavingRows.length };
 

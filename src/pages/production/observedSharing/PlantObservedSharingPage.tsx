@@ -23,7 +23,7 @@ import { ObservationNotComputable } from "./ObservationNotComputable";
 import { ObservationProgress } from "./ObservationProgress";
 import { actionableRecommendations } from "./observedSharingLabels";
 import { formatDataRange, formatDataRangeInSentence, joinNames, NO_VALUE } from "./observedSharingFormat";
-import type { PlantSharingObservation } from "./pendingObservationFields";
+import type { PlantSharingObservationResponse } from "../../../api/models";
 import { usePlantSharingObservationData } from "./usePlantSharingObservationData";
 
 const READ_ONLY_NOTE = "Solo lectura: compara lo que muestra Datadis con lo registrado. No cambia ningún dato.";
@@ -31,7 +31,7 @@ const READ_ONLY_NOTE = "Solo lectura: compara lo que muestra Datadis con lo regi
 const panelSx = { ...sxStyles.softPanel, display: "flex", flexDirection: "column", gap: 2 } as const;
 
 /** What the page's header says about the analysis, once it is known. */
-function headerFacts(observation: PlantSharingObservation): { keyFacts: DetailKeyFacts; details: DetailFact[] } {
+function headerFacts(observation: PlantSharingObservationResponse): { keyFacts: DetailKeyFacts; details: DetailFact[] } {
   const { analysis, sharingAgreements, unattributedAnomalies } = observation;
   const withData = analysis.suppliesWithValidDays.length;
   const analysed = withData + analysis.suppliesWithoutValidDays.length;
@@ -54,7 +54,7 @@ function headerFacts(observation: PlantSharingObservation): { keyFacts: DetailKe
 }
 
 /** Whether the analysis found nothing to look at: no agreement to review and no anomaly. */
-function isAllClear(observation: PlantSharingObservation): boolean {
+function isAllClear(observation: PlantSharingObservationResponse): boolean {
   return (
     observation.unattributedAnomalies.length === 0 &&
     observation.sharingAgreements.every(
@@ -64,7 +64,7 @@ function isAllClear(observation: PlantSharingObservation): boolean {
 }
 
 /** The data the analysis rests on, the supplies without any, and, when it found nothing to look at, so. */
-const AnalysisNotice: FC<{ observation: PlantSharingObservation }> = ({ observation }) => {
+const AnalysisNotice: FC<{ observation: PlantSharingObservationResponse }> = ({ observation }) => {
   const { analysis } = observation;
   const withoutData = analysis.suppliesWithoutValidDays.map((supply) => supplyDisplayLabel(supply));
   return (
@@ -98,7 +98,7 @@ const LoadingState: FC = () => (
 );
 
 /** Supplies holding coefficients in this plant and in another: not analysed, and no reason is given (UI-AGR-028). */
-const NotComputableSupplies: FC<{ observation: PlantSharingObservation }> = ({ observation }) => {
+const NotComputableSupplies: FC<{ observation: PlantSharingObservationResponse }> = ({ observation }) => {
   const supplies = observation.analysis.notComputableSupplies;
   if (supplies.length === 0) return null;
   const status = <ObservationChip label="No calculable" tone="neutral" />;
@@ -136,7 +136,7 @@ const NotComputableSupplies: FC<{ observation: PlantSharingObservation }> = ({ o
   );
 };
 
-const AnalysedState: FC<{ plantId: string; observation: PlantSharingObservation }> = ({ plantId, observation }) => {
+const AnalysedState: FC<{ plantId: string; observation: PlantSharingObservationResponse }> = ({ plantId, observation }) => {
   const groups = useMemo(
     () => groupAnomalies(observation.sharingAgreements, observation.unattributedAnomalies),
     [observation],

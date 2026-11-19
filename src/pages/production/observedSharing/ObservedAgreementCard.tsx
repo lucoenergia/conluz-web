@@ -7,7 +7,7 @@ import { colors, radii } from "../../../theme/tokens";
 import { ANOMALY_COUNT_ORDER, ANOMALY_TYPE_LABEL, COEFFICIENT_STATUS_LABEL, STATUS_COUNT_ORDER } from "./observedSharingLabels";
 import { formatAgreementApplication, formatDay, formatPercentageOrNone } from "./observedSharingFormat";
 import { agreementObservationPath } from "./observedSharingRoutes";
-import type { ObservedAgreementSummary } from "./pendingObservationFields";
+import type { SharingAgreementObservationSummaryResponse } from "../../../api/models";
 import { RecommendationList } from "./RecommendationList";
 
 const sectionLabelSx = { color: colors.text.subtle, fontWeight: 600 } as const;
@@ -26,7 +26,7 @@ const CountRow: FC<{ label: string; count: number }> = ({ label, count }) => (
 const countListSx = { listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 0.25 } as const;
 
 /** "Salen del reparto: 2 · 1 con fecha distinta", only when some supply leaves with the agreement. */
-function leavingText(summary: ObservedAgreementSummary): string | undefined {
+function leavingText(summary: SharingAgreementObservationSummaryResponse): string | undefined {
   const counts = summary.leavingStatusCounts;
   const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
   if (total === 0) return undefined;
@@ -36,7 +36,7 @@ function leavingText(summary: ObservedAgreementSummary): string | undefined {
 
 interface ObservedAgreementCardProps {
   plantId: string;
-  summary: ObservedAgreementSummary;
+  summary: SharingAgreementObservationSummaryResponse;
   /** Supplies of the plant without any valid day, whose registered share the unexplained part includes. */
   suppliesWithoutDataCount: number;
 }

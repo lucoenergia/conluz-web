@@ -9,7 +9,7 @@ import { supplyDisplayLabel } from "../../../utils/supplyDisplayLabel";
 import type { AgreementAnomalies, SupplyAnomalies } from "./anomalyGroups";
 import { ANOMALY_TYPE_LABEL } from "./observedSharingLabels";
 import { formatAnomalyDetail, formatAnomalyEnd, formatObservedDate } from "./observedSharingFormat";
-import type { ObservedAnomaly } from "./pendingObservationFields";
+import type { SharingAnomalyResponse } from "../../../api/models";
 
 const anomaliesCount = (count: number) => `${count} ${count === 1 ? "anomalía" : "anomalías"}`;
 const suppliesCount = (count: number) => `${count} ${count === 1 ? "punto" : "puntos"}`;
@@ -36,7 +36,7 @@ const AnomalyRows: FC<{ group: SupplyAnomalies }> = ({ group }) => {
   }
 
   return (
-    <ListTable<ObservedAnomaly>
+    <ListTable<SharingAnomalyResponse>
       rows={group.anomalies}
       getRowKey={(anomaly) => anomaly.id}
       isLoading={false}

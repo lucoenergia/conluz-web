@@ -1,8 +1,7 @@
-import type { PlantResponse } from "../../../api/models";
+import type { PlantResponse, PlantSharingObservationResponse } from "../../../api/models";
 import { useGetPlantSharingObservation } from "../../../api/sharing-agreements/sharing-agreements";
 import { usePlantInActiveCommunity } from "../usePlantInActiveCommunity";
 import { isNotFoundError } from "../useSharingAgreementsData";
-import type { PlantSharingObservation } from "./pendingObservationFields";
 
 /**
  * The analysis is computed on every request and is expensive, while what it
@@ -13,7 +12,7 @@ export const OBSERVATION_STALE_TIME = 10 * 60 * 1000;
 
 export interface PlantSharingObservationData {
   plant: PlantResponse | undefined;
-  observation: PlantSharingObservation | undefined;
+  observation: PlantSharingObservationResponse | undefined;
   isLoading: boolean;
   /** A plant that does not exist, or belongs to another community. */
   isNotFound: boolean;
@@ -33,12 +32,10 @@ export function usePlantSharingObservationData(plantId: string): PlantSharingObs
     query: { enabled: plant !== undefined, staleTime: OBSERVATION_STALE_TIME },
   });
 
-  // The regenerated client's response is the placeholder type (conluz#597).
-  const observation: PlantSharingObservation | undefined = observationRead.data;
   const isNotFound = plantRead.isNotFound || isNotFoundError(observationRead.error);
   return {
     plant,
-    observation,
+    observation: observationRead.data,
     isLoading: plantRead.isLoading || (plant !== undefined && observationRead.isLoading),
     isNotFound,
     error: isNotFound ? null : (plantRead.error ?? observationRead.error),

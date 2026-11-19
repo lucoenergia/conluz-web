@@ -1,8 +1,7 @@
-import type { ObservedDateResponse } from "../../../api/models";
+import type { ObservedDateResponse, SharingAgreementObservationSummaryResponse } from "../../../api/models";
 import { formatLocalDate, SHORT_CALENDAR_DATE } from "../../../utils/formatCalendarDate";
 import { formatPercentage } from "../../../utils/formatPercentage";
 import { COEFFICIENT_SCALE } from "../sharingAgreementCoefficientSums";
-import type { ObservedAgreementSummary } from "./pendingObservationFields";
 
 /** What a value the analysis did not give reads as. */
 export const NO_VALUE = "—";
@@ -31,14 +30,13 @@ export function formatObservedDate(date: ObservedDateResponse): string {
 }
 
 /** A registered period, its end exclusive (UI-AGR-019): the first day it no longer applies. */
-export function formatRegisteredPeriod(from: string | null, to: string | null | undefined): string {
+export function formatRegisteredPeriod(from: string | null, to: string | null): string {
   if (from === null) return "Sin fecha";
   return `${formatDay(from)} – ${to ? formatDay(to) : "en curso"}`;
 }
 
 /** A β, on a 0-1 scale, in % with 4 decimals; "—" when the analysis gave none. */
-export const formatBeta = (value: number | null | undefined) =>
-  value === null || value === undefined ? NO_VALUE : formatPercentage(value);
+export const formatBeta = (value: number | null) => (value === null ? NO_VALUE : formatPercentage(value));
 
 /** ±0.1 percentage points, in millionths of the 0-1 scale. */
 const EQUAL_TOLERANCE = COEFFICIENT_SCALE / 1000;
@@ -53,8 +51,7 @@ export function betaMatches(observed: number, registered: number): boolean {
 }
 
 /** The evidence behind an anomaly: "Recibe 4,1200 % en 21 días válidos." */
-export function formatAnomalyDetail(observedBeta: number | null | undefined, validDays: number | undefined): string {
-  if (observedBeta === null || observedBeta === undefined || validDays === undefined) return NO_VALUE;
+export function formatAnomalyDetail(observedBeta: number, validDays: number): string {
   return `Recibe ${formatBeta(observedBeta)} en ${validDays} ${validDays === 1 ? "día válido" : "días válidos"}.`;
 }
 
@@ -65,7 +62,7 @@ export const formatAnomalyEnd = (end: string | null) => (end === null ? "en curs
  * When the distributor applied an agreement, as the analysis observed it: the
  * day most of its coefficients started on, or why there is none.
  */
-export function formatAgreementApplication(summary: ObservedAgreementSummary): string {
+export function formatAgreementApplication(summary: SharingAgreementObservationSummaryResponse): string {
   const observed = summary.mostFrequentObservedDate;
   if (observed) {
     if (observed.from === null) return `Aplicado el ${formatDay(observed.to)} o antes`;

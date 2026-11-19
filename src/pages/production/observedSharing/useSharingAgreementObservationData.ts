@@ -1,14 +1,13 @@
-import type { PlantResponse } from "../../../api/models";
+import type { PlantResponse, SharingAgreementObservationResponse } from "../../../api/models";
 import { useGetSharingAgreementObservation } from "../../../api/sharing-agreements/sharing-agreements";
 import { getFirstApiErrorCode, getFirstApiErrorMessage } from "../../../errors/apiErrorCatalogue";
 import { usePlantInActiveCommunity } from "../usePlantInActiveCommunity";
 import { isNotFoundError } from "../useSharingAgreementsData";
-import type { AgreementObservation } from "./pendingObservationFields";
 import { OBSERVATION_STALE_TIME } from "./usePlantSharingObservationData";
 
 export interface SharingAgreementObservationData {
   plant: PlantResponse | undefined;
-  observation: AgreementObservation | undefined;
+  observation: SharingAgreementObservationResponse | undefined;
   isLoading: boolean;
   /** A plant or agreement that does not exist, or a plant of another community. */
   isNotFound: boolean;
@@ -35,13 +34,11 @@ export function useSharingAgreementObservationData(plantId: string, sharingAgree
     query: { enabled: plant !== undefined && sharingAgreementId !== "", staleTime: OBSERVATION_STALE_TIME },
   });
 
-  // The regenerated client's response is the placeholder type (conluz#597).
-  const observation: AgreementObservation | undefined = observationRead.data;
   const isNotFound = plantRead.isNotFound || isNotFoundError(observationRead.error);
   const notObservable = isNotObservable(observationRead.error);
   return {
     plant,
-    observation,
+    observation: observationRead.data,
     isLoading: plantRead.isLoading || (plant !== undefined && observationRead.isLoading),
     isNotFound,
     notObservableMessage: notObservable ? getFirstApiErrorMessage(observationRead.error, "") : undefined,

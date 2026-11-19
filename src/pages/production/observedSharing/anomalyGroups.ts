@@ -1,15 +1,18 @@
-import type { SupplyReferenceResponse } from "../../../api/models";
-import type { ObservedAgreementSummary, ObservedAnomaly } from "./pendingObservationFields";
+import type {
+  SharingAgreementObservationSummaryResponse,
+  SharingAnomalyResponse,
+  SupplyReferenceResponse,
+} from "../../../api/models";
 
 export interface SupplyAnomalies {
   supply: SupplyReferenceResponse;
   /** In the order the analysis returned them. */
-  anomalies: ObservedAnomaly[];
+  anomalies: SharingAnomalyResponse[];
 }
 
 export interface AgreementAnomalies {
   /** The agreement the anomalies are attributed to; undefined for those attributed to none. */
-  agreement?: ObservedAgreementSummary["sharingAgreement"];
+  agreement?: SharingAgreementObservationSummaryResponse["sharingAgreement"];
   supplies: SupplyAnomalies[];
   count: number;
 }
@@ -20,7 +23,7 @@ export interface AgreementAnomalies {
  * anomaly about every supply (APPLIED_BEFORE_SENT) still sits under the supply
  * it names.
  */
-export function groupBySupply(anomalies: ObservedAnomaly[]): SupplyAnomalies[] {
+export function groupBySupply(anomalies: SharingAnomalyResponse[]): SupplyAnomalies[] {
   const bySupply = new Map<string, SupplyAnomalies>();
   for (const anomaly of anomalies) {
     const group = bySupply.get(anomaly.supply.id);
@@ -36,8 +39,8 @@ export function groupBySupply(anomalies: ObservedAnomaly[]): SupplyAnomalies[] {
  * without anomalies has no group.
  */
 export function groupAnomalies(
-  agreements: ObservedAgreementSummary[],
-  unattributed: ObservedAnomaly[],
+  agreements: SharingAgreementObservationSummaryResponse[],
+  unattributed: SharingAnomalyResponse[],
 ): AgreementAnomalies[] {
   const groups: AgreementAnomalies[] = agreements
     .filter((summary) => summary.anomalies.length > 0)
