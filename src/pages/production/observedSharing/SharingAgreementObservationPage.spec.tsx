@@ -58,6 +58,7 @@ const OESTE = supply("004", "Casa Oeste");
 const TALLER = supply("005", "Taller");
 const ESCUELA = supply("006", "Escuela");
 const BAR = supply("007", "Bar");
+const KIOSCO = supply("008", "Kiosco");
 
 const PREVIOUS = buildSharingAgreementReference({
   id: "initial",
@@ -67,13 +68,13 @@ const PREVIOUS = buildSharingAgreementReference({
 
 // A row of each kind the page treats apart: applied on its date, applied on
 // another, not distinguishable, without data, with an anomaly on its supply,
-// and two supplies leaving the distribution.
+// and three supplies leaving the distribution, one of them not yet seen to.
 function observationFixture(overrides: Partial<SharingAgreementObservationResponse> = {}): SharingAgreementObservationResponse {
   return buildSharingAgreementObservation({
     analysis: buildObservationAnalysis({
       analysedFrom: "2023-04-01",
       analysedTo: "2026-10-31",
-      suppliesWithValidDays: [NORTE, SUR, ESTE, TALLER, ESCUELA, BAR],
+      suppliesWithValidDays: [NORTE, SUR, ESTE, TALLER, ESCUELA, BAR, KIOSCO],
       suppliesWithoutValidDays: [OESTE],
     }),
     summary: buildObservationSummary({
@@ -90,7 +91,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         notDistinguishable: 1,
         noData: 1,
       }),
-      leavingStatusCounts: buildObservationStatusCounts({ appliedSameDate: 1, appliedDifferentDate: 1 }),
+      leavingStatusCounts: buildObservationStatusCounts({ appliedSameDate: 1, appliedDifferentDate: 1, pendingApplication: 1 }),
       anomalies: [
         buildSharingAnomaly({
           id: "a-taller",
@@ -182,9 +183,23 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         previousCoefficient: 0.01,
         storedValidTo: null,
         observedLeavingDate: { from: "2025-04-01", to: "2025-04-01" },
+        observedBeta: 0,
+        observedValidDays: 75,
+        status: LeavingStatus.APPLIED_DIFFERENT_DATE,
+      }),
+      // Not observed leaving: the supply has valid days before this agreement,
+      // none in its window, so its observed β is null (OBS-009). An observed
+      // leaving always has valid days and therefore a β.
+      buildLeavingObservation({
+        previousCoefficientId: "l-kiosco",
+        supply: KIOSCO,
+        previousSharingAgreement: PREVIOUS,
+        previousCoefficient: 0.015,
+        storedValidTo: "2025-03-01",
+        observedLeavingDate: null,
         observedBeta: null,
         observedValidDays: 0,
-        status: LeavingStatus.APPLIED_DIFFERENT_DATE,
+        status: LeavingStatus.PENDING_APPLICATION,
       }),
     ],
     ...overrides,
@@ -224,7 +239,7 @@ const supplyNames = (section: HTMLElement) =>
   within(section)
     .getAllByRole("row")
     .slice(1)
-    .map((row) => row.textContent?.match(/^(Casa (Norte|Sur|Este|Oeste)|Taller|Escuela|Bar)/)?.[0]);
+    .map((row) => row.textContent?.match(/^(Casa (Norte|Sur|Este|Oeste)|Taller|Escuela|Bar|Kiosco)/)?.[0]);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -251,7 +266,8 @@ describe("SharingAgreementObservationPage", () => {
 
     expect(supplyRow("Casa Oeste")).toHaveTextContent(/^Casa Oeste.*3,0000 %—Sin fecha—Sin datos de Datadis$/);
     expect(within(leavingSection()).getByRole("row", { name: /Escuela/ })).toHaveTextContent("4,0000 %0,0000 %");
-    expect(within(leavingSection()).getByRole("row", { name: /Bar/ })).toHaveTextContent("1,0000 %—");
+    expect(within(leavingSection()).getByRole("row", { name: /Bar/ })).toHaveTextContent("1,0000 %0,0000 %");
+    expect(within(leavingSection()).getByRole("row", { name: /Kiosco/ })).toHaveTextContent("1,5000 %—");
   });
 
   test("UI-AGR-025: a registered period ends on its exclusive end, or is in progress", () => {
@@ -296,12 +312,12 @@ describe("SharingAgreementObservationPage", () => {
     renderPage();
     const section = leavingSection();
 
-    expect(within(section).getByRole("heading", { name: "Salen del reparto (2)" })).toBeInTheDocument();
+    expect(within(section).getByRole("heading", { name: "Salen del reparto (3)" })).toBeInTheDocument();
     expect(within(section).getByRole("row", { name: /Escuela/ })).toHaveTextContent(
       "Reparto inicial 20234,0000 %0,0000 %01/03/2025Observada01/03/2025Salida · misma fecha",
     );
     expect(within(section).getByRole("row", { name: /Bar/ })).toHaveTextContent(
-      "Reparto inicial 20231,0000 %—01/04/2025ObservadaSin fecha de finSalida · otra fecha",
+      "Reparto inicial 20231,0000 %0,0000 %01/04/2025ObservadaSin fecha de finSalida · otra fecha",
     );
   });
 
@@ -309,7 +325,7 @@ describe("SharingAgreementObservationPage", () => {
     renderPage();
     const user = userEvent.setup();
 
-    expect(screen.getByRole("button", { name: "Todos (7)" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Todos (8)" })).toHaveAttribute("aria-pressed", "true");
     await user.click(screen.getByRole("button", { name: "Con avisos (4)" }));
 
     expect(screen.getByRole("button", { name: "Con avisos (4)" })).toHaveAttribute("aria-pressed", "true");
