@@ -306,15 +306,18 @@ is in force today.
   returns them. Each card MUST show the distributor file sent date or "Sin registrar", the
   application the analysis observed, its supplies' status counts, its leaving counts when there is
   any, its anomaly counts by type, and the part no supply with data received (1 − Σβ). Each card
-  and the agreement's page MUST show every recommendation returned, in order, each with its
-  sentence; "Fijar fechas" MUST show no action until #419, and still counts as an agreement to
-  review. On the agreement's page, "Con avisos" MUST keep the coefficient rows applied on another
+  and the agreement's page MUST show every recommendation returned, in order, as a finding under
+  "Qué revisar": a title stating what was found, a detail from the backend's counts, and a link
+  worded apart from the title. "Fechas distintas de las registradas" MUST offer no link until
+  #419, and still counts as an agreement to review. A "none" recommendation MUST show nothing. On
+  the agreement's page, "Con avisos" MUST keep the coefficient rows applied on another
   date, not distinguishable, or of a supply with an anomaly of the agreement, and the leaving rows
   that left on another date; its count MUST equal the rows it shows.
 - **Rationale:** This is what an admin comes to see. The backend owns the order and the
-  recommendations; restating either here would let the two disagree.
+  recommendations; restating either here would let the two disagree. A finding says what the
+  analysis saw, which the admin can check, rather than an instruction.
 - **Implements:** n/a
-- **Source:** #418
+- **Source:** #418; findings layout: maintainer decision in the #418 review
 
 ### UI-AGR-024 — Anomalies are grouped by agreement and supply, with their evidence
 
