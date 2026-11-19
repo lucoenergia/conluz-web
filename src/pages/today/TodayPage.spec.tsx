@@ -4,6 +4,7 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useLocation } from "react-router";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { stubViewport } from "../../test/overlay";
 import { query } from "../../test/queryState";
 import { apiError } from "../../test/apiError";
 import {
@@ -210,7 +211,15 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
+
+/** No admin block of its own: the selector is the only place the viewed supply appears (UI-TDY-003). */
+function expectNoAdminBlock() {
+  expect(screen.queryByRole("navigation", { name: /breadcrumb/i })).not.toBeInTheDocument();
+  expect(screen.queryByText(/Este punto no es tuyo/)).not.toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "Volver al punto de suministro" })).not.toBeInTheDocument();
+}
 
 describe("the supply selector", () => {
   it("UI-TDY-002 lists only the caller's own supplies in the active community, without the plant's own, by name and CUPS", async () => {
@@ -218,6 +227,24 @@ describe("the supply selector", () => {
 
     expect(shown()).toBe(HOME_LABEL);
     expect(optionLabels(await openSheet())).toEqual([HOME_LABEL, GARAGE_LABEL]);
+  });
+
+  it("UI-TDY-002 offers no Todos mis puntos in the bottom sheet, and keeps the footer about the caller's own", async () => {
+    renderPage();
+
+    const sheet = await openSheet();
+    expect(within(sheet).queryByRole("radio", { name: "Todos mis puntos" })).not.toBeInTheDocument();
+    expect(screen.getByText("Solo aparecen tus puntos activos en esta comunidad.")).toBeInTheDocument();
+  });
+
+  it("UI-TDY-002 from sm up, the same selector as a dropdown, with the same options and no Todos mis puntos", async () => {
+    stubViewport(1024);
+    renderPage();
+
+    const dropdown = screen.getByRole("combobox", { name: "Punto de suministro" });
+    expect(dropdown).toHaveTextContent(HOME_LABEL);
+    await userEvent.click(dropdown);
+    expect(within(screen.getByRole("listbox")).getAllByRole("option").map((option) => option.textContent)).toEqual([HOME_LABEL, GARAGE_LABEL]);
   });
 
   it("UI-TDY-002 shows the first own supply without a parameter, and asks today's data for it alone", () => {
@@ -269,7 +296,23 @@ describe("?supplyId=", () => {
     ]);
     expect(optionLabels(sheet)).toEqual([MEMBERS_LABEL, HOME_LABEL, GARAGE_LABEL]);
     expect(within(sheet).getByRole("radio", { name: MEMBERS_LABEL })).toBeChecked();
+    expect(within(sheet).queryByRole("radio", { name: "Todos mis puntos" })).not.toBeInTheDocument();
     expect(askedFor()).toEqual(new Set([MEMBERS.id]));
+    expectNoAdminBlock();
+  });
+
+  it("UI-TDY-003 choosing one of the caller's own supplies drops the viewed one from the selector", async () => {
+    mockLoggedUser = admin();
+    canManage = true;
+    renderPage(`?supplyId=${MEMBERS.id}`);
+
+    await userEvent.click(within(await openSheet()).getByRole("radio", { name: HOME_LABEL }));
+
+    expect(currentSearch()).toBe(`?supplyId=${HOME.id}`);
+    expect(shown()).toBe(HOME_LABEL);
+    const sheet = await openSheet();
+    expect(within(sheet).queryByRole("heading", { name: "Punto que estás consultando" })).not.toBeInTheDocument();
+    expect(optionLabels(sheet)).toEqual([HOME_LABEL, GARAGE_LABEL]);
   });
 
   it("UI-TDY-003 a community admin with no own supply sees the viewed one, not the no-supply state", () => {
@@ -280,7 +323,20 @@ describe("?supplyId=", () => {
 
     expect(shown()).toBe(MEMBERS_LABEL);
     expect(screen.queryByText("No tienes puntos de suministro en esta comunidad")).not.toBeInTheDocument();
+    expect(screen.queryByText("Solo aparecen tus puntos activos en esta comunidad.")).not.toBeInTheDocument();
     expect(askedFor()).toEqual(new Set([MEMBERS.id]));
+    expectNoAdminBlock();
+  });
+
+  it("UI-TDY-003 a community admin with no own supply finds only the Punto que estás consultando group in the selector", async () => {
+    mockLoggedUser = admin();
+    canManage = true;
+    ownListing = [];
+    renderPage(`?supplyId=${MEMBERS.id}`);
+
+    const sheet = await openSheet();
+    expect(within(sheet).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual(["Punto que estás consultando"]);
+    expect(optionLabels(sheet)).toEqual([MEMBERS_LABEL]);
   });
 
   it("UI-TDY-003 ignores a supply the caller may not read, as if there were no parameter", () => {
