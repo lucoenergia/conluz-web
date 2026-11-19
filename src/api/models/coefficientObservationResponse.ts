@@ -15,8 +15,15 @@ export interface CoefficientObservationResponse {
   coefficient: number;
   /** Identifier of the coefficient row */
   coefficientId: string;
+  /**
+     * Median of the supply's daily observed β (E / G) over its valid days from the row's observed application date (the latest day of a range or of an open date) to the end of the agreement's applied window, or over the whole applied window when the row has no observed date. The applied window runs from the agreement's most frequent observed application date to the day before the next agreement's, or to the end of the analysed range. On a 0-1 scale, rounded half-up to 6 decimals; for an even number of days, the mean of the two middle values. Null when the agreement has no applied window, the row's start falls after its end, or the supply has no valid day in between.
+     * @nullable
+     */
+  observedBeta: number | null;
   /** When the distributor was observed to start applying it. Null when not observed. */
   observedDate: CoefficientObservationResponseObservedDate;
+  /** Number of valid days the observed β rests on. 0 when it is null. */
+  observedValidDays: number;
   /** For NOT_DISTINGUISHABLE, the agreement's most frequent observed application date. Null otherwise, or when nothing of the agreement was observed. */
   proposedDate: CoefficientObservationResponseProposedDate;
   /** How its observed application compares with what is stored */
@@ -26,6 +33,11 @@ export interface CoefficientObservationResponse {
      * @nullable
      */
   storedValidFrom: string | null;
+  /**
+     * Local day the coefficient is stored to stop applying (exclusive end). Null when its period is open.
+     * @nullable
+     */
+  storedValidTo: string | null;
   /** Supply the coefficient belongs to */
   supply: SupplyReferenceResponse;
 }

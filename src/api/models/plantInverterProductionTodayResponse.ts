@@ -20,7 +20,7 @@ export interface PlantInverterProductionTodayResponse {
      */
   powerCurve: PlantInverterPowerPointResponse[] | null;
   /**
-     * True when the latest inverter snapshot of today is more than 60 minutes old; one exactly 60 minutes old is not stale. Null unless the status is AVAILABLE.
+     * True when the latest inverter snapshot of today is more than 15 minutes old; one exactly 15 minutes old is not stale. Null unless the status is AVAILABLE.
      * @nullable
      */
   stale: boolean | null;

@@ -26,6 +26,7 @@ import type {
 
 import type {
   ActivateCoefficientsBody,
+  ActivateCoefficientsResponse,
   CloseCoefficientsBody,
   CoefficientActivationResponse,
   CreateSharingAgreementBody,
@@ -1358,6 +1359,16 @@ export const useReplacePartitionCoefficients = <TError = ErrorType<RestError>,
  * does, then places it at the new date. A close set on the coefficient itself is kept,
  * shortened to the next coefficient's start if that comes earlier.
  *
+ * The first activation of an agreement (none of its coefficients had a `validFrom`
+ * before the request) also closes on `appliedOn`, in the same transaction, the
+ * coefficient in force on that day of every supply of the plant that has no coefficient
+ * in the agreement: a supply that leaves the distribution stops receiving production. A
+ * coefficient that ended on or before `appliedOn`, or starts on or after it, is not
+ * touched. Later activations of the agreement and corrections close nothing, and
+ * deactivating the agreement does not reopen these closures: use `reopen`.
+ * `leavingClosures` is the subset of `coefficients` closed because their supply is absent
+ * from the agreement.
+ *
  * Date writes on the same plant run one after another.
  *
  * **Required: Community Admin**
@@ -1388,7 +1399,7 @@ export const activatePartitionCoefficients = (
 ) => {
 
 
-      return customInstance<CoefficientActivationResponse>(
+      return customInstance<ActivateCoefficientsResponse>(
       {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/partition-coefficients/activate`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: activateCoefficientsBody, signal
