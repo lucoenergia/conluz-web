@@ -54,11 +54,19 @@ const AnomalyRows: FC<{ group: SupplyAnomalies }> = ({ group }) => {
   );
 };
 
-/** A supply's anomalies, collapsible, saying how many there are while collapsed. */
-const SupplyAnomaliesItem: FC<{ group: SupplyAnomalies; defaultExpanded: boolean }> = ({ group, defaultExpanded }) => (
+/**
+ * A supply's anomalies, collapsible, saying how many there are while
+ * collapsed. Its heading sits one level below its agreement's, when there is one.
+ */
+const SupplyAnomaliesItem: FC<{ group: SupplyAnomalies; defaultExpanded: boolean; heading: "h3" | "h4" }> = ({
+  group,
+  defaultExpanded,
+  heading,
+}) => (
   <Accordion
     disableGutters
     defaultExpanded={defaultExpanded}
+    slots={{ heading }}
     elevation={0}
     sx={{ border: `1px solid ${colors.border.light}`, "&::before": { display: "none" } }}
   >
@@ -108,7 +116,12 @@ export const ObservedAnomalies: FC<ObservedAnomaliesProps> = ({ groups, showAgre
           </Box>
         )}
         {group.supplies.map((supplyGroup) => (
-          <SupplyAnomaliesItem key={supplyGroup.supply.id} group={supplyGroup} defaultExpanded={defaultExpanded} />
+          <SupplyAnomaliesItem
+            key={supplyGroup.supply.id}
+            group={supplyGroup}
+            defaultExpanded={defaultExpanded}
+            heading={showAgreements ? "h4" : "h3"}
+          />
         ))}
       </Box>
     ))}
