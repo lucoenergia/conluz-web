@@ -290,7 +290,66 @@ describe("SharingAgreementObservationPage", () => {
     const este = supplyRow("Casa Este");
 
     expect(within(este).getByText("No distinguible")).toBeInTheDocument();
-    expect(este).toHaveTextContent("Mismo coeficiente que en el acuerdo anterior: no se puede observar el cambio01/03/2025Propuesta");
+    expect(este).toHaveTextContent(
+      "Mismo coeficiente que en el acuerdo anterior: en Datadis no se ve cuándo cambió." +
+        "01/03/2025Propuesta" +
+        "Propuesta: es la fecha de aplicación más frecuente entre los demás puntos de este acuerdo.",
+    );
+    expect(within(este).queryByText("Observada")).not.toBeInTheDocument();
+  });
+
+  test("UI-AGR-027: a row that cannot be distinguished, in an agreement with no other row observed, says there is no proposed date", () => {
+    const fixture = observationFixture();
+    renderPage({
+      observation: query.success<typeof getSharingAgreementObservation>(
+        observationFixture({
+          summary: {
+            ...fixture.summary,
+            earliestObservedDate: null,
+            mostFrequentObservedDate: null,
+            coefficientStatusCounts: buildObservationStatusCounts({ notDistinguishable: 1, pendingApplication: 1 }),
+            leavingStatusCounts: buildObservationStatusCounts(),
+            anomalies: [],
+            anomalyCounts: buildSharingAnomalyCounts(),
+            // No row observed: the agreement has no applied window, so
+            // neither Σβ nor any row's observed β (OBS-009).
+            unallocatedShare: null,
+            recommendations: [Recommendation.SET_DATES],
+          },
+          coefficients: [
+            buildCoefficientObservation({
+              coefficientId: "c-este",
+              supply: ESTE,
+              coefficient: 0.05,
+              storedValidFrom: "2025-03-01",
+              observedDate: null,
+              proposedDate: null,
+              observedBeta: null,
+              observedValidDays: 0,
+              status: Status.NOT_DISTINGUISHABLE,
+            }),
+            buildCoefficientObservation({
+              coefficientId: "c-norte",
+              supply: NORTE,
+              coefficient: 0.0315,
+              storedValidFrom: "2025-03-01",
+              observedDate: null,
+              observedBeta: null,
+              observedValidDays: 0,
+              status: Status.PENDING_APPLICATION,
+            }),
+          ],
+          leavingRows: [],
+        }),
+      ),
+    });
+    const este = supplyRow("Casa Este");
+
+    expect(este).toHaveTextContent(
+      "Mismo coeficiente que en el acuerdo anterior: en Datadis no se ve cuándo cambió." +
+        "Sin fecha propuesta: ningún otro punto de este acuerdo tiene fecha observada.",
+    );
+    expect(within(este).queryByText("Propuesta")).not.toBeInTheDocument();
     expect(within(este).queryByText("Observada")).not.toBeInTheDocument();
   });
 

@@ -81,13 +81,22 @@ const RowDate: FC<{
     return (
       <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5 }}>
         <Typography variant="body2" sx={{ color: colors.text.subtle }}>
-          Mismo coeficiente que en el acuerdo anterior: no se puede observar el cambio
+          Mismo coeficiente que en el acuerdo anterior: en Datadis no se ve cuándo cambió.
         </Typography>
-        {proposed && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
-            <span>{formatObservedDate(proposed)}</span>
-            <ObservationChip label="Propuesta" tone="proposed" />
-          </Box>
+        {proposed ? (
+          <>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+              <span>{formatObservedDate(proposed)}</span>
+              <ObservationChip label="Propuesta" tone="proposed" />
+            </Box>
+            <Typography variant="body2" sx={{ color: colors.text.subtle }}>
+              Propuesta: es la fecha de aplicación más frecuente entre los demás puntos de este acuerdo.
+            </Typography>
+          </>
+        ) : (
+          <Typography variant="body2" sx={{ color: colors.text.subtle }}>
+            Sin fecha propuesta: ningún otro punto de este acuerdo tiene fecha observada.
+          </Typography>
         )}
       </Box>
     );
