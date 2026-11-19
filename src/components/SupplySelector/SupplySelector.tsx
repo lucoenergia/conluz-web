@@ -33,6 +33,8 @@ interface SupplySelectorProps {
   /** A supply of the community the caller does not own, opened by a community admin (#252). */
   viewed?: SupplyResponse | null;
   onSelect: (supplyId: string | null) => void;
+  /** Offer "Todos mis puntos". A page that shows one supply at a time leaves it out (#432). */
+  showAll?: boolean;
 }
 
 /** The viewed supply alone: the caller owns none here (#385). */
@@ -67,7 +69,7 @@ export const SupplySelector: FC<SupplySelectorProps> = (props) => {
 };
 
 const SupplyDropdown: FC<SupplySelectorProps> = (props) => {
-  const { supplies, selected, viewed, onSelect } = props;
+  const { supplies, selected, viewed, onSelect, showAll = true } = props;
   const viewedOnly = isViewedOnly(props);
   return (
     <TextField
@@ -86,7 +88,7 @@ const SupplyDropdown: FC<SupplySelectorProps> = (props) => {
         </MenuItem>
       )}
       {viewed && !viewedOnly && <ListSubheader>{OWN_GROUP}</ListSubheader>}
-      {!viewedOnly && <MenuItem value={ALL}>{ALL_LABEL}</MenuItem>}
+      {!viewedOnly && showAll && <MenuItem value={ALL}>{ALL_LABEL}</MenuItem>}
       {supplies.map((supply) => (
         <MenuItem key={supply.id} value={supply.id} sx={{ whiteSpace: "normal" }}>
           <OptionContent supply={supply} />
@@ -97,7 +99,7 @@ const SupplyDropdown: FC<SupplySelectorProps> = (props) => {
 };
 
 const SupplySheet: FC<SupplySelectorProps> = (props) => {
-  const { supplies, selected, viewed, onSelect } = props;
+  const { supplies, selected, viewed, onSelect, showAll = true } = props;
   const viewedOnly = isViewedOnly(props);
   const [open, setOpen] = useState(false);
   const labelId = useId();
@@ -169,7 +171,7 @@ const SupplySheet: FC<SupplySelectorProps> = (props) => {
               {!viewedOnly && <GroupHeading>{OWN_GROUP}</GroupHeading>}
             </>
           )}
-          {!viewedOnly && <FormControlLabel value={ALL} control={<Radio />} label={ALL_LABEL} />}
+          {!viewedOnly && showAll && <FormControlLabel value={ALL} control={<Radio />} label={ALL_LABEL} />}
           {supplies.map((supply) => (
             <FormControlLabel
               key={supply.id}
