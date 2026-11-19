@@ -34,18 +34,24 @@ here too, and opens another member's supply from its detail page, one at a time.
 - **Rule:**
   - The page MUST list the caller's own enabled supplies in the active community and "Todos mis
     puntos", for members and community admins alike. The selector, labelled "Punto de suministro",
-    MUST offer "Todos mis puntos" first among them, as the default, then one option per supply as
-    "{nombre} · {CUPS}", the name falling back to the address as UI-SUP-010 does. An option MUST be
-    tagged "Punto de planta" exactly when the supply's `plant` reference is non-null. The footer
+    MUST offer "Todos mis puntos" first among them, as the default, then one option per supply.
+    A supply MUST be shown in two lines, in the closed field, its options and the bottom sheet
+    alike: its name first, falling back to the address as UI-SUP-010 does, then its CUPS. Both lines
+    MUST wrap and MUST NOT be truncated, with no ellipsis and no tooltip; "Todos mis puntos" stays
+    one line. An option MUST be tagged "Punto de planta", on its first line, exactly when the
+    supply's `plant` reference is non-null. The footer
     "Solo aparecen tus puntos activos en esta comunidad." MUST be shown under it. Below `sm` the
     selector MUST open as a bottom sheet.
   - A community admin MAY open any enabled supply of the active community through `?supplyId=`. It
     is looked up only when the active community reports `canManage`, and selectable only when it is
     enabled, belongs to the active community and reports `canRead`.
   - That supply MUST be shown in its own group, "Punto que estás consultando", above the caller's
-    own, labelled "{nombre} · {CUPS} · {titular}" when the response carries the owner's member
-    record and "{nombre} · {CUPS}" when it does not. Choosing any other option MUST remove it from
-    the selector.
+    own, its second line reading "{CUPS} · de {titular}" when the response carries the owner's
+    member record and "{CUPS}" when it does not. Choosing any other option MUST remove it from the
+    selector.
+  - From `sm`, the supply and period selectors MUST sit in one row of equal columns, their fields
+    the same height and styled alike, the footer under the supply field only. Below `sm` they are
+    stacked.
   - For a caller who owns no supplies, the selector MUST list only the viewed supply, with no
     "Todos mis puntos" and no footer, in the dropdown and in the bottom sheet alike.
   - "Todos mis puntos" MUST stay the caller's own supplies, read from the caller's own membership.
@@ -61,10 +67,14 @@ here too, and opens another member's supply from its detail page, one at a time.
   name. The owner's member record, when the response carries one, says whose supply the admin is
   reading, with no second request. For a caller who owns no supplies, "Todos mis puntos" would
   always be empty and the footer would describe a list that is not there, so neither is offered,
-  and the membership they would read is never asked.
+  and the membership they would read is never asked. A name, a CUPS and an owner do not fit one
+  line on a phone, and a cut name or CUPS is a wrong supply waiting to happen, so a supply takes two
+  lines and is never truncated; the period selector beside it matches its field, so the row reads as
+  one set of filters.
 - **Implements:** n/a
 - **Source:** #247; changed in #252 (a community admin opens a supply of the community); changed
-  in #385 (a community admin who owns no supplies)
+  in #385 (a community admin who owns no supplies); changed in #432 (two lines, never truncated,
+  the row with the period selector)
 
 ### UI-HIS-002 — The selection is held in the address, and does not survive a community switch
 
