@@ -46,7 +46,7 @@ function headerFacts(observation: PlantSharingObservationResponse): { keyFacts: 
         shortLabel: "Periodo",
         value: computable ? formatDataRange(analysis.analysedFrom!, analysis.analysedTo!) : NO_VALUE,
       },
-      { label: "Puntos con datos", shortLabel: "Con datos", value: `${withData} de ${analysed}` },
+      { label: "Puntos con datos", shortLabel: "Con datos", value: computable ? `${withData} de ${analysed}` : NO_VALUE },
       { label: "Anomalías", value: computable ? String(anomalies) : NO_VALUE },
     ],
     details: computable ? [{ label: "Acuerdos por revisar", value: `${toReview} de ${sharingAgreements.length}` }] : [],
