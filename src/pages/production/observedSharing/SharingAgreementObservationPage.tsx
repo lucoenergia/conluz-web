@@ -132,7 +132,7 @@ const FilterChips: FC<{
   onChange: (filter: ObservationFilter) => void;
   counts: Record<ObservationFilter, number>;
 }> = ({ filter, onChange, counts }) => (
-  <Box sx={{ display: "flex", gap: 1, overflowX: "auto", flexWrap: "nowrap", pb: 0.5, px: { xs: 2, sm: 0 }, pt: { xs: 2, sm: 0 } }}>
+  <Box sx={{ display: "flex", gap: 1, overflowX: "auto", flexWrap: "nowrap", pb: 0.5, px: 2, pt: 2 }}>
     {(["all", "warnings"] as const).map((value) => (
       <Chip
         key={value}
