@@ -108,6 +108,13 @@ export interface DetailVariantProps {
   subtitleIcon?: ReactNode;
   status?: ReactNode;
   keyFacts?: DetailKeyFacts;
+  /**
+   * Lets a key fact's value wrap onto more lines instead of being cut with an
+   * ellipsis. For a page whose facts are sentences ("Entre el 26/02/2025 y el
+   * 04/03/2025") rather than identifiers or figures, where a cut value says
+   * nothing. A copyable value still truncates: it is repeated in the details.
+   */
+  wrapFactValues?: boolean;
   details?: readonly DetailFact[];
   /** The "⋯" trigger and its menu. Visibility stays the consumer's business. */
   menu?: ReactNode;
@@ -136,6 +143,7 @@ export interface ListVariantProps {
   subtitle?: ReactNode;
   keyFacts?: ListKeyFacts;
   details?: never;
+  wrapFactValues?: never;
   status?: never;
   menu?: never;
   titleRef?: never;
@@ -158,11 +166,15 @@ const KeyFactCell: FC<{
   flex: Record<string, string | number>;
   isDivided: boolean;
   isCopied: boolean;
+  wrapValue: boolean;
   onCopy: (fact: DetailKeyFact) => void;
   onTruncationChange: (label: string, isTruncated: boolean) => void;
-}> = ({ fact, label, flex, isDivided, isCopied, onCopy, onTruncationChange }) => {
+}> = ({ fact, label, flex, isDivided, isCopied, wrapValue, onCopy, onTruncationChange }) => {
   const valueRef = useRef<HTMLDivElement | null>(null);
   const isCopyable = fact.copyable !== undefined;
+  // A wrapping value takes the space it needs on more lines, so the label
+  // beside it holds and the value is the one that narrows.
+  const wraps = wrapValue && !isCopyable;
 
   useEffect(() => {
     if (!isCopyable) return;
@@ -214,7 +226,7 @@ const KeyFactCell: FC<{
           // label holds; where it is not, the label yields, because a
           // figure squeezed out by the word naming it is worse than a
           // shortened word.
-          flexShrink: isCopyable ? 0 : 1,
+          flexShrink: isCopyable || wraps ? 0 : 1,
           minWidth: 0,
           overflow: "hidden",
           textOverflow: "ellipsis",
@@ -228,7 +240,7 @@ const KeyFactCell: FC<{
           alignItems: "center",
           gap: 0.5,
           maxWidth: "100%",
-          flexShrink: isCopyable ? 1 : 0,
+          flexShrink: isCopyable || wraps ? 1 : 0,
           // A floor for the value AND its copy button together. The
           // copyable cell is the one that gives way, and without this it
           // gave way entirely: clipped to a character and a half it
@@ -245,9 +257,9 @@ const KeyFactCell: FC<{
             color: colors.text.primary,
             fontVariantNumeric: "tabular-nums",
             minWidth: 0,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            ...(wraps
+              ? { whiteSpace: "normal", overflowWrap: "anywhere" }
+              : { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }),
           }}
         >
           {fact.value}
@@ -283,6 +295,7 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
   subtitleIcon,
   status,
   keyFacts,
+  wrapFactValues = false,
   details,
   menu,
   isLoading = false,
@@ -486,6 +499,7 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
               flex={isList ? { xs: "1 1 0", sm: 1 } : { xs: compactFlex(fact), sm: 1 }}
               isDivided={index > 0}
               isCopied={copiedLabel === fact.label}
+              wrapValue={wrapFactValues}
               onCopy={handleCopy}
               onTruncationChange={handleTruncationChange}
             />

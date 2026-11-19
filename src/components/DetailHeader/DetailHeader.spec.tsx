@@ -13,6 +13,7 @@ import {
   type ListVariantProps,
 } from "./DetailHeader";
 import { colors } from "../../theme/tokens";
+import { declaredStyle } from "../../test/declaredStyle";
 
 vi.mock("@mui/material", async () => {
   const actual = await vi.importActual("@mui/material");
@@ -240,6 +241,34 @@ describe("DetailHeader", () => {
 
       const toggle = screen.getByRole("button", { name: "Ver 5 datos más" });
       expect(toggle).toHaveTextContent("+5");
+    });
+  });
+
+  describe("wrapping fact values (#418)", () => {
+    const SENTENCE_FACTS: DetailKeyFacts = [
+      { label: "Aplicación", value: "Entre el 26/02/2025 y el 04/03/2025" },
+      { label: "CAU", value: "ES0031300325733001FH0FA000", copyable: "ES0031300325733001FH0FA000" },
+    ];
+    const value = (text: string) => screen.getByText(text);
+
+    it("cuts a value with an ellipsis by default", () => {
+      setViewport(true);
+      renderHeader({ keyFacts: SENTENCE_FACTS });
+
+      expect(declaredStyle(value("Entre el 26/02/2025 y el 04/03/2025"))).toMatchObject({
+        "white-space": "nowrap",
+        "text-overflow": "ellipsis",
+      });
+    });
+
+    it("lets a value wrap onto more lines when asked, keeping a copyable one cut", () => {
+      setViewport(true);
+      renderHeader({ keyFacts: SENTENCE_FACTS, wrapFactValues: true });
+
+      const wrapped = declaredStyle(value("Entre el 26/02/2025 y el 04/03/2025"));
+      expect(wrapped["white-space"]).toBe("normal");
+      expect(wrapped["text-overflow"]).toBeUndefined();
+      expect(declaredStyle(value("ES0031300325733001FH0FA000"))["white-space"]).toBe("nowrap");
     });
   });
 

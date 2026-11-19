@@ -94,3 +94,21 @@ export const Loading = () => (
     />
   </Mui.Box>
 );
+
+/** Facts that are sentences wrap instead of being cut, on a phone-width card. */
+export const WrappedFacts = () => (
+  <Mui.Box sx={{ width: 390 }}>
+    <DetailHeader
+      icon={<Icons.SolarPower />}
+      title="Reparto vecinos bloque A según Datadis"
+      subtitle="Planta Solar Norte"
+      keyFacts={[
+        { label: "Fichero enviado", shortLabel: "Enviado", value: "10/02/2025" },
+        { label: "Aplicación", value: "Entre el 26/02/2025 y el 04/03/2025" },
+        { label: "Anomalías", value: "2" },
+      ]}
+      details={[{ label: "Sin explicar (1 − Σβ)", value: "6,7 %" }]}
+      wrapFactValues
+    />
+  </Mui.Box>
+);

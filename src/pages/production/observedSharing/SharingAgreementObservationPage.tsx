@@ -457,6 +457,7 @@ export const SharingAgreementObservationPage: FC = () => {
               }
               status={summary && <SharingAgreementStatusChip status={summary.sharingAgreement.status} />}
               isLoading={isLoading}
+              wrapFactValues
               keyFacts={
                 summary && observation.analysis.computable
                   ? [

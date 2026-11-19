@@ -267,6 +267,7 @@ export const PlantObservedSharingPage: FC = () => {
                 </>
               }
               isLoading={isLoading}
+              wrapFactValues
               keyFacts={facts?.keyFacts}
               details={facts?.details}
             />

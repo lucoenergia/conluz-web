@@ -44,6 +44,8 @@ import {
   FIXED_NO_COMMUNITY_USER,
   FIXED_PLANT,
   FIXED_PLANT_ID,
+  FIXED_AGREEMENT_OBSERVATION,
+  FIXED_PLANT_OBSERVATION,
   FIXED_PLATFORM_ADMIN_USER,
   FIXED_PLATFORM_ADMINS,
   FIXED_SHARING_AGREEMENTS,
@@ -65,6 +67,8 @@ import {
   mockManagementHome,
   mockMemberHome,
   mockSharingAgreementDetailRoutes,
+  mockObservedSharingRoutes,
+  mockPlantDetailRoutes,
   memberDailySeries,
   memberHourlySeries,
   mockSharingAgreementsPlantRoutes,
@@ -1926,4 +1930,47 @@ test.describe("#416: a value never editable from its screen", () => {
 
     expect((await styles(email)).background).not.toBe(rgb(colors.background.readOnly));
   });
+});
+
+test.describe("#418: the observed sharing headers at 390px", () => {
+  const cases = [
+    {
+      page: "the plant's",
+      path: `/plants/${FIXED_PLANT_ID}/sharing-agreements/observed`,
+      values: ["Del 1 abr 2023 al 31 oct 2026", "4 de 5"],
+    },
+    {
+      page: "an agreement's",
+      path: `/plants/${FIXED_PLANT_ID}/sharing-agreements/observed/${PUBLISHED_AGREEMENT.id}`,
+      values: ["10/02/2025", "Entre el 26/02/2025 y el 04/03/2025"],
+    },
+  ];
+
+  for (const { page: name, path, values } of cases) {
+    test(`${name} page wraps its fact values instead of cutting them`, async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name !== "mobile", "The strip holds two facts on a line only below sm: the 390px viewport.");
+      await injectAuthToken(page);
+      await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+      await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+      await mockPlantDetailRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+      await mockObservedSharingRoutes(
+        page,
+        FIXED_PLANT_OBSERVATION,
+        { [PUBLISHED_AGREEMENT.id]: FIXED_AGREEMENT_OBSERVATION },
+        FIXED_COMMUNITY_ADMIN_USER,
+      );
+      await page.goto(path);
+
+      const header = page.getByTestId("detail-header");
+      for (const value of values) {
+        const cell = header.getByText(value, { exact: true });
+        await expect(cell).toBeVisible();
+        // Clipped text is wider than its box; a wrapped value is not.
+        const clipped = await cell.evaluate((element) => element.scrollWidth > element.clientWidth);
+        expect(clipped, `"${value}" is cut`).toBe(false);
+      }
+      const sideways = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+      expect(sideways, "the page scrolls sideways").toBe(false);
+    });
+  }
 });
