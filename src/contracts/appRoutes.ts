@@ -17,6 +17,8 @@ export interface ExtractedRoute {
   path: string;
   /** The requirement of the nearest CapabilityRoute wrapping this leaf, parent elements included. */
   require: Requirement | null;
+  /** The source of the leaf's `element`, e.g. `<CapabilityRoute …><TodayPage /></CapabilityRoute>`. */
+  element: string;
 }
 
 function attribute(element: ts.JsxSelfClosingElement | ts.JsxOpeningElement, name: string) {
@@ -109,7 +111,7 @@ export function extractRoutes(source: string): ExtractedRoute[] {
     // A route with an element and no Route children is a page; `index` is the
     // same thing addressed by its parent's path.
     if (elementAttr && children.length === 0) {
-      routes.push({ path: joinPath(here), require: guard });
+      routes.push({ path: joinPath(here), require: guard, element: elementAttr.initializer?.getText() ?? "" });
       return;
     }
 
