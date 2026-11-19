@@ -23,10 +23,14 @@ import type {
   PlantInverterProductionTodayResponse,
   PlantMonthlyEnergyBucketResponse,
   PlantResponse,
+  PlantSharingObservationResponse,
   PlatformAdminResponse,
   PlatformCapabilitiesResponse,
   SendInvitationsResponse,
+  SharingAgreementObservationResponse,
+  SharingAgreementObservationSummaryResponse,
   SharingAgreementResponse,
+  SupplyReferenceResponse,
   SupplyResponse,
 } from "../../../src/api/models";
 
@@ -2031,4 +2035,194 @@ export const FIXED_INVERTER_NO_DATA_TODAY: PlantInverterProductionTodayResponse 
   powerCurve: null,
   lastUpdatedAt: null,
   stale: null,
+};
+
+// ---------------------------------------------------------------------------
+// Observed sharing (#418): the plant's analysis and one agreement's slice of
+// it. Two agreements of FIXED_SHARING_AGREEMENTS, the superseded one applied
+// on its date and the one in force applied on other dates, with anomalies and
+// a supply leaving; one supply without data and one not computable.
+// ---------------------------------------------------------------------------
+
+const OBSERVED_SUPPLIES = {
+  norte: { id: "0b5e0001-0000-0000-0000-000000000001", code: "ES0031000000000001JN0F", name: "Casa Norte" },
+  sur: { id: "0b5e0001-0000-0000-0000-000000000002", code: "ES0031000000000002JN0F", name: "Casa Sur" },
+  este: { id: "0b5e0001-0000-0000-0000-000000000003", code: "ES0031000000000003JN0F", name: "Casa Este" },
+  oeste: { id: "0b5e0001-0000-0000-0000-000000000004", code: "ES0031000000000004JN0F", name: "Casa Oeste" },
+  escuela: { id: "0b5e0001-0000-0000-0000-000000000005", code: "ES0031000000000005JN0F", name: "Escuela" },
+  taller: { id: "0b5e0001-0000-0000-0000-000000000006", code: "ES0031000000000006JN0F", name: "Taller" },
+} satisfies Record<string, SupplyReferenceResponse>;
+
+const OBSERVED_ANALYSIS = {
+  analysedFrom: "2023-04-01",
+  analysedTo: "2026-10-31",
+  computable: true,
+  notComputableReason: null,
+  notComputableSupplies: [OBSERVED_SUPPLIES.taller],
+  suppliesWithValidDays: [OBSERVED_SUPPLIES.norte, OBSERVED_SUPPLIES.sur, OBSERVED_SUPPLIES.este, OBSERVED_SUPPLIES.escuela],
+  suppliesWithoutValidDays: [OBSERVED_SUPPLIES.oeste],
+} satisfies PlantSharingObservationResponse["analysis"];
+
+const NO_COUNTS = {
+  appliedSameDate: 0,
+  appliedDifferentDate: 0,
+  pendingApplication: 0,
+  notDistinguishable: 0,
+  notObserved: 0,
+  noData: 0,
+};
+
+const ORIGINAL_OBSERVED: SharingAgreementObservationSummaryResponse = {
+  sharingAgreement: { id: "00000000-1111-2222-3333-444444444444", name: "Reparto original 2022", status: "SUPERSEDED" },
+  distributorFileSentOn: "2023-03-15",
+  earliestObservedDate: { from: null, to: "2023-04-01" },
+  mostFrequentObservedDate: { from: null, to: "2023-04-01" },
+  coefficientStatusCounts: { ...NO_COUNTS, appliedSameDate: 4, noData: 1 },
+  leavingStatusCounts: NO_COUNTS,
+  anomalies: [],
+  anomalyCounts: { unknownCoefficient: 0, reverted: 0, energyOutsideAgreement: 0, noEnergyInAgreement: 0, appliedBeforeSent: 0 },
+  unallocatedShare: { days: 700, unallocated: 0.042, registeredShareWithoutData: 0.03 },
+  recommendations: ["NONE"],
+};
+
+const IN_FORCE_ANOMALIES: SharingAgreementObservationSummaryResponse["anomalies"] = [
+  {
+    id: "anomaly-norte",
+    supply: OBSERVED_SUPPLIES.norte,
+    type: "UNKNOWN_COEFFICIENT",
+    start: { from: "2025-05-01", to: "2025-05-01" },
+    end: "2025-06-30",
+    observedBeta: 0.0305,
+    observedValidDays: 61,
+  },
+  {
+    id: "anomaly-sur",
+    supply: OBSERVED_SUPPLIES.sur,
+    type: "REVERTED",
+    start: { from: "2025-08-28", to: "2025-09-03" },
+    end: null,
+    observedBeta: 0.0412,
+    observedValidDays: 420,
+  },
+];
+
+const IN_FORCE_OBSERVED: SharingAgreementObservationSummaryResponse = {
+  sharingAgreement: { id: "eeeeeeee-ffff-0000-1111-222222222222", name: "Reparto vecinos bloque A", status: "PUBLISHED" },
+  distributorFileSentOn: "2025-02-10",
+  earliestObservedDate: { from: "2025-02-26", to: "2025-03-04" },
+  mostFrequentObservedDate: { from: "2025-02-26", to: "2025-03-04" },
+  coefficientStatusCounts: { ...NO_COUNTS, appliedSameDate: 1, appliedDifferentDate: 1, notDistinguishable: 1, noData: 1 },
+  leavingStatusCounts: { ...NO_COUNTS, appliedDifferentDate: 1 },
+  anomalies: IN_FORCE_ANOMALIES,
+  anomalyCounts: { unknownCoefficient: 1, reverted: 1, energyOutsideAgreement: 0, noEnergyInAgreement: 0, appliedBeforeSent: 0 },
+  unallocatedShare: { days: 600, unallocated: 0.067, registeredShareWithoutData: 0.03 },
+  recommendations: ["SET_DATES", "REVIEW_ANOMALIES"],
+};
+
+export const FIXED_PLANT_OBSERVATION: PlantSharingObservationResponse = {
+  analysis: OBSERVED_ANALYSIS,
+  consecutiveDays: 3,
+  sharingAgreements: [ORIGINAL_OBSERVED, IN_FORCE_OBSERVED],
+  unattributedAnomalies: [
+    {
+      id: "anomaly-este",
+      supply: OBSERVED_SUPPLIES.este,
+      type: "ENERGY_OUTSIDE_AGREEMENT",
+      start: { from: "2024-01-01", to: "2024-01-01" },
+      end: "2024-01-31",
+      observedBeta: 0.02,
+      observedValidDays: 31,
+    },
+  ],
+};
+
+/** The plant supply has no data: nothing can be observed. */
+export const FIXED_PLANT_OBSERVATION_NOT_COMPUTABLE: PlantSharingObservationResponse = {
+  analysis: {
+    ...OBSERVED_ANALYSIS,
+    analysedFrom: null,
+    analysedTo: null,
+    computable: false,
+    notComputableReason: "PLANT_SUPPLY_WITHOUT_DATA",
+    notComputableSupplies: [],
+    suppliesWithValidDays: [],
+    suppliesWithoutValidDays: [],
+  },
+  consecutiveDays: 3,
+  sharingAgreements: [
+    { ...ORIGINAL_OBSERVED, recommendations: [], unallocatedShare: null },
+    { ...IN_FORCE_OBSERVED, recommendations: [], unallocatedShare: null, anomalies: [] },
+  ],
+  unattributedAnomalies: [],
+};
+
+/** The agreement in force, row by row: one of each status the page treats apart. */
+export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = {
+  analysis: OBSERVED_ANALYSIS,
+  consecutiveDays: 3,
+  summary: IN_FORCE_OBSERVED,
+  coefficients: [
+    {
+      coefficientId: "observed-norte",
+      supply: OBSERVED_SUPPLIES.norte,
+      coefficient: 0.0315,
+      storedValidFrom: "2025-03-01",
+      storedValidTo: null,
+      observedDate: { from: "2025-03-01", to: "2025-03-01" },
+      proposedDate: null,
+      observedBeta: 0.0318,
+      observedValidDays: 540,
+      status: "APPLIED_SAME_DATE",
+    },
+    {
+      coefficientId: "observed-sur",
+      supply: OBSERVED_SUPPLIES.sur,
+      coefficient: 0.0315,
+      storedValidFrom: "2025-03-01",
+      storedValidTo: null,
+      observedDate: { from: "2025-02-26", to: "2025-03-04" },
+      proposedDate: null,
+      observedBeta: 0.0412,
+      observedValidDays: 540,
+      status: "APPLIED_DIFFERENT_DATE",
+    },
+    {
+      coefficientId: "observed-este",
+      supply: OBSERVED_SUPPLIES.este,
+      coefficient: 0.05,
+      storedValidFrom: "2025-03-01",
+      storedValidTo: null,
+      observedDate: null,
+      proposedDate: { from: "2025-02-26", to: "2025-03-04" },
+      observedBeta: 0.05,
+      observedValidDays: 540,
+      status: "NOT_DISTINGUISHABLE",
+    },
+    {
+      coefficientId: "observed-oeste",
+      supply: OBSERVED_SUPPLIES.oeste,
+      coefficient: 0.03,
+      storedValidFrom: "2025-03-01",
+      storedValidTo: "2026-01-01",
+      observedDate: null,
+      proposedDate: null,
+      observedBeta: null,
+      observedValidDays: 0,
+      status: "NO_DATA",
+    },
+  ],
+  leavingRows: [
+    {
+      supply: OBSERVED_SUPPLIES.escuela,
+      previousCoefficientId: "observed-escuela-previous",
+      previousSharingAgreement: { id: "00000000-1111-2222-3333-444444444444", name: "Reparto original 2022", status: "SUPERSEDED" },
+      previousCoefficient: 0.04,
+      storedValidTo: "2025-03-01",
+      observedLeavingDate: { from: "2025-04-01", to: "2025-04-01" },
+      proposedDate: null,
+      observedBeta: 0,
+      observedValidDays: 540,
+      status: "APPLIED_DIFFERENT_DATE",
+    },
+  ],
 };

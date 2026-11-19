@@ -380,6 +380,8 @@ describe("PlantObservedSharingPage", () => {
 
     expect(screen.getByRole("heading", { name: "No se puede calcular el reparto observado" })).toBeInTheDocument();
     expect(screen.queryByRole("article")).not.toBeInTheDocument();
+    // Nothing was analysed, so the header has no figure to give.
+    expect(screen.getByText("Puntos con datos").nextElementSibling).toHaveTextContent(/^—$/);
     expect(screen.queryByText(/^Recomendaci/)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ver el punto de la planta" })).toHaveAttribute("href", "/supply-points/900");
   });

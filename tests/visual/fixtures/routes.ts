@@ -13,8 +13,10 @@ import type {
   MembershipResponse,
   PartitionCoefficientResponse,
   PlantResponse,
+  PlantSharingObservationResponse,
   PlatformAdminResponse,
   PlatformCapabilitiesResponse,
+  SharingAgreementObservationResponse,
   SharingAgreementResponse,
   SupplyConsumptionBucketResponse,
   SupplyEnergyMetricsResponse,
@@ -636,6 +638,35 @@ export async function mockSharingAgreementsPlantRoutes(
       const agreement = byId.get(id);
       return agreement
         ? route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(agreement) })
+        : route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({}) });
+    },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Helper: the plant's observed sharing and its agreements' (#418). Registered
+// AFTER mockSharingAgreementsPlantRoutes(), whose predicate also matches these
+// URLs and would answer an agreement's observation as a 404. Refused unless the
+// plant served to this caller says it may list its agreements, as the backend
+// does.
+// ---------------------------------------------------------------------------
+
+export async function mockObservedSharingRoutes(
+  page: Page,
+  observation: PlantSharingObservationResponse,
+  agreementObservations: Record<string, SharingAgreementObservationResponse>,
+  currentUser?: { memberships?: Record<string, string> },
+) {
+  const { capabilities } = asPlantCaller(FIXED_PLANT, currentUser);
+  const prefix = `/api/v1/plants/${FIXED_PLANT_ID}/sharing-agreements/`;
+  await page.route(
+    (url) => url.pathname.startsWith(prefix) && url.pathname.endsWith("/observation"),
+    (route: Route) => {
+      if (refusal(capabilities, "canListSharingAgreements")) return refuse(route, "canListSharingAgreements");
+      const id = new URL(route.request().url()).pathname.slice(prefix.length).split("/")[0];
+      const body = id === "observation" ? observation : agreementObservations[id];
+      return body
+        ? route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) })
         : route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({}) });
     },
   );
