@@ -183,7 +183,7 @@ const AnalysedState: FC<{ plantId: string; observation: PlantSharingObservationR
             title={anomalyCount > 0 ? `Anomalías (${anomalyCount})` : "Anomalías"}
             description={
               anomalyCount > 0
-                ? "Agrupadas por acuerdo y punto de suministro. Cada fila es un periodo continuo, del primer al último día. Conluz no propone coeficientes: revisa el acuerdo o el fichero enviado."
+                ? "Agrupadas por acuerdo y punto de suministro. Cada fila es un periodo continuo, del primer al último día."
                 : "Cambios sostenidos que no corresponden al siguiente coeficiente registrado de un punto."
             }
           />

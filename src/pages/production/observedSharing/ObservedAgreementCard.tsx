@@ -8,7 +8,8 @@ import { ANOMALY_COUNT_ORDER, ANOMALY_TYPE_LABEL, COEFFICIENT_STATUS_LABEL, STAT
 import { formatAgreementApplication, formatDay, formatPercentageOrNone } from "./observedSharingFormat";
 import { agreementObservationPath } from "./observedSharingRoutes";
 import type { SharingAgreementObservationSummaryResponse } from "../../../api/models";
-import { RecommendationList } from "./RecommendationList";
+import { RecommendationFindings } from "./RecommendationFindings";
+import { recommendationFindings } from "./recommendationFindings";
 
 const sectionLabelSx = { color: colors.text.subtle, fontWeight: 600 } as const;
 
@@ -48,6 +49,7 @@ interface ObservedAgreementCardProps {
  */
 export const ObservedAgreementCard: FC<ObservedAgreementCardProps> = ({ plantId, summary, suppliesWithoutDataCount }) => {
   const agreement = summary.sharingAgreement;
+  const findings = recommendationFindings(plantId, summary);
   const anomalyCount = summary.anomalies.length;
   const leaving = leavingText(summary);
   const unallocated = summary.unallocatedShare;
@@ -133,7 +135,14 @@ export const ObservedAgreementCard: FC<ObservedAgreementCardProps> = ({ plantId,
         )}
       </Box>
 
-      <RecommendationList plantId={plantId} sharingAgreementId={agreement.id} recommendations={summary.recommendations} />
+      {findings.length > 0 && (
+        <Box>
+          <Typography variant="body2" sx={{ ...sectionLabelSx, mb: 0.75 }}>
+            Qué revisar
+          </Typography>
+          <RecommendationFindings findings={findings} compact />
+        </Box>
+      )}
     </Box>
   );
 };

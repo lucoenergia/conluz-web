@@ -84,28 +84,6 @@ export const ANOMALY_COUNT_ORDER: { type: SharingAnomalyResponseType; count: key
 /** A recommendation the analysis can make, other than "none". */
 export type ActionableRecommendation = Exclude<Recommendation, "NONE">;
 
-/**
- * What each recommendation says (#418). Fixed sentences, with no figure: the
- * agreement stays the source of truth and the view never proposes a value.
- */
-export const RECOMMENDATION_COPY: Record<ActionableRecommendation, { label: string; sentence: string; tone: ObservationTone }> = {
-  SET_DATES: {
-    label: "Fijar fechas",
-    sentence: "En algunos puntos, Datadis observa fechas distintas de las registradas.",
-    tone: "pending",
-  },
-  DEACTIVATE: {
-    label: "Desactivar",
-    sentence: "No se observa ningún coeficiente de este acuerdo y no consta fecha de envío.",
-    tone: "warning",
-  },
-  REVIEW_ANOMALIES: {
-    label: "Revisar anomalías",
-    sentence: "Hay anomalías atribuidas a este acuerdo. Conluz no corrige coeficientes.",
-    tone: "warning",
-  },
-};
-
 /** The recommendations that ask for something, in the order the analysis returned them. */
 export const actionableRecommendations = (recommendations: Recommendation[]): ActionableRecommendation[] =>
   recommendations.filter((item): item is ActionableRecommendation => item !== Recommendation.NONE);

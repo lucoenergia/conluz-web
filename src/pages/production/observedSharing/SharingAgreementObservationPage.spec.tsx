@@ -393,23 +393,23 @@ describe("SharingAgreementObservationPage", () => {
     expect(within(leavingSection()).getByRole("heading", { name: "Salen del reparto (1)" })).toBeInTheDocument();
   });
 
-  test("UI-AGR-023: the recommendations show in the order returned, 'Fijar fechas' with no action", () => {
+  test("UI-AGR-023: the findings show under 'Qué revisar' in the order returned, the dates with no link", () => {
     renderPage();
-    const section = screen.getByRole("region", { name: "Recomendaciones" });
+    const section = screen.getByRole("region", { name: "Qué revisar" });
 
-    expect(within(section).getByText("En algunos puntos, Datadis observa fechas distintas de las registradas.")).toBeInTheDocument();
-    expect(within(section).getAllByRole("link").map((link) => link.textContent)).toEqual(["Revisar anomalías"]);
+    expect(within(section).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+      "Fechas distintas de las registradas1 aplicado en otra fecha · 1 no distinguible · 1 salida en otra fecha",
+      "1 anomalía1 vuelve a un coeficiente anteriorVer anomalías",
+    ]);
+    expect(within(section).getAllByRole("link").map((link) => link.textContent)).toEqual(["Ver anomalías"]);
+    expect(within(section).getByRole("link", { name: "Ver anomalías" })).toHaveAttribute(
+      "href",
+      `/plants/${PLANT_ID}/sharing-agreements/observed/${AGREEMENT_ID}#anomalias`,
+    );
+    expect(within(section).queryByText("Fijar fechas")).not.toBeInTheDocument();
   });
 
-  test("states the recommendations under its own heading, with no label repeating it (#418)", () => {
-    renderPage();
-    const section = screen.getByRole("region", { name: "Recomendaciones" });
-
-    expect(within(section).queryByText(/^Recomendaci(ón|ones):/)).not.toBeInTheDocument();
-    expect(within(section).getByText("Fijar fechas")).toBeInTheDocument();
-  });
-
-  test("says 'Ninguna' under its heading when nothing is recommended (#418)", () => {
+  test("UI-AGR-023: shows no 'Qué revisar' section when nothing is to review", () => {
     renderPage({
       observation: query.success<typeof getSharingAgreementObservation>(
         observationFixture({
@@ -421,7 +421,16 @@ describe("SharingAgreementObservationPage", () => {
       ),
     });
 
-    expect(screen.getByRole("region", { name: "Recomendaciones" })).toHaveTextContent(/^RecomendacionesNinguna$/);
+    expect(screen.queryByRole("region", { name: "Qué revisar" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Ninguna/)).not.toBeInTheDocument();
+  });
+
+  test("UI-AGR-029: states nothing about what Conluz does with coefficients", () => {
+    renderPage();
+    const text = document.body.textContent ?? "";
+
+    expect(text).not.toContain("Conluz no corrige coeficientes.");
+    expect(text).not.toContain("Conluz no propone coeficientes: revisa el acuerdo o el fichero enviado.");
   });
 
   test("UI-AGR-024: the agreement's anomalies are open, by supply, with the β the backend observed", () => {

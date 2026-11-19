@@ -46,7 +46,8 @@ import {
   NO_VALUE,
 } from "./observedSharingFormat";
 import { OBSERVED_ANOMALIES_ANCHOR, observedSharingPath } from "./observedSharingRoutes";
-import { RecommendationList } from "./RecommendationList";
+import { RecommendationFindings } from "./RecommendationFindings";
+import { recommendationFindings } from "./recommendationFindings";
 import { useSharingAgreementObservationData } from "./useSharingAgreementObservationData";
 
 /** How many coefficient rows show before "Mostrar todos". */
@@ -304,22 +305,17 @@ const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservat
     return labels;
   }, [summary]);
   const anomalyCount = summary.anomalies.length;
-  const hasRecommendations = summary.recommendations.length > 0;
+  const findings = recommendationFindings(plantId, summary);
 
   return (
     <>
-      {hasRecommendations && (
+      {findings.length > 0 && (
         <Box component="section" aria-labelledby="observation-recommendations" sx={sxStyles.pageContainer}>
           <Box sx={sxStyles.softPanel}>
             <Typography id="observation-recommendations" variant="h6" component="h2" sx={{ fontWeight: 700, mb: 1.5 }}>
-              Recomendaciones
+              Qué revisar
             </Typography>
-            <RecommendationList
-              plantId={plantId}
-              sharingAgreementId={summary.sharingAgreement.id}
-              recommendations={summary.recommendations}
-              showLabel={false}
-            />
+            <RecommendationFindings findings={findings} />
           </Box>
         </Box>
       )}

@@ -5,5 +5,5 @@ export const observedSharingPath = (plantId: string) => `/plants/${plantId}/shar
 export const agreementObservationPath = (plantId: string, sharingAgreementId: string) =>
   `${observedSharingPath(plantId)}/${sharingAgreementId}`;
 
-/** The id of an agreement observation's anomalies, where "Revisar anomalías" leads. */
+/** The id of an agreement observation's anomalies, where "Ver anomalías" leads. */
 export const OBSERVED_ANOMALIES_ANCHOR = "anomalias";

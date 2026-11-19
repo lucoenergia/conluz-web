@@ -242,39 +242,48 @@ describe("PlantObservedSharingPage", () => {
     expect(within(card("Reparto 2025")).getByText("Histórico")).toBeInTheDocument();
   });
 
-  test("UI-AGR-023: every recommendation shows in the order returned, with its sentence and its action", () => {
+  test("UI-AGR-023: every recommendation shows as a finding, in the order returned, with its detail and its link", () => {
     renderPage();
-    const revised = card("Reparto 2025");
+    const findings = (name: string) =>
+      within(within(card(name)).getByText("Qué revisar").nextElementSibling as HTMLElement).getAllByRole("listitem");
 
-    const items = within(revised)
-      .getAllByRole("listitem")
-      .filter((item) => item.textContent?.startsWith("Fijar fechas") || item.textContent?.startsWith("Revisar anomalías"));
-    expect(items.map((item) => item.firstElementChild?.textContent)).toEqual(["Fijar fechas", "Revisar anomalías"]);
-    expect(within(items[0]).getByText("En algunos puntos, Datadis observa fechas distintas de las registradas.")).toBeInTheDocument();
-    expect(within(items[1]).getByText("Hay anomalías atribuidas a este acuerdo. Conluz no corrige coeficientes.")).toBeInTheDocument();
-    expect(within(items[1]).getByRole("link", { name: "Revisar anomalías" })).toHaveAttribute(
+    const revised = findings("Reparto 2025");
+    expect(revised.map((item) => item.textContent)).toEqual([
+      "Fechas distintas de las registradas2 aplicados en otra fecha · 1 salida en otra fecha",
+      "2 anomalías1 coeficiente desconocido · 1 vuelve a un coeficiente anteriorVer anomalías",
+    ]);
+    expect(within(revised[1]).getByRole("link", { name: "Ver anomalías" })).toHaveAttribute(
       "href",
       `/plants/${PLANT_ID}/sharing-agreements/observed/revised#anomalias`,
     );
 
-    const current = card("Reparto 2026");
-    expect(within(current).getByText("No se observa ningún coeficiente de este acuerdo y no consta fecha de envío.")).toBeInTheDocument();
-    expect(within(current).getByRole("link", { name: "Ir a desactivar" })).toHaveAttribute(
+    const current = findings("Reparto 2026");
+    expect(current.map((item) => item.textContent)).toEqual([
+      "Sin aplicación observadaNo se observa ningún coeficiente y no consta fecha de envío.Ir a desactivar",
+    ]);
+    expect(within(current[0]).getByRole("link", { name: "Ir a desactivar" })).toHaveAttribute(
       "href",
       `/plants/${PLANT_ID}/sharing-agreements/current`,
     );
-
-    expect(within(card("Reparto inicial 2023")).getByText("Recomendación: Ninguna")).toBeInTheDocument();
-    // A card has no heading of its own for them: its label stays.
-    expect(within(revised).getByText("Recomendaciones:")).toBeInTheDocument();
   });
 
-  // The set-dates flow ships with #419; until then the recommendation is shown, with nothing to press.
-  test("UI-AGR-023: 'Fijar fechas' offers no action", () => {
+  test("UI-AGR-023: an agreement with nothing to review shows no finding, and no chip states one", () => {
+    renderPage();
+    const initial = card("Reparto inicial 2023");
+
+    expect(within(initial).queryByText("Qué revisar")).not.toBeInTheDocument();
+    expect(within(initial).queryByText(/Ninguna/)).not.toBeInTheDocument();
+    for (const label of ["Fijar fechas", "Desactivar", "Revisar anomalías"]) {
+      expect(screen.queryByText(label)).not.toBeInTheDocument();
+    }
+  });
+
+  // The set-dates flow ships with #419; until then the finding is shown, with nothing to press.
+  test("UI-AGR-023: dates different from the registered ones offer no action", () => {
     renderPage();
     const revised = card("Reparto 2025");
 
-    expect(within(revised).getAllByRole("link").map((link) => link.textContent)).toEqual(["Reparto 2025", "Revisar anomalías"]);
+    expect(within(revised).getAllByRole("link").map((link) => link.textContent)).toEqual(["Reparto 2025", "Ver anomalías"]);
     expect(within(revised).queryByRole("button")).not.toBeInTheDocument();
   });
 
@@ -371,6 +380,17 @@ describe("PlantObservedSharingPage", () => {
     for (const phrase of ["primero", "después", "a continuación", "siguiente paso", "tiempo real", "en directo", "nuevo coeficiente", "te proponemos"]) {
       expect(text.toLowerCase()).not.toContain(phrase);
     }
+    // Statements about what Conluz does with coefficients, removed with the findings layout.
+    expect(text).not.toContain("Conluz no corrige coeficientes.");
+    expect(text).not.toContain("Conluz no propone coeficientes: revisa el acuerdo o el fichero enviado.");
+  });
+
+  test("describes the anomalies with their grouping and period alone", () => {
+    renderPage();
+
+    expect(screen.getByText(/^Agrupadas por acuerdo/)).toHaveTextContent(
+      /^Agrupadas por acuerdo y punto de suministro\. Cada fila es un periodo continuo, del primer al último día\.$/,
+    );
   });
 
   test("says the analysis found nothing to look at when no agreement needs review and there is no anomaly", () => {
@@ -409,7 +429,7 @@ describe("PlantObservedSharingPage", () => {
     expect(screen.queryByRole("article")).not.toBeInTheDocument();
     // Nothing was analysed, so the header has no figure to give.
     expect(screen.getByText("Puntos con datos").nextElementSibling).toHaveTextContent(/^—$/);
-    expect(screen.queryByText(/^Recomendaci/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Qué revisar")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ver el punto de la planta" })).toHaveAttribute("href", "/supply-points/900");
   });
 
