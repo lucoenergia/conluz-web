@@ -12,6 +12,8 @@ interface RecommendationListProps {
   sharingAgreementId: string;
   /** In the order the analysis returned them. Empty when the plant is not computable. */
   recommendations: Recommendation[];
+  /** Off where a heading above already says "Recomendaciones". */
+  showLabel?: boolean;
 }
 
 /**
@@ -39,18 +41,25 @@ function actionOf(recommendation: ActionableRecommendation, plantId: string, sha
  * recommends nothing, and nothing at all when it returned none (a plant that
  * is not computable).
  */
-export const RecommendationList: FC<RecommendationListProps> = ({ plantId, sharingAgreementId, recommendations }) => {
+export const RecommendationList: FC<RecommendationListProps> = ({
+  plantId,
+  sharingAgreementId,
+  recommendations,
+  showLabel = true,
+}) => {
   if (recommendations.length === 0) return null;
   const actionable = actionableRecommendations(recommendations);
   if (actionable.length === 0) {
-    return <Typography variant="body2">Recomendación: Ninguna</Typography>;
+    return <Typography variant="body2">{showLabel ? "Recomendación: Ninguna" : "Ninguna"}</Typography>;
   }
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-        {actionable.length === 1 ? "Recomendación:" : "Recomendaciones:"}
-      </Typography>
+      {showLabel && (
+        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+          {actionable.length === 1 ? "Recomendación:" : "Recomendaciones:"}
+        </Typography>
+      )}
       <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 1.5 }}>
         {actionable.map((recommendation) => {
           const copy = RECOMMENDATION_COPY[recommendation];

@@ -265,6 +265,8 @@ describe("PlantObservedSharingPage", () => {
     );
 
     expect(within(card("Reparto inicial 2023")).getByText("Recomendación: Ninguna")).toBeInTheDocument();
+    // A card has no heading of its own for them: its label stays.
+    expect(within(revised).getByText("Recomendaciones:")).toBeInTheDocument();
   });
 
   // The set-dates flow ships with #419; until then the recommendation is shown, with nothing to press.

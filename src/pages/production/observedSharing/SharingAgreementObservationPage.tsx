@@ -309,6 +309,7 @@ const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservat
               plantId={plantId}
               sharingAgreementId={summary.sharingAgreement.id}
               recommendations={summary.recommendations}
+              showLabel={false}
             />
           </Box>
         </Box>

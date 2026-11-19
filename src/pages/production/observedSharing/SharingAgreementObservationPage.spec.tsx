@@ -325,6 +325,29 @@ describe("SharingAgreementObservationPage", () => {
     expect(within(section).getAllByRole("link").map((link) => link.textContent)).toEqual(["Revisar anomalías"]);
   });
 
+  test("states the recommendations under its own heading, with no label repeating it (#418)", () => {
+    renderPage();
+    const section = screen.getByRole("region", { name: "Recomendaciones" });
+
+    expect(within(section).queryByText(/^Recomendaci(ón|ones):/)).not.toBeInTheDocument();
+    expect(within(section).getByText("Fijar fechas")).toBeInTheDocument();
+  });
+
+  test("says 'Ninguna' under its heading when nothing is recommended (#418)", () => {
+    renderPage({
+      observation: query.success<typeof getSharingAgreementObservation>(
+        observationFixture({
+          summary: buildObservationSummary({
+            sharingAgreement: buildSharingAgreementReference({ id: AGREEMENT_ID, name: "Reparto 2025" }),
+            recommendations: [Recommendation.NONE],
+          }),
+        }),
+      ),
+    });
+
+    expect(screen.getByRole("region", { name: "Recomendaciones" })).toHaveTextContent(/^RecomendacionesNinguna$/);
+  });
+
   test("UI-AGR-024: the agreement's anomalies are open, by supply, with the β the backend observed", () => {
     renderPage();
     const section = screen.getByRole("region", { name: "Anomalías de este acuerdo (1)" });
