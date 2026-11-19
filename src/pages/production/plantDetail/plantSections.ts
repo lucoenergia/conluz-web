@@ -3,6 +3,7 @@ import { sectionHeadingId } from "../../../components/PlantSection/sectionAnchor
 /** The sections of the plant detail that something on the screen can jump to. */
 export const PLANT_SECTION_IDS = {
   agreements: "plant-agreements",
+  observedSharing: "plant-observed-sharing",
   integrations: "plant-integrations",
 } as const;
 

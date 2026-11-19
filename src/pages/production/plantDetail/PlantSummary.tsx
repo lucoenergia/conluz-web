@@ -7,7 +7,7 @@ import { sxStyles } from "../../../theme/sx";
 import { usePlantSharingAgreements } from "../../home/management/usePlantSharingAgreements";
 import { computeSharingAgreementCounts } from "../useSharingAgreementsData";
 import { agreementsSummaryText } from "./agreementsSummary";
-import { AGREEMENTS_ICON, INTEGRATIONS_ICON } from "./sectionIcons";
+import { AGREEMENTS_ICON, INTEGRATIONS_ICON, OBSERVED_SHARING_ICON } from "./sectionIcons";
 import { PLANT_SECTION_IDS, scrollToSection, type PlantSectionId } from "./plantSections";
 import type { PlantIntegrationStatus } from "./usePlantIntegrationStatus";
 
@@ -24,6 +24,8 @@ const TONE_COLOR: Record<StatusTone, string> = {
 
 interface SummaryRowProps {
   label: string;
+  /** A second line under the label, saying what the section is about. */
+  description?: string;
   /** The icon of the section the row leads to, so the two read as one. */
   icon: FC<SvgIconProps>;
   /** Absent while the status is unknown: the row then claims nothing. */
@@ -31,7 +33,7 @@ interface SummaryRowProps {
   target: PlantSectionId;
 }
 
-const SummaryRow: FC<SummaryRowProps> = ({ label, icon: Icon, status, target }) => (
+const SummaryRow: FC<SummaryRowProps> = ({ label, description, icon: Icon, status, target }) => (
   // A divider between rows, never above the first.
   <Box component="li" sx={{ "& + &": { borderTop: `1px solid ${colors.divider}` } }}>
     <ButtonBase
@@ -70,9 +72,20 @@ const SummaryRow: FC<SummaryRowProps> = ({ label, icon: Icon, status, target }) 
       </Box>
       {/* The label keeps its line; the status wraps between its parts instead,
           never narrower than its longest part. Both labels fit a 390px screen. */}
-      <Typography component="span" sx={{ flex: "1 0 auto", fontSize: fontSizes.lg, fontWeight: 600, color: colors.text.primary }}>
-        {label}
-      </Typography>
+      {description ? (
+        <Box component="span" sx={{ flex: "1 0 auto", display: "flex", flexDirection: "column" }}>
+          <Typography component="span" sx={{ fontSize: fontSizes.lg, fontWeight: 600, color: colors.text.primary }}>
+            {label}
+          </Typography>
+          <Typography component="span" variant="body2" sx={{ color: colors.text.subtle }}>
+            {description}
+          </Typography>
+        </Box>
+      ) : (
+        <Typography component="span" sx={{ flex: "1 0 auto", fontSize: fontSizes.lg, fontWeight: 600, color: colors.text.primary }}>
+          {label}
+        </Typography>
+      )}
       {status && (
         <Typography
           component="span"
@@ -136,6 +149,15 @@ export const PlantSummary: FC<PlantSummaryProps> = ({ plant, integrationStatus }
     <Box component="section" aria-label="En esta planta" sx={{ ...sxStyles.softPanel, py: { xs: 1, sm: 1.5 } }}>
       <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
         {showAgreements && <AgreementsRow plant={plant} />}
+        {/* No status: the analysis is asked only from its own pages (#418). */}
+        {showAgreements && (
+          <SummaryRow
+            label="Reparto observado"
+            description="Comparación con Datadis"
+            icon={OBSERVED_SHARING_ICON}
+            target={PLANT_SECTION_IDS.observedSharing}
+          />
+        )}
         {showIntegration && (
           <SummaryRow
             label="Integración Huawei"

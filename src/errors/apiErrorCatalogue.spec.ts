@@ -618,3 +618,33 @@ describe("the supply already in another plant (#253)", () => {
     );
   });
 });
+
+describe("the sharing agreement codes of conluz#579 and conluz#582 (#418)", () => {
+  const REMOVED = "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR";
+
+  it("keeps no entry for the activation code the contract removed", () => {
+    const spec = JSON.parse(readFileSync("api-docs.json", "utf8")) as {
+      components: { schemas: { RestErrorDetail: { properties: { code: { enum: string[] } } } } };
+    };
+
+    expect(spec.components.schemas.RestErrorDetail.properties.code.enum).not.toContain(REMOVED);
+    expect(readFileSync("src/errors/apiErrorCatalogue.ts", "utf8")).not.toContain(REMOVED);
+  });
+
+  it("shows NOT_BEFORE_SUCCESSOR as the coefficient's own end, naming the supply when the CUPS comes with it", () => {
+    const code = "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR";
+
+    expect(getFirstApiErrorMessage(apiError(409, { code, params: { cups: "ES0031000000000001JN0F" } }), "fallback")).toBe(
+      "La fecha debe ser anterior a la fecha de fin del coeficiente del punto de suministro con CUPS: ES0031000000000001JN0F.",
+    );
+    expect(getFirstApiErrorMessage(apiError(409, { code, params: null }), "fallback")).toBe(
+      "La fecha debe ser anterior a la fecha de fin de este coeficiente.",
+    );
+  });
+
+  it("shows SHARING_AGREEMENT_NOT_OBSERVABLE with the catalogue's text", () => {
+    expect(
+      getFirstApiErrorMessage(apiError(409, { code: "SHARING_AGREEMENT_NOT_OBSERVABLE", params: null }), "fallback"),
+    ).toBe("El reparto observado solo está disponible para acuerdos vigentes o históricos.");
+  });
+});

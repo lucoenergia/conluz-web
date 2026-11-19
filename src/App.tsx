@@ -50,6 +50,8 @@ const PlantsPage = lazyPage(() => import("./pages/production/PlantsPage"), "Plan
 const PlantDetailPage = lazyPage(() => import("./pages/production/PlantDetailPage"), "PlantDetailPage");
 const SharingAgreementsPage = lazyPage(() => import("./pages/production/SharingAgreementsPage"), "SharingAgreementsPage");
 const SharingAgreementDetailPage = lazyPage(() => import("./pages/production/SharingAgreementDetailPage"), "SharingAgreementDetailPage");
+const PlantObservedSharingPage = lazyPage(() => import("./pages/production/observedSharing/PlantObservedSharingPage"), "PlantObservedSharingPage");
+const SharingAgreementObservationPage = lazyPage(() => import("./pages/production/observedSharing/SharingAgreementObservationPage"), "SharingAgreementObservationPage");
 
 const IntegrationsPage = lazyPage(() => import("./pages/integrations/IntegrationsPage"), "IntegrationsPage");
 const MembersPage = lazyPage(() => import("./pages/members/MembersPage"), "MembersPage");
@@ -146,6 +148,16 @@ function App() {
               <Route
                 path="sharing-agreements"
                 element={<CapabilityRoute require={{ scope: "plant", capability: "canListSharingAgreements" }}><SharingAgreementsPage /></CapabilityRoute>}
+              />
+              {/* The observed sharing (#418). A static segment, so it ranks
+                  above an agreement id. */}
+              <Route
+                path="sharing-agreements/observed"
+                element={<CapabilityRoute require={{ scope: "plant", capability: "canListSharingAgreements" }}><PlantObservedSharingPage /></CapabilityRoute>}
+              />
+              <Route
+                path="sharing-agreements/observed/:sharingAgreementId"
+                element={<CapabilityRoute require={{ scope: "plant", capability: "canListSharingAgreements" }}><SharingAgreementObservationPage /></CapabilityRoute>}
               />
               <Route
                 path="sharing-agreements/:sharingAgreementId"

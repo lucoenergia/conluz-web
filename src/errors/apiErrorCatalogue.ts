@@ -146,6 +146,7 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   SHARING_AGREEMENT_NOT_REVERTIBLE: "Este acuerdo no se puede volver a borrador.",
   SHARING_AGREEMENT_HAS_APPLIED_COEFFICIENTS:
     "Este acuerdo ya tiene coeficientes aplicados por la distribuidora, por lo que no se puede volver a borrador.",
+  SHARING_AGREEMENT_NOT_OBSERVABLE: "El reparto observado solo está disponible para acuerdos vigentes o históricos.",
   // Said on the date input as well, by the edit form (#417).
   SHARING_AGREEMENT_DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE: DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE_MESSAGE,
 
@@ -222,9 +223,11 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
     (cups) => `La fecha indicada no puede ser una fecha futura (afecta a ${cups}).`,
     "La fecha indicada no puede ser una fecha futura.",
   ),
+  // Since conluz#582 the bound is the coefficient's own end date, not the next
+  // coefficient's start.
   SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR: withOptionalCups(
-    (cups) => `La fecha de activación debe ser anterior a la del siguiente coeficiente de ${cups}.`,
-    "La fecha de activación debe ser anterior a la del siguiente coeficiente de este suministro.",
+    (cups) => `La fecha debe ser anterior a la fecha de fin del coeficiente del punto de suministro con CUPS: ${cups}.`,
+    "La fecha debe ser anterior a la fecha de fin de este coeficiente.",
   ),
   SHARING_AGREEMENT_CLOSURE_DATE_NOT_AFTER_ACTIVATION: withOptionalCups(
     (cups) => `La fecha de cierre debe ser posterior a la fecha de activación del coeficiente de ${cups}.`,

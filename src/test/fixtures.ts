@@ -1,14 +1,20 @@
 import {
+  CoefficientObservationResponseStatus,
+  LeavingObservationResponseStatus,
   PlantResponseInverterProvider,
+  SharingAgreementObservationSummaryResponseRecommendationsItem,
+  SharingAnomalyResponseType,
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
   SharingAgreementReferenceResponseStatus,
   SharingAgreementResponseStatus,
+  type CoefficientObservationResponse,
   type CommunityAdminResponse,
   type CommunityCapabilitiesResponse,
   type CommunityResponse,
   type ContactChannelResponse,
   type CurrentUserResponse,
+  type LeavingObservationResponse,
   type MemberRecordResponse,
   type MemberResponse,
   type MembershipCapabilitiesResponse,
@@ -18,17 +24,25 @@ import {
   type MembershipMonthlyConsumptionBucketResponse,
   type MembershipPaybackResponse,
   type MembershipResponse,
+  type ObservationStatusCountsResponse,
   type OperatorContactResponse,
   type PartitionCoefficientResponse,
   type PlantCapabilitiesResponse,
   type PlantResponse,
+  type PlantSharingObservationResponse,
   type PartitionCoefficientCapabilitiesResponse,
   type PlatformAdminCapabilitiesResponse,
   type PlatformAdminResponse,
   type PlatformCapabilitiesResponse,
   type SharingAgreementCapabilitiesResponse,
+  type SharingAgreementObservationResponse,
+  type SharingAgreementObservationSummaryResponse,
   type SharingAgreementPartitionCoefficientResponse,
+  type SharingAgreementReferenceResponse,
   type SharingAgreementResponse,
+  type SharingAnomalyCountsResponse,
+  type SharingAnomalyResponse,
+  type SharingObservationAnalysisResponse,
   type SupplyCapabilitiesResponse,
   type SupplyReferenceResponse,
   type SupplyResponse,
@@ -672,6 +686,184 @@ export function buildOperatorContact(overrides: Partial<OperatorContactResponse>
       schedule: null,
       notes: null,
     } satisfies OperatorContactResponse),
+    ...overrides,
+  };
+}
+
+/**
+ * Observed sharing (#418). The defaults describe an analysis that could be
+ * computed and observed nothing: every count zero, no observed date, no
+ * anomaly and no recommendation but "none". It is the only shape that is valid
+ * without saying what Datadis showed, as a DRAFT agreement is the only valid
+ * agreement on its own; a count that is not zero would promise rows the
+ * fixture does not hold. A spec sets every count, date and β it asserts on.
+ */
+export function buildObservationStatusCounts(
+  overrides: Partial<ObservationStatusCountsResponse> = {},
+): ObservationStatusCountsResponse {
+  return {
+    ...({
+      appliedSameDate: 0,
+      appliedDifferentDate: 0,
+      pendingApplication: 0,
+      notDistinguishable: 0,
+      notObserved: 0,
+      noData: 0,
+    } satisfies ObservationStatusCountsResponse),
+    ...overrides,
+  };
+}
+
+export function buildSharingAnomalyCounts(overrides: Partial<SharingAnomalyCountsResponse> = {}): SharingAnomalyCountsResponse {
+  return {
+    ...({
+      unknownCoefficient: 0,
+      reverted: 0,
+      energyOutsideAgreement: 0,
+      noEnergyInAgreement: 0,
+      appliedBeforeSent: 0,
+    } satisfies SharingAnomalyCountsResponse),
+    ...overrides,
+  };
+}
+
+/** An agreement as the analysis refers to it. Only an agreement in force or superseded is observed, so it is PUBLISHED. */
+export function buildSharingAgreementReference(
+  overrides: Partial<SharingAgreementReferenceResponse> = {},
+): SharingAgreementReferenceResponse {
+  return {
+    ...({
+      id: "TEST-AGREEMENT-ID",
+      name: "TEST-AGREEMENT-NAME",
+      status: SharingAgreementReferenceResponseStatus.PUBLISHED,
+    } satisfies SharingAgreementReferenceResponse),
+    ...overrides,
+  };
+}
+
+/** The analysis itself: computable, over a synthetic range, with no supply listed. */
+export function buildObservationAnalysis(
+  overrides: Partial<SharingObservationAnalysisResponse> = {},
+): SharingObservationAnalysisResponse {
+  return {
+    ...({
+      analysedFrom: "2001-01-01",
+      analysedTo: "2001-12-31",
+      computable: true,
+      notComputableReason: null,
+      notComputableSupplies: [],
+      suppliesWithValidDays: [],
+      suppliesWithoutValidDays: [],
+    } satisfies SharingObservationAnalysisResponse),
+    ...overrides,
+  };
+}
+
+export function buildObservationSummary(
+  overrides: Partial<SharingAgreementObservationSummaryResponse> = {},
+): SharingAgreementObservationSummaryResponse {
+  return {
+    ...({
+      sharingAgreement: buildSharingAgreementReference(),
+      distributorFileSentOn: null,
+      earliestObservedDate: null,
+      mostFrequentObservedDate: null,
+      coefficientStatusCounts: buildObservationStatusCounts(),
+      leavingStatusCounts: buildObservationStatusCounts(),
+      anomalies: [],
+      anomalyCounts: buildSharingAnomalyCounts(),
+      unallocatedShare: null,
+      recommendations: [SharingAgreementObservationSummaryResponseRecommendationsItem.NONE],
+    } satisfies SharingAgreementObservationSummaryResponse),
+    ...overrides,
+  };
+}
+
+export function buildCoefficientObservation(
+  overrides: Partial<CoefficientObservationResponse> = {},
+): CoefficientObservationResponse {
+  return {
+    ...({
+      coefficientId: "TEST-COEFFICIENT-ID",
+      supply: buildSupplyReference(),
+      // Not zero, and not a round share, so an unintended default stands out.
+      coefficient: 0.090001,
+      storedValidFrom: null,
+      storedValidTo: null,
+      observedDate: null,
+      proposedDate: null,
+      observedBeta: null,
+      observedValidDays: 0,
+      status: CoefficientObservationResponseStatus.NOT_OBSERVED,
+    } satisfies CoefficientObservationResponse),
+    ...overrides,
+  };
+}
+
+export function buildLeavingObservation(overrides: Partial<LeavingObservationResponse> = {}): LeavingObservationResponse {
+  return {
+    ...({
+      supply: buildSupplyReference(),
+      previousCoefficientId: "TEST-PREVIOUS-COEFFICIENT-ID",
+      previousSharingAgreement: buildSharingAgreementReference({
+        id: "TEST-PREVIOUS-AGREEMENT-ID",
+        name: "TEST-PREVIOUS-AGREEMENT-NAME",
+      }),
+      // Not zero, and not a round share, so an unintended default stands out.
+      previousCoefficient: 0.080001,
+      storedValidTo: null,
+      observedLeavingDate: null,
+      proposedDate: null,
+      observedBeta: null,
+      observedValidDays: 0,
+      status: LeavingObservationResponseStatus.NOT_OBSERVED,
+    } satisfies LeavingObservationResponse),
+    ...overrides,
+  };
+}
+
+/** An anomaly always rests on valid days, so its observed β is never null. */
+export function buildSharingAnomaly(overrides: Partial<SharingAnomalyResponse> = {}): SharingAnomalyResponse {
+  return {
+    ...({
+      id: "TEST-ANOMALY-ID",
+      supply: buildSupplyReference(),
+      type: SharingAnomalyResponseType.UNKNOWN_COEFFICIENT,
+      start: { from: "2001-01-01", to: "2001-01-01" },
+      end: null,
+      // Not zero, and not a round share, so an unintended default stands out.
+      observedBeta: 0.060001,
+      observedValidDays: 9007,
+    } satisfies SharingAnomalyResponse),
+    ...overrides,
+  };
+}
+
+export function buildPlantSharingObservation(
+  overrides: Partial<PlantSharingObservationResponse> = {},
+): PlantSharingObservationResponse {
+  return {
+    ...({
+      analysis: buildObservationAnalysis(),
+      consecutiveDays: 9008,
+      sharingAgreements: [],
+      unattributedAnomalies: [],
+    } satisfies PlantSharingObservationResponse),
+    ...overrides,
+  };
+}
+
+export function buildSharingAgreementObservation(
+  overrides: Partial<SharingAgreementObservationResponse> = {},
+): SharingAgreementObservationResponse {
+  return {
+    ...({
+      analysis: buildObservationAnalysis(),
+      consecutiveDays: 9008,
+      summary: buildObservationSummary(),
+      coefficients: [],
+      leavingRows: [],
+    } satisfies SharingAgreementObservationResponse),
     ...overrides,
   };
 }

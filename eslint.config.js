@@ -198,9 +198,11 @@ const COMMUNITY_IMPLICIT_HOOKS = [
       "useGetSharingAgreementById",
       "useGetSharingAgreementPartitionCoefficients",
       "useGetSharingAgreementFile",
+      "useGetPlantSharingObservation",
+      "useGetSharingAgreementObservation",
     ],
     message:
-      "Read sharing agreements through useSharingAgreementsData / useSharingAgreementDetailData / usePlantSharingAgreements: those apply the active-community guard, these hooks are keyed by a plant id alone.",
+      "Read sharing agreements through useSharingAgreementsData / useSharingAgreementDetailData / usePlantSharingAgreements, and their observed sharing through usePlantSharingObservationData / useSharingAgreementObservationData: those apply the active-community guard, these hooks are keyed by a plant id alone.",
   },
   {
     group: ["**/api/supplies/supplies"],
@@ -231,6 +233,8 @@ const COMMUNITY_SCOPE_WRAPPERS = [
   "src/pages/production/usePlantInActiveCommunity.ts",
   "src/pages/production/useSharingAgreementsData.ts",
   "src/pages/production/useSharingAgreementDetailData.ts",
+  "src/pages/production/observedSharing/usePlantSharingObservationData.ts",
+  "src/pages/production/observedSharing/useSharingAgreementObservationData.ts",
   "src/pages/supply-points/useSupplyInActiveCommunity.ts",
   // Filters its own response through selectPeriodsInCommunity -- the original
   // and still correct way to scope an entity-keyed response.

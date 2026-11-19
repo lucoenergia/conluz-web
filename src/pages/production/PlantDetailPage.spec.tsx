@@ -110,7 +110,7 @@ describe("PlantDetailPage", () => {
     expect(screen.queryByRole("menuitem")).not.toBeInTheDocument();
   });
 
-  it("shows its sections in the design's order: summary, today, the period, agreements and integrations (#406)", () => {
+  it("shows its sections in the design's order: summary, observed sharing, today, the period, agreements and integrations (#406, #418)", () => {
     setup({ canManage: true, canListSharingAgreements: true, inverter: available() });
 
     // The page's own sections, not the regions inside them (the Huawei card).
@@ -118,7 +118,14 @@ describe("PlantDetailPage", () => {
       .getAllByRole("region")
       .filter((region) => !region.parentElement?.closest("section, [role='region']"))
       .map((region) => region.getAttribute("aria-label") ?? document.getElementById(region.getAttribute("aria-labelledby") ?? "")?.textContent);
-    expect(names).toEqual(["En esta planta", "Hoy, según el inversor", "Producción por periodo", "Acuerdos de reparto", "Integraciones"]);
+    expect(names).toEqual([
+      "En esta planta",
+      "Reparto observado",
+      "Hoy, según el inversor",
+      "Producción por periodo",
+      "Acuerdos de reparto",
+      "Integraciones",
+    ]);
   });
 
   it("links the supply for a caller the plant says may read it", async () => {

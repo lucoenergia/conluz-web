@@ -12,8 +12,15 @@ import type { SharingAgreementReferenceResponse } from './sharingAgreementRefere
 import type { SupplyReferenceResponse } from './supplyReferenceResponse';
 
 export interface LeavingObservationResponse {
+  /**
+     * Median of the supply's daily observed β (E / G) over its valid days from the row's observed leaving date (the latest day of a range or of an open date) to the end of the agreement's applied window, or over the whole applied window when the row has no observed date. The applied window runs from the agreement's most frequent observed application date to the day before the next agreement's, or to the end of the analysed range. On a 0-1 scale, rounded half-up to 6 decimals; for an even number of days, the mean of the two middle values. Null when the agreement has no applied window, the row's start falls after its end, or the supply has no valid day in between.
+     * @nullable
+     */
+  observedBeta: number | null;
   /** When the distributor was observed to stop giving the supply production. Null when not observed. */
   observedLeavingDate: LeavingObservationResponseObservedLeavingDate;
+  /** Number of valid days the observed β rests on. 0 when it is null. */
+  observedValidDays: number;
   /** The supply's coefficient in the previous agreement, on a 0-1 scale */
   previousCoefficient: number;
   /** Identifier of the supply's coefficient row in the previous agreement */

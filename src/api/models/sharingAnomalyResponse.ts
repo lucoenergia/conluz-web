@@ -17,6 +17,10 @@ export interface SharingAnomalyResponse {
   end: string | null;
   /** Identifier derived from the supply, the type and the first anomalous day: the same anomaly keeps it from one read to the next */
   id: string;
+  /** Median of the supply's daily observed β (E / G) over the anomaly's valid days, from the latest day of its start to its last day, or to the supply's last valid day when it lasts until the end of the analysed data. On a 0-1 scale, rounded half-up to 6 decimals; for an even number of days, the mean of the two middle values. */
+  observedBeta: number;
+  /** Number of valid days the observed β rests on */
+  observedValidDays: number;
   /** When it started */
   start: ObservedDateResponse;
   /** Supply the anomaly was observed on */

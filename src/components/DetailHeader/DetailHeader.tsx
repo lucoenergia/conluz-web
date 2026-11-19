@@ -108,6 +108,13 @@ export interface DetailVariantProps {
   subtitleIcon?: ReactNode;
   status?: ReactNode;
   keyFacts?: DetailKeyFacts;
+  /**
+   * Lets a key fact's value wrap onto more lines instead of being cut with an
+   * ellipsis. For a page whose facts are sentences ("Entre el 26/02/2025 y el
+   * 04/03/2025") rather than identifiers or figures, where a cut value says
+   * nothing. A copyable value still truncates: it is repeated in the details.
+   */
+  wrapFactValues?: boolean;
   details?: readonly DetailFact[];
   /** The "⋯" trigger and its menu. Visibility stays the consumer's business. */
   menu?: ReactNode;
@@ -143,6 +150,7 @@ export interface ListVariantProps {
   subtitle?: ReactNode;
   keyFacts?: ListKeyFacts;
   details?: never;
+  wrapFactValues?: never;
   status?: never;
   menu?: never;
   actions?: never;
@@ -166,11 +174,17 @@ const KeyFactCell: FC<{
   flex: Record<string, string | number>;
   isDivided: boolean;
   isCopied: boolean;
+  wrapValue: boolean;
   onCopy: (fact: DetailKeyFact) => void;
   onTruncationChange: (label: string, isTruncated: boolean) => void;
-}> = ({ fact, label, flex, isDivided, isCopied, onCopy, onTruncationChange }) => {
+}> = ({ fact, label, flex, isDivided, isCopied, wrapValue, onCopy, onTruncationChange }) => {
   const valueRef = useRef<HTMLDivElement | null>(null);
   const isCopyable = fact.copyable !== undefined;
+  // A wrapping value takes the space it needs on more lines, and its label
+  // holds. It breaks between words only, and no cell gets narrower than its
+  // longest word: a date split into "10/ 02/ 20 25" is no better than one cut
+  // with an ellipsis.
+  const wraps = wrapValue && !isCopyable;
 
   useEffect(() => {
     if (!isCopyable) return;
@@ -195,10 +209,12 @@ const KeyFactCell: FC<{
         // by what they hold, so a short value is not truncated to make
         // room for a long one to have space to spare.
         flex,
-        minWidth: 0,
+        minWidth: wraps ? "min-content" : 0,
         display: "flex",
-        flexDirection: { xs: "row", sm: "column" },
-        alignItems: { xs: "center", sm: "flex-start" },
+        // A wrapping value sits under its label on a phone too, so it has the
+        // cell's whole width to wrap in.
+        flexDirection: wraps ? "column" : { xs: "row", sm: "column" },
+        alignItems: wraps ? "flex-start" : { xs: "center", sm: "flex-start" },
         gap: { xs: 0.5, sm: 0.25 },
         px: { xs: 0.75, sm: 3 },
         py: { xs: 0.75, sm: 1.5 },
@@ -222,7 +238,7 @@ const KeyFactCell: FC<{
           // label holds; where it is not, the label yields, because a
           // figure squeezed out by the word naming it is worse than a
           // shortened word.
-          flexShrink: isCopyable ? 0 : 1,
+          flexShrink: isCopyable || wraps ? 0 : 1,
           minWidth: 0,
           overflow: "hidden",
           textOverflow: "ellipsis",
@@ -236,12 +252,12 @@ const KeyFactCell: FC<{
           alignItems: "center",
           gap: 0.5,
           maxWidth: "100%",
-          flexShrink: isCopyable ? 1 : 0,
+          flexShrink: isCopyable || wraps ? 1 : 0,
           // A floor for the value AND its copy button together. The
           // copyable cell is the one that gives way, and without this it
           // gave way entirely: clipped to a character and a half it
           // still cost strip width while telling the reader nothing.
-          minWidth: isCopyable ? { xs: 72, sm: 0 } : 0,
+          minWidth: isCopyable ? { xs: 72, sm: 0 } : wraps ? "min-content" : 0,
         }}
       >
         <Typography
@@ -252,10 +268,10 @@ const KeyFactCell: FC<{
             fontWeight: 700,
             color: colors.text.primary,
             fontVariantNumeric: "tabular-nums",
-            minWidth: 0,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            minWidth: wraps ? "min-content" : 0,
+            ...(wraps
+              ? { whiteSpace: "normal" }
+              : { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }),
           }}
         >
           {fact.value}
@@ -291,6 +307,7 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
   subtitleIcon,
   status,
   keyFacts,
+  wrapFactValues = false,
   details,
   menu,
   actions,
@@ -363,8 +380,16 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
    * one holding "1 sept 2024", so the longer value eats its own label.
    */
   const stripHasCopyable = visibleFacts.some((fact) => fact.copyable !== undefined);
+  // Wrapping values share the strip in equal columns: sized by content, a long
+  // value would push a short one onto three lines to keep two of its own.
   const compactFlex = (fact: DetailKeyFact) =>
-    stripHasCopyable ? (fact.copyable !== undefined ? "1 1 auto" : "0 0 auto") : "0 1 auto";
+    stripHasCopyable
+      ? fact.copyable !== undefined
+        ? "1 1 auto"
+        : "0 0 auto"
+      : wrapFactValues
+        ? "1 1 0"
+        : "0 1 auto";
 
   const expandLabel = `Ver ${hiddenCount} dato${hiddenCount === 1 ? "" : "s"} más`;
   const collapseLabel = "Ocultar detalles";
@@ -502,6 +527,7 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
               flex={isList ? { xs: "1 1 0", sm: 1 } : { xs: compactFlex(fact), sm: 1 }}
               isDivided={index > 0}
               isCopied={copiedLabel === fact.label}
+              wrapValue={wrapFactValues}
               onCopy={handleCopy}
               onTruncationChange={handleTruncationChange}
             />

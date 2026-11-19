@@ -43,12 +43,20 @@ vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
 vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetSharingAgreements: vi.fn(),
+  // Mocked only to prove the page never asks for the analysis (#418).
+  useGetPlantSharingObservation: vi.fn(),
+  useGetSharingAgreementObservation: vi.fn(),
 }));
 
 import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
 import { getHuaweiConfig, useGetHuaweiConfig } from "../../api/production/production";
 import { useGetPlantEnergyMetrics, useGetPlantInverterProductionToday } from "../../api/plants/plants";
-import { getSharingAgreements, useGetSharingAgreements } from "../../api/sharing-agreements/sharing-agreements";
+import {
+  getSharingAgreements,
+  useGetPlantSharingObservation,
+  useGetSharingAgreementObservation,
+  useGetSharingAgreements,
+} from "../../api/sharing-agreements/sharing-agreements";
 import { PlantDetailPage } from "./PlantDetailPage";
 
 const COMMUNITY_ID = "community-a";
@@ -179,6 +187,7 @@ describe("PlantDetailPage rules (#260)", () => {
       const rows = within(summary()!).getAllByRole("button");
       expect(rows.map((row) => row.getAttribute("aria-label"))).toEqual([
         "Acuerdos de reparto: Ninguno en vigor",
+        "Reparto observado",
         "Integración Huawei: Activa",
       ]);
       expect(screen.getByRole("heading", { name: "Acuerdos de reparto" })).toBeVisible();
@@ -190,8 +199,9 @@ describe("PlantDetailPage rules (#260)", () => {
     it("UI-PLT-002 each capability brings only its own row and section", () => {
       setup({ capabilities: { canListSharingAgreements: true } });
 
-      expect(within(summary()!).getAllByRole("button")).toHaveLength(1);
+      expect(within(summary()!).getAllByRole("button")).toHaveLength(2);
       expect(within(summary()!).getByRole("button", { name: /^Acuerdos de reparto/ })).toBeVisible();
+      expect(within(summary()!).getByRole("button", { name: "Reparto observado" })).toBeVisible();
       expect(screen.queryByRole("heading", { name: "Integraciones" })).not.toBeInTheDocument();
       expect(nextStep()).not.toBeInTheDocument();
     });
@@ -340,6 +350,20 @@ describe("PlantDetailPage rules (#260)", () => {
       const alertTones = [colors.error.main, colors.error.surface, colors.error.vivid, colors.warning.main, colors.warning.surface];
       expect(alertTones).not.toContain(declared.color);
       expect(alertTones).not.toContain(declared["background-color"]);
+    });
+  });
+
+  describe("the observed sharing (#418)", () => {
+    it("UI-AGR-022 links to the observed sharing without asking for the analysis", () => {
+      setup({ capabilities: ADMIN });
+
+      const section = screen.getByRole("region", { name: "Reparto observado" });
+      expect(within(section).getByRole("link", { name: "Ver comparación" })).toHaveAttribute(
+        "href",
+        `/plants/${PLANT_A.id}/sharing-agreements/observed`,
+      );
+      expect(useGetPlantSharingObservation).not.toHaveBeenCalled();
+      expect(useGetSharingAgreementObservation).not.toHaveBeenCalled();
     });
   });
 });
