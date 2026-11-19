@@ -5,7 +5,7 @@
 | **Prefix** | `UI-TDY` |
 | **Status** | Active |
 | **Routes** | `/today`, `/today?supplyId=<id>`; the "Ver datos de hoy" action on `/supply-points/:supplyPointId` |
-| **Roles** | A caller who may read the active community (`canRead`): members and community admins. The admin view: a caller the active community grants `canManage`, on a supply that reports `canRead` |
+| **Roles** | A caller who may read the active community (`canRead`): members and community admins. Another member's supply, in the selector's "Punto que estás consultando" group: a caller the active community grants `canManage`, on a supply that reports `canRead` |
 | **Domain rules** | n/a (the data is `getSupplyEnergyToday`, lucoenergia/conluz#595) |
 | **Design reference** | Claude Design canvas "Datos de hoy", alternative 1 "Nodos", final artboards |
 | **Last reviewed against code** | #432 |
@@ -29,39 +29,38 @@ A community admin can look at any supply of the community the same way, from its
 - **Implements:** n/a
 - **Source:** #432
 
-### UI-TDY-002 — The selector lists the caller's own supplies, without the plant's own
+### UI-TDY-002 — The selector is the shared supply selector, without "Todos mis puntos"
 
 - **Status:** Active
-- **Rule:** The selector MUST list only the user's own supply points in the active community,
-  excluding plant-backing ones.
-  - Each option is named as UI-SUP-010 names a supply. The one in `?supplyId=` is selected, or else
-    the first.
-  - A caller left with none sees an empty state, not a failure, and no selector.
-- **Rationale:** It has the same scope as "Mi consumo y ahorro". A plant's own supply point receives
-  no share of the plant's production.
+- **Rule:** The selector MUST be the shared supply selector of "Mi consumo y ahorro", listing only the
+  user's own supply points in the active community, excluding plant-backing ones, and without the
+  "Todos mis puntos" option.
+  - Each option reads "{nombre} · {CUPS}", the name as UI-SUP-010 names a supply. The one in
+    `?supplyId=` is selected, or else the first.
+  - The header, the selector's loading skeleton and the no-supply state are those of "Mi consumo y
+    ahorro". A caller left with no supply to show sees the neutral "No tienes puntos de suministro en
+    esta comunidad", not a failure, and no selector.
+- **Rationale:** There is one selector across the app. A plant's own supply point receives no share of
+  the plant's production.
 - **Implements:** n/a
 - **Source:** #432
 
-### UI-TDY-003 — Another member's supply is reached only from its detail page, in the admin view
+### UI-TDY-003 — Another member's supply is reached only from its detail page, in the selector's own group
 
 - **Status:** Active
 - **Rule:** A supply the user does not own MUST be reachable only via "Ver datos de hoy" in
-  `SupplyDetailHeader`, MUST NOT appear in the selector and MUST show why it is visible; the action
-  MUST NOT be rendered for plant-backing supplies.
+  `SupplyDetailHeader`, and MUST appear only in the selector's "Punto que estás consultando" group,
+  as in "Mi consumo y ahorro"; the action MUST NOT be rendered for plant-backing supplies.
   - The action is rendered when the supply reports `canRead` and does not back a plant. It leads to
     `/today?supplyId=<id>`. It is not part of the latest published month's block.
-  - A `?supplyId=` that is not one of the caller's own opens the admin view only when it passes
-    "Mi consumo y ahorro"'s lookup (UI-HIS-001): the active community's `canManage`, and an enabled
-    supply of the active community that reports `canRead`.
-  - The admin view replaces the selector with:
-    - a breadcrumb;
-    - the supply's name (or address) and its CUPS;
-    - a notice that the point is not the caller's and is visible because they manage the community;
-    - "Volver al punto de suministro".
-  - The admin view takes precedence over owning no supply.
+  - A `?supplyId=` that is not one of the caller's own is shown only when it passes "Mi consumo y
+    ahorro"'s lookup (UI-HIS-001): the active community's `canManage`, and an enabled supply of the
+    active community that reports `canRead`. The group names its owner, and choosing one of the
+    caller's own supplies drops it.
+  - A community admin with no own supply sees that group alone, as in "Mi consumo y ahorro" (#385).
   - An unknown, unreadable or plant-backing id is ignored, as if the page had none, without an
-    error.
-- **Rationale:** Admins inspect any supply without mixing it into their own.
+    error. A failed lookup, with no own supply to show instead, offers a retry.
+- **Rationale:** The admin view is the same in every page that shows a supply's data.
 - **Implements:** n/a
 - **Source:** #432
 
@@ -134,15 +133,16 @@ A community admin can look at any supply of the community the same way, from its
 
 | State | Rendered | Actions available |
 | --- | --- | --- |
-| Loading (first load) | The selector loading; skeletons under the figures' labels and for the curve | — |
-| No own supply, no admin target | An empty state, no selector | — |
+| Loading (first load) | The selector's skeleton; then skeletons under the figures' labels and for the curve | — |
+| No own supply, no viewed supply | A neutral note, "No tienes puntos de suministro en esta comunidad", no selector | — |
 | Available, power flowing | Hero with a solid conduit, sentence, "Te llega ahora" and today's energy, β line, curve, note | Choose another supply |
 | Available, power 0 | Hero with a dashed conduit, "not producing" sentence, today's energy only | Choose another supply |
 | Available, no current power | Hero with a dashed conduit, "no data now" sentence, today's energy only | Choose another supply |
 | Stale (normal) | A neutral notice with the time of the last data; values read "a las {hh:mm}" | Choose another supply |
 | No data today / no coefficient today | Hero waiting, a title and an explanation; the community's contact for no coefficient | Contact link |
 | Plant not connected | Hero with the plant greyed, a title and an explanation | — |
-| Admin view | Breadcrumb, the supply's block with its notice, no selector | Volver al punto de suministro |
+| Viewed supply (community admin) | The selector's "Punto que estás consultando" group, with the owner's name | Choose one of the caller's own supplies |
+| Viewed supply failed to load, no own supply | The load error | Reintentar |
 | Error (first load) | The load error | Reintentar |
 
 ## Accepted exceptions
