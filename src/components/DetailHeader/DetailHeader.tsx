@@ -172,8 +172,10 @@ const KeyFactCell: FC<{
 }> = ({ fact, label, flex, isDivided, isCopied, wrapValue, onCopy, onTruncationChange }) => {
   const valueRef = useRef<HTMLDivElement | null>(null);
   const isCopyable = fact.copyable !== undefined;
-  // A wrapping value takes the space it needs on more lines, so the label
-  // beside it holds and the value is the one that narrows.
+  // A wrapping value takes the space it needs on more lines, and its label
+  // holds. It breaks between words only, and no cell gets narrower than its
+  // longest word: a date split into "10/ 02/ 20 25" is no better than one cut
+  // with an ellipsis.
   const wraps = wrapValue && !isCopyable;
 
   useEffect(() => {
@@ -199,10 +201,12 @@ const KeyFactCell: FC<{
         // by what they hold, so a short value is not truncated to make
         // room for a long one to have space to spare.
         flex,
-        minWidth: 0,
+        minWidth: wraps ? "min-content" : 0,
         display: "flex",
-        flexDirection: { xs: "row", sm: "column" },
-        alignItems: { xs: "center", sm: "flex-start" },
+        // A wrapping value sits under its label on a phone too, so it has the
+        // cell's whole width to wrap in.
+        flexDirection: wraps ? "column" : { xs: "row", sm: "column" },
+        alignItems: wraps ? "flex-start" : { xs: "center", sm: "flex-start" },
         gap: { xs: 0.5, sm: 0.25 },
         px: { xs: 0.75, sm: 3 },
         py: { xs: 0.75, sm: 1.5 },
@@ -245,7 +249,7 @@ const KeyFactCell: FC<{
           // copyable cell is the one that gives way, and without this it
           // gave way entirely: clipped to a character and a half it
           // still cost strip width while telling the reader nothing.
-          minWidth: isCopyable ? { xs: 72, sm: 0 } : 0,
+          minWidth: isCopyable ? { xs: 72, sm: 0 } : wraps ? "min-content" : 0,
         }}
       >
         <Typography
@@ -256,9 +260,9 @@ const KeyFactCell: FC<{
             fontWeight: 700,
             color: colors.text.primary,
             fontVariantNumeric: "tabular-nums",
-            minWidth: 0,
+            minWidth: wraps ? "min-content" : 0,
             ...(wraps
-              ? { whiteSpace: "normal", overflowWrap: "anywhere" }
+              ? { whiteSpace: "normal" }
               : { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }),
           }}
         >
@@ -367,8 +371,16 @@ export const DetailHeader: FC<DetailHeaderProps> = ({
    * one holding "1 sept 2024", so the longer value eats its own label.
    */
   const stripHasCopyable = visibleFacts.some((fact) => fact.copyable !== undefined);
+  // Wrapping values share the strip in equal columns: sized by content, a long
+  // value would push a short one onto three lines to keep two of its own.
   const compactFlex = (fact: DetailKeyFact) =>
-    stripHasCopyable ? (fact.copyable !== undefined ? "1 1 auto" : "0 0 auto") : "0 1 auto";
+    stripHasCopyable
+      ? fact.copyable !== undefined
+        ? "1 1 auto"
+        : "0 0 auto"
+      : wrapFactValues
+        ? "1 1 0"
+        : "0 1 auto";
 
   const expandLabel = `Ver ${hiddenCount} dato${hiddenCount === 1 ? "" : "s"} más`;
   const collapseLabel = "Ocultar detalles";
