@@ -327,6 +327,31 @@ describe("PlantObservedSharingPage", () => {
     );
   });
 
+  test("names each supply's anomaly region after its supply (#418)", () => {
+    // Casa Sur under a second agreement too: one supply, two regions, two ids.
+    const second = buildObservationSummary({
+      sharingAgreement: buildSharingAgreementReference({ id: "second", name: "Reparto 2026" }),
+      anomalies: [buildSharingAnomaly({ id: "a-sur-2", supply: SUR, type: SharingAnomalyResponseType.NO_ENERGY_IN_AGREEMENT })],
+      anomalyCounts: buildSharingAnomalyCounts({ noEnergyInAgreement: 1 }),
+    });
+    renderPage({
+      observation: query.success<typeof getPlantSharingObservation>(
+        observationFixture({ sharingAgreements: [REVISED, second], unattributedAnomalies: [] }),
+      ),
+    });
+    const section = screen.getByRole("region", { name: "Anomalías (3)" });
+
+    // Collapsed on this page, so the regions are reached with hidden: true.
+    const norte = within(section).getByRole("region", { name: /^Casa Norte/, hidden: true });
+    expect(within(norte).getByRole("row", { name: /Coeficiente desconocido/, hidden: true })).toBeInTheDocument();
+    expect(within(section).getByRole("button", { name: /^Casa Norte/ })).toHaveAttribute("aria-controls", norte.id);
+
+    const sur = within(section).getAllByRole("region", { name: /^Casa Sur/, hidden: true });
+    expect(sur).toHaveLength(2);
+    expect(new Set(sur.map((region) => region.id)).size).toBe(2);
+    expect(within(sur[1]).getByRole("row", { name: /No recibe energía en el acuerdo/, hidden: true })).toBeInTheDocument();
+  });
+
   test("UI-AGR-028: supplies without data are named in the notice, and not computable ones say only 'No calculable'", () => {
     renderPage();
 
