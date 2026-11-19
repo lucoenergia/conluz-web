@@ -4,6 +4,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navigate, useLocation } from "react-router";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { expectPageBreadcrumb } from "../../test/breadcrumb";
 import { query } from "../../test/queryState";
 import { apiError } from "../../test/apiError";
 import type { CommunityEnergyMetricsResponse, CurrentUserResponse } from "../../api/models";
@@ -160,6 +161,14 @@ beforeEach(() => {
 });
 
 describe("UI-CAN-001 the page (#403)", () => {
+  it("UI-LAY-003 shows Inicio, then Energía de la comunidad, above the title", () => {
+    renderPage();
+
+    expectPageBreadcrumb("Energía de la comunidad");
+    const trail = screen.getByRole("navigation", { name: "breadcrumbs" });
+    expect(trail.compareDocumentPosition(screen.getByRole("heading", { level: 1 })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("UI-CAN-001 renders at /community-analysis, with the community and its plants", () => {
     renderPage();
 

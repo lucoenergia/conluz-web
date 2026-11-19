@@ -21,6 +21,8 @@ import { readMonthAnchor, useMemberAnchorQuery } from "./useMemberAnchorQuery";
 import { useHistoricalPeriodState, type HistoricalPeriodState } from "../../components/period/useHistoricalPeriodState";
 import { useOwnSupplies } from "./useOwnSupplies";
 import { useSelectedSupply } from "./useSelectedSupply";
+import { BreadCrumb } from "../../components/Breadcrumb";
+import { HISTORICAL_ANALYSIS_PATH } from "../../utils/routes";
 
 /**
  * "Mi consumo y ahorro": the caller's own supplies over time (#247). This
@@ -58,8 +60,16 @@ export const HistoricalAnalysisPage: FC = () => {
   return (
     <Box sx={sxStyles.pageRoot}>
       <Box sx={sxStyles.pageContainer}>
+        <BreadCrumb
+          steps={[
+            { label: "Inicio", href: "/" },
+            { label: PAGE_TITLE, href: HISTORICAL_ANALYSIS_PATH },
+          ]}
+        />
+      </Box>
+      <Box sx={sxStyles.pageContainer}>
         <Typography variant="h4" component="h1" sx={{ color: colors.text.primary }}>
-          Mi consumo y ahorro
+          {PAGE_TITLE}
         </Typography>
       </Box>
       {(isLoading || (noSupplyToShow && isResolving)) && (
@@ -125,6 +135,7 @@ const SELECTOR_CELL_SX = (theme: Theme) => ({
   },
 });
 
+const PAGE_TITLE = "Mi consumo y ahorro";
 const VIEWED_SUPPLY_ERROR = "No se pudo cargar el punto de suministro. Comprueba tu conexión e inténtalo de nuevo.";
 const NO_DATA_TITLE = "Todavía no hay datos publicados";
 const NO_DATA_BODY =

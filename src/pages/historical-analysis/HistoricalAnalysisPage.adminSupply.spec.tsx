@@ -4,6 +4,7 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useLocation } from "react-router";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { expectPageBreadcrumb } from "../../test/breadcrumb";
 import { query } from "../../test/queryState";
 import { apiError } from "../../test/apiError";
 import {
@@ -207,6 +208,13 @@ afterEach(() => {
 });
 
 describe("UI-HIS-001 a community admin may open any enabled supply of the active community (#252)", () => {
+  it("UI-LAY-003 keeps the trail Inicio, then Mi consumo y ahorro, while viewing another member's supply", () => {
+    renderPage();
+
+    expect(screen.getByRole("button", { name: SELECTOR })).toHaveTextContent(MEMBERS_LABEL);
+    expectPageBreadcrumb("Mi consumo y ahorro");
+  });
+
   it("UI-HIS-001 AC6 selects another member's supply from the address, in its own group above the caller's own", async () => {
     renderPage();
 

@@ -1,11 +1,13 @@
 import { useEffect, type FC } from "react";
 import { Box, Skeleton, Typography } from "@mui/material";
+import { BreadCrumb } from "../../components/Breadcrumb";
 import { NeutralNotice } from "../../components/EnergyFigures/NeutralNotice";
 import { LoadErrorAlert } from "../../components/LoadErrorAlert/LoadErrorAlert";
 import { SupplySelector } from "../../components/SupplySelector";
 import { useErrorDispatch } from "../../context/error.context";
 import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
+import { TODAY_PATH } from "../../utils/routes";
 import { TodayContent } from "./TodayContent";
 import { PAGE_TITLE } from "./todayTexts";
 import { useTodaySupply } from "./useTodaySupply";
@@ -35,6 +37,14 @@ export const TodayPage: FC = () => {
 
   return (
     <Box sx={sxStyles.pageRoot}>
+      <Box sx={sxStyles.pageContainer}>
+        <BreadCrumb
+          steps={[
+            { label: "Inicio", href: "/" },
+            { label: PAGE_TITLE, href: TODAY_PATH },
+          ]}
+        />
+      </Box>
       <Box sx={sxStyles.pageContainer}>
         <Typography variant="h4" component="h1" sx={{ color: colors.text.primary }}>
           {PAGE_TITLE}

@@ -4,6 +4,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navigate, useLocation } from "react-router";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { expectPageBreadcrumb } from "../../test/breadcrumb";
 import { query } from "../../test/queryState";
 import { buildCommunity, buildCommunityCapabilities, buildCurrentUser } from "../../test/fixtures";
 import { CAPTURED_SUPPLIES_BY_USER_ID } from "../../test/capturedResponses";
@@ -149,6 +150,15 @@ beforeEach(() => {
 });
 
 describe("HistoricalAnalysisPage", () => {
+  it("UI-LAY-003 shows Inicio, then Mi consumo y ahorro, above the title", () => {
+    serveSupplies([HOME]);
+    renderPage();
+
+    expectPageBreadcrumb("Mi consumo y ahorro");
+    const trail = screen.getByRole("navigation", { name: "breadcrumbs" });
+    expect(trail.compareDocumentPosition(screen.getByRole("heading", { level: 1 })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   describe("UI-HIS-001 lists only the caller's own enabled supplies in the active community", () => {
     it("UI-HIS-001 AC1 offers a community admin their one own supply, never the community's other ten", async () => {
       mockLoggedUser = communityAdmin();

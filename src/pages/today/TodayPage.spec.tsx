@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { useLocation } from "react-router";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { stubViewport } from "../../test/overlay";
+import { expectPageBreadcrumb } from "../../test/breadcrumb";
 import { query } from "../../test/queryState";
 import { apiError } from "../../test/apiError";
 import {
@@ -214,12 +215,48 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** No admin block of its own: the selector is the only place the viewed supply appears (UI-TDY-003). */
+/**
+ * No admin block of its own: the selector is the only place the viewed supply
+ * appears (UI-TDY-003), and the breadcrumb stays the page's own two steps,
+ * never the trail through "Puntos de suministro" (UI-LAY-003).
+ */
 function expectNoAdminBlock() {
-  expect(screen.queryByRole("navigation", { name: /breadcrumb/i })).not.toBeInTheDocument();
+  expectPageBreadcrumb("Datos de hoy");
   expect(screen.queryByText(/Este punto no es tuyo/)).not.toBeInTheDocument();
   expect(screen.queryByRole("link", { name: "Volver al punto de suministro" })).not.toBeInTheDocument();
 }
+
+describe("the breadcrumb", () => {
+  it("UI-LAY-003 UI-TDY-001 shows Inicio, then Datos de hoy, above the title", () => {
+    renderPage();
+
+    expectPageBreadcrumb("Datos de hoy");
+    const trail = screen.getByRole("navigation", { name: "breadcrumbs" });
+    expect(trail.compareDocumentPosition(screen.getByRole("heading", { level: 1 })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("UI-LAY-003 UI-TDY-001 keeps the same trail for a community admin viewing another member's supply", () => {
+    mockLoggedUser = admin();
+    canManage = true;
+    renderPage(`?supplyId=${MEMBERS.id}`);
+
+    expect(shown()).toBe(MEMBERS_LABEL);
+    expectPageBreadcrumb("Datos de hoy");
+  });
+
+  it("UI-LAY-003 UI-TDY-001 shows it before anything has loaded, and with no supply to show", () => {
+    vi.mocked(useGetSuppliesByUserId).mockReturnValue(query.loading());
+    const { unmount } = renderPage();
+    expectPageBreadcrumb("Datos de hoy");
+    unmount();
+
+    ownListing = [];
+    serve();
+    renderPage();
+    expect(screen.getByText("No tienes puntos de suministro en esta comunidad")).toBeInTheDocument();
+    expectPageBreadcrumb("Datos de hoy");
+  });
+});
 
 describe("the supply selector", () => {
   it("UI-TDY-002 lists only the caller's own supplies in the active community, without the plant's own, by name and CUPS", async () => {
@@ -289,6 +326,7 @@ describe("?supplyId=", () => {
     renderPage(`?supplyId=${MEMBERS.id}`);
 
     expect(shown()).toBe(MEMBERS_LABEL);
+    expectNoAdminBlock();
     const sheet = await openSheet();
     expect(within(sheet).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual([
       "Punto que estás consultando",
@@ -298,7 +336,6 @@ describe("?supplyId=", () => {
     expect(within(sheet).getByRole("radio", { name: MEMBERS_LABEL })).toBeChecked();
     expect(within(sheet).queryByRole("radio", { name: "Todos mis puntos" })).not.toBeInTheDocument();
     expect(askedFor()).toEqual(new Set([MEMBERS.id]));
-    expectNoAdminBlock();
   });
 
   it("UI-TDY-003 choosing one of the caller's own supplies drops the viewed one from the selector", async () => {
