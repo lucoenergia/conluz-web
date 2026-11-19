@@ -216,7 +216,6 @@ export const IntegrationCard: FC<IntegrationCardProps> = ({
               errors={errors}
               onFieldBlur={onFieldBlur}
               inputRefs={inputRefs}
-              accent={accent}
               urlPlaceholder={provider.urlPlaceholder}
             />
 

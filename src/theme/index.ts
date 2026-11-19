@@ -1,7 +1,10 @@
-import { createTheme } from "@mui/material";
+import { createTheme, outlinedInputClasses } from "@mui/material";
 import { esES } from "@mui/material/locale";
 import { esES as pickersEsES } from "@mui/x-date-pickers/locales";
+import { pickersOutlinedInputClasses } from "@mui/x-date-pickers/PickersTextField";
+import type {} from "@mui/x-date-pickers/themeAugmentation";
 import { colors, shadows, radii } from "./tokens";
+import { outlinedFieldStyles } from "./fieldOutline";
 
 const themeOptions: Parameters<typeof createTheme>[0] = {
   shape: {
@@ -199,18 +202,19 @@ const themeOptions: Parameters<typeof createTheme>[0] = {
         },
       },
     },
-    // OutlinedInput hover/focus border colour centralised here so every
-    // field in the app gets primary.main without repeating sx on each instance.
+    // Every input field's outline and fill, from one set of values
+    // (fieldOutline.ts, UI-FRM-004): text, select and autocomplete fields here,
+    // date fields in MuiPickersOutlinedInput below.
     MuiOutlinedInput: {
       styleOverrides: {
-        root: ({ theme }) => ({
-          "&:hover fieldset": {
-            borderColor: theme.palette.primary.main,
-          },
-          "&.Mui-focused fieldset": {
-            borderColor: theme.palette.primary.main,
-          },
-        }),
+        root: outlinedFieldStyles(outlinedInputClasses),
+      },
+    },
+    // The date pickers' accessible field (MUI X v8) draws its own outline; it
+    // takes the very same values, so a date field looks like any other.
+    MuiPickersOutlinedInput: {
+      styleOverrides: {
+        root: outlinedFieldStyles(pickersOutlinedInputClasses),
       },
     },
     // Matching label colour on focus — pairs with the OutlinedInput override above.

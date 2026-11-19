@@ -5,6 +5,8 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { SearchBar } from "./SearchBar";
+import { cascadedValue } from "../../test/cascade";
+import { fieldOutline } from "../../theme/fieldOutline";
 
 const ControlledSearchBar = ({ onChange }: { onChange?: (value: string) => void }) => {
   const [value, setValue] = useState("");
@@ -59,5 +61,18 @@ describe("SearchBar", () => {
     expect(rules[0]).toMatch(/\.MuiInputBase-input::-webkit-search-cancel-button/);
     expect(rules[0]).toMatch(/display:\s*none/);
     expect(rules[0]).toMatch(/appearance:\s*none/);
+  });
+
+  it("UI-FRM-004 has the shared field outline, 2 px and primary only while focused", async () => {
+    renderWithProviders(<ControlledSearchBar />);
+    const box = screen.getByRole("searchbox").closest(".MuiPaper-root")!;
+
+    expect(cascadedValue(box, "border-color")).toBe(fieldOutline.color);
+    expect(cascadedValue(box, "border-top-width") ?? cascadedValue(box, "border")).toMatch(/^1px/);
+
+    await userEvent.click(screen.getByRole("searchbox"));
+
+    expect(cascadedValue(box, "border-color")).toBe(fieldOutline.focusedColor);
+    expect(cascadedValue(box, "border-top-width") ?? cascadedValue(box, "border")).toMatch(/^2px/);
   });
 });
