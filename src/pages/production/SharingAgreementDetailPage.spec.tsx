@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Routes, Route } from "react-router";
 import { renderWithProviders } from "../../test/renderWithProviders";
@@ -168,6 +168,15 @@ describe("SharingAgreementDetailPage", () => {
       options?.query?.enabled ? query.success<typeof getPlantActivePartitionCoefficients>([]) : query.disabled(),
     );
     vi.mocked(getSharingAgreementById).mockRejectedValue(new Error("No agreement fixture"));
+  });
+
+  test("UI-LAY-003 leads back to Acuerdos de reparto, in sentence case, in its breadcrumb", async () => {
+    mockData();
+    setup();
+
+    const trail = await screen.findByRole("navigation", { name: "breadcrumbs" });
+    expect(within(trail).getByRole("link", { name: "Acuerdos de reparto" })).toBeInTheDocument();
+    expect(within(trail).queryByText("Acuerdos de Reparto")).not.toBeInTheDocument();
   });
 
   test("offers editing and deleting in the kebab for a DRAFT agreement", async () => {

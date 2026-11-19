@@ -221,7 +221,7 @@ export const SupplyPointsPage: FC = () => {
           steps={[
             { label: "Inicio", href: "/" },
             ...(personId ? [{ label: "Miembros", href: "/members" }] : []),
-            { label: "Puntos de Suministro", href: "/supply-points" },
+            { label: "Puntos de suministro", href: "/supply-points" },
           ]}
         />
       </Box>
@@ -231,7 +231,7 @@ export const SupplyPointsPage: FC = () => {
         <DetailHeader
           variant="list"
           icon={<ElectricMeterIcon />}
-          title="Puntos de Suministro"
+          title="Puntos de suministro"
           subtitle={
             personId
               ? `Usuario: ${personData?.fullName ?? "..."}`

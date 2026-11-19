@@ -15,7 +15,7 @@ import type { HistoricalPeriodState } from "../../../components/period/useHistor
 import type { PlantEnergyMetricsResponse } from "../../../api/models";
 import { colors, radii } from "../../../theme/tokens";
 import { formatKilowattHours } from "../../../utils/formatEnergyFigures";
-import { PlantSection } from "./PlantSection";
+import { PlantSection } from "../../../components/PlantSection";
 import { PLANT_PRESETS, plantPublicationText } from "./plantPeriod";
 import { PLANT_EVOLUTION_COPY, PLANT_LOOK, toPlantSeriesView, type PlantSeries } from "./plantSeries";
 import { usePlantEnergySeries } from "./usePlantEnergySeries";

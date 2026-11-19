@@ -1,5 +1,5 @@
 import { useEffect, type FC } from "react";
-import { Box, Skeleton, Typography } from "@mui/material";
+import { Box, Skeleton, Typography, formControlClasses, type Theme } from "@mui/material";
 import type { SupplyResponse } from "../../api/models";
 import { useErrorDispatch } from "../../context/error.context";
 import { sxStyles } from "../../theme/sx";
@@ -14,13 +14,15 @@ import { PeriodEvolution } from "./PeriodEvolution";
 import { PeriodFigures } from "./PeriodFigures";
 import { PeriodHeader } from "../../components/EnergyFigures/PeriodHeader";
 import { PeriodSelector } from "../../components/period/PeriodSelector";
-import { SupplySelector } from "./SupplySelector";
+import { SupplySelector } from "../../components/SupplySelector";
 import { useHistoricalAnchor, type HistoricalAnchor } from "../../components/period/useHistoricalAnchor";
 import { MEMBER_DEFAULT_PRESET, MEMBER_PRESETS, memberClampNotice, memberPublicationText } from "./memberPeriod";
 import { readMonthAnchor, useMemberAnchorQuery } from "./useMemberAnchorQuery";
 import { useHistoricalPeriodState, type HistoricalPeriodState } from "../../components/period/useHistoricalPeriodState";
 import { useOwnSupplies } from "./useOwnSupplies";
 import { useSelectedSupply } from "./useSelectedSupply";
+import { BreadCrumb } from "../../components/Breadcrumb";
+import { HISTORICAL_ANALYSIS_PATH } from "../../utils/routes";
 
 /**
  * "Mi consumo y ahorro": the caller's own supplies over time (#247). This
@@ -58,8 +60,16 @@ export const HistoricalAnalysisPage: FC = () => {
   return (
     <Box sx={sxStyles.pageRoot}>
       <Box sx={sxStyles.pageContainer}>
+        <BreadCrumb
+          steps={[
+            { label: "Inicio", href: "/" },
+            { label: PAGE_TITLE, href: HISTORICAL_ANALYSIS_PATH },
+          ]}
+        />
+      </Box>
+      <Box sx={sxStyles.pageContainer}>
         <Typography variant="h4" component="h1" sx={{ color: colors.text.primary }}>
-          Mi consumo y ahorro
+          {PAGE_TITLE}
         </Typography>
       </Box>
       {(isLoading || (noSupplyToShow && isResolving)) && (
@@ -73,13 +83,13 @@ export const HistoricalAnalysisPage: FC = () => {
       )}
       {supplies && (ownsSupplies || viewed !== null) && (
         <>
-          <Box sx={[sxStyles.pageContainer, { display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: "flex-start", gap: 2 }]}>
-            <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
+          <Box sx={[sxStyles.pageContainer, SELECTORS_ROW_SX]}>
+            <Box sx={SELECTOR_CELL_SX}>
               <SupplySelector supplies={supplies} selected={selected} viewed={viewed} onSelect={select} />
             </Box>
-            {anchor.status === "loading" && <Skeleton variant="rounded" height={56} sx={{ flex: 1, width: "100%" }} />}
+            {anchor.status === "loading" && <Skeleton variant="rounded" height={64} sx={{ width: "100%" }} />}
             {anchor.status === "ready" && (
-              <Box sx={{ flex: 1, minWidth: 0, width: "100%" }}>
+              <Box sx={SELECTOR_CELL_SX}>
                 <PeriodSelector anchor={anchor.anchor} presets={MEMBER_PRESETS} selection={period.selection} onSelect={period.select} />
               </Box>
             )}
@@ -93,6 +103,39 @@ export const HistoricalAnalysisPage: FC = () => {
   );
 };
 
+/**
+ * The supply and period selectors (#432). From sm, one row of two equal
+ * columns, each at most as wide as the supply field: the fields share the
+ * first grid row, so both stretch to the taller one, and the supply's footer
+ * takes the second row under its own field, without pushing the period field
+ * down. Each field's FormControl joins the grid through subgrid. Below sm,
+ * stacked.
+ */
+const SELECTORS_ROW_SX = (theme: Theme) => ({
+  display: "flex",
+  flexDirection: "column",
+  gap: 2,
+  [theme.breakpoints.up("sm")]: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 560px))",
+    gridTemplateRows: "auto auto",
+    columnGap: 2,
+    rowGap: 0,
+  },
+});
+
+const SELECTOR_CELL_SX = (theme: Theme) => ({
+  minWidth: 0,
+  width: "100%",
+  [theme.breakpoints.up("sm")]: {
+    display: "grid",
+    gridRow: "span 2",
+    gridTemplateRows: "subgrid",
+    [`& > .${formControlClasses.root}`]: { display: "grid", gridRow: "span 2", gridTemplateRows: "subgrid", maxWidth: "none" },
+  },
+});
+
+const PAGE_TITLE = "Mi consumo y ahorro";
 const VIEWED_SUPPLY_ERROR = "No se pudo cargar el punto de suministro. Comprueba tu conexión e inténtalo de nuevo.";
 const NO_DATA_TITLE = "Todavía no hay datos publicados";
 const NO_DATA_BODY =

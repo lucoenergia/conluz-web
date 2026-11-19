@@ -8,13 +8,14 @@
 | **Roles** | Every signed-in caller |
 | **Domain rules** | n/a |
 | **Design reference** | `DESIGN.md` → Layout |
-| **Last reviewed against code** | #415 |
+| **Last reviewed against code** | #432 |
 
 ## Purpose
 
 Give every screen of the app the same column: the same width, padding and spacing on a phone and on
 a desktop, so moving between screens never shifts where the content starts and ends. The subject is
-the page's own frame (its root and its page-level panels), not the layout of what a panel holds.
+the page's own frame (its root and its page-level panels), not the layout of what a panel holds, and
+the breadcrumb that tells a user where the page sits (#432).
 
 ## Rules
 
@@ -44,11 +45,30 @@ the page's own frame (its root and its page-level panels), not the layout of wha
 - **Implements:** n/a
 - **Source:** #415
 
+### UI-LAY-003 — Every page shows a breadcrumb that starts at Inicio
+
+- **Status:** Active
+- **Rule:** Every authenticated page except Inicio MUST show a breadcrumb above its title, starting
+  at 'Inicio' and ending at the page itself; a step for a page with a menu entry MUST use that
+  entry's label.
+  - "Inicio" is every landing a caller may be sent to from `/`: the member and management home
+    views, the platform page of a platform admin with no membership, and the no-community page.
+  - The breadcrumb depends on no data, so it shows in every state of the page.
+  - A page's own step does not change with its query string: a community admin viewing another
+    member's supply keeps the page's trail (UI-TDY-003, UI-HIS-001).
+- **Rationale:** The same orientation on every page. The three energy pages, "Datos de hoy", "Mi
+  consumo y ahorro" and "Energía de la comunidad", shipped without one because no rule required it.
+  A label that matches the menu, in sentence case, names one place one way. Enforced by
+  `src/contracts/pageBreadcrumbs.spec.ts`, which reads the routes from `src/App.tsx`; its
+  exemptions are the landings above and the two redirects.
+- **Implements:** n/a
+- **Source:** #432
+
 ## States
 
 | State | Rendered | Actions available |
 | --- | --- | --- |
-| Any page, any state | The shared page root, filling the main content area; a not-found state inside a detail page uses the same root | Those of the page |
+| Any page, any state | The shared page root, filling the main content area; a not-found state inside a detail page uses the same root; above the title, the page's breadcrumb, except on a landing (UI-LAY-003) | Those of the page |
 
 ## Accepted exceptions
 

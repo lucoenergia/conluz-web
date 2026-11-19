@@ -4,11 +4,11 @@
 | --- | --- |
 | **Prefix** | `UI-FRM` |
 | **Status** | Active |
-| **Routes** | `/supply-points`, `/plants`, `/plants/:plantId`, `/communities`, `/platform`, `/members` (the supply, plant, community, member record and registration forms open in the shared overlay over them), `/profile` |
+| **Routes** | `/supply-points`, `/plants`, `/plants/:plantId`, `/communities`, `/platform`, `/members` (the supply, plant, community, member record and registration forms open in the shared overlay over them), `/profile`; for UI-FRM-004, every screen with an input field |
 | **Roles** | Whoever may open each form; this document adds no gate |
 | **Domain rules** | `lucoenergia/conluz`: API-003, API-004 |
-| **Design reference** | Design system: `AddressField`, `ReadOnlyField` (forms group) |
-| **Last reviewed against code** | #431 |
+| **Design reference** | Design system: `AddressField`, `ReadOnlyField` (forms group); the theme's field outline (`src/theme/fieldOutline.ts`) |
+| **Last reviewed against code** | #432 |
 
 <!-- Domain rules are cited by ID; the prefix registry in lucoenergia/conluz → docs/specs/README.md maps each prefix to its file. -->
 
@@ -16,8 +16,10 @@
 
 Let a user type, read and check a whole address before saving it, on a phone as on a desktop, in
 every record form that asks for one. Let a user tell at a glance a value they can change from one
-they cannot. This document covers only the rules #411 introduced, on the address input, and #416
-and #431, on values that can never be edited from their screen; where a refused save is shown is
+they cannot. Let a user find every editable field's edge, on a phone outdoors as on a desktop. This document
+covers only the rules #411 introduced, on the address input, #416 and #431, on values that can never
+be edited from their screen, and #432, on the outline every input field shares; where a refused save
+is shown is
 [`api-errors.md`](api-errors.md)'s (UI-ERR-007).
 
 ## Rules
@@ -70,6 +72,24 @@ and #431, on values that can never be edited from their screen; where a refused 
 - **Implements:** n/a
 - **Source:** #416; #431 (filled variant, label inside)
 
+### UI-FRM-004 — Every input field has an accessible outline, the same for every kind of field
+
+- **Status:** Active
+- **Rule:** Every enabled input field, text, select, autocomplete and date fields alike, MUST have
+  an outline with at least 3:1 contrast against both the field fill and the page background, and
+  the same outline, fill and states across field kinds, through the theme; disabled inputs are
+  exempt.
+  - The values are defined once and read by every field: the outline, the white fill, and the hover,
+    focus and error states. A field drawn by hand, such as the search bar or an outlined button
+    standing in for a field (a selector's sheet trigger, a range picker's day readout), takes the
+    same values.
+  - A value that can never be edited keeps its read-only presentation (UI-FRM-003).
+- **Rationale:** WCAG 1.4.11 asks 3:1 of a control's boundary, and MUI's default outline is well
+  below it. About 90 % of use is on a phone, often outdoors, where a faint edge disappears. One look
+  for every field, a date included, means no field reads as a different kind of control.
+- **Implements:** n/a
+- **Source:** #432
+
 ## States
 
 | State | Rendered | Actions available |
@@ -77,6 +97,8 @@ and #431, on values that can never be edited from their screen; where a refused 
 | Empty or short address | One line, at the height of the other inputs | Type; Enter submits the form |
 | Long address | Up to four lines, then it scrolls | The same |
 | Save in flight (overlay forms) | The same, read-only (UI-OVL-002), in the editable look | None |
+| An editable field, enabled | The shared outline on a white fill; hover, focus and error change the outline (UI-FRM-004) | Type, pick |
+| An editable field, disabled | MUI's disabled look, exempt from UI-FRM-004 | — |
 | A value never editable from its screen | The read-only presentation: a filled field with its label inside and any helper text below (UI-FRM-003) | Focus it, select and copy its value |
 | Refused for its length | The refusal on the address input in the overlay forms, where the profile shows errors on its own page (UI-ERR-007, UI-PRF-004) | Edit the address, which clears an error on it |
 

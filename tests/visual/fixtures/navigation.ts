@@ -46,7 +46,7 @@ export async function navigateToSharingAgreements(page: Page) {
   await stabilizePage(page);
 
   await plantMenuButton.click();
-  await page.getByRole("menuitem", { name: /Acuerdos de Reparto/i }).click();
+  await page.getByRole("menuitem", { name: /Acuerdos de reparto/i }).click();
 
   // A click into another lazy, capability-guarded route. React Router renders a
   // navigation as a transition, so the old page stays up with no fallback while

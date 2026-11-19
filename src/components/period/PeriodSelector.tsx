@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { sxStyles } from "../../theme/sx";
 import { colors, radii } from "../../theme/tokens";
 import { CustomRangePicker } from "./CustomRangePicker";
 import {
@@ -84,6 +85,8 @@ const PeriodDropdown: FC<PeriodSelectorProps> = ({ anchor, presets, selection, o
           if (kind !== "custom") onSelect({ kind });
         }}
         slotProps={{ select: { renderValue: (kind) => nameOf(kind as PeriodSelection["kind"], anchor, presets) } }}
+        // The supply selector's field (#432). The value stays one line: PeriodHeader states the period.
+        sx={sxStyles.filterField}
         fullWidth
       >
         {optionsFor(anchor, presets).map((option) => (
@@ -141,7 +144,10 @@ const PeriodSheet: FC<PeriodSelectorProps> = ({ anchor, presets, selection, onSe
         aria-expanded={open || rangeOpen}
         onClick={() => setOpen(true)}
         endIcon={<ExpandMoreIcon aria-hidden />}
-        sx={{ justifyContent: "space-between", textAlign: "left", textTransform: "none", borderRadius: radii.default, minWidth: 0 }}
+        sx={[
+          sxStyles.filterField,
+          { justifyContent: "space-between", textAlign: "left", textTransform: "none", borderRadius: radii.default, minWidth: 0 },
+        ]}
       >
         <Box id={valueId} component="span" sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
           {nameOf(selection.kind, anchor, presets)}

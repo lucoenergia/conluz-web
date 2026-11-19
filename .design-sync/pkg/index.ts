@@ -29,7 +29,6 @@ export { ContactChannelReorderList } from "../../src/components/ContactChannelRe
 export { DetailHeader } from "../../src/components/DetailHeader/DetailHeader";
 export { EmptyState } from "../../src/components/EmptyState/EmptyState";
 export { FilterChipsBar } from "../../src/components/FilterChips/FilterChipsBar";
-export { DropdownSelector } from "../../src/components/Forms/DropdownSelector";
 export { PasswordInput } from "../../src/components/Forms/PasswordInput";
 export { PasswordPolicyHint } from "../../src/components/Forms/PasswordPolicyHint";
 export { Logo } from "../../src/components/Header/Logo";

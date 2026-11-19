@@ -1,4 +1,26 @@
+import { buttonClasses, inputBaseClasses, selectClasses } from "@mui/material";
 import { colors, radii, shadows } from "./tokens";
+import { fieldOutline } from "./fieldOutline";
+
+/**
+ * An outlined Button standing in for a field, such as a picker's sheet
+ * trigger: the shared field outline and fill (UI-FRM-004), its focus drawn
+ * 2 px wide by an inner outline, so the button does not shift.
+ */
+const fieldButton = {
+  [`&.${buttonClasses.outlined}`]: {
+    backgroundColor: fieldOutline.fill,
+    borderColor: fieldOutline.color,
+    color: colors.text.primary,
+    "&:hover": { backgroundColor: fieldOutline.fill, borderColor: fieldOutline.hoverColor },
+    "&:focus-visible": {
+      borderColor: fieldOutline.focusedColor,
+      outline: "1px solid",
+      outlineColor: fieldOutline.focusedColor,
+      outlineOffset: "-2px",
+    },
+  },
+} as const;
 
 export const sxStyles = {
   // The root of every page under the authenticated layout: one full-width column
@@ -64,6 +86,19 @@ export const sxStyles = {
         height: 44,
       },
     },
+  },
+  // An outlined Button drawn as a field (UI-FRM-004); see fieldButton above.
+  fieldButton,
+  // The field of a selector heading a page's filters, the supply and the
+  // period selectors alike (#432): at least 64 px tall, its value centred, so
+  // a two-line value fits and the selectors side by side match. On the
+  // dropdown it sizes the select; on the sheet trigger, an outlined Button,
+  // it also draws the shared field outline and fill.
+  filterField: {
+    [`& .${inputBaseClasses.root}`]: { minHeight: 64 },
+    [`& .${selectClasses.select}`]: { display: "flex", alignItems: "center" },
+    [`&.${buttonClasses.root}`]: { minHeight: 64, alignItems: "center" },
+    ...fieldButton,
   },
   // Padded white surface: responsive radius and soft drop-shadow.
   softPanel: {

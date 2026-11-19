@@ -25,21 +25,12 @@ export interface CredentialsFieldsProps {
   errors?: CredentialsErrors;
   /** A field lost focus. */
   onFieldBlur?: (field: CredentialsField) => void;
-  accent: string;
   urlPlaceholder?: string;
   /** Each field's input element, for a screen that must bring the admin to one. */
   inputRefs?: Partial<Record<CredentialsField, Ref<HTMLInputElement>>>;
   /** The fields take no input, e.g. while the form's write is in flight. */
   readOnly?: boolean;
 }
-
-const fieldSx = (accent: string) => ({
-  "& .MuiOutlinedInput-root": {
-    "&:hover fieldset": { borderColor: accent },
-    "&.Mui-focused fieldset": { borderColor: accent },
-  },
-  "& .MuiInputLabel-root.Mui-focused": { color: accent },
-});
 
 /**
  * Usuario, Contraseña and URL del servicio: the credentials every
@@ -52,7 +43,6 @@ export const CredentialsFields: FC<CredentialsFieldsProps> = ({
   onChange,
   errors = {},
   onFieldBlur,
-  accent,
   urlPlaceholder,
   inputRefs = {},
   readOnly = false,
@@ -86,7 +76,6 @@ export const CredentialsFields: FC<CredentialsFieldsProps> = ({
             </InputAdornment>
           ),
         }}
-        sx={fieldSx(accent)}
       />
       <TextField
         label="Contraseña"
@@ -125,7 +114,6 @@ export const CredentialsFields: FC<CredentialsFieldsProps> = ({
             </InputAdornment>
           ),
         }}
-        sx={fieldSx(accent)}
       />
       <TextField
         label="URL del servicio"
@@ -147,7 +135,7 @@ export const CredentialsFields: FC<CredentialsFieldsProps> = ({
             </InputAdornment>
           ),
         }}
-        sx={{ ...fieldSx(accent), gridColumn: { xs: "auto", sm: "1 / -1" } }}
+        sx={{ gridColumn: { xs: "auto", sm: "1 / -1" } }}
       />
     </Box>
   );

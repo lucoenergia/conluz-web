@@ -165,7 +165,7 @@ export const SharingAgreementDetailPage: FC = () => {
             { label: "Inicio", href: "/" },
             { label: "Plantas", href: "/plants" },
             { label: plant?.name || "Planta", href: `/plants/${plantId}` },
-            { label: "Acuerdos de Reparto", href: `/plants/${plantId}/sharing-agreements` },
+            { label: "Acuerdos de reparto", href: `/plants/${plantId}/sharing-agreements` },
             { label: agreement?.name || "Detalle", href: "#" },
           ]}
         />

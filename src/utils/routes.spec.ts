@@ -140,6 +140,11 @@ describe("resolveCommunityScopedTarget", () => {
     expect(resolveCommunityScopedTarget("/historical-analysis", "?period=2026-08")).toBeNull();
   });
 
+  it("drops ?supplyId= from the Datos de hoy page, since a supply belongs to one community (#432)", () => {
+    expect(resolveCommunityScopedTarget("/today", "?supplyId=supply-a")).toBe("/today");
+    expect(resolveCommunityScopedTarget("/today", "")).toBeNull();
+  });
+
   it("leaves community-agnostic routes alone", () => {
     for (const pathname of ["/", "/profile", "/members", "/integrations", "/platform-admins", "/platform", "/communities/community-1/admins", "/no-community"]) {
       expect(resolveCommunityScopedTarget(pathname, "")).toBeNull();

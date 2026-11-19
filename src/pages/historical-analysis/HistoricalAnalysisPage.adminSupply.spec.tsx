@@ -4,6 +4,7 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useLocation } from "react-router";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { expectPageBreadcrumb } from "../../test/breadcrumb";
 import { query } from "../../test/queryState";
 import { apiError } from "../../test/apiError";
 import {
@@ -101,7 +102,7 @@ const MEMBERS: SupplyResponse = {
   ownerRecord: buildMemberRecord({ fullName: "Lucía Martínez Soler" }),
   capabilities: buildSupplyCapabilities({ canRead: true, canEdit: true }),
 };
-const MEMBERS_LABEL = "Casa de Lucía · ES0021000000000009AA · Lucía Martínez Soler";
+const MEMBERS_LABEL = "Casa de Lucía · ES0021000000000009AA · de Lucía Martínez Soler";
 const OTHER_COMMUNITY: SupplyResponse = { ...MEMBERS, id: "other-community", community: { id: "community-b", name: "Otra" } };
 const DISABLED: SupplyResponse = { ...MEMBERS, id: "disabled", enabled: false };
 const UNREADABLE: SupplyResponse = { ...MEMBERS, id: "unreadable", capabilities: buildSupplyCapabilities({}) };
@@ -207,6 +208,13 @@ afterEach(() => {
 });
 
 describe("UI-HIS-001 a community admin may open any enabled supply of the active community (#252)", () => {
+  it("UI-LAY-003 keeps the trail Inicio, then Mi consumo y ahorro, while viewing another member's supply", () => {
+    renderPage();
+
+    expect(screen.getByRole("button", { name: SELECTOR })).toHaveTextContent(MEMBERS_LABEL);
+    expectPageBreadcrumb("Mi consumo y ahorro");
+  });
+
   it("UI-HIS-001 AC6 selects another member's supply from the address, in its own group above the caller's own", async () => {
     renderPage();
 

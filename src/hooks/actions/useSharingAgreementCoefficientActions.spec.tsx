@@ -309,12 +309,12 @@ describe("activateCoefficients", () => {
           errors: [
             {
               message: "raw",
-              code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
+              code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR",
               params: { cups: "ES1111111111111111AA" },
             },
             {
               message: "raw",
-              code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
+              code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR",
               params: { cups: "ES2222222222222222BB" },
             },
           ],

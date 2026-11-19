@@ -7,7 +7,6 @@ import { alpha } from "@mui/material/styles";
 import "dayjs/locale/es";
 import type { SupplyResponse } from "../../api/models";
 import { AddressField } from "../AddressField";
-import { fontSizes } from "../../theme/tokens";
 import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 import { type PlantFieldValues, type PlantFormField } from "./plantFields";
 
@@ -216,12 +215,6 @@ export const PlantFormFields: FC<PlantFormFieldsProps> = ({
           textField: {
             fullWidth: true,
             size: "small",
-            sx: {
-              "& .MuiOutlinedInput-root": {
-                fontSize: fontSizes.lg,
-                height: "40px",
-              },
-            },
           },
           popper: {
             sx: (theme) => ({

@@ -1,6 +1,7 @@
 import { InputBase, Paper, InputAdornment, IconButton } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { radii, shadows, colors, interactiveTransition} from "../../theme/tokens";
+import { fieldOutline } from "../../theme/fieldOutline";
 import { useState, type FC } from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -46,14 +47,17 @@ export const SearchBar: FC<SearchBarProps> = ({
         background: isFocused
           ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.primary.dark, 0.08)} 100%)`
           : "white",
-        border: "2px solid",
-        borderColor: isFocused ? theme.palette.primary.main : colors.border.light,
+        // The shared field outline (UI-FRM-004): 2 px only while focused, the
+        // padding giving back the pixel so the field does not shift.
+        border: `${isFocused ? fieldOutline.focusedWidth : 1}px solid`,
+        borderColor: isFocused ? fieldOutline.focusedColor : fieldOutline.color,
+        p: isFocused ? 0 : "1px",
         transition: interactiveTransition("0.3s", "cubic-bezier(0.4, 0, 0.2, 1)"),
         boxShadow: isFocused
           ? `0 10px 40px 0 ${alpha(theme.palette.primary.main, 0.15)}`
           : shadows.soft,
         "&:hover": {
-          borderColor: theme.palette.primary.main,
+          borderColor: isFocused ? fieldOutline.focusedColor : fieldOutline.hoverColor,
           boxShadow: `0 6px 24px 0 ${alpha(theme.palette.primary.main, 0.12)}`,
         },
       }}

@@ -27,6 +27,8 @@ import type {
   PlatformCapabilitiesResponse,
   SendInvitationsResponse,
   SharingAgreementResponse,
+  SupplyAssignedPowerPointResponse,
+  SupplyProductionTodayResponse,
   SupplyResponse,
 } from "../../../src/api/models";
 
@@ -2023,6 +2025,49 @@ export const FIXED_INVERTER_STALE: PlantInverterProductionTodayResponse = {
   powerCurve: inverterPoints("07:35", "10:15", morning),
   lastUpdatedAt: "2026-09-15T10:15:00+02:00",
   stale: true,
+};
+
+/** The assigned curve every 5 minutes from `from` to `to` ("HH:mm" on 15 September, +02:00), its power from `power`. */
+function assignedSlots(from: string, to: string, power: (minute: number) => number | null): SupplyAssignedPowerPointResponse[] {
+  return inverterPoints(from, to, power);
+}
+
+/** The member's share of the clear-sky morning, at a 4.25 % coefficient. */
+const share = (minute: number) => Math.round(morning(minute) * 0.0425 * 1000) / 1000;
+
+/**
+ * "Datos de hoy" (#432), producing: about 1.9 kW reaches the member at 13:55,
+ * thick enough for the conduit's chevrons. FIXED_NOW is 14:00 in Madrid.
+ */
+export const FIXED_ENERGY_TODAY_FLOWING: SupplyProductionTodayResponse = {
+  status: "AVAILABLE",
+  assignedPowerCurve: assignedSlots("07:35", "13:55", share),
+  assignedEnergyKWh: 6.92,
+  currentAssignedPowerKW: 1.9,
+  currentPlantPowerKW: 44.7,
+  partitionCoefficient: 0.0425,
+  lastUpdatedAt: "2026-09-15T13:55:00+02:00",
+  stale: false,
+};
+
+/** AVAILABLE, but the plant produces nothing right now: the dashed conduit. */
+export const FIXED_ENERGY_TODAY_IDLE: SupplyProductionTodayResponse = {
+  ...FIXED_ENERGY_TODAY_FLOWING,
+  assignedPowerCurve: assignedSlots("07:35", "13:55", (minute) => (minute >= 13 * 60 + 30 ? 0 : share(minute))),
+  currentAssignedPowerKW: 0,
+  currentPlantPowerKW: 0,
+};
+
+/** The plant sends no inverter data: the greyed plant node. */
+export const FIXED_ENERGY_TODAY_NOT_AVAILABLE: SupplyProductionTodayResponse = {
+  status: "NOT_AVAILABLE",
+  assignedPowerCurve: null,
+  assignedEnergyKWh: null,
+  currentAssignedPowerKW: null,
+  currentPlantPowerKW: null,
+  partitionCoefficient: null,
+  lastUpdatedAt: null,
+  stale: null,
 };
 
 export const FIXED_INVERTER_NO_DATA_TODAY: PlantInverterProductionTodayResponse = {

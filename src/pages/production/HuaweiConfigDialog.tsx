@@ -8,7 +8,6 @@ import { buildCredentialsBody, passwordRequiredMessage } from "../../utils/integ
 import { colors } from "../../theme/tokens";
 import { CredentialsFields } from "../integrations/CredentialsFields";
 import {
-  HUAWEI_ACCENT,
   HUAWEI_HELP,
   HUAWEI_URL_PLACEHOLDER,
   SAVE_FAILED_MESSAGE,
@@ -112,7 +111,6 @@ export const HuaweiConfigDialog: FC<HuaweiConfigDialogProps> = ({
           onChange={(patch) => setValues((current) => ({ ...current, ...patch }))}
           errors={form.errors}
           onFieldBlur={form.touch}
-          accent={HUAWEI_ACCENT}
           urlPlaceholder={HUAWEI_URL_PLACEHOLDER}
           readOnly={isSaving}
         />

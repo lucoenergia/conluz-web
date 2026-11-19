@@ -203,7 +203,6 @@ describe("distributor-file and sharing-agreement error templates", () => {
 
 const LIFECYCLE_CODES: RestErrorDetailCode[] = [
   "SHARING_AGREEMENT_DATE_IN_FUTURE",
-  "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
   "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR",
   "SHARING_AGREEMENT_CLOSURE_DATE_NOT_AFTER_ACTIVATION",
   "SHARING_AGREEMENT_COEFFICIENT_NOT_ACTIVE",
@@ -245,12 +244,12 @@ describe("coefficient-lifecycle error templates (activate/deactivate/close/reope
           errors: [
             {
               message: "raw",
-              code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
+              code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR",
               params: { cups: "ES1111111111111111AA", coefficientId: "c1" },
             },
             {
               message: "raw",
-              code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_AFTER_PREDECESSOR",
+              code: "SHARING_AGREEMENT_ACTIVATION_DATE_NOT_BEFORE_SUCCESSOR",
               params: { cups: "ES2222222222222222BB", coefficientId: "c2" },
             },
             { message: "raw", code: "SHARING_AGREEMENT_DATE_IN_FUTURE", params: { coefficientId: "c3" } },

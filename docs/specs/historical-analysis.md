@@ -8,7 +8,7 @@
 | **Roles** | A caller who may read the active community (`canRead`): members and community admins |
 | **Domain rules** | EPR-001, EPR-003, EPR-004 (lucoenergia/conluz#409); EPR-005 (lucoenergia/conluz#545, #546); SEM-001 (lucoenergia/conluz#408); SEM-002, SEM-003, SEM-004, ENM-006, ENM-007, ENM-008 (lucoenergia/conluz#411); MCS-001, MCS-002 (lucoenergia/conluz#410); SCS-001 (lucoenergia/conluz#545); MCS-003 (lucoenergia/conluz#546); ADR-0005 in lucoenergia/conluz |
 | **Design reference** | Claude Design round 2 copy deck; round 3 copy deck for the period (#248); the member consumption analysis design, option A, for the evolution charts (#250) and the data table and CSV (#251); its round 3, for the mobile charts and the paired terms (#361) |
-| **Last reviewed against code** | #425 |
+| **Last reviewed against code** | #432 |
 
 Scope: the page shell, its menu entry and its supply selector (#247), the period: its anchor,
 selector, custom range picker, header and query string (#248), the period's card and totals
@@ -34,18 +34,24 @@ here too, and opens another member's supply from its detail page, one at a time.
 - **Rule:**
   - The page MUST list the caller's own enabled supplies in the active community and "Todos mis
     puntos", for members and community admins alike. The selector, labelled "Punto de suministro",
-    MUST offer "Todos mis puntos" first among them, as the default, then one option per supply as
-    "{nombre} · {CUPS}", the name falling back to the address as UI-SUP-010 does. An option MUST be
-    tagged "Punto de planta" exactly when the supply's `plant` reference is non-null. The footer
+    MUST offer "Todos mis puntos" first among them, as the default, then one option per supply.
+    A supply MUST be shown in two lines, in the closed field, its options and the bottom sheet
+    alike: its name first, falling back to the address as UI-SUP-010 does, then its CUPS. Both lines
+    MUST wrap and MUST NOT be truncated, with no ellipsis and no tooltip; "Todos mis puntos" stays
+    one line. An option MUST be tagged "Punto de planta", on its first line, exactly when the
+    supply's `plant` reference is non-null. The footer
     "Solo aparecen tus puntos activos en esta comunidad." MUST be shown under it. Below `sm` the
     selector MUST open as a bottom sheet.
   - A community admin MAY open any enabled supply of the active community through `?supplyId=`. It
     is looked up only when the active community reports `canManage`, and selectable only when it is
     enabled, belongs to the active community and reports `canRead`.
   - That supply MUST be shown in its own group, "Punto que estás consultando", above the caller's
-    own, labelled "{nombre} · {CUPS} · {titular}" when the response carries the owner's member
-    record and "{nombre} · {CUPS}" when it does not. Choosing any other option MUST remove it from
-    the selector.
+    own, its second line reading "{CUPS} · de {titular}" when the response carries the owner's
+    member record and "{CUPS}" when it does not. Choosing any other option MUST remove it from the
+    selector.
+  - From `sm`, the supply and period selectors MUST sit in one row of equal columns, their fields
+    the same height and styled alike, the footer under the supply field only. Below `sm` they are
+    stacked.
   - For a caller who owns no supplies, the selector MUST list only the viewed supply, with no
     "Todos mis puntos" and no footer, in the dropdown and in the bottom sheet alike.
   - "Todos mis puntos" MUST stay the caller's own supplies, read from the caller's own membership.
@@ -61,10 +67,14 @@ here too, and opens another member's supply from its detail page, one at a time.
   name. The owner's member record, when the response carries one, says whose supply the admin is
   reading, with no second request. For a caller who owns no supplies, "Todos mis puntos" would
   always be empty and the footer would describe a list that is not there, so neither is offered,
-  and the membership they would read is never asked.
+  and the membership they would read is never asked. A name, a CUPS and an owner do not fit one
+  line on a phone, and a cut name or CUPS is a wrong supply waiting to happen, so a supply takes two
+  lines and is never truncated; the period selector beside it matches its field, so the row reads as
+  one set of filters.
 - **Implements:** n/a
 - **Source:** #247; changed in #252 (a community admin opens a supply of the community); changed
-  in #385 (a community admin who owns no supplies)
+  in #385 (a community admin who owns no supplies); changed in #432 (two lines, never truncated,
+  the row with the period selector)
 
 ### UI-HIS-002 — The selection is held in the address, and does not survive a community switch
 
@@ -115,16 +125,17 @@ here too, and opens another member's supply from its detail page, one at a time.
 - **Source:** #247; changed in #385 (a community admin who owns no supplies opens a supply of the
   community)
 
-### UI-HIS-004 — The community menu leads here right after Inicio
+### UI-HIS-004 — The community menu leads here right after Datos de hoy
 
 - **Status:** Active
-- **Rule:** The community menu MUST list "Mi consumo y ahorro" right after "Inicio", requiring the
-  active community's `canRead`, as the route does. The `/supply-points` entry MUST read "Puntos de
-  suministro".
-- **Rationale:** This page is the caller's own analysis, second only to the home. With it in the
-  menu, "Consumo" no longer described the supply list, which manages supply points.
+- **Rule:** The community menu MUST list "Mi consumo y ahorro" right after "Datos de hoy", which
+  follows "Inicio" (UI-TDY-001). The entry requires the active community's `canRead`, as the route
+  does. The `/supply-points` entry MUST read "Puntos de suministro".
+- **Rationale:** This page is the caller's own analysis. Today's data, the most frequent check,
+  comes before it (#432). With it in the menu, "Consumo" no longer described the supply list, which
+  manages supply points.
 - **Implements:** n/a
-- **Source:** #247
+- **Source:** #247, #432
 
 ### UI-HIS-005 — Periods end at the latest month published for the selected scope, never at the device clock
 
@@ -596,6 +607,8 @@ here too, and opens another member's supply from its detail page, one at a time.
 | Supplies, period, table failed | Under the evolution card, the neutral line "La tabla estará disponible cuando se carguen tus datos." and "Descargar CSV" disabled; the failure itself is reported, with "Reintentar", only by the period card (UI-HIS-010) or the evolution charts (UI-HIS-019) that own the request | Choosing a supply or a period; retrying from the block that reports the failure |
 | Supplies, period, table | Under the evolution card, "Tus datos": a row per slot (UI-HIS-021), the totals row (UI-HIS-022), seven rows until "Ver todos"; below `sm`, a card per row | Choosing a supply or a period; "Ver todos" / "Ver menos"; "Descargar CSV" (UI-HIS-023, UI-HIS-024) |
 | Error | The title only; the error is reported as on the supply list | None |
+
+Every state also shows the page's breadcrumb above the title (UI-LAY-003).
 
 ## Accepted exceptions
 

@@ -18,6 +18,7 @@ import type {
   SharingAgreementResponse,
   SupplyConsumptionBucketResponse,
   SupplyEnergyMetricsResponse,
+  SupplyProductionTodayResponse,
   SupplyResponse,
   PlantDailyEnergyBucketResponse,
   PlantEnergyMetricsResponse,
@@ -747,6 +748,22 @@ export async function mockPlantProductionRoutes(
         ...plantPeriodMetrics(buckets),
         period: { startDate: url.searchParams.get("startDate"), endDate: url.searchParams.get("endDate") },
       });
+    },
+  );
+}
+
+/**
+ * Today's energy assigned to the member's own supply, FIXED_SUPPLY ("Datos de
+ * hoy", #432). Registered AFTER mockAllApiRoutes(), whose supplies handler
+ * would otherwise answer this URL with the supply itself. Derived like the
+ * supply's own read: refused when the supply served does not report canRead.
+ */
+export async function mockSupplyEnergyToday(page: Page, production: SupplyProductionTodayResponse) {
+  await page.route(
+    (url) => url.pathname === `/api/v1/supplies/${FIXED_SUPPLY_ID}/energy-today`,
+    (route: Route) => {
+      if (refusal(FIXED_SUPPLY.capabilities, "canRead")) return refuse(route, "canRead");
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ production }) });
     },
   );
 }
