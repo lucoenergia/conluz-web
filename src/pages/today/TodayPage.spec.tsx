@@ -181,11 +181,18 @@ const askedFor = () =>
       .map(([supplyId]) => supplyId),
   );
 
-const selector = () => screen.getByRole("combobox", { name: "Punto de suministro" });
-async function optionLabels() {
+// jsdom answers no media query, so the selector is its bottom sheet, as on a phone.
+const selector = () => screen.getByRole("button", { name: /^Punto de suministro/ });
+/** The supply the selector shows as chosen. */
+const shown = () => selector().textContent;
+async function openSheet() {
   await userEvent.click(selector());
-  return within(screen.getByRole("listbox")).getAllByRole("option").map((option) => option.textContent);
+  return screen.getByRole("dialog", { name: "Punto de suministro" });
 }
+const optionLabels = (sheet: HTMLElement) => within(sheet).getAllByRole("radio").map((radio) => radio.closest("label")!.textContent);
+const HOME_LABEL = "Casa · ES0021000000000001AA";
+const GARAGE_LABEL = "Calle Mayor 3, garaje · ES0021000000000002AA";
+const MEMBERS_LABEL = "Casa de Lucía · ES0021000000000009AA · Lucía Martínez Soler";
 const hero = () => screen.getByTestId("energy-flow-hero");
 const conduit = () => within(hero()).getByTestId("conduit");
 
@@ -206,12 +213,11 @@ afterEach(() => {
 });
 
 describe("the supply selector", () => {
-  it("UI-TDY-002 lists only the caller's own supplies in the active community, without the plant's own, by name or address", async () => {
+  it("UI-TDY-002 lists only the caller's own supplies in the active community, without the plant's own, by name and CUPS", async () => {
     renderPage();
 
-    expect(selector()).toHaveValue("Casa");
-    expect(await optionLabels()).toEqual(["Casa", "Calle Mayor 3, garaje"]);
-    expect(screen.queryByRole("option", { name: /Cubierta del polideportivo|Casa del pueblo|Casa de Lucía/ })).not.toBeInTheDocument();
+    expect(shown()).toBe(HOME_LABEL);
+    expect(optionLabels(await openSheet())).toEqual([HOME_LABEL, GARAGE_LABEL]);
   });
 
   it("UI-TDY-002 shows the first own supply without a parameter, and asks today's data for it alone", () => {
@@ -224,23 +230,19 @@ describe("the supply selector", () => {
   it("UI-TDY-002 choosing another supply holds it in the address and asks its data", async () => {
     renderPage();
 
-    await userEvent.click(selector());
-    await userEvent.click(screen.getByRole("option", { name: "Calle Mayor 3, garaje" }));
+    await userEvent.click(within(await openSheet()).getByRole("radio", { name: GARAGE_LABEL }));
 
     expect(currentSearch()).toBe(`?supplyId=${GARAGE.id}`);
-    expect(selector()).toHaveValue("Calle Mayor 3, garaje");
+    expect(shown()).toBe(GARAGE_LABEL);
     expect(askedFor()).toContain(GARAGE.id);
   });
 
-  it("UI-TDY-002 a caller whose only supply here backs the plant sees the empty state, with no selector and no request", () => {
+  it("UI-TDY-002 a caller whose only supply here backs the plant sees the neutral no-supply state, with no selector and no request", () => {
     ownListing = [PLANT_SUPPLY, ELSEWHERE];
     renderPage();
 
-    expect(screen.getByText("Todavía no tienes puntos de suministro")).toBeInTheDocument();
-    expect(
-      screen.getByText("Cuando la comunidad dé de alta un punto de suministro a tu nombre, aquí verás la energía que le llega cada día."),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.getByRole("note")).toHaveTextContent("No tienes puntos de suministro en esta comunidad");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(askedFor()).toEqual(new Set());
   });
@@ -250,36 +252,34 @@ describe("?supplyId=", () => {
   it("UI-TDY-003 preselects one of the caller's own supplies", () => {
     renderPage(`?supplyId=${GARAGE.id}`);
 
-    expect(selector()).toHaveValue("Calle Mayor 3, garaje");
+    expect(shown()).toBe(GARAGE_LABEL);
     expect(askedFor()).toEqual(new Set([GARAGE.id]));
-    expect(screen.queryByText("Este punto no es tuyo. Lo ves porque gestionas la comunidad.")).not.toBeInTheDocument();
   });
 
-  it("UI-TDY-003 opens a supply the caller may read but does not own in the admin view, never in the selector", () => {
+  it("UI-TDY-003 shows a supply the caller may read but does not own in the selector's own group, with its owner", async () => {
     mockLoggedUser = admin();
     canManage = true;
     renderPage(`?supplyId=${MEMBERS.id}`);
 
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    const crumbs = screen.getByRole("navigation", { name: /breadcrumb/i });
-    expect(within(crumbs).getByRole("link", { name: "Inicio" })).toHaveAttribute("href", "/");
-    expect(within(crumbs).getByRole("link", { name: "Puntos de Suministro" })).toHaveAttribute("href", "/supply-points");
-    expect(within(crumbs).getByRole("link", { name: "Casa de Lucía" })).toHaveAttribute("href", `/supply-points/${MEMBERS.id}`);
-    expect(within(crumbs).getByText("Datos de hoy")).toBeInTheDocument();
-    expect(screen.getByText("ES0021000000000009AA")).toBeInTheDocument();
-    expect(screen.getByRole("note")).toHaveTextContent("Este punto no es tuyo. Lo ves porque gestionas la comunidad.");
-    expect(screen.getByRole("link", { name: "Volver al punto de suministro" })).toHaveAttribute("href", `/supply-points/${MEMBERS.id}`);
+    expect(shown()).toBe(MEMBERS_LABEL);
+    const sheet = await openSheet();
+    expect(within(sheet).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual([
+      "Punto que estás consultando",
+      "Tus puntos",
+    ]);
+    expect(optionLabels(sheet)).toEqual([MEMBERS_LABEL, HOME_LABEL, GARAGE_LABEL]);
+    expect(within(sheet).getByRole("radio", { name: MEMBERS_LABEL })).toBeChecked();
     expect(askedFor()).toEqual(new Set([MEMBERS.id]));
   });
 
-  it("UI-TDY-003 the admin view wins over owning no supply: a community admin with none opens another member's", () => {
+  it("UI-TDY-003 a community admin with no own supply sees the viewed one, not the no-supply state", () => {
     mockLoggedUser = admin();
     canManage = true;
     ownListing = [];
     renderPage(`?supplyId=${MEMBERS.id}`);
 
-    expect(screen.getByText("Este punto no es tuyo. Lo ves porque gestionas la comunidad.")).toBeInTheDocument();
-    expect(screen.queryByText("Todavía no tienes puntos de suministro")).not.toBeInTheDocument();
+    expect(shown()).toBe(MEMBERS_LABEL);
+    expect(screen.queryByText("No tienes puntos de suministro en esta comunidad")).not.toBeInTheDocument();
     expect(askedFor()).toEqual(new Set([MEMBERS.id]));
   });
 
@@ -288,9 +288,8 @@ describe("?supplyId=", () => {
     canManage = true;
     renderPage(`?supplyId=${UNREADABLE.id}`);
 
-    expect(selector()).toHaveValue("Casa");
+    expect(shown()).toBe(HOME_LABEL);
     expect(askedFor()).toEqual(new Set([HOME.id]));
-    expect(screen.queryByText("Este punto no es tuyo. Lo ves porque gestionas la comunidad.")).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
@@ -299,7 +298,7 @@ describe("?supplyId=", () => {
     canManage = true;
     renderPage("?supplyId=no-such-supply");
 
-    expect(selector()).toHaveValue("Casa");
+    expect(shown()).toBe(HOME_LABEL);
     expect(askedFor()).toEqual(new Set([HOME.id]));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(currentSearch()).toBe("");
@@ -308,16 +307,17 @@ describe("?supplyId=", () => {
   it("UI-TDY-003 ignores another member's supply for a caller the community grants no canManage", () => {
     renderPage(`?supplyId=${MEMBERS.id}`);
 
-    expect(selector()).toHaveValue("Casa");
+    expect(shown()).toBe(HOME_LABEL);
     expect(askedFor()).toEqual(new Set([HOME.id]));
     expect(vi.mocked(useGetSupply).mock.calls.filter(([supplyId, options]) => supplyId && isEnabled(options))).toEqual([]);
   });
 
-  it("UI-TDY-003 ignores a supply that backs a plant, the caller's own or another member's", () => {
+  it("UI-TDY-003 ignores a supply that backs a plant, the caller's own or another member's", async () => {
     mockLoggedUser = admin();
     canManage = true;
     const { unmount } = renderPage(`?supplyId=${MEMBERS_PLANT_SUPPLY.id}`);
-    expect(selector()).toHaveValue("Casa");
+    expect(shown()).toBe(HOME_LABEL);
+    expect(optionLabels(await openSheet())).toEqual([HOME_LABEL, GARAGE_LABEL]);
     expect(askedFor()).toEqual(new Set([HOME.id]));
     unmount();
 
@@ -325,7 +325,7 @@ describe("?supplyId=", () => {
     serve();
     lookups = [...lookups, PLANT_SUPPLY];
     renderPage(`?supplyId=${PLANT_SUPPLY.id}`);
-    expect(selector()).toHaveValue("Casa");
+    expect(shown()).toBe(HOME_LABEL);
     expect(askedFor()).toEqual(new Set([HOME.id]));
   });
 });

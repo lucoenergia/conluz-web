@@ -1,7 +1,6 @@
 // The words of "Datos de hoy" (#432).
 
 export const PAGE_TITLE = "Datos de hoy";
-export const SELECTOR_LABEL = "Punto de suministro";
 
 export const NOW_TITLE = "Ahora";
 export const NOW_DESCRIPTION = "Lo que te llega de la planta de la comunidad.";
@@ -49,10 +48,3 @@ export const CONTACT_LINK = "Ver el contacto de tu comunidad";
 
 export const LOAD_ERROR =
   "No se pudieron cargar los datos de hoy de este punto. Comprueba tu conexión e inténtalo de nuevo.";
-
-export const NO_SUPPLIES_TITLE = "Todavía no tienes puntos de suministro";
-export const NO_SUPPLIES_TEXT =
-  "Cuando la comunidad dé de alta un punto de suministro a tu nombre, aquí verás la energía que le llega cada día.";
-
-export const ADMIN_NOTICE = "Este punto no es tuyo. Lo ves porque gestionas la comunidad.";
-export const BACK_TO_SUPPLY = "Volver al punto de suministro";

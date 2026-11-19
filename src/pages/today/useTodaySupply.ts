@@ -4,20 +4,16 @@ import { useOwnSupplies } from "../historical-analysis/useOwnSupplies";
 import { useSelectedSupply } from "../historical-analysis/useSelectedSupply";
 
 export interface TodaySupply {
-  /**
-   * `own`: one of the caller's supplies is shown, with the selector.
-   * `admin`: a supply the caller may read but does not own, opened by its id.
-   * `none`: the caller owns no supply here and opened no other.
-   * `pending`: not known yet.
-   * `listingFailed`: the caller's own supplies could not be read.
-   * `lookupFailed`: the lookup of an id the caller does not own failed, and there is no own supply to show instead.
-   */
-  mode: "own" | "admin" | "none" | "pending" | "listingFailed" | "lookupFailed";
-  supply: SupplyResponse | null;
-  /** The supplies the selector offers: the caller's own in the active community, without the ones backing a plant. */
-  options: SupplyResponse[];
-  isLoadingOptions: boolean;
-  listingError: unknown;
+  /** The caller's own supplies in the active community, without the ones backing a plant; `undefined` until the listing has succeeded. */
+  supplies: SupplyResponse[] | undefined;
+  isLoading: boolean;
+  error: unknown;
+  /** The supply shown: the one in ?supplyId=, else the first own one. `null` while that is still being resolved, or when there is none. */
+  selected: SupplyResponse | null;
+  /** A supply of the community the caller does not own, opened by a community admin from its detail page. */
+  viewed: SupplyResponse | null;
+  isResolving: boolean;
+  lookupFailed: boolean;
   retryLookup: () => void;
   select: (supplyId: string | null) => void;
 }
@@ -28,29 +24,35 @@ export interface TodaySupply {
  * The selector offers the caller's own supplies in the active community, as
  * "Mi consumo y ahorro" does, without the ones that back a plant: a plant's
  * own point receives no share of its production. ?supplyId= preselects one of
- * them, and otherwise the first is shown.
+ * them, and otherwise the first is shown: there is no "Todos mis puntos" here.
  *
  * Any other id goes through the same lookup as "Mi consumo y ahorro"
  * (useSelectedSupply): a community admin may open an enabled supply of the
- * active community that reports canRead. That supply is shown on its own, in
- * the admin view, and never joins the selector. A supply backing a plant is
- * ignored there too, as is an unknown or unreadable id: the page shows what it
- * would show without the parameter. The admin view takes precedence over
- * owning no supply.
+ * active community that reports canRead, and it sits in the selector's
+ * "Punto que estás consultando" group. A supply backing a plant is ignored
+ * there too, as is an unknown or unreadable id: the page shows what it would
+ * show without the parameter.
  */
 export function useTodaySupply(): TodaySupply {
   const { supplies, isLoading, error } = useOwnSupplies();
-  const options = useMemo(() => supplies?.filter((supply) => !supply.plant), [supplies]);
-  const { selected, viewed, isResolving, lookupFailed, retryLookup, select } = useSelectedSupply(options);
+  const own = useMemo(() => supplies?.filter((supply) => !supply.plant), [supplies]);
+  const resolved = useSelectedSupply(own);
 
-  const base = { options: options ?? [], isLoadingOptions: isLoading, listingError: error, retryLookup, select };
+  const viewed = resolved.viewed && !resolved.viewed.plant ? resolved.viewed : null;
+  const ownSelected = resolved.selected && resolved.selected !== resolved.viewed ? resolved.selected : null;
+  // While an id the caller does not own is being looked up, nothing is shown
+  // yet: falling back to the first own supply would show, and ask, another.
+  const selected = resolved.isResolving ? null : (ownSelected ?? viewed ?? own?.[0] ?? null);
 
-  if (viewed && !viewed.plant) return { ...base, mode: "admin", supply: viewed };
-  if (options === undefined && !isLoading && error) return { ...base, mode: "listingFailed", supply: null };
-  if (options === undefined || isResolving) return { ...base, mode: "pending", supply: null };
-  const own = selected && selected !== viewed ? selected : null;
-  if (own) return { ...base, mode: "own", supply: own };
-  if (options.length > 0) return { ...base, mode: "own", supply: options[0] };
-  if (lookupFailed) return { ...base, mode: "lookupFailed", supply: null };
-  return { ...base, mode: "none", supply: null };
+  return {
+    supplies: own,
+    isLoading,
+    error,
+    selected,
+    viewed,
+    isResolving: resolved.isResolving,
+    lookupFailed: resolved.lookupFailed,
+    retryLookup: resolved.retryLookup,
+    select: resolved.select,
+  };
 }
