@@ -127,8 +127,8 @@ export const ObservedAgreementCard: FC<ObservedAgreementCardProps> = ({ plantId,
         </Typography>
         {unallocated && unallocated.registeredShareWithoutData > 0 && suppliesWithoutDataCount > 0 && (
           <Typography variant="body2" sx={{ color: colors.text.subtle }}>
-            {formatPercentageOrNone(unallocated.registeredShareWithoutData, 1)} es de{" "}
-            {suppliesWithoutDataCount === 1 ? "el punto sin datos" : `los ${suppliesWithoutDataCount} puntos sin datos`}
+            {formatPercentageOrNone(unallocated.registeredShareWithoutData, 1)} es{" "}
+            {suppliesWithoutDataCount === 1 ? "del punto sin datos" : `de los ${suppliesWithoutDataCount} puntos sin datos`}
           </Typography>
         )}
       </Box>

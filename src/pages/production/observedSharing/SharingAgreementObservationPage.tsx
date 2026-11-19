@@ -477,7 +477,7 @@ export const SharingAgreementObservationPage: FC = () => {
                         label: "Sin explicar (1 − Σβ)",
                         value:
                           unallocated && unallocated.registeredShareWithoutData > 0 && suppliesWithoutData > 0
-                            ? `${formatPercentageOrNone(unallocated.unallocated, 1)} · ${formatPercentageOrNone(unallocated.registeredShareWithoutData, 1)} es de ${suppliesWithoutData === 1 ? "el punto sin datos" : `los ${suppliesWithoutData} puntos sin datos`}`
+                            ? `${formatPercentageOrNone(unallocated.unallocated, 1)} · ${formatPercentageOrNone(unallocated.registeredShareWithoutData, 1)} es ${suppliesWithoutData === 1 ? "del punto sin datos" : `de los ${suppliesWithoutData} puntos sin datos`}`
                             : formatPercentageOrNone(unallocated?.unallocated, 1),
                       },
                     ]

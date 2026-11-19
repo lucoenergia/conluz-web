@@ -207,7 +207,7 @@ describe("PlantObservedSharingPage", () => {
     expect(within(revised).getByText("Salen del reparto: 2 · 1 con fecha distinta")).toBeInTheDocument();
     expect(within(revised).getByText("Anomalías · 2")).toBeInTheDocument();
     expect(within(revised).getByText("6,7 %")).toBeInTheDocument();
-    expect(within(revised).getByText("3,0 % es de el punto sin datos")).toBeInTheDocument();
+    expect(within(revised).getByText("3,0 % es del punto sin datos")).toBeInTheDocument();
   });
 
   test("UI-AGR-023: a card with nothing observed says so, and leaves out the leaving and anomaly figures it has none of", () => {
