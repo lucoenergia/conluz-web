@@ -8,7 +8,7 @@
 | **Roles** | Community admin only: the plant's `canManage` (UI-PLT-010). Agreements: also the plant's `canListSharingAgreements` |
 | **Domain rules** | `lucoenergia/conluz`: PLT-001 (UI-PLT-008) |
 | **Design reference** | Claude Design canvas "Conluz · Energía de la comunidad y detalle de planta", revision 5: artboards `Planta-Movil`, `Planta-Escritorio`, `Planta-Estados`, `Planta-Hoy-Estados`, `CompHoy`, `CompPeriodo`, `CompGrafico` |
-| **Last reviewed against code** | #407 |
+| **Last reviewed against code** | #432 |
 
 ## Purpose
 
@@ -210,14 +210,16 @@ keep those in [`formatting.md`](formatting.md).
     the app's time zone, so a day the clocks change lasts 23 or 25 hours; its "Ahora" mark is at
     now, and a gap is covered by a "Sin datos" band.
   - The "Ahora" mark reads now's time and the latest snapshot's power ("Ahora · 14:00 · 44,99 kW").
-    It reads the time alone when that snapshot is a gap, or while the data is stale: an hour-old
+    It reads the time alone when that snapshot is a gap, or while the data is stale: a stale
     power is not now's.
+  - The stale state says nothing new arrived for more than 15 minutes, the threshold the API flags
+    `stale` at (UI-TDY-008).
   - The block also refetches when the page regains focus, and after a change to the plant's Huawei
     configuration.
 - **Rationale:** Inverter data is separate from, and may differ from, the distributor's. Without
   refetching, its update time and stale state freeze.
 - **Implements:** n/a
-- **Source:** #406
+- **Source:** #406, #432
 
 ### UI-PLT-013 — Production is gold, and gold is never text
 
@@ -280,7 +282,7 @@ keep those in [`formatting.md`](formatting.md).
 | No inverter data today | "Sin datos del inversor hoy", no figure, no chart | — |
 | Inverter producing | Today's energy, the power curve, "Actualizado a las HH:mm" | — |
 | Inverter not producing yet | Today's energy at 0, the curve flat at 0, "Todavía no ha empezado a producir hoy" | — |
-| Inverter stale | A neutral note saying nothing new arrived for more than an hour; no "Actualizado" line | — |
+| Inverter stale | A neutral note saying nothing new arrived for more than 15 minutes; no "Actualizado" line | — |
 | Inverter day with a gap | The line broken under a "Sin datos" band, and a note naming the stretch | — |
 | Inverter read failed | The block's error | Retry |
 | No production day from the distributor | A neutral notice, no selector (UI-PLT-011) | — |

@@ -11,6 +11,8 @@ import type { Dayjs } from "dayjs";
 import "dayjs/locale/es";
 import { ActionStatus } from "../../components/ActionStatus/ActionStatus";
 import { colors, radii } from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
+import { fieldOutline } from "../../theme/fieldOutline";
 import { toCalendarDay, toDayjs } from "./calendarDayjs";
 import {
   addMonths,
@@ -265,15 +267,20 @@ const DayReadout: FC<{ label: string; day: CalendarDay | null; active: boolean; 
     color={active ? "primary" : "inherit"}
     aria-pressed={active}
     onClick={onClick}
-    sx={{
-      minHeight: 56,
-      flexDirection: "column",
-      alignItems: "flex-start",
-      textTransform: "none",
-      borderRadius: radii.default,
-      borderWidth: active ? 2 : 1,
-      "&.MuiButton-root": { borderColor: active ? "primary.main" : colors.border.inactive },
-    }}
+    // The shared field outline and fill (UI-FRM-004); the day being edited is
+    // drawn as a focused field, 2 px in primary, without shifting.
+    sx={[
+      sxStyles.fieldButton,
+      { minHeight: 56, flexDirection: "column", alignItems: "flex-start", textTransform: "none", borderRadius: radii.default },
+      active && {
+        "&.MuiButton-outlined": {
+          borderColor: fieldOutline.focusedColor,
+          outline: "1px solid",
+          outlineColor: fieldOutline.focusedColor,
+          outlineOffset: "-2px",
+        },
+      },
+    ]}
   >
     <Typography component="span" variant="caption" sx={{ color: active ? "primary.main" : colors.text.subtle }}>
       {label}

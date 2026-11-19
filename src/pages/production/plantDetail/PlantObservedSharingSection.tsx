@@ -3,7 +3,7 @@ import { Box, Button } from "@mui/material";
 import { Link as RouterLink } from "react-router";
 import type { PlantResponse } from "../../../api/models";
 import { observedSharingPath } from "../observedSharing/observedSharingRoutes";
-import { PlantSection } from "./PlantSection";
+import { PlantSection } from "../../../components/PlantSection";
 import { PLANT_SECTION_IDS } from "./plantSections";
 import { OBSERVED_SHARING_ICON } from "./sectionIcons";
 

@@ -1,14 +1,16 @@
-import { useMemo, type FC, type ReactNode } from "react";
+import { useMemo, type FC } from "react";
 import { Box, Typography } from "@mui/material";
 import { LoadErrorAlert } from "../../../components/LoadErrorAlert/LoadErrorAlert";
 import { NeutralNotice } from "../../../components/EnergyFigures/NeutralNotice";
 import { ENERGY_COLORS } from "../../../components/EnergyFigures/energyColors";
+import { LegendEntry } from "../../../components/EnergyFigures/LegendEntry";
+import { Swatch } from "../../../components/EnergyFigures/Swatch";
 import { PlantInverterProductionTodayResponseStatus, type PlantInverterProductionTodayResponse } from "../../../api/models";
-import { colors, radii } from "../../../theme/tokens";
+import { colors } from "../../../theme/tokens";
 import { formatTimeOfDay } from "../../../utils/formatCalendarDate";
 import { formatKilowattHours } from "../../../utils/formatEnergyFigures";
 import { formatKilowatts } from "../../../utils/formatKilowatts";
-import { PlantSection } from "./PlantSection";
+import { PlantSection } from "../../../components/PlantSection";
 import { TODAY_ICON } from "./sectionIcons";
 import { axisTime, gapsPhrase, inverterCurve, type InverterCurve } from "./inverterCurve";
 import { InverterTodayChart } from "./InverterTodayChart";
@@ -65,14 +67,6 @@ export const PlantInverterToday: FC<{ plantId: string }> = ({ plantId }) => {
   );
 };
 
-/** A swatch beside a figure or a legend entry: gold is only ever a mark, never text (UI-PLT-013). */
-const Swatch: FC<{ bgcolor: string; border?: string; line?: boolean }> = ({ bgcolor, border, line = false }) => (
-  <Box
-    aria-hidden
-    sx={{ width: line ? 2 : 12, height: 12, borderRadius: line ? 0 : radii.small, bgcolor, border, flexShrink: 0 }}
-  />
-);
-
 const AvailableToday: FC<{ today: PlantInverterProductionTodayResponse }> = ({ today }) => {
   // Read at every render: each refetch moves the "Ahora" mark along.
   const now = Date.now();
@@ -119,15 +113,6 @@ const AvailableToday: FC<{ today: PlantInverterProductionTodayResponse }> = ({ t
     </>
   );
 };
-
-const LegendEntry: FC<{ swatch: ReactNode; label: string }> = ({ swatch, label }) => (
-  <Box component="li" sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-    {swatch}
-    <Typography variant="caption" sx={{ color: colors.text.primary }}>
-      {label}
-    </Typography>
-  </Box>
-);
 
 /** What the curve shows, for a reader who cannot see it. */
 function curveDescription(curve: InverterCurve, nowPowerKW: number | null): string {

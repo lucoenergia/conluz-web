@@ -4,6 +4,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navigate, useLocation } from "react-router";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { expectPageBreadcrumb } from "../../test/breadcrumb";
 import { query } from "../../test/queryState";
 import { buildCommunity, buildCommunityCapabilities, buildCurrentUser } from "../../test/fixtures";
 import { CAPTURED_SUPPLIES_BY_USER_ID } from "../../test/capturedResponses";
@@ -72,7 +73,8 @@ const NAMELESS: SupplyResponse = { ...CAPTURED_PLANT_SUPPLY, id: "own-nameless",
 /** A supply somebody else owns, in the active community: never in the caller's own listing. */
 const SOMEONE_ELSES: SupplyResponse = { ...CAPTURED_PLANT_SUPPLY, id: "someone-elses", name: "Vecino", code: "ES0021000000000004AA", plant: null, user: { id: "another-user" } };
 
-const PLANT_LABEL = `${CAPTURED_PLANT_SUPPLY.name} · ${CAPTURED_PLANT_SUPPLY.code}`;
+/** A plant's own supply as an option reads: its name with the tag on the first line, then its CUPS (#432). */
+const PLANT_OPTION = `${CAPTURED_PLANT_SUPPLY.name}Punto de planta · ${CAPTURED_PLANT_SUPPLY.code}`;
 const SELECTOR = /^Punto de suministro/;
 const ALL = "Todos mis puntos";
 const EMPTY = "No tienes puntos de suministro en esta comunidad";
@@ -148,6 +150,15 @@ beforeEach(() => {
 });
 
 describe("HistoricalAnalysisPage", () => {
+  it("UI-LAY-003 shows Inicio, then Mi consumo y ahorro, above the title", () => {
+    serveSupplies([HOME]);
+    renderPage();
+
+    expectPageBreadcrumb("Mi consumo y ahorro");
+    const trail = screen.getByRole("navigation", { name: "breadcrumbs" });
+    expect(trail.compareDocumentPosition(screen.getByRole("heading", { level: 1 })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   describe("UI-HIS-001 lists only the caller's own enabled supplies in the active community", () => {
     it("UI-HIS-001 AC1 offers a community admin their one own supply, never the community's other ten", async () => {
       mockLoggedUser = communityAdmin();
@@ -167,7 +178,7 @@ describe("HistoricalAnalysisPage", () => {
       serveSupplies(CAPTURED_SUPPLIES_BY_USER_ID);
       renderPage();
 
-      expect(await openOptions()).toEqual([ALL, expect.stringContaining(PLANT_LABEL)]);
+      expect(await openOptions()).toEqual([ALL, PLANT_OPTION]);
     });
 
     it("UI-HIS-001 leaves a disabled supply out, and says only active supplies are listed", async () => {
@@ -190,7 +201,7 @@ describe("HistoricalAnalysisPage", () => {
       renderPage();
 
       const [, plant, home] = await openOptions();
-      expect(plant).toBe(`${PLANT_LABEL}Punto de planta`);
+      expect(plant).toBe(PLANT_OPTION);
       expect(home).toBe(`Casa · ${HOME.code}`);
     });
 
@@ -334,7 +345,7 @@ describe("HistoricalAnalysisPage", () => {
       expect(screen.getByText(FOOTER)).toBeInTheDocument();
       await userEvent.click(screen.getByRole("combobox", { name: "Punto de suministro" }));
       const options = within(screen.getByRole("listbox")).getAllByRole("option");
-      expect(options.map((option) => option.textContent)).toEqual([ALL, `${PLANT_LABEL}Punto de planta`, `Casa · ${HOME.code}`]);
+      expect(options.map((option) => option.textContent)).toEqual([ALL, PLANT_OPTION, `Casa · ${HOME.code}`]);
     });
   });
 });

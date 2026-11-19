@@ -4,6 +4,7 @@ import { sxStyles } from "../../theme/sx";
 import { colors } from "../../theme/tokens";
 import { useActiveCommunity } from "../../context/community.context";
 import { ActionStatus } from "../../components/ActionStatus/ActionStatus";
+import { BreadCrumb } from "../../components/Breadcrumb";
 import { LoadErrorAlert } from "../../components/LoadErrorAlert/LoadErrorAlert";
 import { Notice } from "../../components/Notice/Notice";
 import { NeutralNotice } from "../../components/EnergyFigures/NeutralNotice";
@@ -25,6 +26,7 @@ import { useCommunityAnchorQuery } from "./useCommunityAnchorQuery";
 import { useCommunityPeriodMetrics } from "./useCommunityPeriodMetrics";
 
 export const PAGE_TITLE = "Energía de la comunidad";
+const PAGE_PATH = "/community-analysis";
 export const ANCHOR_LOADING_LABEL = "Cargando la energía de la comunidad…";
 export const ANCHOR_ERROR = "No se pudo cargar la energía de la comunidad. Comprueba tu conexión e inténtalo de nuevo.";
 export const NO_DATA_TITLE = "Todavía no hay datos publicados";
@@ -55,6 +57,14 @@ export const CommunityAnalysisPage: FC = () => {
 
   return (
     <Box sx={sxStyles.pageRoot}>
+      <Box sx={sxStyles.pageContainer}>
+        <BreadCrumb
+          steps={[
+            { label: "Inicio", href: "/" },
+            { label: PAGE_TITLE, href: PAGE_PATH },
+          ]}
+        />
+      </Box>
       <Box sx={sxStyles.pageContainer}>
         <Typography variant="h4" component="h1" sx={{ color: colors.text.primary }}>
           {PAGE_TITLE}

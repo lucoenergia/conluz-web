@@ -1,18 +1,20 @@
 import type { FC, ReactNode } from "react";
-import { Box, type SvgIconProps } from "@mui/material";
-import { SectionHeading } from "../../../components/SectionHeading";
-import { sxStyles } from "../../../theme/sx";
-import { colors } from "../../../theme/tokens";
-import { sectionHeadingId, sectionScrollMarginSx, type PlantSectionId } from "./plantSections";
+import { Box, type SvgIconProps, type SxProps, type Theme } from "@mui/material";
+import { SectionHeading } from "../SectionHeading";
+import { sxStyles } from "../../theme/sx";
+import { colors } from "../../theme/tokens";
+import { sectionHeadingId, sectionScrollMarginSx } from "./sectionAnchors";
 
 export interface PlantSectionProps {
   /** Set when something on the screen jumps to this section. */
-  id?: PlantSectionId;
+  id?: string;
   title: string;
   description: string;
   icon: FC<SvgIconProps>;
   /** The icon's colour, and the tint of the circle behind it. */
   accent?: { main: string; surface: string };
+  /** Overrides of the card's own surface, such as a full-bleed card on a phone. */
+  sx?: SxProps<Theme>;
   children: ReactNode;
 }
 
@@ -27,6 +29,7 @@ export const PlantSection: FC<PlantSectionProps> = ({
   description,
   icon: Icon,
   accent = { main: colors.brand.main, surface: colors.brand.surface },
+  sx,
   children,
 }) => {
   const headingId = id ? sectionHeadingId(id) : undefined;
@@ -36,7 +39,7 @@ export const PlantSection: FC<PlantSectionProps> = ({
       id={id}
       aria-labelledby={headingId}
       aria-label={headingId ? undefined : title}
-      sx={[{ ...sxStyles.softPanel, display: "flex", flexDirection: "column" }, sectionScrollMarginSx]}
+      sx={[{ ...sxStyles.softPanel, display: "flex", flexDirection: "column" }, sectionScrollMarginSx, ...(Array.isArray(sx) ? sx : [sx])]}
     >
       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
         <Box

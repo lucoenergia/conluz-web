@@ -40,6 +40,7 @@ const NoCommunityPage = lazyPage(() => import("./pages/no-community/NoCommunityP
 const MemberHomePage = lazyPage(() => import("./pages/home/MemberHomePage"), "MemberHomePage");
 const CommunityManagementPage = lazyPage(() => import("./pages/home/CommunityManagementPage"), "CommunityManagementPage");
 const HistoricalAnalysisPage = lazyPage(() => import("./pages/historical-analysis/HistoricalAnalysisPage"), "HistoricalAnalysisPage");
+const TodayPage = lazyPage(() => import("./pages/today/TodayPage"), "TodayPage");
 const CommunityAnalysisPage = lazyPage(() => import("./pages/community-analysis/CommunityAnalysisPage"), "CommunityAnalysisPage");
 
 const SupplyPointsPage = lazyPage(() => import("./pages/supply-points/SupplyPointsPage"), "SupplyPointsPage");
@@ -49,14 +50,8 @@ const PlantsPage = lazyPage(() => import("./pages/production/PlantsPage"), "Plan
 const PlantDetailPage = lazyPage(() => import("./pages/production/PlantDetailPage"), "PlantDetailPage");
 const SharingAgreementsPage = lazyPage(() => import("./pages/production/SharingAgreementsPage"), "SharingAgreementsPage");
 const SharingAgreementDetailPage = lazyPage(() => import("./pages/production/SharingAgreementDetailPage"), "SharingAgreementDetailPage");
-const PlantObservedSharingPage = lazyPage(
-  () => import("./pages/production/observedSharing/PlantObservedSharingPage"),
-  "PlantObservedSharingPage",
-);
-const SharingAgreementObservationPage = lazyPage(
-  () => import("./pages/production/observedSharing/SharingAgreementObservationPage"),
-  "SharingAgreementObservationPage",
-);
+const PlantObservedSharingPage = lazyPage(() => import("./pages/production/observedSharing/PlantObservedSharingPage"), "PlantObservedSharingPage");
+const SharingAgreementObservationPage = lazyPage(() => import("./pages/production/observedSharing/SharingAgreementObservationPage"), "SharingAgreementObservationPage");
 
 const IntegrationsPage = lazyPage(() => import("./pages/integrations/IntegrationsPage"), "IntegrationsPage");
 const MembersPage = lazyPage(() => import("./pages/members/MembersPage"), "MembersPage");
@@ -108,6 +103,11 @@ function App() {
             <Route path="member" element={<HomeViewRoute view="member"><MemberHomePage /></HomeViewRoute>} />
             <Route path="management" element={<HomeViewRoute view="management"><CommunityManagementPage /></HomeViewRoute>} />
           </Route>
+          {/* What reaches one of the caller's supply points from the plant today (#432). */}
+          <Route
+            path="today"
+            element={<CapabilityRoute require={{ scope: "community", capability: "canRead" }}><TodayPage /></CapabilityRoute>}
+          />
           {/* The caller's own consumption and savings over time (#247). */}
           <Route
             path="historical-analysis"

@@ -9,7 +9,7 @@ import { SharingAgreementStatusChip } from "../../../components/SharingAgreement
 import { colors, radii } from "../../../theme/tokens";
 import { formatCalendarDate } from "../../../utils/formatCalendarDate";
 import { usePlantSharingAgreements } from "../../home/management/usePlantSharingAgreements";
-import { PlantSection } from "./PlantSection";
+import { PlantSection } from "../../../components/PlantSection";
 import { PLANT_SECTION_IDS } from "./plantSections";
 import { AGREEMENTS_ICON } from "./sectionIcons";
 

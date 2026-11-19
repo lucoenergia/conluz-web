@@ -6,6 +6,7 @@ import { SideMenu } from "./SideMenu";
 import { CONTACT_ITEM, MENU_SECTIONS, type MenuSection } from "../../utils/constants";
 import { selectVisibleSections } from "../../utils/menuVisibility";
 import type { MenuRequirement } from "../../hooks/permissions";
+import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
 
 /**
  * Visibility is exercised through the production rule, not a copy of it. The
@@ -73,12 +74,45 @@ describe("SideMenu visibility", () => {
     hides("Integraciones");
   });
 
-  test("UI-HIS-004 offers Mi consumo y ahorro with the community's canRead, right after Inicio", () => {
+  test("UI-HIS-004 offers Mi consumo y ahorro with the community's canRead, right after Datos de hoy", () => {
     setup(menuFor(MEMBER));
     const entries = within(screen.getByRole("list", { name: "Comunidad" })).getAllByRole("link");
 
-    expect(entries.map((entry) => entry.textContent)).toEqual(["Inicio", "Mi consumo y ahorro", "Energía de la comunidad", "Puntos de suministro"]);
-    expect(entries[1]).toHaveAttribute("href", "/historical-analysis");
+    expect(entries.map((entry) => entry.textContent)).toEqual([
+      "Inicio",
+      "Datos de hoy",
+      "Mi consumo y ahorro",
+      "Energía de la comunidad",
+      "Puntos de suministro",
+    ]);
+    expect(entries[2]).toHaveAttribute("href", "/historical-analysis");
+  });
+
+  test("UI-TDY-001 offers Datos de hoy with the community's canRead, right above Mi consumo y ahorro, leading to /today", () => {
+    // The menu asks the community's canRead alone, so a member who owns no supply point still has it (#432 AC3).
+    setup(menuFor(MEMBER));
+    const entries = within(screen.getByRole("list", { name: "Comunidad" })).getAllByRole("link");
+    const labels = entries.map((entry) => entry.textContent);
+
+    expect(labels.indexOf("Datos de hoy")).toBe(labels.indexOf("Mi consumo y ahorro") - 1);
+    expect(screen.getByRole("link", { name: "Datos de hoy" })).toHaveAttribute("href", "/today");
+    const item = MENU_SECTIONS.flatMap((section) => section.items).find((entry) => entry.to === "/today");
+    expect(item).toMatchObject({ label: "Datos de hoy", icon: TodayRoundedIcon, requires: { scope: "community", capability: "canRead" } });
+  });
+
+  test("UI-TDY-001 keeps Datos de hoy highlighted in the admin view, which carries a ?supplyId=", () => {
+    render(
+      <MemoryRouter initialEntries={["/today?supplyId=members-supply"]}>
+        <SideMenu isMenuOpened sections={menuFor(COMMUNITY_ADMIN)} contactItem={CONTACT_ITEM} onMenuClose={() => {}} />
+      </MemoryRouter>,
+    );
+
+    // The highlight is MUI's selected state, which exposes no ARIA of its own: read its class.
+    const selected = (label: string) =>
+      screen.getByRole("link", { name: label }).querySelector(".MuiListItemButton-root")!.classList.contains("Mui-selected");
+    expect(selected("Datos de hoy")).toBe(true);
+    expect(selected("Mi consumo y ahorro")).toBe(false);
+    expect(selected("Puntos de suministro")).toBe(false);
   });
 
   test("UI-PLT-010 AC1 offers Plantas only with the community's canManage, leading to /plants", () => {

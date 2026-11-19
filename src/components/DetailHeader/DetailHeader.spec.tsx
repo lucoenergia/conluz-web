@@ -119,6 +119,26 @@ describe("DetailHeader", () => {
       expect(screen.getByText("Calle Callejas 4, 44391, Luco de Jiloca, Teruel")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Más opciones" })).toBeInTheDocument();
     });
+
+    it("renders the actions in the identity row, before the menu, when supplied (#432)", () => {
+      renderHeader({
+        actions: <a href="/today">Ver datos de hoy</a>,
+        menu: <button type="button">Más opciones</button>,
+      });
+
+      const action = screen.getByRole("link", { name: "Ver datos de hoy" });
+      const menu = screen.getByRole("button", { name: "Más opciones" });
+      expect(action.compareDocumentPosition(menu) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      // From sm the actions sit beside the title's column, not inside it.
+      expect(screen.getByRole("heading", { level: 1 }).parentElement?.parentElement).not.toContainElement(action);
+    });
+
+    it("renders no link or button of its own when no actions are supplied (#432)", () => {
+      renderHeader();
+
+      expect(screen.queryByRole("link")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    });
   });
 
   // AC13.
@@ -146,6 +166,12 @@ describe("DetailHeader", () => {
 
       expect(screen.queryByText("Borrador")).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Más opciones" })).not.toBeInTheDocument();
+    });
+
+    it("withholds the actions until the data resolves (#432)", () => {
+      renderHeader({ actions: <a href="/today">Ver datos de hoy</a>, isLoading: true });
+
+      expect(screen.queryByRole("link", { name: "Ver datos de hoy" })).not.toBeInTheDocument();
     });
   });
 
@@ -190,6 +216,20 @@ describe("DetailHeader", () => {
 
   describe("on a narrow viewport", () => {
     beforeEach(() => setViewport(true));
+
+    it("puts the actions on a line of their own under the title and its badges (#432)", () => {
+      renderHeader({
+        status: <span>Activo</span>,
+        subtitle: "Calle Mayor 1",
+        actions: <a href="/today">Ver datos de hoy</a>,
+        menu: <button type="button">Más opciones</button>,
+      });
+
+      const action = screen.getByRole("link", { name: "Ver datos de hoy" });
+      const titleColumn = screen.getByRole("heading", { level: 1 }).parentElement?.parentElement;
+      expect(titleColumn).toContainElement(action);
+      expect(screen.getByText("Calle Mayor 1").compareDocumentPosition(action) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
 
     // AC5.
     it("keeps two key facts in the strip and moves the third to the top of the details", async () => {

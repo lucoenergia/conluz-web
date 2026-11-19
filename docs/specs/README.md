@@ -52,7 +52,8 @@ An unqualified "update the spec" is ambiguous. Ask which one is meant.
 | `UI-DATA` | Data fetching: how the app consumes the generated API client, and the token its requests carry | [`data-fetching.md`](data-fetching.md) |
 | `UI-OVL` | Overlays: the shared dialog or bottom sheet of every create, edit, action and confirmation flow, its close path and back, and what may bypass it | [`overlays.md`](overlays.md) |
 | `UI-COM` | Communities: creating and editing a community over the communities list and the platform page | [`communities.md`](communities.md) |
-| `UI-FRM` | Forms: the address input every record form shares, and the read-only presentation of values never editable from their screen | [`forms.md`](forms.md) |
+| `UI-FRM` | Forms: the address input every record form shares, the read-only presentation of values never editable from their screen, and the outline every input field shares | [`forms.md`](forms.md) |
 | `UI-CAN` | Community energy: the community's production, where it went, its estimated income, the CO₂ avoided, its evolution and its plants, for every member | [`community-analysis.md`](community-analysis.md) |
-| `UI-LAY` | Page layout: the shared page root every authenticated page uses, and the full width it fills | [`layout.md`](layout.md) |
+| `UI-LAY` | Page layout: the shared page root every authenticated page uses, the full width it fills, and the breadcrumb above its title | [`layout.md`](layout.md) |
 | `UI-CHT` | Charts: how every bar chart renders below `sm`, and which modules may draw one | [`charts.md`](charts.md) |
+| `UI-TDY` | Datos de hoy: today's energy reaching a supply point from the plant, its menu entry, selector and admin view, its states, the energy-flow hero and its refresh, and the inverter staleness threshold | [`today-page.md`](today-page.md) |

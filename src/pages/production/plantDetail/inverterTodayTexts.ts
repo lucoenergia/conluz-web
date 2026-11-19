@@ -13,9 +13,9 @@ export const TODAY_LOAD_ERROR = "No se pudo cargar la producción de hoy del inv
 /** "Hoy, hasta las 13:42": the figure's label, up to the latest snapshot. */
 export const figureLabel = (lastUpdated: string) => `Hoy, hasta las ${lastUpdated}`;
 export const updatedText = (lastUpdated: string) => `Actualizado a las ${lastUpdated}`;
-/** The stale state in words: the server says the latest snapshot is more than an hour old. */
+/** The stale state in words: the server says the latest snapshot is more than 15 minutes old (#432). */
 export const staleText = (lastUpdated: string) =>
-  `Sin datos nuevos desde las ${lastUpdated}, hace más de 1 hora. La cifra y la curva llegan hasta esa hora.`;
+  `Sin datos nuevos desde las ${lastUpdated}, hace más de 15 minutos. La cifra y la curva llegan hasta esa hora.`;
 /** Today's figure is the inverter's day counter, which a gap does not stop: only the curve misses the stretch. */
 export const gapText = (gaps: string, several: boolean) =>
   several

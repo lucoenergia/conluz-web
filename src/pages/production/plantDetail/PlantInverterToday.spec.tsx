@@ -180,11 +180,11 @@ describe("UI-PLT-012 not producing yet (#406)", () => {
 });
 
 describe("UI-PLT-012 stale (#406)", () => {
-  it("UI-PLT-012 AC13 says in words that nothing new arrived for more than an hour, in neutral styling", () => {
+  it("UI-PLT-012 AC13 says in words that nothing new arrived for more than 15 minutes, in neutral styling", () => {
     renderBlock(STALE);
 
     const note = within(block()).getByText(
-      "Sin datos nuevos desde las 10:15, hace más de 1 hora. La cifra y la curva llegan hasta esa hora.",
+      "Sin datos nuevos desde las 10:15, hace más de 15 minutos. La cifra y la curva llegan hasta esa hora.",
     );
     expect(note.closest("[role='note']")).toBeInTheDocument();
     expect(within(block()).queryByRole("alert")).not.toBeInTheDocument();
@@ -192,6 +192,16 @@ describe("UI-PLT-012 stale (#406)", () => {
     // The mark stays at now, not at the latest snapshot, and reads no power: the latest is not now's.
     expect(nowMark()).toMatchObject({ x: Date.parse(NOW), label: { text: "Ahora · 13:42" } });
     expect(within(block()).getByRole("img", { name: (name) => !name.includes("Ahora,") })).toBeInTheDocument();
+  });
+});
+
+describe("UI-TDY-008 one staleness threshold across plant and supply views (#432)", () => {
+  it("UI-TDY-008 states the 15-minute threshold in the plant's stale copy, and no other", () => {
+    renderBlock(STALE);
+
+    const note = within(block()).getByText(/^Sin datos nuevos desde las 10:15,/);
+    expect(note).toHaveTextContent("hace más de 15 minutos");
+    expect(within(block()).queryByText(/1 hora|una hora|60 minutos/)).not.toBeInTheDocument();
   });
 });
 

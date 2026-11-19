@@ -53,6 +53,7 @@ export type PageScope = "community" | "platform" | "personal" | "none" | "unknow
 const PAGE_SCOPES: ReadonlyArray<{ prefix: string; scope: Exclude<PageScope, "unknown"> }> = [
   { prefix: "/home", scope: "community" },
   { prefix: "/historical-analysis", scope: "community" },
+  { prefix: "/today", scope: "community" },
   { prefix: "/community-analysis", scope: "community" },
   { prefix: "/plants", scope: "community" },
   { prefix: "/supply-points", scope: "community" },
@@ -86,6 +87,8 @@ export function resolvePageScope(pathname: string): PageScope {
 /** The historical analysis page, and the query parameter holding its selected supply (#247). */
 export const HISTORICAL_ANALYSIS_PATH = "/historical-analysis";
 export const SUPPLY_ID_PARAM = "supplyId";
+/** The "Datos de hoy" page, which holds its selected supply in the same parameter (#432). */
+export const TODAY_PATH = "/today";
 
 const ENTITY_SCOPED_SECTIONS = ["/plants", "/supply-points"] as const;
 
@@ -115,15 +118,16 @@ export function resolveCommunityScopedTarget(pathname: string, search: string): 
     return "/supply-points";
   }
 
-  // The historical analysis page holds the selected supply in ?supplyId=. A
-  // supply belongs to one community, so the id cannot follow the caller into
-  // another; whatever else the query string holds stays (#247).
-  if (pathname === HISTORICAL_ANALYSIS_PATH) {
+  // The historical analysis and "Datos de hoy" pages hold the selected supply
+  // in ?supplyId=. A supply belongs to one community, so the id cannot follow
+  // the caller into another; whatever else the query string holds stays
+  // (#247, #432).
+  if (pathname === HISTORICAL_ANALYSIS_PATH || pathname === TODAY_PATH) {
     const params = new URLSearchParams(search);
     if (!params.has(SUPPLY_ID_PARAM)) return null;
     params.delete(SUPPLY_ID_PARAM);
     const rest = params.toString();
-    return rest ? `${HISTORICAL_ANALYSIS_PATH}?${rest}` : HISTORICAL_ANALYSIS_PATH;
+    return rest ? `${pathname}?${rest}` : pathname;
   }
 
   return null;

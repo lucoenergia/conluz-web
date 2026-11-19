@@ -2,6 +2,7 @@ import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import SolarPowerRoundedIcon from "@mui/icons-material/SolarPowerRounded";
 import ElectricBoltRoundedIcon from "@mui/icons-material/ElectricBoltRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
+import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
 import GroupsRoundedIcon from "@mui/icons-material/GroupsRounded";
 import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
 import ExtensionRoundedIcon from "@mui/icons-material/ExtensionRounded";
@@ -63,6 +64,7 @@ export const MENU_SECTIONS: MenuSection[] = [
       // once the caller may read the community they are working in -- which is
       // false when there is no active community, as before.
       { to: "/home", id: "home", icon: HomeRoundedIcon, label: "Inicio", requires: COMMUNITY_READ },
+      { to: "/today", id: "today", icon: TodayRoundedIcon, label: "Datos de hoy", requires: COMMUNITY_READ },
       { to: "/historical-analysis", id: "historical-analysis", icon: InsightsRoundedIcon, label: "Mi consumo y ahorro", requires: COMMUNITY_READ },
       { to: "/community-analysis", id: "community-analysis", icon: GroupsRoundedIcon, label: "Energía de la comunidad", requires: COMMUNITY_READ },
       { to: "/plants", id: "plants", icon: SolarPowerRoundedIcon, label: "Plantas", requires: { scope: "community", capability: "canManage" } },
