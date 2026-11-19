@@ -88,7 +88,7 @@ export const SupplyDetailPage: FC = () => {
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
-            { label: "Puntos de Suministro", href: "/supply-points" },
+            { label: "Puntos de suministro", href: "/supply-points" },
             { label: supplyPoint ? supplyDisplayLabel(supplyPoint) : supplyPointId, href: "#" },
           ]}
         />

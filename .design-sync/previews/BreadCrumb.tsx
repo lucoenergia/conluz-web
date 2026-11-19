@@ -4,7 +4,7 @@ export const SupplyDetail = () => (
   <BreadCrumb
     steps={[
       { label: "Inicio", href: "/" },
-      { label: "Puntos de Suministro", href: "/supply-points" },
+      { label: "Puntos de suministro", href: "/supply-points" },
       { label: "Casa de Lucía", href: "#" },
     ]}
   />

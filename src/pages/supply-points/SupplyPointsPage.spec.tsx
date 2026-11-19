@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { query } from "../../test/queryState";
@@ -87,6 +87,14 @@ beforeEach(() => {
 });
 
 describe("SupplyPointsPage", () => {
+  it("UI-LAY-003 names the list Puntos de suministro, as the menu does, in its breadcrumb and its title", () => {
+    setup({ community: { canManage: false } });
+
+    const trail = screen.getByRole("navigation", { name: "breadcrumbs" });
+    expect(within(trail).getAllByRole("listitem").map((step) => step.textContent)).toEqual(["Inicio", "Puntos de suministro"]);
+    expect(screen.getByRole("heading", { level: 1, name: "Puntos de suministro" })).toBeInTheDocument();
+  });
+
   describe("a member of the community", () => {
     it("is offered neither creating nor importing", () => {
       setup({ community: { canManage: false } });

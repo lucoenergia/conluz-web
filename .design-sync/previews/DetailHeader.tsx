@@ -93,7 +93,7 @@ export const ListPage = () => (
     <DetailHeader
       variant="list"
       icon={<Icons.ElectricMeter />}
-      title="Puntos de Suministro"
+      title="Puntos de suministro"
       subtitle="Gestiona los puntos de suministro de la comunidad energética"
       keyFacts={[
         { label: "Total", value: 128 },

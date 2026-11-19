@@ -84,6 +84,16 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
+describe("the supply detail's breadcrumb (#432)", () => {
+  it("UI-LAY-003 leads back to Puntos de suministro, named as the menu names it", () => {
+    render(supplyWith({}, { canRead: true }));
+
+    const trail = screen.getByRole("navigation", { name: "breadcrumbs" });
+    expect(within(trail).getAllByRole("listitem").map((step) => step.textContent)).toEqual(["Inicio", "Puntos de suministro", "Casa de Lucía"]);
+    expect(within(trail).getByRole("link", { name: "Puntos de suministro" })).toHaveAttribute("href", "/supply-points");
+  });
+});
+
 describe("Ver datos de hoy on the supply detail (#432)", () => {
   it("UI-TDY-003 is offered in the header to whoever may read the supply, with the supply preselected", () => {
     render(supplyWith({}, { canRead: true }));
