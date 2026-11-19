@@ -2041,7 +2041,9 @@ export const FIXED_INVERTER_NO_DATA_TODAY: PlantInverterProductionTodayResponse 
 // Observed sharing (#418): the plant's analysis and one agreement's slice of
 // it. Two agreements of FIXED_SHARING_AGREEMENTS, the superseded one applied
 // on its date and the one in force applied on other dates, with anomalies and
-// a supply leaving; one supply without data and one not computable.
+// a supply leaving; one supply without data, one not computable, and one in no
+// agreement receiving energy. Every value is one the backend rules
+// (lucoenergia/conluz docs/specs/observed-sharing.md) can produce.
 // ---------------------------------------------------------------------------
 
 const OBSERVED_SUPPLIES = {
@@ -2051,6 +2053,7 @@ const OBSERVED_SUPPLIES = {
   oeste: { id: "0b5e0001-0000-0000-0000-000000000004", code: "ES0031000000000004JN0F", name: "Casa Oeste" },
   escuela: { id: "0b5e0001-0000-0000-0000-000000000005", code: "ES0031000000000005JN0F", name: "Escuela" },
   taller: { id: "0b5e0001-0000-0000-0000-000000000006", code: "ES0031000000000006JN0F", name: "Taller" },
+  almacen: { id: "0b5e0001-0000-0000-0000-000000000007", code: "ES0031000000000007JN0F", name: "Almacén" },
 } satisfies Record<string, SupplyReferenceResponse>;
 
 const OBSERVED_ANALYSIS = {
@@ -2059,7 +2062,13 @@ const OBSERVED_ANALYSIS = {
   computable: true,
   notComputableReason: null,
   notComputableSupplies: [OBSERVED_SUPPLIES.taller],
-  suppliesWithValidDays: [OBSERVED_SUPPLIES.norte, OBSERVED_SUPPLIES.sur, OBSERVED_SUPPLIES.este, OBSERVED_SUPPLIES.escuela],
+  suppliesWithValidDays: [
+    OBSERVED_SUPPLIES.norte,
+    OBSERVED_SUPPLIES.sur,
+    OBSERVED_SUPPLIES.este,
+    OBSERVED_SUPPLIES.escuela,
+    OBSERVED_SUPPLIES.almacen,
+  ],
   suppliesWithoutValidDays: [OBSERVED_SUPPLIES.oeste],
 } satisfies PlantSharingObservationResponse["analysis"];
 
@@ -2092,7 +2101,8 @@ const IN_FORCE_ANOMALIES: SharingAgreementObservationSummaryResponse["anomalies"
     type: "UNKNOWN_COEFFICIENT",
     start: { from: "2025-05-01", to: "2025-05-01" },
     end: "2025-06-30",
-    observedBeta: 0.0305,
+    // Clearly off its registered 3.15 %: within ±0.1 points it would match.
+    observedBeta: 0.025,
     observedValidDays: 61,
   },
   {
@@ -2124,9 +2134,11 @@ export const FIXED_PLANT_OBSERVATION: PlantSharingObservationResponse = {
   consecutiveDays: 3,
   sharingAgreements: [ORIGINAL_OBSERVED, IN_FORCE_OBSERVED],
   unattributedAnomalies: [
+    // A supply with no coefficient in any agreement: a supply holding one would
+    // have an unknown coefficient, attributed to the agreement applied to it.
     {
-      id: "anomaly-este",
-      supply: OBSERVED_SUPPLIES.este,
+      id: "anomaly-almacen",
+      supply: OBSERVED_SUPPLIES.almacen,
       type: "ENERGY_OUTSIDE_AGREEMENT",
       start: { from: "2024-01-01", to: "2024-01-01" },
       end: "2024-01-31",
@@ -2178,7 +2190,8 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
       coefficientId: "observed-sur",
       supply: OBSERVED_SUPPLIES.sur,
       coefficient: 0.0315,
-      storedValidFrom: "2025-03-01",
+      // Outside the observed range: a stored start within it is the same date.
+      storedValidFrom: "2025-03-15",
       storedValidTo: null,
       observedDate: { from: "2025-02-26", to: "2025-03-04" },
       proposedDate: null,

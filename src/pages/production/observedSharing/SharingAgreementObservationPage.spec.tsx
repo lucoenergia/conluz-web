@@ -123,7 +123,8 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         coefficientId: "c-sur",
         supply: SUR,
         coefficient: 0.0315,
-        storedValidFrom: "2025-03-01",
+        // Outside the observed range: a stored start within it is the same date.
+        storedValidFrom: "2025-03-15",
         storedValidTo: "2026-01-01",
         observedDate: { from: "2025-02-26", to: "2025-03-04" },
         // Just beyond 0.1 percentage points: it differs.
@@ -257,7 +258,7 @@ describe("SharingAgreementObservationPage", () => {
     renderPage();
 
     expect(supplyRow("Casa Norte")).toHaveTextContent("01/03/2025 – en curso");
-    expect(supplyRow("Casa Sur")).toHaveTextContent("01/03/2025 – 01/01/2026");
+    expect(supplyRow("Casa Sur")).toHaveTextContent("15/03/2025 – 01/01/2026");
   });
 
   test("UI-AGR-025: an observed date is exact, a range, or 'o antes', and is marked as observed", () => {

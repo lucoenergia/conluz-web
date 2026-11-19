@@ -1937,8 +1937,8 @@ test.describe("#418: the observed sharing headers at 390px", () => {
     {
       page: "the plant's",
       path: `/plants/${FIXED_PLANT_ID}/sharing-agreements/observed`,
-      values: ["Del 1 abr 2023 al 31 oct 2026", "4 de 5"],
-      oneLine: ["4 de 5"],
+      values: ["Del 1 abr 2023 al 31 oct 2026", "5 de 6"],
+      oneLine: ["5 de 6"],
     },
     {
       page: "an agreement's",
