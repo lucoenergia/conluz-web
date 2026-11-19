@@ -4,17 +4,18 @@
 | --- | --- |
 | **Prefix** | `UI-AGR` |
 | **Status** | Active |
-| **Routes** | `/plants/:plantId/sharing-agreements`, `/plants/:plantId/sharing-agreements/:sharingAgreementId` |
+| **Routes** | `/plants/:plantId/sharing-agreements`, `/plants/:plantId/sharing-agreements/:sharingAgreementId`, `/plants/:plantId/sharing-agreements/observed`, `/plants/:plantId/sharing-agreements/observed/:sharingAgreementId` |
 | **Roles** | A caller with the plant's `canListSharingAgreements`. Authoring and lifecycle actions: the capabilities each agreement and coefficient carries |
 | **Domain rules** | n/a |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `ListPagination` (the list; its shared rules are `record-lists.md`) |
-| **Last reviewed against code** | #417 |
+| **Last reviewed against code** | #418 |
 
 Scope: the rules introduced in #277 for sharing-agreement states migrated from visual tests to
 Vitest, the rules #350 introduced for the list's rows and for how a status is shown, and the
 coefficient history's layout (#369), the create dialog's starting power (#407), and how a
-coefficient's end date is shown and worded (#420), and the distributor file sent date (#417). Not
-exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
+coefficient's end date is shown and worded (#420), the distributor file sent date (#417), and the
+observed sharing view: a plant's agreements and one agreement compared with what Datadis shows
+(#418). Not exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
 list shares, the agreement list among them, are in [`record-lists.md`](record-lists.md).
 
 ## Purpose
@@ -287,6 +288,117 @@ is in force today.
 - **Implements:** n/a
 - **Source:** #417
 
+### UI-AGR-022 — The observed sharing is requested only from its own pages
+
+- **Status:** Active
+- **Rule:** The plant's observed sharing and an agreement's MUST be requested only by the plant's
+  observed sharing page and the agreement's. The plant detail MUST link to the plant's page without
+  requesting either.
+- **Rationale:** The analysis is expensive: it reads every day of Datadis data of every supply of
+  the plant.
+- **Implements:** n/a
+- **Source:** #418, lucoenergia/conluz#579
+
+### UI-AGR-023 — Each agreement shows its observed application, its sent date and its recommendations, in backend order
+
+- **Status:** Active
+- **Rule:** The plant's observed sharing MUST show one card per agreement, in the order the analysis
+  returns them. Each card MUST show the distributor file sent date or "Sin registrar", the
+  application the analysis observed, its supplies' status counts, its leaving counts when there is
+  any, its anomaly counts by type, and the part no supply with data received (1 − Σβ). Each card
+  and the agreement's page MUST show every recommendation returned, in order, each with its
+  sentence; "Fijar fechas" MUST show no action until #419, and still counts as an agreement to
+  review. On the agreement's page, "Con avisos" MUST keep the coefficient rows applied on another
+  date, not distinguishable, or of a supply with an anomaly of the agreement, and the leaving rows
+  that left on another date; its count MUST equal the rows it shows.
+- **Rationale:** This is what an admin comes to see. The backend owns the order and the
+  recommendations; restating either here would let the two disagree.
+- **Implements:** n/a
+- **Source:** #418
+
+### UI-AGR-024 — Anomalies are grouped by agreement and supply, with their evidence
+
+- **Status:** Active
+- **Rule:** Anomalies MUST be grouped by agreement, in the order the analysis returns the
+  agreements, with those attributed to none last under "Sin acuerdo atribuido". Within an
+  agreement they MUST be grouped by supply, in the order each supply first appears, keeping the
+  analysis order within a supply; an anomaly about the whole agreement sits under the supply it
+  names. Each anomaly MUST show its type, its start (or range), its end (or "en curso") and the β
+  the backend observed with the valid days it rests on.
+- **Rationale:** An admin reviews them without a flood, and can check each against the evidence.
+- **Implements:** n/a
+- **Source:** #418, lucoenergia/conluz#597
+
+### UI-AGR-025 — Each kind of date reads one way
+
+- **Status:** Active
+- **Rule:** A range of data MUST be written in words ("Del 1 abr 2023 al 31 oct 2026"). A registered
+  period MUST read "dd/mm/aaaa – dd/mm/aaaa" with its exclusive end (UI-AGR-019), or
+  "dd/mm/aaaa – en curso" while open. An observed range MUST read "Entre el … y el …", and a date the
+  data starts on "dd/mm/aaaa o antes". Every date is a local date of the application time zone.
+- **Rationale:** One dash, one meaning; the analysis knows a date only as precisely as the data, and
+  the view must not claim more.
+- **Implements:** n/a
+- **Source:** #418
+
+### UI-AGR-026 — A β is a percentage with 4 decimals, and ±0.1 points reads as equal
+
+- **Status:** Active
+- **Rule:** Every β MUST be shown as a percentage with 4 decimals. An observed β within ±0.1
+  percentage points of the registered one MUST read as equal; beyond that, it MUST take the warning
+  style.
+- **Rationale:** It is the analysis's own tolerance; a difference inside it is not a finding.
+- **Implements:** n/a
+- **Source:** #418
+
+### UI-AGR-027 — A proposed date never reads as an observed one
+
+- **Status:** Active
+- **Rule:** A row that cannot be distinguished MUST show "No distinguible" and the proposed date
+  marked as proposed. A proposed date MUST NOT be marked or styled as observed.
+- **Rationale:** A proposed date is not evidence.
+- **Implements:** n/a
+- **Source:** #418
+
+### UI-AGR-028 — No reason is given for missing data or a supply that cannot be computed
+
+- **Status:** Active
+- **Rule:** A supply without Datadis data MUST show "Sin datos de Datadis", and a supply that cannot
+  be computed "No calculable", with no reason for either.
+- **Rationale:** The application cannot know the reason.
+- **Implements:** n/a
+- **Source:** #418
+
+### UI-AGR-029 — The view sets no order of work, proposes no coefficient and claims no real time
+
+- **Status:** Active
+- **Rule:** The view's text MUST NOT imply an order in which to work, propose a coefficient, or
+  mention real time.
+- **Rationale:** The view places each agreement in time; the registered agreement stays the source
+  of truth, and Datadis publishes with days of delay.
+- **Implements:** n/a
+- **Source:** #418
+
+### UI-AGR-030 — Supplies leaving the distribution are shown with the agreement they leave
+
+- **Status:** Active
+- **Rule:** The agreement's page MUST list under "Salen del reparto" each supply that leaves the
+  distribution with it, with the agreement it leaves, its β there, its observed leaving date and
+  its status. A leaving row applied on its date MUST read "Salida · misma fecha", and on another
+  date "Salida · otra fecha"; any other status reads as a coefficient row's.
+- **Rationale:** A leaving supply keeps receiving attributed production until its coefficient ends.
+- **Implements:** n/a
+- **Source:** #418
+
+### UI-AGR-031 — An observed β comes only from the backend, wherever a conclusion is stated
+
+- **Status:** Active
+- **Rule:** Every coefficient row, leaving row and anomaly MUST show the observed β the backend
+  returns, and "—" when it returns none. The view MUST NOT compute an observed β.
+- **Rationale:** Admins must be able to verify the analysis, against the figure it rests on.
+- **Implements:** n/a
+- **Source:** #418, lucoenergia/conluz#597
+
 ## States
 
 | State | Rendered | Actions available |
@@ -301,6 +413,10 @@ is in force today.
 | List with no results, a search or a status filter hiding every agreement | "No hay acuerdos de reparto que coincidan" (UI-AGR-015) | "Limpiar filtros", which clears both |
 | List read failed | "No se pudieron cargar los acuerdos de reparto." in place of the rows (UI-LST-004) | "Reintentar" |
 | List of more than 25 agreements | 25 rows and the pagination (UI-LST-005) | Changing page; a new search or filter returns to the first |
+| Observed sharing loading | "Calculando el reparto observado…" and its progress, with no figure | None |
+| Observed sharing not computable, the plant supply without data | "No se puede calcular el reparto observado"; no agreement and no recommendation (UI-AGR-028) | "Ver el punto de la planta", with the plant's `canReadSupply` |
+| Observed sharing read failed | "No se pudo cargar el reparto observado." | "Reintentar" |
+| Agreement observation of a draft | The catalogue's text for `SHARING_AGREEMENT_NOT_OBSERVABLE`, as a note | None |
 
 ## Accepted exceptions
 
