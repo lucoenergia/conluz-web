@@ -145,6 +145,8 @@ A community admin can look at any supply of the community the same way, from its
 | Viewed supply failed to load, no own supply | The load error | Reintentar |
 | Error (first load) | The load error | Reintentar |
 
+Every state also shows the page's breadcrumb above the title (UI-LAY-003).
+
 ## Accepted exceptions
 
 None.

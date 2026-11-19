@@ -608,6 +608,8 @@ here too, and opens another member's supply from its detail page, one at a time.
 | Supplies, period, table | Under the evolution card, "Tus datos": a row per slot (UI-HIS-021), the totals row (UI-HIS-022), seven rows until "Ver todos"; below `sm`, a card per row | Choosing a supply or a period; "Ver todos" / "Ver menos"; "Descargar CSV" (UI-HIS-023, UI-HIS-024) |
 | Error | The title only; the error is reported as on the supply list | None |
 
+Every state also shows the page's breadcrumb above the title (UI-LAY-003).
+
 ## Accepted exceptions
 
 | Exception | Reason | Expires when | Source |

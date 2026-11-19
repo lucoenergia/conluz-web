@@ -8,7 +8,7 @@
 | **Roles** | A caller who may read the active community (`canRead`): members and community admins, who see the same page |
 | **Domain rules** | `lucoenergia/conluz`: CEM-003, CEM-005 (lucoenergia/conluz#567); CEM-006, CEM-007 (lucoenergia/conluz#554); lucoenergia/conluz#556 (estimated income); lucoenergia/conluz#559 (CO₂ avoided) |
 | **Design reference** | Claude Design canvas "Conluz · Energía de la comunidad y detalle de planta", direction A, revision 5: artboards `Main`, `A-Escritorio`, `A-Estados-1`, `A-Estados-2`, `CompPeriodo`, `CompGrafico`. Where the canvas and #403 disagree, #403 wins. |
-| **Last reviewed against code** | #407 |
+| **Last reviewed against code** | #432 |
 
 ## Purpose
 
@@ -129,6 +129,8 @@ the page is about one member or one supply.
 | Incomplete coverage (normal) | A neutral notice: how many of the community's supplies have data for the period | Change the period |
 | Gaps and partial buckets (normal) | The evolution chart marks them and says which days, hours or months; neutral, no alert colour | Change the period |
 | Ready | Header, period, journey, figures, evolution chart and plants | Change the period |
+
+Every state also shows the page's breadcrumb above the title (UI-LAY-003).
 
 ## Accepted exceptions
 
