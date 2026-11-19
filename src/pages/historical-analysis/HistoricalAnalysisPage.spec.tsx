@@ -72,7 +72,8 @@ const NAMELESS: SupplyResponse = { ...CAPTURED_PLANT_SUPPLY, id: "own-nameless",
 /** A supply somebody else owns, in the active community: never in the caller's own listing. */
 const SOMEONE_ELSES: SupplyResponse = { ...CAPTURED_PLANT_SUPPLY, id: "someone-elses", name: "Vecino", code: "ES0021000000000004AA", plant: null, user: { id: "another-user" } };
 
-const PLANT_LABEL = `${CAPTURED_PLANT_SUPPLY.name} · ${CAPTURED_PLANT_SUPPLY.code}`;
+/** A plant's own supply as an option reads: its name with the tag on the first line, then its CUPS (#432). */
+const PLANT_OPTION = `${CAPTURED_PLANT_SUPPLY.name}Punto de planta · ${CAPTURED_PLANT_SUPPLY.code}`;
 const SELECTOR = /^Punto de suministro/;
 const ALL = "Todos mis puntos";
 const EMPTY = "No tienes puntos de suministro en esta comunidad";
@@ -167,7 +168,7 @@ describe("HistoricalAnalysisPage", () => {
       serveSupplies(CAPTURED_SUPPLIES_BY_USER_ID);
       renderPage();
 
-      expect(await openOptions()).toEqual([ALL, expect.stringContaining(PLANT_LABEL)]);
+      expect(await openOptions()).toEqual([ALL, PLANT_OPTION]);
     });
 
     it("UI-HIS-001 leaves a disabled supply out, and says only active supplies are listed", async () => {
@@ -190,7 +191,7 @@ describe("HistoricalAnalysisPage", () => {
       renderPage();
 
       const [, plant, home] = await openOptions();
-      expect(plant).toBe(`${PLANT_LABEL}Punto de planta`);
+      expect(plant).toBe(PLANT_OPTION);
       expect(home).toBe(`Casa · ${HOME.code}`);
     });
 
@@ -334,7 +335,7 @@ describe("HistoricalAnalysisPage", () => {
       expect(screen.getByText(FOOTER)).toBeInTheDocument();
       await userEvent.click(screen.getByRole("combobox", { name: "Punto de suministro" }));
       const options = within(screen.getByRole("listbox")).getAllByRole("option");
-      expect(options.map((option) => option.textContent)).toEqual([ALL, `${PLANT_LABEL}Punto de planta`, `Casa · ${HOME.code}`]);
+      expect(options.map((option) => option.textContent)).toEqual([ALL, PLANT_OPTION, `Casa · ${HOME.code}`]);
     });
   });
 });

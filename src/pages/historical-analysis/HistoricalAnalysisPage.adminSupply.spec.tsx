@@ -101,7 +101,7 @@ const MEMBERS: SupplyResponse = {
   ownerRecord: buildMemberRecord({ fullName: "Lucía Martínez Soler" }),
   capabilities: buildSupplyCapabilities({ canRead: true, canEdit: true }),
 };
-const MEMBERS_LABEL = "Casa de Lucía · ES0021000000000009AA · Lucía Martínez Soler";
+const MEMBERS_LABEL = "Casa de Lucía · ES0021000000000009AA · de Lucía Martínez Soler";
 const OTHER_COMMUNITY: SupplyResponse = { ...MEMBERS, id: "other-community", community: { id: "community-b", name: "Otra" } };
 const DISABLED: SupplyResponse = { ...MEMBERS, id: "disabled", enabled: false };
 const UNREADABLE: SupplyResponse = { ...MEMBERS, id: "unreadable", capabilities: buildSupplyCapabilities({}) };

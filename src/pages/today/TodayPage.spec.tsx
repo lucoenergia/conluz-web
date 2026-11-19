@@ -193,7 +193,7 @@ async function openSheet() {
 const optionLabels = (sheet: HTMLElement) => within(sheet).getAllByRole("radio").map((radio) => radio.closest("label")!.textContent);
 const HOME_LABEL = "Casa · ES0021000000000001AA";
 const GARAGE_LABEL = "Calle Mayor 3, garaje · ES0021000000000002AA";
-const MEMBERS_LABEL = "Casa de Lucía · ES0021000000000009AA · Lucía Martínez Soler";
+const MEMBERS_LABEL = "Casa de Lucía · ES0021000000000009AA · de Lucía Martínez Soler";
 const hero = () => screen.getByTestId("energy-flow-hero");
 const conduit = () => within(hero()).getByTestId("conduit");
 

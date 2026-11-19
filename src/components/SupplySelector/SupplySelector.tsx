@@ -13,12 +13,16 @@ import {
   TextField,
   Typography,
   useMediaQuery,
+  inputBaseClasses,
+  selectClasses,
   useTheme,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { visuallyHidden } from "@mui/utils";
 import type { SupplyResponse } from "../../api/models";
 import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
-import { colors, radii } from "../../theme/tokens";
+import { sxStyles } from "../../theme/sx";
+import { colors, fontFamilies, radii } from "../../theme/tokens";
 
 const ALL = "all";
 const ALL_LABEL = "Todos mis puntos";
@@ -39,18 +43,6 @@ interface SupplySelectorProps {
 
 /** The viewed supply alone: the caller owns none here (#385). */
 const isViewedOnly = ({ supplies, viewed }: SupplySelectorProps) => supplies.length === 0 && !!viewed;
-
-/** "{nombre} · {CUPS}", the name falling back to the address as everywhere else (UI-SUP-010). */
-function supplyOptionLabel(supply: SupplyResponse): string {
-  const name = supplyDisplayLabel(supply);
-  return name === supply.code ? supply.code : `${name} · ${supply.code}`;
-}
-
-/** The viewed supply also names its owner's member record, when the response carries one. */
-function viewedOptionLabel(supply: SupplyResponse): string {
-  const label = supplyOptionLabel(supply);
-  return supply.ownerRecord ? `${label} · ${supply.ownerRecord.fullName}` : label;
-}
 
 /**
  * Picks one of the caller's own supplies, or all of them (#247). A dropdown
@@ -78,20 +70,30 @@ const SupplyDropdown: FC<SupplySelectorProps> = (props) => {
       value={selected?.id ?? ALL}
       onChange={(event) => onSelect(event.target.value === ALL ? null : event.target.value)}
       helperText={viewedOnly ? undefined : FOOTER}
-      sx={{ maxWidth: 560 }}
+      slotProps={{
+        select: {
+          renderValue: (value) => {
+            const supply = [viewed, ...supplies].find((candidate) => candidate?.id === value);
+            return supply ? <SupplyLines supply={supply} viewed={supply === viewed} /> : ALL_LABEL;
+          },
+        },
+      }}
+      // The value wraps over its two lines: never cut, never ellipsed. Both
+      // classes, to outweigh the select's own nowrap.
+      sx={[sxStyles.filterField, { maxWidth: 560, [`& .${selectClasses.select}.${inputBaseClasses.input}`]: { whiteSpace: "normal" } }]}
       fullWidth
     >
       {viewed && <ListSubheader>{VIEWED_GROUP}</ListSubheader>}
       {viewed && (
         <MenuItem value={viewed.id} sx={{ whiteSpace: "normal" }}>
-          <OptionContent supply={viewed} label={viewedOptionLabel(viewed)} />
+          <SupplyLines supply={viewed} viewed />
         </MenuItem>
       )}
       {viewed && !viewedOnly && <ListSubheader>{OWN_GROUP}</ListSubheader>}
       {!viewedOnly && showAll && <MenuItem value={ALL}>{ALL_LABEL}</MenuItem>}
       {supplies.map((supply) => (
         <MenuItem key={supply.id} value={supply.id} sx={{ whiteSpace: "normal" }}>
-          <OptionContent supply={supply} />
+          <SupplyLines supply={supply} />
         </MenuItem>
       ))}
     </TextField>
@@ -127,14 +129,13 @@ const SupplySheet: FC<SupplySelectorProps> = (props) => {
         aria-expanded={open}
         onClick={() => setOpen(true)}
         endIcon={<ExpandMoreIcon aria-hidden />}
-        sx={{ justifyContent: "space-between", textAlign: "left", textTransform: "none", borderRadius: radii.default, minWidth: 0 }}
+        sx={[
+          sxStyles.filterField,
+          { justifyContent: "space-between", textAlign: "left", textTransform: "none", borderRadius: radii.default, minWidth: 0 },
+        ]}
       >
         <Box id={valueId} component="span" sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
-          {selected ? (
-            <OptionContent supply={selected} label={selected === viewed ? viewedOptionLabel(selected) : undefined} />
-          ) : (
-            ALL_LABEL
-          )}
+          {selected ? <SupplyLines supply={selected} viewed={selected === viewed} /> : ALL_LABEL}
         </Box>
       </Button>
       {!viewedOnly && <FormHelperText id={footerId}>{FOOTER}</FormHelperText>}
@@ -165,7 +166,7 @@ const SupplySheet: FC<SupplySelectorProps> = (props) => {
               <FormControlLabel
                 value={viewed.id}
                 control={<Radio />}
-                label={<OptionContent supply={viewed} label={viewedOptionLabel(viewed)} />}
+                label={<SupplyLines supply={viewed} viewed />}
                 sx={{ alignItems: "center", minWidth: 0, mr: 0 }}
               />
               {!viewedOnly && <GroupHeading>{OWN_GROUP}</GroupHeading>}
@@ -177,7 +178,7 @@ const SupplySheet: FC<SupplySelectorProps> = (props) => {
               key={supply.id}
               value={supply.id}
               control={<Radio />}
-              label={<OptionContent supply={supply} />}
+              label={<SupplyLines supply={supply} />}
               sx={{ alignItems: "center", minWidth: 0, mr: 0 }}
             />
           ))}
@@ -193,11 +194,43 @@ const GroupHeading: FC<{ children: string }> = ({ children }) => (
   </Typography>
 );
 
-const OptionContent: FC<{ supply: SupplyResponse; label?: string }> = ({ supply, label }) => (
-  <Box component="span" sx={{ display: "inline-flex", flexWrap: "wrap", alignItems: "center", gap: 1, minWidth: 0 }}>
-    <Box component="span" sx={{ overflowWrap: "anywhere" }}>
-      {label ?? supplyOptionLabel(supply)}
+/**
+ * A supply in two lines (#432): its name, as UI-SUP-010 names a supply, then
+ * its CUPS and, for a supply the caller does not own, its owner. Both wrap,
+ * never cut. A hidden separator keeps the accessible name one readable line:
+ * "{nombre} · {CUPS} · de {titular}".
+ */
+const SupplyLines: FC<{ supply: SupplyResponse; viewed?: boolean }> = ({ supply, viewed = false }) => {
+  const name = supplyDisplayLabel(supply);
+  const owner = viewed ? supply.ownerRecord?.fullName : undefined;
+  // A supply named by its CUPS alone does not repeat it on the second line.
+  const showsCode = name !== supply.code;
+  const hasSecondLine = showsCode || !!owner;
+  return (
+    <Box component="span" sx={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <Box component="span" sx={{ display: "inline-flex", flexWrap: "wrap", alignItems: "center", gap: 1, minWidth: 0 }}>
+        <Typography
+          component="span"
+          variant="body1"
+          sx={{ fontWeight: 500, color: colors.text.primary, overflowWrap: "anywhere", whiteSpace: "normal" }}
+        >
+          {name}
+        </Typography>
+        {supply.plant !== null && <Chip size="small" label="Punto de planta" />}
+      </Box>
+      {hasSecondLine && (
+        <Typography component="span" variant="body2" sx={{ color: colors.text.secondary, overflowWrap: "anywhere", whiteSpace: "normal" }}>
+          <Box component="span" sx={visuallyHidden}>
+            {" · "}
+          </Box>
+          {showsCode && (
+            <Box component="span" sx={{ fontFamily: fontFamilies.mono }}>
+              {supply.code}
+            </Box>
+          )}
+          {owner && `${showsCode ? " · " : ""}de ${owner}`}
+        </Typography>
+      )}
     </Box>
-    {supply.plant !== null && <Chip size="small" label="Punto de planta" />}
-  </Box>
-);
+  );
+};
