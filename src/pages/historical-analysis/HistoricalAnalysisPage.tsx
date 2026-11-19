@@ -14,7 +14,7 @@ import { PeriodEvolution } from "./PeriodEvolution";
 import { PeriodFigures } from "./PeriodFigures";
 import { PeriodHeader } from "../../components/EnergyFigures/PeriodHeader";
 import { PeriodSelector } from "../../components/period/PeriodSelector";
-import { SupplySelector } from "./SupplySelector";
+import { SupplySelector } from "../../components/SupplySelector";
 import { useHistoricalAnchor, type HistoricalAnchor } from "../../components/period/useHistoricalAnchor";
 import { MEMBER_DEFAULT_PRESET, MEMBER_PRESETS, memberClampNotice, memberPublicationText } from "./memberPeriod";
 import { readMonthAnchor, useMemberAnchorQuery } from "./useMemberAnchorQuery";

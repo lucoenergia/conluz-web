@@ -363,7 +363,7 @@ const OVERLAY_IMPORT_RESTRICTION = {
 const OVERLAY_PRIMITIVE_ALLOWLIST = [
   "src/components/Menu/SideMenu.tsx", // permanent: the navigation drawer, not an overlay flow
   "src/components/CoefficientHistoryDrawer/CoefficientHistoryDrawer.tsx", // permanent: a read-only side panel, a documented exception
-  "src/pages/historical-analysis/SupplySelector.tsx", // permanent: a picker, not a flow
+  "src/components/SupplySelector/SupplySelector.tsx", // permanent: a picker, not a flow
   "src/components/period/PeriodSelector.tsx", // permanent: a picker, not a flow
   "src/components/period/CustomRangePicker.tsx", // permanent: a picker, not a flow
 ];
