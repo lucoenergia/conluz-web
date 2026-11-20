@@ -152,12 +152,6 @@ export interface SharingAgreementCoefficientSetProps {
    */
   onImportRequest?: () => void;
   /**
-   * Bumped by the application panel, or by the next-step banner at stage 5, to
-   * start recording application dates. Selecting the pending rows has to happen
-   * here, where the selection lives.
-   */
-  registerDatesRequestId?: number;
-  /**
    * False when the next-step banner is already promoting these same two actions
    * — which it does exactly while authoring *is* the current step. Rendering
    * both would put two identically-labelled buttons on one screen.
@@ -346,7 +340,6 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   nominalPowerKW,
   editRequestId = 0,
   onImportRequest,
-  registerDatesRequestId = 0,
   showAuthoringActions = true,
   onBatchBarMountedChange,
 }) => {
@@ -381,7 +374,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const [applicationStateFilter, setApplicationStateFilter] = useState<SharingAgreementCoefficientApplicationStateFilter>("all");
   const debouncedSearchText = useDebounce(searchText, 500);
   // Debounce applies to narrowing the list, not to widening it. Clearing the
-  // field — whether the user did it or "Registrar fechas" did — takes effect at
+  // field takes effect at
   // once, so a selection made straight afterwards is never reported as partly
   // hidden behind a filter that is already gone.
   const effectiveSearchText = searchText.trim() === "" ? "" : debouncedSearchText;
@@ -559,34 +552,6 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // Unlike the header checkbox, clears the *real* selection — visible and
   // hidden alike. That asymmetry is the whole reason both controls exist.
   const handleClearSelection = clearSelection;
-
-  /**
-   * Show the coefficients still waiting for a date, and bring them into view.
-   *
-   * It deliberately does NOT select anything. Choosing which points share an
-   * application date is the admin's judgement — the distributor rarely applies
-   * them all on the same day — and a screen that arrives with 29 rows already
-   * ticked invites a bulk action nobody actually decided on. Narrow the list,
-   * then let them pick.
-   *
-   * The search is cleared alongside the filter so a leftover query cannot hide
-   * part of what the filter just surfaced.
-   */
-  const lastHandledRegisterDatesRequestId = useRef(registerDatesRequestId);
-  useEffect(() => {
-    if (registerDatesRequestId === lastHandledRegisterDatesRequestId.current) return;
-    lastHandledRegisterDatesRequestId.current = registerDatesRequestId;
-
-    setApplicationStateFilter(SharingAgreementPartitionCoefficientResponseApplicationState.PENDING);
-    setSearchText("");
-    clearSelection();
-    // The request came from a panel above the table, which on a long agreement
-    // is well off screen.
-    panelRef.current?.scrollIntoView({
-      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-      block: "start",
-    });
-  }, [registerDatesRequestId, clearSelection]);
 
   const handleOpenActionsMenu = (event: MouseEvent<HTMLElement>, coefficient: SharingAgreementPartitionCoefficientResponse) => {
     setActionsAnchorEl(event.currentTarget);
