@@ -250,6 +250,15 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
     (cups) => `CUPS ${cups}: con esa fecha, su periodo se solaparía con otro coeficiente del mismo suministro.`,
     "Con esa fecha, el periodo de un coeficiente se solaparía con otro del mismo suministro.",
   ),
+  // A leaving supply refused by set-dates (lucoenergia/conluz#583, #419).
+  SHARING_AGREEMENT_LEAVING_SUPPLY_IN_AGREEMENT: withOptionalCups(
+    (cups) => `Este punto tiene un coeficiente en este acuerdo, así que no sale del reparto (afecta a ${cups}).`,
+    "Este punto tiene un coeficiente en este acuerdo, así que no sale del reparto.",
+  ),
+  SHARING_AGREEMENT_NO_COEFFICIENT_TO_CLOSE: withOptionalCups(
+    (cups) => `Este punto no tiene ningún coeficiente anterior que cerrar (afecta a ${cups}).`,
+    "Este punto no tiene ningún coeficiente anterior que cerrar.",
+  ),
   SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT:
     "No se ha podido guardar: el cambio haría que se solapen dos periodos de un mismo suministro. Recarga la página y revisa las fechas.",
 
