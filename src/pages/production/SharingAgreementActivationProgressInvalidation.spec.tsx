@@ -124,6 +124,18 @@ describe("Activating the last pending coefficient — the refetch hides the appl
           return { coefficients: [{ coefficientId: lastPending.coefficientId }] };
         },
       },
+      // The dialog's dry run of the activation, which closes no leaving supply here.
+      {
+        method: "POST",
+        url: `${COEFFICIENTS_URL}/preview-dates`,
+        respond: () => ({
+          coefficients: [],
+          neighbours: [],
+          leavingClosures: [],
+          agreementStatuses: [],
+          communityStart: { before: null, after: null },
+        }),
+      },
     ]);
     mockCustomInstance.mockImplementation(router.handle);
   });

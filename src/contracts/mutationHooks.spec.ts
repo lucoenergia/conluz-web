@@ -532,6 +532,7 @@ const TEST_HELPER_MUTATION_IMPORTS: Record<string, { hooks: string[]; reason: st
       "useActivatePartitionCoefficients",
       "useClosePartitionCoefficients",
       "useDeactivatePartitionCoefficients",
+      "usePreviewPartitionCoefficientDates",
       "useReopenPartitionCoefficients",
       "useReplacePartitionCoefficients",
     ],

@@ -21,7 +21,7 @@ import {
 } from "../../api/supplies/supplies";
 import {
   getSharingAgreementById,
-  /* eslint-disable no-restricted-imports -- test helper: these five are imported
+  /* eslint-disable no-restricted-imports -- test helper: these six are imported
      only to type and set the mocked hooks' results, never called. Not numbered:
      this file is test infrastructure and is not migrating to the actions layer. */
   useActivatePartitionCoefficients,
@@ -29,6 +29,7 @@ import {
   type getPlantActivePartitionCoefficients,
   useClosePartitionCoefficients,
   useDeactivatePartitionCoefficients,
+  usePreviewPartitionCoefficientDates,
   useReopenPartitionCoefficients,
   useReplacePartitionCoefficients,
   /* eslint-enable no-restricted-imports */
@@ -51,6 +52,7 @@ import {
   mockCloseMutateAsync,
   mockDeactivateMutateAsync,
   mockMutateAsync,
+  mockPreviewDatesMutateAsync,
   mockReopenMutateAsync,
   mutationPending,
 } from "./SharingAgreementCoefficientSet.mocks";
@@ -60,6 +62,7 @@ export {
   mockCloseMutateAsync,
   mockDeactivateMutateAsync,
   mockMutateAsync,
+  mockPreviewDatesMutateAsync,
   mockReopenMutateAsync,
   mockSuccessDispatch,
   mutationPending,
@@ -108,6 +111,18 @@ beforeEach(() => {
           { mutateAsync: mockActivateMutateAsync },
         )
       : mutation.idle({ mutateAsync: mockActivateMutateAsync }),
+  );
+  // The activation dialog's dry run: by default the activation closes no
+  // leaving supply, as on any activation after an agreement's first.
+  mockPreviewDatesMutateAsync.mockResolvedValue({
+    coefficients: [],
+    neighbours: [],
+    leavingClosures: [],
+    agreementStatuses: [],
+    communityStart: { before: null, after: null },
+  });
+  vi.mocked(usePreviewPartitionCoefficientDates).mockImplementation(() =>
+    mutation.idle({ mutateAsync: mockPreviewDatesMutateAsync }),
   );
   vi.mocked(useDeactivatePartitionCoefficients).mockImplementation(() =>
     mutationPending.deactivating

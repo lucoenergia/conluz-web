@@ -47,7 +47,12 @@ import { SharingAgreementCoefficientCard, SharingAgreementCoefficientTableRow } 
 import { SharingAgreementOutgoingSupplies } from "../SharingAgreementOutgoingSupplies";
 import { CoefficientHistoryDrawer } from "../CoefficientHistoryDrawer";
 import { CoefficientActionsMenuItems } from "../CoefficientActionsMenu";
-import { ApplyCoefficientDateConfirmationModal } from "../Modals/ApplyCoefficientDateConfirmationModal";
+import {
+  ApplyCoefficientDateConfirmationModal,
+  type LeavingSuppliesPreview,
+} from "../Modals/ApplyCoefficientDateConfirmationModal";
+import { formatEffectDay } from "../../pages/production/applicationDates/applicationDatesEffects";
+import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 import { CorrectCoefficientDateConfirmationModal } from "../Modals/CorrectCoefficientDateConfirmationModal";
 import { DeactivateOrReopenCoefficientConfirmationModal } from "../Modals/DeactivateOrReopenCoefficientConfirmationModal";
 import { CloseCoefficientConfirmationModal } from "../Modals/CloseCoefficientConfirmationModal";
@@ -58,6 +63,7 @@ import { useActiveCommunity } from "../../context/community.context";
 import { useSuccessDispatch } from "../../context/success.context";
 import { useUnsavedChangesGuard } from "../../hooks/useUnsavedChangesGuard";
 import {
+  LeavingClosureChangeResponseSource,
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
   SharingAgreementResponseStatus,
@@ -347,7 +353,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const successDispatch = useSuccessDispatch();
   const sharingAgreementId = agreement?.id ?? "";
   const agreementStatus: StatusValue | undefined = agreement?.status;
-  const { replace, activate, deactivate, close, reopen } =
+  const { replace, activate, deactivate, close, reopen, previewDates } =
     useSharingAgreementCoefficientActions(plantId).forAgreement(agreement).actions;
   // The four lifecycle writes share the agreement's one write flag, so a row
   // menu and the batch bar are offered exactly when all four were handed over.
@@ -429,6 +435,15 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // trusting a captured snapshot.
   const [activeDialog, setActiveDialog] = useState<ActiveCoefficientDialog | null>(null);
   const [dialogErrors, setDialogErrors] = useState<string[] | null>(null);
+  // The supplies an activation at the chosen date closes, from a dry run of
+  // it (UI-AGR-037). Only the latest date's answer is kept.
+  const [leavingSupplies, setLeavingSupplies] = useState<LeavingSuppliesPreview>({ status: "waiting" });
+  const leavingSuppliesRequest = useRef(0);
+
+  useEffect(() => {
+    leavingSuppliesRequest.current += 1;
+    setLeavingSupplies({ status: "waiting" });
+  }, [activeDialog]);
 
   useUnsavedChangesGuard(isEditing);
 
@@ -644,6 +659,50 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     if (!activate) return;
     const result = await activate.run([...dialog.targetIds], date);
     handleDialogOutcome(result, dialog);
+  };
+
+  /**
+   * Asks the backend which supplies an activation of the targets at `date`
+   * closes: on an agreement's first activation, every supply of the plant
+   * absent from it (lucoenergia/conluz#593). A dry run of set-dates with the
+   * same coefficients at the same date and no listed closure reports exactly
+   * those closures as DEFAULT; on a later activation it reports none.
+   */
+  const previewLeavingSupplies = (date: Dayjs | null, isValid: boolean) => {
+    // Typing a year passes through valid years ("0202") on its way; each
+    // answer but the one for the day the field rests on is dropped.
+    const request = ++leavingSuppliesRequest.current;
+    if (!isValid || !date || !previewDates || !activeDialog) {
+      setLeavingSupplies({ status: "waiting" });
+      return;
+    }
+    const targetIds = [...activeDialog.targetIds];
+    setLeavingSupplies({ status: "loading" });
+    void (async () => {
+      const result = await previewDates.run({
+        coefficients: targetIds.map((coefficientId) => ({ coefficientId, validFrom: date })),
+        leavingClosures: [],
+      });
+      if (request !== leavingSuppliesRequest.current) return;
+      if (result.kind === "applied") {
+        setLeavingSupplies({
+          status: "ready",
+          closures: result.effects.leavingClosures
+            .filter((closure) => closure.source === LeavingClosureChangeResponseSource.DEFAULT)
+            .map((closure) => ({
+              supplyId: closure.supply.id,
+              label: supplyDisplayLabel(closure.supply),
+              code: closure.supply.code,
+              previousAgreementName: closure.sharingAgreement.name,
+              closedOn: formatEffectDay(closure.validToAfter),
+            })),
+        });
+      } else if (result.kind === "refused") {
+        setLeavingSupplies({ status: "refused", messages: [...result.rows.map((row) => row.message), ...result.general] });
+      } else {
+        setLeavingSupplies({ status: "failed", onRetry: () => previewLeavingSupplies(date, true) });
+      }
+    })();
   };
 
   const handleConfirmDeactivateOrReopen = async () => {
@@ -1447,6 +1506,8 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
         errorMessages={activeDialog?.source === "row" ? dialogErrors : null}
         onCancel={handleCancelDialog}
         onConfirm={handleConfirmActivate}
+        leavingSupplies={leavingSupplies}
+        onDateChange={previewLeavingSupplies}
       />
 
       <CorrectCoefficientDateConfirmationModal
