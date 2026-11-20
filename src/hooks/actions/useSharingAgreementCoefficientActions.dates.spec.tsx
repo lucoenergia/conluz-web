@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 import { createTestQueryClient, renderHookWithProviders } from "../../test/renderWithProviders";
 import { mutation } from "../../test/queryState";
 import { apiError } from "../../test/apiError";
-import { buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
+import { buildActiveCoefficient, buildSharingAgreement, buildSharingAgreementCapabilities } from "../../test/fixtures";
 import type { CoefficientDatesEffectsResponse } from "../../api/models";
 import {
   useActivatePartitionCoefficients,
@@ -98,7 +98,50 @@ const DATED_READS = [
   `/api/v1/communities/${COMMUNITY_ID}/memberships/user-1/payback`,
   `/api/v1/communities/${COMMUNITY_ID}/memberships/user-2/payback`,
   `/api/v1/communities/${COMMUNITY_ID}/energy-metrics`,
+  // The energy each member was assigned.
+  `/api/v1/communities/${COMMUNITY_ID}/memberships/user-1/energy-metrics`,
+  `/api/v1/communities/${COMMUNITY_ID}/memberships/user-2/energy-metrics`,
 ];
+
+const supplyRef = (id: string) => ({ id, code: `ES-${id}`, name: null });
+const AGREEMENT_REF = { id: "initial", name: "Reparto inicial", status: "SUPERSEDED" as const };
+
+/** A written result naming three supplies: one per kind of effect. */
+const WRITTEN_ON_THREE_SUPPLIES: CoefficientDatesEffectsResponse = {
+  ...EFFECTS,
+  coefficients: [
+    {
+      coefficient: { id: "c1" },
+      supply: supplyRef("s-norte"),
+      validFromBefore: null,
+      validFromAfter: "2025-02-28T23:00:00Z",
+      validToBefore: null,
+      validToAfter: null,
+    },
+  ],
+  neighbours: [
+    {
+      coefficient: { id: "prev-sur" },
+      sharingAgreement: AGREEMENT_REF,
+      supply: supplyRef("s-sur"),
+      validToBefore: null,
+      validToAfter: "2025-02-28T23:00:00Z",
+    },
+  ],
+  leavingClosures: [
+    {
+      coefficient: { id: "prev-bar" },
+      sharingAgreement: AGREEMENT_REF,
+      supply: supplyRef("s-bar"),
+      source: "REQUEST",
+      validToBefore: null,
+      validToAfter: "2025-03-31T22:00:00Z",
+    },
+  ],
+};
+
+/** The energy metrics of a supply, as their query key starts. */
+const supplyMetrics = (supplyId: string) => `/api/v1/supplies/${supplyId}/energy-metrics`;
 
 describe("useSharingAgreementCoefficientActions — dates", () => {
   it("hands out neither dates action to a caller the agreement does not let manage it", () => {
@@ -151,6 +194,24 @@ describe("useSharingAgreementCoefficientActions — dates", () => {
     expect(invalidates("/api/v1/plants/plant-2/sharing-agreements/agreement-9")).toBe(false);
     expect(invalidates("/api/v1/communities/community-b/memberships/user-1/payback")).toBe(false);
     expect(invalidates(`/api/v1/communities/${COMMUNITY_ID}/supplies`)).toBe(false);
+    expect(invalidates("/api/v1/communities/community-b/memberships/user-1/energy-metrics")).toBe(false);
+    expect(invalidates("/api/v1/communities/community-b/energy-metrics")).toBe(false);
+    // A member's other reads are not about the energy assigned.
+    expect(invalidates(`/api/v1/communities/${COMMUNITY_ID}/memberships/user-1/monthly-consumption`)).toBe(false);
+  });
+
+  it("UI-AGR-035: a write invalidates the energy metrics of every supply it names, and of no other", async () => {
+    setAsync.mockResolvedValue(WRITTEN_ON_THREE_SUPPLIES);
+    const { result, invalidates } = renderActions();
+
+    await result.current.actions.setDates!.run(REQUEST);
+
+    expect(invalidates(supplyMetrics("s-norte"))).toBe(true);
+    expect(invalidates(supplyMetrics("s-sur"))).toBe(true);
+    expect(invalidates(supplyMetrics("s-bar"))).toBe(true);
+    expect(invalidates(supplyMetrics("s-elsewhere"))).toBe(false);
+    // The same supply's other reads are not about the energy assigned.
+    expect(invalidates("/api/v1/supplies/s-norte/consumption")).toBe(false);
   });
 
   it("UI-AGR-035: an activation invalidates the same reads, the community start date's included", async () => {
@@ -159,6 +220,21 @@ describe("useSharingAgreementCoefficientActions — dates", () => {
     await result.current.actions.activate!.run(["c1"], dayjs("2025-03-01"));
 
     for (const key of DATED_READS) expect(invalidates(key), key).toBe(true);
+  });
+
+  it("UI-AGR-035: an activation invalidates the energy metrics of every supply it touched, leaving closures included", async () => {
+    const touched = (id: string, supplyId: string) => ({ ...buildActiveCoefficient({ id }), supply: supplyRef(supplyId) });
+    activateAsync.mockResolvedValue({
+      coefficients: [touched("c1", "s-norte"), touched("prev-bar", "s-bar")],
+      leavingClosures: [touched("prev-bar", "s-bar")],
+    });
+    const { result, invalidates } = renderActions();
+
+    await result.current.actions.activate!.run(["c1"], dayjs("2025-03-01"));
+
+    expect(invalidates(supplyMetrics("s-norte"))).toBe(true);
+    expect(invalidates(supplyMetrics("s-bar"))).toBe(true);
+    expect(invalidates(supplyMetrics("s-elsewhere"))).toBe(false);
   });
 
   it("UI-AGR-036: a 409 is refused, each detail on the row its params name, and nothing is invalidated", async () => {

@@ -12,6 +12,7 @@ import {
   useReplacePartitionCoefficients,
   useSetPartitionCoefficientDates,
 } from "../../api/sharing-agreements/sharing-agreements";
+import { getGetSupplyEnergyMetricsQueryKey } from "../../api/supplies/supplies";
 import { useActiveCommunity } from "../../context/community.context";
 import { useErrorDispatch } from "../../context/error.context";
 import { useSuccessDispatch } from "../../context/success.context";
@@ -126,6 +127,17 @@ function coefficientDatesBody(request: CoefficientDatesRequest) {
       closedOn: closedOn.format("YYYY-MM-DD"),
     })),
   };
+}
+
+const isPresent = (value: string | undefined): value is string => value !== undefined;
+
+/** Every supply a dates write changed a coefficient of. */
+function effectSupplyIds(effects: CoefficientDatesEffectsResponse): string[] {
+  return [
+    ...effects.coefficients.map((row) => row.supply.id),
+    ...effects.neighbours.map((row) => row.supply.id),
+    ...effects.leavingClosures.map((row) => row.supply.id),
+  ];
 }
 
 function coefficientDatesFailure(error: unknown): CoefficientDatesResult {
@@ -290,20 +302,26 @@ export function useSharingAgreementCoefficientActions(plantId: string): SharingA
        * whatever the response names, and the reads that depend on the
        * community's start date -- its earliest validFrom, which an activation or
        * a correction can move. That is every member's payback, whose start date
-       * is community-wide, and the community's energy metrics. One call, so the
+       * is community-wide, and the community's energy metrics. And the energy
+       * each member and each touched supply was assigned, which the moved
+       * coefficients decide: every member's energy metrics in this community,
+       * and the energy metrics of each supply the write names. One call, so the
        * returned promise settles once every one of them has refetched.
        */
-      const invalidateDatedQueries = () => {
+      const invalidateDatedQueries = (supplyIds: readonly string[]) => {
         const communityPrefix = `/api/v1/communities/${activeCommunityId ?? ""}/`;
-        const dependsOnCommunityStart = (key: string) =>
+        const dependsOnCommunity = (key: string) =>
           !!activeCommunityId &&
           key.startsWith(communityPrefix) &&
-          (key.endsWith("/payback") || key === `${communityPrefix}energy-metrics`);
+          (key.endsWith("/payback") ||
+            key === `${communityPrefix}energy-metrics` ||
+            /^memberships\/[^/]+\/energy-metrics$/.test(key.slice(communityPrefix.length)));
+        const supplyMetrics = new Set<string>(supplyIds.map((supplyId) => getGetSupplyEnergyMetricsQueryKey(supplyId)[0]));
         return queryClient.invalidateQueries({
           predicate: (query) => {
             const key = query.queryKey[0];
             if (typeof key !== "string") return false;
-            return isCoefficientScoped(key) || dependsOnCommunityStart(key);
+            return isCoefficientScoped(key) || dependsOnCommunity(key) || supplyMetrics.has(key);
           },
         });
       };
@@ -311,7 +329,7 @@ export function useSharingAgreementCoefficientActions(plantId: string): SharingA
       const activate = async (coefficientIds: string[], appliedOn: Dayjs): Promise<CoefficientActivationResult> => {
         setIsActivatingAfterInvalidate(true);
         try {
-          await activateMutation.mutateAsync({
+          const activated = await activateMutation.mutateAsync({
             plantId,
             sharingAgreementId,
             data: {
@@ -325,7 +343,10 @@ export function useSharingAgreementCoefficientActions(plantId: string): SharingA
               appliedOn: appliedOn.format("YYYY-MM-DD"),
             },
           });
-          await invalidateDatedQueries();
+          // Every coefficient the call touched, the leaving closures among them.
+          // Read defensively: a no-op answer may carry no coefficient at all.
+          const touchedSupplyIds = (activated?.coefficients ?? []).map((coefficient) => coefficient.supply?.id);
+          await invalidateDatedQueries(touchedSupplyIds.filter(isPresent));
           // A no-op batch (200, empty `coefficients` array in the response) is
           // still success: it's not an error, and the state the caller asked for
           // is the state that now holds. Not distinguished from a real batch —
@@ -423,7 +444,7 @@ export function useSharingAgreementCoefficientActions(plantId: string): SharingA
             sharingAgreementId,
             data: coefficientDatesBody(request),
           });
-          await invalidateDatedQueries();
+          await invalidateDatedQueries(effectSupplyIds(effects));
           return { kind: "applied", effects };
         } catch (error) {
           return coefficientDatesFailure(error);
