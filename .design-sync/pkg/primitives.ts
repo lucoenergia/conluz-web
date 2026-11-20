@@ -81,6 +81,7 @@ import BatteryChargingFullIcon from "@mui/icons-material/BatteryChargingFull";
 import BlockIcon from "@mui/icons-material/Block";
 import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
 import BoltIcon from "@mui/icons-material/Bolt";
+import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import BusinessIcon from "@mui/icons-material/Business";
 import BusinessRoundedIcon from "@mui/icons-material/BusinessRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
@@ -97,11 +98,13 @@ import ClearIcon from "@mui/icons-material/Clear";
 import CloseIcon from "@mui/icons-material/Close";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CompareArrowsRoundedIcon from "@mui/icons-material/CompareArrowsRounded";
+import ContactPhoneIcon from "@mui/icons-material/ContactPhone";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import DomainAddRoundedIcon from "@mui/icons-material/DomainAddRounded";
 import DomainDisabledRoundedIcon from "@mui/icons-material/DomainDisabledRounded";
+import DownloadIcon from "@mui/icons-material/Download";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import EditIcon from "@mui/icons-material/Edit";
 import EditCalendarOutlinedIcon from "@mui/icons-material/EditCalendarOutlined";
@@ -178,16 +181,19 @@ import SearchIcon from "@mui/icons-material/Search";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import SendIcon from "@mui/icons-material/Send";
 import SensorsIcon from "@mui/icons-material/Sensors";
+import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
 import SolarPowerOutlinedIcon from "@mui/icons-material/SolarPowerOutlined";
 import SolarPowerRoundedIcon from "@mui/icons-material/SolarPowerRounded";
 import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
 import SwapHorizOutlinedIcon from "@mui/icons-material/SwapHorizOutlined";
 import TableRowsRoundedIcon from "@mui/icons-material/TableRowsRounded";
+import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import UndoOutlinedIcon from "@mui/icons-material/UndoOutlined";
 import UnfoldMoreRoundedIcon from "@mui/icons-material/UnfoldMoreRounded";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
@@ -283,6 +289,7 @@ export const Icons = {
   Block: BlockIcon,
   BlockOutlined: BlockOutlinedIcon,
   Bolt: BoltIcon,
+  BoltRounded: BoltRoundedIcon,
   Business: BusinessIcon,
   BusinessRounded: BusinessRoundedIcon,
   CalendarMonthRounded: CalendarMonthRoundedIcon,
@@ -299,11 +306,13 @@ export const Icons = {
   Close: CloseIcon,
   CloudUpload: CloudUploadIcon,
   CompareArrowsRounded: CompareArrowsRoundedIcon,
+  ContactPhone: ContactPhoneIcon,
   ContentCopy: ContentCopyIcon,
   DeleteOutline: DeleteOutlineIcon,
   DescriptionOutlined: DescriptionOutlinedIcon,
   DomainAddRounded: DomainAddRoundedIcon,
   DomainDisabledRounded: DomainDisabledRoundedIcon,
+  Download: DownloadIcon,
   DownloadOutlined: DownloadOutlinedIcon,
   Edit: EditIcon,
   EditCalendarOutlined: EditCalendarOutlinedIcon,
@@ -380,16 +389,19 @@ export const Icons = {
   SearchOff: SearchOffIcon,
   Send: SendIcon,
   Sensors: SensorsIcon,
+  ShowChartRounded: ShowChartRoundedIcon,
   SolarPower: SolarPowerIcon,
   SolarPowerOutlined: SolarPowerOutlinedIcon,
   SolarPowerRounded: SolarPowerRoundedIcon,
   SupportAgentRounded: SupportAgentRoundedIcon,
   SwapHorizOutlined: SwapHorizOutlinedIcon,
   TableRowsRounded: TableRowsRoundedIcon,
+  TodayRounded: TodayRoundedIcon,
   TrendingDown: TrendingDownIcon,
   TrendingUp: TrendingUpIcon,
   UndoOutlined: UndoOutlinedIcon,
   UnfoldMoreRounded: UnfoldMoreRoundedIcon,
+  UploadFile: UploadFileIcon,
   UploadFileOutlined: UploadFileOutlinedIcon,
   Visibility: VisibilityIcon,
   VisibilityOff: VisibilityOffIcon,

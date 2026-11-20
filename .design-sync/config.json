@@ -1,5 +1,5 @@
 {
-  "projectId": "0f2a485c-16f2-40a0-8daa-f60d47528106",
+  "projectId": "c57d92b8-c573-4efa-a806-ec3d4d0b9548",
   "shape": "package",
   "pkg": "conluz-web",
   "globalName": "ConluzWeb",
@@ -99,7 +99,31 @@
     "EnableConfirmationModal": "../groups/dialogs.md",
     "PublishSharingAgreementConfirmationModal": "../groups/dialogs.md",
     "RevertSharingAgreementToDraftConfirmationModal": "../groups/dialogs.md",
-    "NextStepBanner": "../groups/layout.md"
+    "NextStepBanner": "../groups/layout.md",
+    "PeriodHeader": "../groups/energy-figures.md",
+    "PeriodUsageCard": "../groups/energy-figures.md",
+    "PeriodTotals": "../groups/energy-figures.md",
+    "EstimatedPriceLabel": "../groups/energy-figures.md",
+    "Swatch": "../groups/energy-figures.md",
+    "LegendEntry": "../groups/energy-figures.md",
+    "NeutralNotice": "../groups/feedback.md",
+    "PlantSection": "../groups/supplies-and-plants.md",
+    "SupplySelector": "../groups/forms.md",
+    "MemberPicker": "../groups/forms.md",
+    "Evolution": "../groups/charts.md",
+    "EnergyEvolutionChart": "../groups/charts.md",
+    "SavingsEvolutionChart": "../groups/charts.md",
+    "EnergyEvolutionRows": "../groups/charts.md",
+    "SavingsEvolutionRows": "../groups/charts.md",
+    "ChartScrollArea": "../groups/charts.md",
+    "PairedTerm": "../groups/energy-figures.md",
+    "SeriesLegend": "../groups/energy-figures.md",
+    "StateMark": "../groups/energy-figures.md",
+    "PeriodSelector": "../groups/forms.md",
+    "CustomRangePicker": "../groups/forms.md",
+    "PlantFormFields": "../groups/forms.md",
+    "SupplyFormFields": "../groups/forms.md",
+    "SharingAgreementFormDialog": "../groups/dialogs.md"
   },
   "overrides": {
     "RowActionsMenu": {
@@ -233,6 +257,53 @@
       "cardMode": "column"
     },
     "NextStepBanner": {
+      "cardMode": "column"
+    },
+    "ListTable": {
+      "cardMode": "column"
+    },
+    "ResponsiveRecordList": {
+      "cardMode": "column"
+    },
+    "SupplyStatsCard": {
+      "cardMode": "column"
+    },
+    "PeriodUsageCard": {
+      "cardMode": "column"
+    },
+    "PeriodTotals": {
+      "cardMode": "column"
+    },
+    "PlantSection": {
+      "cardMode": "column"
+    },
+    "PeriodHeader": {
+      "cardMode": "column"
+    },
+    "Evolution": {
+      "cardMode": "column"
+    },
+    "EnergyEvolutionChart": {
+      "cardMode": "column"
+    },
+    "SavingsEvolutionChart": {
+      "cardMode": "column"
+    },
+    "PlantFormFields": {
+      "cardMode": "column"
+    },
+    "SupplyFormFields": {
+      "cardMode": "column"
+    },
+    "CustomRangePicker": {
+      "cardMode": "single",
+      "viewport": "900x620"
+    },
+    "SharingAgreementFormDialog": {
+      "cardMode": "single",
+      "viewport": "720x820"
+    },
+    "ChartScrollArea": {
       "cardMode": "column"
     }
   },

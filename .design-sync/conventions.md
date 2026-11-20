@@ -32,9 +32,14 @@ community context the dialogs read. There is no signed-in user, so community-sco
   `color: "text.secondary"`, `"error.main"`) or the exported `colors` token object:
   `colors.brand.main` (#5267cd) / `.dark` / `.surface`, `colors.success|error|warning|info.main`
   / `.surface`, `colors.text.primary|secondary|body|subtle`, `colors.background.default|paper|surface`,
-  `colors.border.light`, `colors.accent.violet` (production) / `.blue` (consumption).
+  `colors.border.light`, `colors.accent.violet` (a plant's own supply) / `.blue` (consumption).
   Rules: `main` is the only role safe as text; `vivid` and `colors.brand.light` are decorative only;
   put tinted backgrounds on `*.surface`, never an alpha overlay under text.
+- **Energy concepts** keep one colour each, from the exported `ENERGY_COLORS`: `.assigned` (energy
+  assigned to a member, sunlight gold, only ever a mark, never text), `.community` (community energy
+  they used), `.grid` (bought from the grid), `.exported` (assigned but went to the grid),
+  `.consumption`; savings in euros are `SAVINGS_COLOR`. Mark them with `Swatch`, and legends with
+  `LegendEntry` inside a `<ul>`.
 - **Other tokens**: `radii.small|default|large` (4/8/12px), `shadows.soft|medium|dataCard|dropdown`,
   `fontSizes.xs…xl` (12–16px), `fontFamilies.mono` (identifiers such as a CUPS), shared `sxStyles` (`pageRoot`, the
   full-width root of every page, never width-capped; `pageContainer`, `softPanel`, `flexRowCenter`, `touchTarget`).
@@ -55,6 +60,19 @@ community context the dialogs read. There is no signed-in user, so community-sco
   disabled, the confirm button's spinner (`confirmPending`).
 - Pages open with `DetailHeader` / `SupplyDetailHeader` / `PlantDetailHeader` and `BreadCrumb`;
   empty, loading and error states use `EmptyState`, the `Loading*` skeletons and `LoadErrorAlert`.
+- An ordinary state of the data (an incomplete month, nothing published yet, a plant's own supply)
+  is a `NeutralNotice`: grey, never an alert colour, because nothing went wrong.
+- Energy screens: `PeriodHeader` names the period, `PeriodUsageCard` and `PeriodTotals` show its
+  figures, `PlantSection` is the white card each block sits in, and `SupplySelector` picks the supply.
+  `PeriodSelector` picks the period from a page's presets (`LATEST`, `YEAR`, `LAST_12` for monthly
+  data; `LAST_7`, `LAST_30`, `DAY_YEAR` for a plant's daily data); `resolvePeriod` turns an anchor and
+  a selection into the period `PeriodHeader` shows. `Evolution` is the evolution card's body: build its
+  `view` with `toConsumptionSeriesView(period, { kind, buckets })` and pass `CONSUMPTION_LOOK` and
+  `CONSUMPTION_EVOLUTION_COPY`. From `sm` up it draws charts; below, rows. Never draw a bar chart on a
+  phone.
+- Forms in an overlay: `SupplyFormFields` and `PlantFormFields` are the field sets (start from
+  `EMPTY_SUPPLY_FIELD_VALUES` / `EMPTY_PLANT_FIELD_VALUES`, or `plantFieldValuesOf(plant)`), and
+  `SharingAgreementFormDialog` is the sharing agreement's create and edit dialog.
 - A guide, an explanation or a confirmation is a `Notice` (a note; the result of an action is also
   announced through an `ActionStatus` mounted before it), never a `Mui.Alert`: an `Alert` is announced as urgent, so it is kept for errors and
   warnings the user must act on now.
