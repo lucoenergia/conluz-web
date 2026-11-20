@@ -344,4 +344,258 @@ interface ContactChannelErrors {
   schedule?: string;
   notes?: string;
 }
+
+interface SupplyEnergyMetricsResponse {
+  /** How much of the period is backed by stored records. */
+  coverage: SupplyEnergyMetricsCoverageResponse;
+  /** The energy totals the ratios were derived from. */
+  energy: SupplyEnergyMetricsEnergyResponse;
+  /** The period the metrics were computed over. */
+  period: SupplyEnergyMetricsPeriodResponse;
+  /** What the self-consumed energy of the period was worth. */
+  savings: SupplyEnergyMetricsSavingsResponse;
+  /** Share of the energy assigned to this supply that it consumed rather than fed back to the grid, on a 0-1 scale. Null when nothing was assigned to the supply in the period, and for a plant's own supply, */
+  selfConsumptionRatio: number | null;
+  /** The energy selfConsumptionRatio was computed from, and the plant's own supplies it leaves out. Both figures are 0 when the status is NOT_APPLICABLE. */
+  selfConsumptionRatioBasis: SelfConsumptionRatioBasisResponse;
+  /** Whether selfConsumptionRatio could be computed. AVAILABLE: it is. NOTHING_ASSIGNED: no energy was assigned to the supplies it covers, which includes a period without data. NOT_APPLICABLE: the supply i */
+  selfConsumptionRatioStatus: 'AVAILABLE' | 'NOTHING_ASSIGNED' | 'NOT_APPLICABLE';
+  /** Share of the energy consumed that came from the community rather than from the grid, on a 0-1 scale. Null when nothing was consumed in the period. */
+  selfSufficiencyRatio: number | null;
+  /** The supply the metrics were computed for. */
+  supply: SupplyEnergyMetricsSupplyResponse;
+}
+
+interface MembershipEnergyMetricsResponse {
+  /** How much of the period is backed by stored records, across every supply of the membership. */
+  coverage: MembershipEnergyMetricsCoverageResponse;
+  /** The energy totals of every supply of the membership, summed. */
+  /** The same fields as SupplyEnergyMetricsEnergyResponse. */
+  energy: SupplyEnergyMetricsEnergyResponse;
+  /** The period the metrics were computed over, the same for every supply. */
+  period: SupplyEnergyMetricsPeriodResponse;
+  /** What the self-consumed energy of the membership's supplies was worth over the period. */
+  /** The same fields as SupplyEnergyMetricsSavingsResponse. */
+  savings: SupplyEnergyMetricsSavingsResponse;
+  /** Share of the energy assigned to the membership's supplies that they consumed rather than fed back to the grid, on a 0-1 scale, computed from the summed energy of the supplies that are no plant's own s */
+  selfConsumptionRatio: number | null;
+  /** The energy selfConsumptionRatio was computed from, and the plant's own supplies it leaves out. Both figures are 0 when the status is NOT_APPLICABLE. */
+  selfConsumptionRatioBasis: SelfConsumptionRatioBasisResponse;
+  /** Whether selfConsumptionRatio could be computed. AVAILABLE: it is. NOTHING_ASSIGNED: no energy was assigned to the supplies it covers, which includes a period without data. NOT_APPLICABLE: every supply */
+  selfConsumptionRatioStatus: 'AVAILABLE' | 'NOTHING_ASSIGNED' | 'NOT_APPLICABLE';
+  /** Share of the energy the membership's supplies consumed that came from the community rather than from the grid, on a 0-1 scale, computed from the summed totals. Null when nothing was consumed in the pe */
+  selfSufficiencyRatio: number | null;
+}
+
+interface SupplyEnergyMetricsSupplyResponse {
+  /** Code that identifies the supply */
+  code: string;
+  /** Internal unique identifier of the supply */
+  id: string;
+  /** Name of the supply */
+  name: string | null;
+}
+
+interface SupplyEnergyMetricsPeriodResponse {
+  /** End of the aggregation, exclusive: the first instant not included */
+  endDate: string | null;
+  /** First instant included in the aggregation, inclusive */
+  startDate: string | null;
+}
+
+interface SupplyEnergyMetricsCoverageResponse {
+  /** Number of hours the period spans. Accounts for daylight saving transitions, so a transition day contributes 23 or 25 hours rather than 24. */
+  expectedHours: number;
+  /** Number of hourly consumption records found in the period */
+  hoursWithData: number;
+}
+
+interface MembershipEnergyMetricsCoverageResponse {
+  /** Number of hours the period spans, times the number of supplies of the membership. A supply without any record therefore lowers coverage even when the rest are complete. Accounts for daylight saving tr */
+  expectedHours: number;
+  /** Number of hourly consumption records found in the period, summed across every supply of the membership */
+  hoursWithData: number;
+  /** Number of those supplies with at least one hourly record in the period */
+  suppliesWithData: number;
+  /** Number of supplies of the membership in this community */
+  supplyCount: number;
+}
+
+interface SupplyEnergyMetricsEnergyResponse {
+  /** Energy assigned to this supply: selfConsumptionKWh plus surplusKWh. In kWh, rounded to 3 decimals after summing, so it can differ by 0.001 from the sum of the rounded figures. */
+  assignedProductionKWh: number;
+  /** Energy taken from the grid by this supply over the period. Does not include self-consumed energy. In kWh, rounded to 3 decimals. */
+  gridImportKWh: number;
+  /** Energy produced by the community and consumed by this supply over the period, as reported by the distributor. In kWh, rounded to 3 decimals. */
+  selfConsumptionKWh: number;
+  /** Energy assigned to this supply and fed back to the grid over the period. In kWh, rounded to 3 decimals. */
+  surplusKWh: number;
+  /** Energy consumed, whatever its origin: gridImportKWh plus selfConsumptionKWh. In kWh, rounded to 3 decimals after summing, so it can differ by 0.001 from the sum of the rounded figures. */
+  totalConsumptionKWh: number;
+}
+
+interface SupplyEnergyMetricsSavingsResponse {
+  /** Estimated amount saved over the period, in euros, rounded to cents. Null when no period could be resolved, which is not the same as a saving of zero. */
+  amountEur: number | null;
+  /** The estimated energy-term price, before taxes, the amount was priced with. Present only when the estimated price was used to price at least part of the period; null when the whole period was priced wi */
+  estimatedPrice: EstimatedPriceResponse | null;
+  /** Whether the prices behind the amount are the supply's contracted tariff or an estimate. A single estimated stretch of the period makes the whole amount an estimate. */
+  tariffSource: 'REAL_TARIFF' | 'ESTIMATE';
+}
+
+interface EstimatedPriceResponse {
+  /** Estimated price of the energy term, in euros per kWh, before taxes. The power term, access tolls, charges, electricity tax and VAT are not included. Returned exactly as configured, without rounding. */
+  eurPerKWh: number;
+}
+
+interface SelfConsumptionRatioBasisResponse {
+  /** Energy assigned to the supplies the ratio covers: selfConsumptionKWh plus surplus over the period, and the ratio's denominator. In kWh, rounded to 3 decimals after summing. */
+  assignedProductionKWh: number;
+  /** How many supplies that are a plant's own supply the ratio leaves out. Their energy is in neither figure above. */
+  excludedPlantSupplyCount: number;
+  /** Energy produced by the community and consumed by the supplies the ratio covers over the period, as reported by the distributor: the ratio's numerator. In kWh, rounded to 3 decimals. */
+  selfConsumptionKWh: number;
+}
+
+interface MembershipResponse {
+  /** When the membership was accepted. Null while it is pending: a pending membership grants no access until it is accepted. Independent of enabled. */
+  acceptedAt: string | null;
+  /** The member's address, as this community records it. Null if there is none. */
+  address: string | null;
+  /** What the caller may do with this membership. MemberPicker reads none of it: pass `{}`. */
+  capabilities: MembershipCapabilitiesResponse;
+  communityId: string;
+  /** The email address this community contacts the member at. Null if there is none. */
+  contactEmail: string | null;
+  enabled: boolean;
+  /** The member's full name, as this community records it. */
+  fullName: string;
+  id: string;
+  /** When the membership's invitation link expires. Null when it has no link that can still be used: none was sent, it was revoked or used, or it has expired. */
+  invitationExpiresAt: string | null;
+  /** When the membership was last sent an invitation. Null if none has been sent. */
+  invitedAt: string | null;
+  /** Whether demoting this membership to member, or deleting it, would be refused right now with MEMBERSHIP_LAST_ACTIVE_ADMIN: true only for the community's last active admin. A pending or suspended admin, */
+  lastActiveAdmin: boolean;
+  /** The member's number in this community. Null if the community records none. */
+  memberNumber: number | null;
+  /** The member's DNI/NIE/NIF, normalised: the one the community registered them with. */
+  personalId: string;
+  /** The member's phone number, as this community records it. Null if there is none. */
+  phoneNumber: string | null;
+  role: 'COMMUNITY_MEMBER' | 'COMMUNITY_ADMIN';
+  /** The member's account, by id only: the {userId} the membership's endpoints take. Nothing else of the account is carried. */
+  user: UserReferenceResponse;
+}
+
+/** `PeriodUsageCard` and `PeriodTotals` take either: one supply's figures, or the membership's ("Todos mis puntos"). */
+type PeriodEnergyMetrics = MembershipEnergyMetricsResponse | SupplyEnergyMetricsResponse;
+
+/** `MemberPicker`'s `status`: where the read of the roster it offers stands. */
+type MemberPickerStatus = 'loading' | 'ready' | 'error';
+
+/** `PeriodHeader`'s `anchor`: the latest published period, a calendar month or day (month is 1-12). */
+type Anchor =
+  | { kind: 'month'; month: { year: number; month: number } }
+  | { kind: 'day'; day: { year: number; month: number; day: number } };
+
+/**
+ * `PeriodHeader`'s `resolution` (`Extract<PeriodResolution, { status: "ok" }>` in its `.d.ts`): the
+ * period on show. `title` is the heading, "Datos de septiembre de 2026".
+ */
+interface PeriodResolutionOk {
+  status: 'ok';
+  /** `startDate` included, `endDate` excluded, both in Europe/Madrid with their offset. */
+  period: { startDate: string; endDate: string; granularity: 'hourly' | 'daily' | 'monthly'; label: string };
+  title: string;
+  firstDay: { year: number; month: number; day: number };
+  lastDay: { year: number; month: number; day: number };
+  pickedDays: number;
+  /** Set when a range longer than 62 days was widened to whole months; `text` says so. */
+  snapped: { from: { year: number; month: number; day: number }; to: { year: number; month: number; day: number }; months: number; text: string } | null;
+}
+
+interface PresetDefinition {
+  /** Its value in the query string: ?period={value}. Unique within a page's list. */
+  value: 'latest' | 'year' | 'last12' | 'last7' | 'last30';
+  name: (anchor: Anchor) => string;
+  /** The kinds of anchor it derives a period from. A page offers it only against one of them. */
+  accepts: readonly ('month' | 'day')[];
+  /** Its first and last calendar day, both included. */
+  range: (anchor: Anchor) => { from: { year: number; month: number; day: number }; to: { year: number; month: number; day: number } };
+  /** How it is offered, when its period's label and granularity would not say it: see `presetSummary`. */
+  summary?: (anchor: Anchor, resolution: PeriodResolutionOk) => string;
+}
+
+type SupplyOwnerField = { mode: 'choose'; status: MemberPickerStatus; options: MembershipResponse[]; } | { mode: 'show'; fullName: string | null; };
+
+interface SupplyFieldValues {
+  name: string;
+  cups: string;
+  address: string;
+  addressRef: string;
+  ownerId: string | null;
+}
+
+interface PlantFieldValues {
+  providerCode: string;
+  regulatoryCode: string;
+  /** As typed: normalised only when it is sent. */
+  cil: string;
+  name: string;
+  address: string;
+  description: string;
+  /** As typed, so that an empty or partial number stays what the user sees. */
+  peakPowerKWp: string;
+  /** As typed, like the peak power. */
+  nominalPowerKW: string;
+  /** A dayjs date: leave it null, or start from `plantFieldValuesOf(plant)`, which converts the plant's `connectionDate`. */
+  connectionDate: Dayjs | null;
+  supplyCode: string | null;
+}
+
+/** One day of `toConsumptionSeriesView`'s `membershipDaily` buckets; `membershipMonthly` buckets have the same fields, one per month, dated on its first day. `date` is written "2026/09/01". */
+interface MembershipDailyConsumptionBucketResponse {
+  /** Energy assigned to every supply of the membership over the day: selfConsumptionKWh plus surplusKWh. In kWh, rounded to 3 decimals after summing, so it can differ by 0.001 from the sum of the rounded f */
+  assignedProductionKWh: number;
+  /** The day, a local calendar date in the community's time zone. */
+  date: string;
+  /** Energy taken from the grid by every supply of the membership over the day. Does not include self-consumed energy. In kWh, rounded to 3 decimals. 0 when no supply stored a record. */
+  gridImportKWh: number;
+  /** Estimated amount the day's self-consumed energy saved across every supply that stored a record, in euros, rounded to cents. Null when no supply stored a record that day: a day with nothing stored is n */
+  savingsEur: number | null;
+  /** Energy produced by the community and consumed by every supply of the membership over the day, as reported by the distributor. In kWh, rounded to 3 decimals. */
+  selfConsumptionKWh: number;
+  /** Number of those supplies that stored at least one hourly record that day, within the period. Measured day by day, whereas the aggregated energy metrics measure their suppliesWithData over the whole pe */
+  suppliesWithData: number;
+  /** Number of supplies the member currently owns in the community. The model records no date a supply joined, so the same count applies to every day, including days before a supply started reporting. */
+  supplyCount: number;
+  /** Energy assigned to every supply of the membership and fed back to the grid over the day. In kWh, rounded to 3 decimals. */
+  surplusKWh: number;
+  /** Whether the prices behind savingsEur are the supplies' contracted tariffs or an estimate. A single estimated stretch of any supply makes the whole amount an estimate. Null exactly when savingsEur is n */
+  tariffSource: 'REAL_TARIFF' | 'ESTIMATE' | null;
+  /** Local time the day starts at in the community's time zone: always midnight, also for a first day the period starts in the middle of. */
+  time: string;
+}
+
+interface SharingAgreementFormInitialValues {
+  name?: string;
+  notes?: string;
+  nominalPowerKW?: number;
+  distributorFileSentOn?: string | null;
+}
+
+interface SharingAgreementFormValues {
+  name: string;
+  /** `null` when left empty. */
+  notes: string | null;
+  nominalPowerKW: number;
+  /** A local date ("2026-03-01"), or `null` when the field is empty. Always `null` in create mode, which does not offer the field. */
+  distributorFileSentOn: string | null;
+}
+
+/** `PeriodSelector`'s `selection`: a preset by its value, or a custom range with both days included. */
+type PeriodSelection =
+  | { kind: 'latest' | 'year' | 'last12' | 'last7' | 'last30' }
+  | { kind: 'custom'; from: { year: number; month: number; day: number }; to: { year: number; month: number; day: number } };
 ```
