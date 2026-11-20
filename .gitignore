@@ -55,3 +55,6 @@ npm-debug.log*
 
 # Temporary file sync-api writes before renaming it to api-docs.json
 .api-docs.json.*.tmp
+
+# Storybook build output
+/storybook-static
