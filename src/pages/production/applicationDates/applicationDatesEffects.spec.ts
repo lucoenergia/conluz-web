@@ -103,6 +103,26 @@ describe("writtenEffectSentences", () => {
     ]);
   });
 
+  it("UI-AGR-035: each counted sentence agrees with its count, in both forms", () => {
+    const neighbour = (id: string, end: string | null) => ({
+      coefficient: { id },
+      sharingAgreement: PREVIOUS,
+      supply: supply(id, null),
+      validToBefore: null,
+      validToAfter: end && midnight(end),
+    });
+
+    expect(writtenEffectSentences({ ...empty, coefficients: [period("1", "2024-02-01")] })).toEqual([
+      "1 coeficiente tiene ya fecha de aplicación: desde el 01/02/2024.",
+    ]);
+    expect(writtenEffectSentences({ ...empty, neighbours: [neighbour("1", "2024-02-01")] })).toEqual([
+      "1 coeficiente de Reparto inicial 2023 termina ahora el 01/02/2024.",
+    ]);
+    expect(writtenEffectSentences({ ...empty, neighbours: [neighbour("1", null), neighbour("2", null)] })).toEqual([
+      "2 coeficientes de Reparto inicial 2023 quedan sin fecha de fin.",
+    ]);
+  });
+
   it("UI-AGR-035: says nothing for a write that changed nothing", () => {
     expect(writtenEffectSentences(empty)).toEqual([]);
   });

@@ -184,7 +184,8 @@ export function previewBlocker(rows: CoefficientDateRow[], leavingDates: Record<
     invalid.length > 0 &&
       `${missing.length > 0 ? "hay" : "Hay"} ${invalid.length} ${pluralize(invalid.length, "fecha no válida o futura", "fechas no válidas o futuras")}`,
   ].filter(Boolean);
-  return `${parts.join(" y ")}. Corrígelas o desmarca esos puntos.`;
+  const fix = missing.length + invalid.length === 1 ? "Corrígela o desmarca ese punto." : "Corrígelas o desmarca esos puntos.";
+  return `${parts.join(" y ")}. ${fix}`;
 }
 
 /**

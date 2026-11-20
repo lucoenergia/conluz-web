@@ -5,7 +5,7 @@ import type { Dayjs } from "dayjs";
 import { Notice } from "../../../components/Notice";
 import { sxStyles } from "../../../theme/sx";
 import { colors, fontFamilies, fontSizes } from "../../../theme/tokens";
-import { pluralize } from "../../../utils/pluralize";
+import { datesToChoose, moreRows, selectedOfTotal } from "./applicationDatesCopy";
 import { supplyDisplayLabel } from "../../../utils/supplyDisplayLabel";
 import { isCoefficientDateValid } from "../coefficientDateValidation";
 import { ObservationChip } from "../observedSharing/ObservationChip";
@@ -211,7 +211,7 @@ export const DatesStep: FC<DatesStepProps> = ({
               . «Observada»: Datadis muestra ese día el coeficiente registrado. «Propuesta»: el coeficiente es el mismo que en
               el acuerdo anterior y el cambio no se puede observar. Revísalas, tú decides.
               {toChoose > 0 &&
-                ` ${toChoose} ${pluralize(toChoose, "punto necesita", "puntos necesitan")} que escribas la fecha.`}
+                ` ${datesToChoose(toChoose)}`}
             </Notice>
           ) : (
             <Notice severity="info">
@@ -252,7 +252,7 @@ export const DatesStep: FC<DatesStepProps> = ({
               Aplicar la misma fecha a todos
             </Button>
             <Typography variant="body2" sx={{ color: colors.text.subtle, ml: { md: "auto" } }}>
-              {selectedCount} de {rows.length} {pluralize(rows.length, "punto marcado", "puntos marcados")}
+              {selectedOfTotal(selectedCount, rows.length)}
             </Typography>
           </Box>
 
@@ -302,7 +302,7 @@ export const DatesStep: FC<DatesStepProps> = ({
             {!showAll && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", px: { xs: 0, md: 2 }, py: 1, borderTop: `1px solid ${colors.divider}` }}>
                 <Typography variant="body2" sx={{ color: colors.text.subtle }}>
-                  Y {rows.length - shown.length} {pluralize(rows.length - shown.length, "punto más", "puntos más")} ·
+                  {moreRows(rows.length - shown.length)} ·
                 </Typography>
                 <Button size="small" onClick={() => setShowAll(true)}>
                   Mostrar todos

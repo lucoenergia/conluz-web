@@ -20,7 +20,13 @@ import { SectionHeading } from "../../../components/SectionHeading";
 import type { CoefficientDatesRowErrorDetail } from "../../../errors/apiErrorCatalogue";
 import { sxStyles } from "../../../theme/sx";
 import { colors, fontFamilies, fontSizes } from "../../../theme/tokens";
-import { pluralize } from "../../../utils/pluralize";
+import {
+  closedSuppliesLabel,
+  datedCoefficientsLabel,
+  fixRowsHint,
+  movedEndsLabel,
+  rowsWithErrors,
+} from "./applicationDatesCopy";
 import { supplyDisplayLabel } from "../../../utils/supplyDisplayLabel";
 import { localDateAt } from "../../../utils/zonedTime";
 import { isCoefficientDateValid } from "../coefficientDateValidation";
@@ -217,7 +223,7 @@ const CoefficientEffects: FC<{
       )}
       {otherNeighbours.length > 0 && (
         <Box sx={{ mt: 2 }}>
-          <Typography sx={{ fontWeight: 600, mb: 0.5 }}>Otros coeficientes que cambian su fin</Typography>
+          <Typography sx={{ fontWeight: 600, mb: 0.5 }}>Coeficientes anteriores que cambian su fin</Typography>
           {otherNeighbours.map((neighbour) => (
             <Typography key={neighbour.coefficient.id} variant="body2">
               {supplyDisplayLabel(neighbour.supply)} · {neighbour.sharingAgreement.name} · Fin{" "}
@@ -388,7 +394,7 @@ export const PreviewStep: FC<PreviewStepProps> = ({
       <Alert severity="error">
         {rowCount > 0 && (
           <AlertTitle>
-            {rowCount} {pluralize(rowCount, "punto tiene un error", "puntos tienen un error")}
+            {rowsWithErrors(rowCount)}
           </AlertTitle>
         )}
         <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
@@ -406,7 +412,7 @@ export const PreviewStep: FC<PreviewStepProps> = ({
         </Box>
         {rowCount > 0 && (
           <Typography variant="body2" sx={{ mt: 1 }}>
-            {pluralize(rowCount, "Corrígelo o desmárcalo para poder confirmar.", "Corrígelos o desmárcalos para poder confirmar.")}
+            {fixRowsHint(rowCount)}
           </Typography>
         )}
       </Alert>
@@ -417,15 +423,15 @@ export const PreviewStep: FC<PreviewStepProps> = ({
         <Box sx={{ display: "flex", gap: { xs: 1, md: 2 } }}>
           <SummaryFigure
             value={effects.coefficients.length}
-            label={pluralize(effects.coefficients.length, "coeficiente de este acuerdo recibe fecha", "coeficientes de este acuerdo reciben fecha")}
+            label={datedCoefficientsLabel(effects.coefficients.length)}
           />
           <SummaryFigure
             value={effects.neighbours.length}
-            label={pluralize(effects.neighbours.length, "coeficiente anterior cambia su fin", "coeficientes anteriores cambian su fin")}
+            label={movedEndsLabel(effects.neighbours.length)}
           />
           <SummaryFigure
             value={effects.leavingClosures.length}
-            label={pluralize(effects.leavingClosures.length, "punto sale del reparto y se cierra", "puntos salen del reparto y se cierran")}
+            label={closedSuppliesLabel(effects.leavingClosures.length)}
           />
         </Box>
 

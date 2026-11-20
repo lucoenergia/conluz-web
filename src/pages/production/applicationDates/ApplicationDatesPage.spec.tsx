@@ -340,7 +340,7 @@ describe("ApplicationDatesPage", () => {
       await typeDay(user, dateGroup("Casa Norte"), dayjs().add(1, "day"));
 
       expect(screen.getByRole("button", { name: "Ver vista previa" })).toBeDisabled();
-      expect(screen.getByText("Hay 1 fecha no válida o futura. Corrígelas o desmarca esos puntos.")).toBeVisible();
+      expect(screen.getByText("Hay 1 fecha no válida o futura. Corrígela o desmarca ese punto.")).toBeVisible();
       expect(screen.getByText("No puede ser una fecha futura")).toBeVisible();
     });
 
@@ -438,6 +438,20 @@ describe("ApplicationDatesPage", () => {
       expect(within(rowOf("Casa Norte")).queryByText("Observada")).not.toBeInTheDocument();
     });
 
+    test("UI-AGR-032: one leaving supply is announced in the singular, with the agreement it leaves", () => {
+      renderPage({ route: FROM_OBSERVED, observation: { ...OBSERVATION, leavingRows: OBSERVATION.leavingRows.slice(0, 1) } });
+
+      expect(
+        screen.getByText(
+          (_content, element) =>
+            element?.getAttribute("role") === "note" &&
+            /Bar sale del reparto: estaba en Reparto inicial 2023 y no está en este acuerdo\. Revisarás su fecha de cierre en la vista previa\./.test(
+              element.textContent ?? "",
+            ),
+        ),
+      ).toBeVisible();
+    });
+
     test("UI-AGR-034: a leaving supply observed on an exact day is sent as a listed closure; one with an open date is not", async () => {
       const user = userEvent.setup({ delay: null });
       renderPage({ route: FROM_OBSERVED });
@@ -491,6 +505,26 @@ describe("ApplicationDatesPage", () => {
       // An agreement whose status stays is no change, and is not listed.
       expect(screen.queryByText(/Reparto 2025: Vigente → Vigente/)).not.toBeInTheDocument();
       expect(setAsync).not.toHaveBeenCalled();
+    });
+
+    test("UI-AGR-034: a previous coefficient of a supply no listed coefficient names still shows its new end", async () => {
+      previewAsync.mockResolvedValue(
+        effects({
+          neighbours: [
+            {
+              coefficient: { id: "prev-oeste" },
+              sharingAgreement: PREVIOUS,
+              supply: OESTE,
+              validToBefore: madridMidnight("2025-06-01"),
+              validToAfter: madridMidnight("2025-03-01"),
+            },
+          ],
+        }),
+      );
+      await openPreview();
+
+      expect(screen.getByText("Coeficientes anteriores que cambian su fin")).toBeVisible();
+      expect(screen.getByText("Casa Oeste · Reparto inicial 2023 · Fin 01/06/2025 → 01/03/2025")).toBeVisible();
     });
 
     test("UI-AGR-034: a date before the agreement's sent date is a note that does not block confirming", async () => {
@@ -578,6 +612,30 @@ describe("ApplicationDatesPage", () => {
       );
       expect(screen.getByRole("button", { name: "Confirmar y aplicar" })).toBeDisabled();
       expect(screen.getByText("Corrige el error de Casa Norte o desmárcalo para confirmar.")).toBeVisible();
+    });
+
+    test("UI-AGR-034: two refused rows are counted in the plural, and confirming says to fix the errors", async () => {
+      previewAsync.mockRejectedValue(
+        Object.assign(apiError(409), {
+          response: {
+            status: 409,
+            headers: {},
+            data: {
+              status: 409,
+              errors: [
+                { code: "SHARING_AGREEMENT_DATE_IN_FUTURE", message: "raw", params: { coefficientId: "c-norte", cups: NORTE.code } },
+                { code: "SHARING_AGREEMENT_DATE_IN_FUTURE", message: "raw", params: { coefficientId: "c-este", cups: ESTE.code } },
+              ],
+            },
+          },
+        }),
+      );
+      await openPreview();
+
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent("2 puntos tienen un error");
+      expect(alert).toHaveTextContent("Corrígelos o desmárcalos para poder confirmar.");
+      expect(screen.getByText("Corrige los errores o desmarca esos puntos para confirmar.")).toBeVisible();
     });
 
     test("UI-AGR-034: back on the dates, a refused row shows its error under its field", async () => {
