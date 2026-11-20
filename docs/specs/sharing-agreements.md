@@ -4,18 +4,19 @@
 | --- | --- |
 | **Prefix** | `UI-AGR` |
 | **Status** | Active |
-| **Routes** | `/plants/:plantId/sharing-agreements`, `/plants/:plantId/sharing-agreements/:sharingAgreementId`, `/plants/:plantId/sharing-agreements/observed`, `/plants/:plantId/sharing-agreements/observed/:sharingAgreementId` |
+| **Routes** | `/plants/:plantId/sharing-agreements`, `/plants/:plantId/sharing-agreements/:sharingAgreementId`, `/plants/:plantId/sharing-agreements/observed`, `/plants/:plantId/sharing-agreements/observed/:sharingAgreementId`, `/plants/:plantId/sharing-agreements/:sharingAgreementId/application-dates` |
 | **Roles** | A caller with the plant's `canListSharingAgreements`. Authoring and lifecycle actions: the capabilities each agreement and coefficient carries |
 | **Domain rules** | n/a |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `ListPagination` (the list; its shared rules are `record-lists.md`) |
-| **Last reviewed against code** | #418 |
+| **Last reviewed against code** | #419 |
 
 Scope: the rules introduced in #277 for sharing-agreement states migrated from visual tests to
 Vitest, the rules #350 introduced for the list's rows and for how a status is shown, and the
 coefficient history's layout (#369), the create dialog's starting power (#407), and how a
 coefficient's end date is shown and worded (#420), the distributor file sent date (#417), and the
 observed sharing view: a plant's agreements and one agreement compared with what Datadis shows
-(#418). Not exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
+(#418), and setting an agreement's application dates after a dry run of every effect, with the
+activation confirmation that lists the supplies a first activation closes (#419). Not exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
 list shares, the agreement list among them, are in [`record-lists.md`](record-lists.md).
 
 ## Purpose
@@ -308,8 +309,9 @@ is in force today.
   any, its anomaly counts by type, and the part no supply with data received (1 − Σβ). Each card
   and the agreement's page MUST show every recommendation returned, in order, as a finding under
   "Qué revisar": a title stating what was found, a detail from the backend's counts, and a link
-  worded apart from the title. "Fechas distintas de las registradas" MUST offer no link until
-  #419, and still counts as an agreement to review. A "none" recommendation MUST show nothing. On
+  worded apart from the title. "Fechas distintas de las registradas" MUST link to "Fijar fechas",
+  which opens the set application dates flow from this agreement's observation (UI-AGR-032), and
+  still counts as an agreement to review. A "none" recommendation MUST show nothing. On
   the agreement's page, "Con avisos" MUST keep the coefficient rows applied on another
   date, not distinguishable, or of a supply with an anomaly of the agreement, and the leaving rows
   that left on another date; its count MUST equal the rows it shows.
@@ -317,7 +319,8 @@ is in force today.
   recommendations; restating either here would let the two disagree. A finding says what the
   analysis saw, which the admin can check, rather than an instruction.
 - **Implements:** n/a
-- **Source:** #418; findings layout: maintainer decision in the #418 review
+- **Source:** #418; findings layout: maintainer decision in the #418 review; the "Fijar fechas"
+  link: #419
 
 ### UI-AGR-024 — Anomalies are grouped by agreement and supply, with their evidence
 
@@ -402,6 +405,94 @@ is in force today.
 - **Implements:** n/a
 - **Source:** #418, lucoenergia/conluz#597
 
+### UI-AGR-032 — Prefilled dates are marked; uncertain dates are left for the admin
+
+- **Status:** Active
+- **Rule:** Opened from the agreement, every date of the set application dates flow MUST start
+  empty, and the undated coefficients MUST start selected. Opened from observed sharing, an exact
+  observed date MUST be prefilled and marked "Observada". An exact proposed date, for a coefficient
+  whose change cannot be observed, MUST be prefilled and marked "Propuesta", with the explanation
+  the observed sharing page gives (UI-AGR-027). An observed range or open date MUST be left empty,
+  with the observed value as its hint and "Elige una fecha". Any other row MUST show its stored
+  date, or none, unmarked. A row with a prefilled date MUST start selected; a row with a range or
+  open date MUST start unselected, and so MUST a row already dated, whatever the observation says.
+  A date edited away from the one it was prefilled with MUST show that one beside it. A leaving
+  supply observed leaving on an exact day MUST start with that day as its closing date, marked
+  "Observada"; one observed on a range or open date MUST start without one, with its hint.
+- **Rationale:** The admin decides the dates. An observed date is evidence and a proposed one is
+  not, so neither may pass for the other, and the client infers no day the backend did not give.
+  Changing a stored date rewrites a period production was attributed by, so it is never preselected.
+- **Implements:** n/a
+- **Source:** #419
+
+### UI-AGR-033 — The preview is not reachable with a missing or future date
+
+- **Status:** Active
+- **Rule:** "Ver vista previa" MUST stay disabled while a selected row has no date, or a date that
+  is invalid or after today, whether typed or picked, and while nothing is selected and no closing
+  date is listed. The reason MUST be visible body text; with three missing dates or fewer and no
+  invalid one, it MUST name their rows.
+- **Rationale:** A dry run of an incomplete or future request can only be refused; the admin
+  should see what to fix where they are fixing it.
+- **Implements:** n/a
+- **Source:** #419
+
+### UI-AGR-034 — Confirming follows an error-free dry run that shows every effect
+
+- **Status:** Active
+- **Rule:** The preview MUST render what the dry run (`previewPartitionCoefficientDates`) returns:
+  how many coefficients get a date, how many previous coefficients change their end and how many
+  supplies are closed; each coefficient's new period and each move of the end of a previous
+  coefficient of its supply; each leaving closure; each agreement whose status changes; and the
+  community's start date when it moves, explained as moving the payback. A closure the backend
+  applies by default on a first activation MUST be marked "Cierre por defecto: fecha más temprana
+  del acuerdo". A date before the day the agreement's file was sent MUST carry a note that does not
+  block confirming. Each leaving supply MUST have an editable closing date, and editing one MUST
+  run the dry run again with it listed. A refused dry run MUST show each row's error in the
+  catalogue's words. "Confirmar y aplicar" MUST be enabled only while the dry run on screen
+  answered, without error, for exactly what is entered.
+- **Rationale:** Nothing may be written that the admin has not seen in full. A default closure is
+  written without having been asked for, so it is the one most in need of saying so.
+- **Implements:** n/a
+- **Source:** #419, lucoenergia/conluz#583, lucoenergia/conluz#593
+
+### UI-AGR-035 — The result shows the effects as written, and every affected read is refreshed
+
+- **Status:** Active
+- **Rule:** After a write applies, the result MUST list the effects from the write's own response,
+  never the preview's. Every write that dates coefficients, setting the dates or activating, MUST
+  invalidate every agreement and coefficient set of the plant, the plant's active coefficients, its
+  observed sharing and each agreement's, every member's payback and the community's energy metrics.
+- **Rationale:** There is no version token: the write validates again and may differ from the
+  preview. A moved community start date moves every member's payback.
+- **Implements:** n/a
+- **Source:** #419
+
+### UI-AGR-036 — A refused write applies nothing and keeps the dates
+
+- **Status:** Active
+- **Rule:** A write answered with a refusal (409, or 400) MUST say that no data was changed, show
+  each row's error in the catalogue's words and keep every date entered; "Volver a la vista previa"
+  MUST run the dry run again on the data as it stands. A write whose answer never arrived MUST NOT
+  be reported as applied or as refused.
+- **Rationale:** A concurrent edit can make a previewed request invalid; the admin should not have
+  to type the dates again to see why.
+- **Implements:** n/a
+- **Source:** #419
+
+### UI-AGR-037 — The activation confirmation lists the supplies its first activation closes
+
+- **Status:** Active
+- **Rule:** Once a valid date is chosen, "Registrar fecha" MUST list the supplies a dry run of the
+  activation at that date reports as closed by default, each with the agreement it leaves and its
+  closing day, and nothing when it reports none. "Registrar fecha" MUST wait for that answer, saying
+  so. A refused dry run MUST keep it disabled and show the catalogue's errors; a network or server
+  failure MUST offer "Reintentar". The activation itself is unchanged.
+- **Rationale:** A first activation also closes the coefficients of the supplies absent from the
+  agreement, in the same write; the admin should see them before confirming.
+- **Implements:** n/a
+- **Source:** #419, lucoenergia/conluz#593
+
 ## States
 
 | State | Rendered | Actions available |
@@ -420,6 +511,12 @@ is in force today.
 | Observed sharing not computable, the plant supply without data | "No se puede calcular el reparto observado"; no agreement and no recommendation (UI-AGR-028) | "Ver el punto de la planta", with the plant's `canReadSupply` |
 | Observed sharing read failed | "No se pudo cargar el reparto observado." | "Reintentar" |
 | Agreement observation of a draft | The catalogue's text for `SHARING_AGREEMENT_NOT_OBSERVABLE`, as a note | None |
+| Set application dates, dates step | The rows, prefilled when opened from observed sharing (UI-AGR-032); the reason "Ver vista previa" is disabled (UI-AGR-033) | "Misma fecha para todos", "Ver vista previa", "Cancelar" |
+| Set application dates, preview | The dry run's effects, default closures marked (UI-AGR-034) | Editing a closing date, "Volver a las fechas", "Confirmar y aplicar" once error-free |
+| Set application dates, preview refused or failed | Each row's error, or "No se pudo calcular la vista previa." | "Volver a las fechas"; "Reintentar" on a failure |
+| Set application dates, applied | "Fechas aplicadas en …" and the effects as written (UI-AGR-035) | "Ver el acuerdo"; "Volver al reparto observado" when opened from it |
+| Set application dates, write refused | "No se han aplicado las fechas", each row's error, the dates kept (UI-AGR-036) | "Volver a la vista previa", "Cancelar" |
+| Set application dates of a draft | "Este acuerdo es un borrador. Publícalo antes de fijar sus fechas de aplicación." | None |
 
 ## Accepted exceptions
 
