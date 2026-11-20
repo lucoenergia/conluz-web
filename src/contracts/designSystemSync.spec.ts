@@ -19,8 +19,8 @@ const ENTRY = ".design-sync/pkg/index.ts";
 const CONFIG = ".design-sync/config.json";
 const PREVIEWS_DIR = ".design-sync/previews";
 
-/** Not components: test specs, type-level tests, test helpers, and folder re-exports of a component already counted. */
-const NOT_COMPONENT_FILES = [/\.spec\.tsx$/, /\.typecheck\.tsx$/, /\.testUtils\.tsx$/, /\/index\.tsx$/];
+/** Not components: test specs, type-level tests, test helpers, Storybook stories, and folder re-exports of a component already counted. */
+const NOT_COMPONENT_FILES = [/\.spec\.tsx$/, /\.typecheck\.tsx$/, /\.testUtils\.tsx$/, /\.stories\.tsx$/, /\/index\.tsx$/];
 
 interface NotSynced {
   file: string;
