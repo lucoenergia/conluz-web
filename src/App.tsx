@@ -52,6 +52,7 @@ const SharingAgreementsPage = lazyPage(() => import("./pages/production/SharingA
 const SharingAgreementDetailPage = lazyPage(() => import("./pages/production/SharingAgreementDetailPage"), "SharingAgreementDetailPage");
 const PlantObservedSharingPage = lazyPage(() => import("./pages/production/observedSharing/PlantObservedSharingPage"), "PlantObservedSharingPage");
 const SharingAgreementObservationPage = lazyPage(() => import("./pages/production/observedSharing/SharingAgreementObservationPage"), "SharingAgreementObservationPage");
+const ApplicationDatesPage = lazyPage(() => import("./pages/production/applicationDates/ApplicationDatesPage"), "ApplicationDatesPage");
 
 const IntegrationsPage = lazyPage(() => import("./pages/integrations/IntegrationsPage"), "IntegrationsPage");
 const MembersPage = lazyPage(() => import("./pages/members/MembersPage"), "MembersPage");
@@ -162,6 +163,13 @@ function App() {
               <Route
                 path="sharing-agreements/:sharingAgreementId"
                 element={<CapabilityRoute require={{ scope: "plant", capability: "canListSharingAgreements" }}><SharingAgreementDetailPage /></CapabilityRoute>}
+              />
+              {/* Setting an agreement's application dates (#419). The page
+                  also needs the agreement's own canManage, which only the
+                  agreement answers. */}
+              <Route
+                path="sharing-agreements/:sharingAgreementId/application-dates"
+                element={<CapabilityRoute require={{ scope: "plant", capability: "canListSharingAgreements" }}><ApplicationDatesPage /></CapabilityRoute>}
               />
             </Route>
           </Route>

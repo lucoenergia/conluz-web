@@ -4,6 +4,7 @@ import { Link as RouterLink } from "react-router";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import EditCalendarOutlinedIcon from "@mui/icons-material/EditCalendarOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
 import SolarPowerIcon from "@mui/icons-material/SolarPower";
@@ -51,6 +52,8 @@ export interface SharingAgreementDetailHeaderProps {
   onEditCoefficientsRequest?: () => void;
   onImportRequest?: () => void;
   onRecordDatesRequest?: () => void;
+  /** Opens the set application dates flow (#419); passed only where it can run. */
+  onSetDatesRequest?: () => void;
 }
 
 export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps> = ({
@@ -69,6 +72,7 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
   onEditCoefficientsRequest,
   onImportRequest,
   onRecordDatesRequest,
+  onSetDatesRequest,
 }) => {
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   // The audit trail stores an id; the header has to say a name. Same hook the
@@ -112,7 +116,7 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
   // A handler the caller was not given is undefined, so a menu with nothing in
   // it is never mounted rather than mounted empty.
   const showDelete = !!onDeleteRequest && isDraft;
-  const showMenu = isResolved && !!agreement && (!!onEdit || showDelete);
+  const showMenu = isResolved && !!agreement && (!!onEdit || !!onSetDatesRequest || showDelete);
 
   const view = selectSharingAgreementLifecycleView(nextStep, agreement?.status);
 
@@ -140,6 +144,11 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
   const handleEditClick = () => {
     handleCloseMenu();
     onEdit?.();
+  };
+
+  const handleSetDatesClick = () => {
+    handleCloseMenu();
+    onSetDatesRequest?.();
   };
 
   const handleDeleteClick = () => {
@@ -225,6 +234,14 @@ export const SharingAgreementDetailHeader: FC<SharingAgreementDetailHeaderProps>
               <EditOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
               <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
                 Editar datos del acuerdo
+              </Typography>
+            </MenuItem>
+          )}
+          {onSetDatesRequest && (
+            <MenuItem onClick={handleSetDatesClick}>
+              <EditCalendarOutlinedIcon sx={{ mr: 2, fontSize: 20, color: colors.text.subtle, flexShrink: 0 }} />
+              <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 500, textAlign: "left" }}>
+                Fijar fechas de aplicación
               </Typography>
             </MenuItem>
           )}

@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { Box, LinearProgress, Paper, Typography } from "@mui/material";
+import { Box, Button, LinearProgress, Paper, Typography } from "@mui/material";
 import ErrorOutlineOutlinedIcon from "@mui/icons-material/ErrorOutline";
 import { sxStyles } from "../../theme/sx";
 import { colors, fontSizes, radii } from "../../theme/tokens";
@@ -22,6 +22,12 @@ const NEW_SUPPLY_CONSEQUENCE =
 
 export interface SharingAgreementApplicationPanelProps {
   coefficients: SharingAgreementPartitionCoefficientResponse[];
+  /**
+   * Opens the set application dates flow (#419); passed only when the caller
+   * may set them. A handler rather than a path, so the panel renders without a
+   * router.
+   */
+  onSetDatesRequest?: () => void;
 }
 
 /**
@@ -30,21 +36,29 @@ export interface SharingAgreementApplicationPanelProps {
  * schedule is finished. On a superseded agreement that claim would be false
  * exactly when the panel is on screen.
  *
- * Reporting only: "Registrar fechas" belongs to the next-step banner, which
- * offers it for exactly as long as recording dates is the current step — the
- * same state in which this panel would have shown its own copy. Repeating it
- * here put the identical action twice on one screen.
+ * "Fijar fechas de aplicación" is offered here beside the progress, and in the
+ * next-step banner and the agreement's menu: the three entry points the flow
+ * was designed with (#419).
  */
-export const SharingAgreementApplicationPanel: FC<SharingAgreementApplicationPanelProps> = ({ coefficients }) => {
+export const SharingAgreementApplicationPanel: FC<SharingAgreementApplicationPanelProps> = ({ coefficients, onSetDatesRequest }) => {
   const { appliedCount: applied, total, hasPendingWithoutCurrent } = summarizeApplicationProgress(coefficients);
   const progress = total === 0 ? 0 : (applied / total) * 100;
 
   return (
     <Paper elevation={0} sx={sxStyles.softPanel}>
-      <SectionHeading
-        title="Aplicación del reparto"
-        description="Desde qué día empieza a contar el coeficiente de reparto de cada punto de suministro."
-      />
+      <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap" }}>
+        <Box sx={{ flex: "1 1 320px", minWidth: 0 }}>
+          <SectionHeading
+            title="Aplicación del reparto"
+            description="Desde qué día empieza a contar el coeficiente de reparto de cada punto de suministro."
+          />
+        </Box>
+        {onSetDatesRequest && (
+          <Button variant="outlined" onClick={onSetDatesRequest} sx={{ mb: 2.5 }}>
+            Fijar fechas de aplicación
+          </Button>
+        )}
+      </Box>
 
       <Box sx={{ mb: 2.5 }}>
         <Typography

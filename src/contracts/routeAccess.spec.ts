@@ -75,6 +75,11 @@ const ROUTE_ACCESS: Record<string, Access> = {
   "/plants/:plantId/sharing-agreements/observed/:sharingAgreementId": {
     require: { scope: "plant", capability: "canListSharingAgreements" },
   },
+  // Setting the dates, under the same guard; the write is the agreement's own
+  // canManage, which the page reads from the agreement (#419).
+  "/plants/:plantId/sharing-agreements/:sharingAgreementId/application-dates": {
+    require: { scope: "plant", capability: "canListSharingAgreements" },
+  },
 
   "/integrations": { require: { scope: "community", capability: "canManage" } },
   "/members": { require: { scope: "community", capability: "canManageMemberships" } },

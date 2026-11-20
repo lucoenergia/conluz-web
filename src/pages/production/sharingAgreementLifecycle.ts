@@ -293,7 +293,7 @@ export function selectSharingAgreementLifecycleView(
     railCaption: "Paso 5 de 5 · Registra las fechas de aplicación",
     primary: {
       kind: "RECORD_DATES",
-      label: `Registrar fechas (${nextStep.pendingCount} ${pluralize(
+      label: `Fijar fechas de aplicación (${nextStep.pendingCount} ${pluralize(
         nextStep.pendingCount,
         "pendiente",
         "pendientes",

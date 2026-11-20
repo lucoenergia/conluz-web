@@ -99,6 +99,10 @@ export interface SharingAgreementCoefficientActions {
  */
 const SUPPLY_COEFFICIENT_QUERY_URL = /^\/api\/v1\/supplies\/[^/]+\/partition-coefficients/;
 
+/** What a refusal the catalogue does not word reads as -- a bare 400 among them. */
+export const COEFFICIENT_DATES_REFUSAL_FALLBACK =
+  "No se han podido comprobar las fechas. Revísalas y vuelve a intentarlo.";
+
 /** The HTTP statuses a dates request is refused with: nothing written, each refusal explained. */
 const REFUSED_STATUSES = new Set([400, 409]);
 
@@ -127,7 +131,7 @@ function coefficientDatesBody(request: CoefficientDatesRequest) {
 function coefficientDatesFailure(error: unknown): CoefficientDatesResult {
   const status = httpStatusOf(error);
   if (status === undefined || !REFUSED_STATUSES.has(status)) return { kind: "failed" };
-  return { kind: "refused", ...getCoefficientDatesErrorDetails(error) };
+  return { kind: "refused", ...getCoefficientDatesErrorDetails(error, COEFFICIENT_DATES_REFUSAL_FALLBACK) };
 }
 
 export function useSharingAgreementCoefficientActions(plantId: string): SharingAgreementCoefficientActions {

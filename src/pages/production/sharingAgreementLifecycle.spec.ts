@@ -235,7 +235,7 @@ describe("selectSharingAgreementLifecycleView", () => {
         PUBLISHED,
       );
 
-      expect(view.primary).toEqual({ kind: "RECORD_DATES", label: "Registrar fechas (4 pendientes)" });
+      expect(view.primary).toEqual({ kind: "RECORD_DATES", label: "Fijar fechas de aplicación (4 pendientes)" });
       expect(view.secondary).toBeUndefined();
       expect(view.headline).toBe(
         "Registra la fecha de aplicación de los puntos que faltan: los puntos nuevos en la planta no reciben producción hasta entonces.",
@@ -252,7 +252,7 @@ describe("selectSharingAgreementLifecycleView", () => {
         "Registra la fecha de aplicación de cada punto cuando la distribuidora aplique su coeficiente.",
       );
       expect(view.headline).not.toMatch(/no recibe/);
-      expect(view.primary).toEqual({ kind: "RECORD_DATES", label: "Registrar fechas (4 pendientes)" });
+      expect(view.primary).toEqual({ kind: "RECORD_DATES", label: "Fijar fechas de aplicación (4 pendientes)" });
     });
 
     it("keeps the pending-count label grammatical at one", () => {
@@ -261,7 +261,7 @@ describe("selectSharingAgreementLifecycleView", () => {
         PUBLISHED,
       );
 
-      expect(view.primary?.label).toBe("Registrar fechas (1 pendiente)");
+      expect(view.primary?.label).toBe("Fijar fechas de aplicación (1 pendiente)");
       expect(view.current?.requirement).toBe("1 coeficiente sin fecha de aplicación.");
     });
 

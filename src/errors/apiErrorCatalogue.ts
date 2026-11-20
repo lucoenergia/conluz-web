@@ -602,23 +602,29 @@ export interface CoefficientDatesErrorDetails {
  * and places it on the row it names. The backend keys a row by
  * `params.coefficientId` or `params.supplyId` (lucoenergia/conluz#583); the
  * operation descriptions call the carrier `details`, but the contract and the
- * response put it in `errors[].params`.
+ * response put it in `errors[].params`. A detail the catalogue does not word
+ * reads as `fallback`.
  */
-export function getCoefficientDatesErrorDetails(error: unknown): CoefficientDatesErrorDetails {
+export function getCoefficientDatesErrorDetails(error: unknown, fallback: string): CoefficientDatesErrorDetails {
   const details = extractRestError(error)?.errors ?? [];
   const rows: CoefficientDatesRowErrorDetail[] = [];
   const general: string[] = [];
 
   for (const detail of details) {
-    const message = translateErrorDetail(detail, detail.message);
+    // The catalogue's wording or the fallback: the server's own message is
+    // English and written for developers (#358).
+    const message = translateErrorDetail({ ...detail, message: "" }, fallback);
     const coefficientId = detail.params?.coefficientId || undefined;
     const supplyId = detail.params?.supplyId || undefined;
     if (coefficientId || supplyId) {
       rows.push({ coefficientId, supplyId, message });
-    } else {
+    } else if (!general.includes(message)) {
       general.push(message);
     }
   }
+
+  // A refusal is never silent, even one with no detail at all (a bare 400).
+  if (rows.length === 0 && general.length === 0) general.push(fallback);
 
   return { rows, general };
 }

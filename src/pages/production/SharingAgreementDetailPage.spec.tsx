@@ -218,10 +218,9 @@ describe("SharingAgreementDetailPage", () => {
     expect(screen.queryByText("Eliminar")).not.toBeInTheDocument();
   });
 
-  // The next-step banner owns "Registrar fechas" while stage 5 is current, and
-  // the application panel is on screen in exactly that state — the two surfaces
-  // used to render the same action one above the other.
-  test("offers 'Registrar fechas' once on a PUBLISHED agreement with outstanding points", () => {
+  // The banner's stage-5 action leads to the set application dates flow
+  // (#419), counting the outstanding points in its label.
+  test("offers 'Fijar fechas de aplicación' in the banner on a PUBLISHED agreement with outstanding points", () => {
     const coefficients = [
       coefficient("1", "APPLIED"),
       coefficient("2", "PENDING"),
@@ -235,7 +234,7 @@ describe("SharingAgreementDetailPage", () => {
     setup();
 
     expect(screen.getByText("1 de 3 puntos con fecha de aplicación")).toBeVisible();
-    expect(screen.getAllByRole("button", { name: "Registrar fechas (2 pendientes)" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Fijar fechas de aplicación (2 pendientes)" })).toHaveLength(1);
   });
 
   test("opens scrolled to the top, whatever scroll position the previous page left", () => {
