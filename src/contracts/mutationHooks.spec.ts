@@ -248,6 +248,18 @@ const ACTION_COVERAGE: Record<string, Decision> = {
     hook: "useSharingAgreementCoefficientActions",
     approximates: AGREEMENT_LIFECYCLE,
   },
+  usePreviewPartitionCoefficientDates: {
+    scope: "sharingAgreement",
+    capability: "canManage",
+    hook: "useSharingAgreementCoefficientActions",
+    approximates: AGREEMENT_LIFECYCLE,
+  },
+  useSetPartitionCoefficientDates: {
+    scope: "sharingAgreement",
+    capability: "canManage",
+    hook: "useSharingAgreementCoefficientActions",
+    approximates: AGREEMENT_LIFECYCLE,
+  },
   useGenerateSharingAgreementDistributorFile: {
     scope: "sharingAgreement",
     capability: "canManage",

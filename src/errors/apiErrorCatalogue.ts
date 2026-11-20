@@ -572,3 +572,44 @@ export function getIndexedApiErrorDetails(
 
   return { formLevel, indexed };
 }
+
+/** A refused row of a coefficient dates request, keyed by the ids the request sent. */
+export interface CoefficientDatesRowErrorDetail {
+  /** Set when the row is a coefficient of the agreement. */
+  coefficientId: string | undefined;
+  /** Set when the row is a leaving supply, the only id the request gave for it. */
+  supplyId: string | undefined;
+  message: string;
+}
+
+export interface CoefficientDatesErrorDetails {
+  rows: CoefficientDatesRowErrorDetail[];
+  /** Details that name no row: kept for the whole request, never dropped. */
+  general: string[];
+}
+
+/**
+ * Translates every error detail of a refused set-dates or preview-dates request
+ * and places it on the row it names. The backend keys a row by
+ * `params.coefficientId` or `params.supplyId` (lucoenergia/conluz#583); the
+ * operation descriptions call the carrier `details`, but the contract and the
+ * response put it in `errors[].params`.
+ */
+export function getCoefficientDatesErrorDetails(error: unknown): CoefficientDatesErrorDetails {
+  const details = extractRestError(error)?.errors ?? [];
+  const rows: CoefficientDatesRowErrorDetail[] = [];
+  const general: string[] = [];
+
+  for (const detail of details) {
+    const message = translateErrorDetail(detail, detail.message);
+    const coefficientId = detail.params?.coefficientId || undefined;
+    const supplyId = detail.params?.supplyId || undefined;
+    if (coefficientId || supplyId) {
+      rows.push({ coefficientId, supplyId, message });
+    } else {
+      general.push(message);
+    }
+  }
+
+  return { rows, general };
+}

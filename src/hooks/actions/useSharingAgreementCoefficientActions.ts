@@ -7,14 +7,22 @@ import {
   useActivatePartitionCoefficients,
   useClosePartitionCoefficients,
   useDeactivatePartitionCoefficients,
+  usePreviewPartitionCoefficientDates,
   useReopenPartitionCoefficients,
   useReplacePartitionCoefficients,
+  useSetPartitionCoefficientDates,
 } from "../../api/sharing-agreements/sharing-agreements";
+import { useActiveCommunity } from "../../context/community.context";
 import { useErrorDispatch } from "../../context/error.context";
 import { useSuccessDispatch } from "../../context/success.context";
-import { getFirstApiErrorMessage, getGroupedApiErrorDetails } from "../../errors/apiErrorCatalogue";
+import {
+  getCoefficientDatesErrorDetails,
+  getFirstApiErrorMessage,
+  getGroupedApiErrorDetails,
+  type CoefficientDatesRowErrorDetail,
+} from "../../errors/apiErrorCatalogue";
 import type { EditableCoefficientRow } from "../../pages/production/sharingAgreementCoefficientEditing";
-import type { SharingAgreementResponse } from "../../api/models";
+import type { CoefficientDatesEffectsResponse, SharingAgreementResponse } from "../../api/models";
 import { outcomeFromResource, type CapabilityOutcome } from "../permissions";
 import { grant, type MaybeAction } from "./action";
 
@@ -24,10 +32,30 @@ export interface ReplaceCoefficientsResult {
 
 export type CoefficientActivationResult = { success: true } | { success: false; errorMessages: string[] };
 
+/** The dates of a set-dates or preview-dates request, as the admin chose them. */
+export interface CoefficientDatesRequest {
+  coefficients: { coefficientId: string; validFrom: Dayjs }[];
+  leavingClosures: { supplyId: string; closedOn: Dayjs }[];
+}
+
+/**
+ * How a set-dates or preview-dates request ended.
+ *
+ * - `applied`: the effects, as previewed or as written.
+ * - `refused`: a 400 or a 409. Nothing was written; each refusal sits on the
+ *   row it names, the rest in `general`.
+ * - `failed`: anything else -- network, timeout, 5xx. Nothing is known about
+ *   the request, so it is offered again rather than explained.
+ */
+export type CoefficientDatesResult =
+  | { kind: "applied"; effects: CoefficientDatesEffectsResponse }
+  | { kind: "refused"; rows: CoefficientDatesRowErrorDetail[]; general: string[] }
+  | { kind: "failed" };
+
 /**
  * What the caller may do to one agreement's partition coefficients.
  *
- * All five gate on the agreement's `canManage`, the only write flag it carries.
+ * Every action gates on the agreement's `canManage`, the only write flag it carries.
  * Which of them is legal *right now* is still the coefficient's own business --
  * `getAvailableCoefficientActions(applicationState, endState)` and the DRAFT
  * rule each consumer applies. Capability first, then state.
@@ -43,6 +71,9 @@ export interface SharingAgreementCoefficientRowActions {
     deactivate: MaybeAction<[string[]], CoefficientActivationResult>;
     close: MaybeAction<[string[], Dayjs], CoefficientActivationResult>;
     reopen: MaybeAction<[string[]], CoefficientActivationResult>;
+    /** Dry run of `setDates`: writes nothing, invalidates nothing. */
+    previewDates: MaybeAction<[CoefficientDatesRequest], CoefficientDatesResult>;
+    setDates: MaybeAction<[CoefficientDatesRequest], CoefficientDatesResult>;
   };
   outcomes: Record<keyof SharingAgreementCoefficientRowActions["actions"], CapabilityOutcome>;
 }
@@ -68,8 +99,40 @@ export interface SharingAgreementCoefficientActions {
  */
 const SUPPLY_COEFFICIENT_QUERY_URL = /^\/api\/v1\/supplies\/[^/]+\/partition-coefficients/;
 
+/** The HTTP statuses a dates request is refused with: nothing written, each refusal explained. */
+const REFUSED_STATUSES = new Set([400, 409]);
+
+function httpStatusOf(error: unknown): number | undefined {
+  return (error as { response?: { status?: number } } | null | undefined)?.response?.status;
+}
+
+/**
+ * The body of a set-dates or preview-dates request. Dates go out as the local
+ * calendar day, never through toISOString(): that converts to UTC first and
+ * moves a Madrid midnight to the previous day.
+ */
+function coefficientDatesBody(request: CoefficientDatesRequest) {
+  return {
+    coefficients: request.coefficients.map(({ coefficientId, validFrom }) => ({
+      coefficientId,
+      validFrom: validFrom.format("YYYY-MM-DD"),
+    })),
+    leavingClosures: request.leavingClosures.map(({ supplyId, closedOn }) => ({
+      supplyId,
+      closedOn: closedOn.format("YYYY-MM-DD"),
+    })),
+  };
+}
+
+function coefficientDatesFailure(error: unknown): CoefficientDatesResult {
+  const status = httpStatusOf(error);
+  if (status === undefined || !REFUSED_STATUSES.has(status)) return { kind: "failed" };
+  return { kind: "refused", ...getCoefficientDatesErrorDetails(error) };
+}
+
 export function useSharingAgreementCoefficientActions(plantId: string): SharingAgreementCoefficientActions {
   const queryClient = useQueryClient();
+  const activeCommunityId = useActiveCommunity();
   const errorDispatch = useErrorDispatch();
   const successDispatch = useSuccessDispatch();
   const replaceMutation = useReplacePartitionCoefficients();
@@ -77,6 +140,8 @@ export function useSharingAgreementCoefficientActions(plantId: string): SharingA
   const deactivateMutation = useDeactivatePartitionCoefficients();
   const closeMutation = useClosePartitionCoefficients();
   const reopenMutation = useReopenPartitionCoefficients();
+  const previewDatesMutation = usePreviewPartitionCoefficientDates();
+  const setDatesMutation = useSetPartitionCoefficientDates();
 
   // Each underlying mutation's own isPending flips false the instant its HTTP
   // response arrives — well before the invalidation-triggered refetch below
@@ -99,6 +164,7 @@ export function useSharingAgreementCoefficientActions(plantId: string): SharingA
   const [isDeactivatingAfterInvalidate, setIsDeactivatingAfterInvalidate] = useState(false);
   const [isClosingAfterInvalidate, setIsClosingAfterInvalidate] = useState(false);
   const [isReopeningAfterInvalidate, setIsReopeningAfterInvalidate] = useState(false);
+  const [isSettingDatesAfterInvalidate, setIsSettingDatesAfterInvalidate] = useState(false);
 
   /**
    * The supply-level timelines alone. `replaceCoefficients` keeps its exact,
@@ -200,16 +266,40 @@ export function useSharingAgreementCoefficientActions(plantId: string): SharingA
        * mutation as fully settled; skipping the await was the whole bug this
        * flag exists to fix (see isActivatingAfterInvalidate above).
        */
+      const isCoefficientScoped = (key: string) =>
+        key.startsWith(`/api/v1/plants/${plantId}/sharing-agreements`) ||
+        key === getGetPlantActivePartitionCoefficientsQueryKey(plantId)[0] ||
+        SUPPLY_COEFFICIENT_QUERY_URL.test(key);
+
       const invalidateCoefficientScopedQueries = () => {
         return queryClient.invalidateQueries({
           predicate: (query) => {
             const key = query.queryKey[0];
+            return typeof key === "string" && isCoefficientScoped(key);
+          },
+        });
+      };
+
+      /**
+       * Everything a write that dates coefficients can change (#419): the
+       * coefficient-scoped reads above, which cover every agreement of the plant
+       * whatever the response names, and the reads that depend on the
+       * community's start date -- its earliest validFrom, which an activation or
+       * a correction can move. That is every member's payback, whose start date
+       * is community-wide, and the community's energy metrics. One call, so the
+       * returned promise settles once every one of them has refetched.
+       */
+      const invalidateDatedQueries = () => {
+        const communityPrefix = `/api/v1/communities/${activeCommunityId ?? ""}/`;
+        const dependsOnCommunityStart = (key: string) =>
+          !!activeCommunityId &&
+          key.startsWith(communityPrefix) &&
+          (key.endsWith("/payback") || key === `${communityPrefix}energy-metrics`);
+        return queryClient.invalidateQueries({
+          predicate: (query) => {
+            const key = query.queryKey[0];
             if (typeof key !== "string") return false;
-            return (
-              key.startsWith(`/api/v1/plants/${plantId}/sharing-agreements`) ||
-              key === getGetPlantActivePartitionCoefficientsQueryKey(plantId)[0] ||
-              SUPPLY_COEFFICIENT_QUERY_URL.test(key)
-            );
+            return isCoefficientScoped(key) || dependsOnCommunityStart(key);
           },
         });
       };
@@ -231,7 +321,7 @@ export function useSharingAgreementCoefficientActions(plantId: string): SharingA
               appliedOn: appliedOn.format("YYYY-MM-DD"),
             },
           });
-          await invalidateCoefficientScopedQueries();
+          await invalidateDatedQueries();
           // A no-op batch (200, empty `coefficients` array in the response) is
           // still success: it's not an error, and the state the caller asked for
           // is the state that now holds. Not distinguished from a real batch —
@@ -308,6 +398,36 @@ export function useSharingAgreementCoefficientActions(plantId: string): SharingA
         }
       };
 
+      const previewDates = async (request: CoefficientDatesRequest): Promise<CoefficientDatesResult> => {
+        try {
+          const effects = await previewDatesMutation.mutateAsync({
+            plantId,
+            sharingAgreementId,
+            data: coefficientDatesBody(request),
+          });
+          return { kind: "applied", effects };
+        } catch (error) {
+          return coefficientDatesFailure(error);
+        }
+      };
+
+      const setDates = async (request: CoefficientDatesRequest): Promise<CoefficientDatesResult> => {
+        setIsSettingDatesAfterInvalidate(true);
+        try {
+          const effects = await setDatesMutation.mutateAsync({
+            plantId,
+            sharingAgreementId,
+            data: coefficientDatesBody(request),
+          });
+          await invalidateDatedQueries();
+          return { kind: "applied", effects };
+        } catch (error) {
+          return coefficientDatesFailure(error);
+        } finally {
+          setIsSettingDatesAfterInvalidate(false);
+        }
+      };
+
       return {
         actions: {
           replace: grant(manage, replace, replaceMutation.isPending || isReplacingAfterInvalidate),
@@ -315,8 +435,18 @@ export function useSharingAgreementCoefficientActions(plantId: string): SharingA
           deactivate: grant(manage, deactivate, deactivateMutation.isPending || isDeactivatingAfterInvalidate),
           close: grant(manage, close, closeMutation.isPending || isClosingAfterInvalidate),
           reopen: grant(manage, reopen, reopenMutation.isPending || isReopeningAfterInvalidate),
+          previewDates: grant(manage, previewDates, previewDatesMutation.isPending),
+          setDates: grant(manage, setDates, setDatesMutation.isPending || isSettingDatesAfterInvalidate),
         },
-        outcomes: { replace: manage, activate: manage, deactivate: manage, close: manage, reopen: manage },
+        outcomes: {
+          replace: manage,
+          activate: manage,
+          deactivate: manage,
+          close: manage,
+          reopen: manage,
+          previewDates: manage,
+          setDates: manage,
+        },
       };
     },
   };
