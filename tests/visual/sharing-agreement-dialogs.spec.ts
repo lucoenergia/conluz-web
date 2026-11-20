@@ -18,6 +18,7 @@ import {
   hideAppBar,
   injectAuthToken,
   mockAllApiRoutes,
+  mockApplicationDatesRoutes,
   mockSharingAgreementDetailRoutes,
   mockSharingAgreementFileUploadRejection,
   mockSharingAgreementGenerateFile,
@@ -92,6 +93,57 @@ test.describe("Visual baselines", () => {
       "sharing-agreement-batch-registration-dialog.png",
       await hideAppBar(page),
     );
+  });
+
+  // Admitted: the dialog grows a list of the supplies a first activation
+  // closes, whose length and wrapping change its height on a phone (#419).
+  // Its content is asserted in SharingAgreementCoefficientSet.leavingSupplies.spec.tsx.
+  test("sharing agreement registration dialog listing the leaving supplies a first activation closes", async ({ page }) => {
+    await injectAuthToken(page);
+    await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
+    await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
+    await mockSharingAgreementsPlantRoutes(page, FIXED_SHARING_AGREEMENTS);
+    await mockSharingAgreementDetailRoutes(page, PUBLISHED_AGREEMENT.id, PUBLISHED_AGREEMENT, FIXED_COEFFICIENTS_MIXED, 200);
+    const previous = { id: "00000000-1111-2222-3333-444444444444", name: "Reparto original 2022", status: "SUPERSEDED" };
+    const closure = (id: string, name: string, code: string) => ({
+      coefficient: { id: `previous-${id}` },
+      sharingAgreement: previous,
+      supply: { id, name, code },
+      source: "DEFAULT",
+      validToBefore: null,
+      // Madrid midnight of 10/01/2026.
+      validToAfter: "2026-01-09T23:00:00Z",
+    });
+    await mockApplicationDatesRoutes(page, PUBLISHED_AGREEMENT.id, {
+      coefficients: [],
+      neighbours: [],
+      leavingClosures: [
+        closure("supply-8", "Nave Industrial Polígono Sur", "ES0031300000000008HH"),
+        closure("supply-9", "Trastero E", "ES0031300000000009II"),
+      ],
+      agreementStatuses: [],
+      communityStart: { before: null, after: null },
+    });
+
+    await navigateToSharingAgreementDetail(page, PUBLISHED_AGREEMENT.name);
+
+    await page.getByRole("checkbox", { name: "Seleccionar Vivienda B" }).click();
+    await page.getByRole("button", { name: "Acciones", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Registrar fecha" }).click();
+    const dialog = page.getByRole("dialog", { name: /^Registrar fecha de aplicación en / });
+    // The year first, one section at a time: in Chromium, typing the year
+    // last clears the day and month already typed, with or without this
+    // change (found while adding this capture for #419).
+    for (const [section, value] of [["Año", "2026"], ["Mes", "01"], ["Dia", "10"]] as const) {
+      await dialog.getByRole("spinbutton", { name: section }).click();
+      await page.keyboard.type(value);
+      await expect(dialog.getByRole("spinbutton", { name: section })).toHaveText(value);
+    }
+
+    await expect(dialog.getByRole("heading", { name: "Salen del reparto (2)" })).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Registrar fecha" })).toBeEnabled();
+    await stabilizePage(page);
+    await expect(dialog).toHaveScreenshot("sharing-agreement-registration-dialog-leaving-supplies.png", await hideAppBar(page));
   });
 
   test("coefficient history drawer (draft)", async ({ page }) => {

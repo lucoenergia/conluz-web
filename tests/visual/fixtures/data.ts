@@ -27,8 +27,10 @@ import type {
   PlatformAdminResponse,
   PlatformCapabilitiesResponse,
   SendInvitationsResponse,
+  CoefficientDatesEffectsResponse,
   SharingAgreementObservationResponse,
   SharingAgreementObservationSummaryResponse,
+  SharingAgreementPartitionCoefficientResponse,
   SharingAgreementResponse,
   SupplyAssignedPowerPointResponse,
   SupplyProductionTodayResponse,
@@ -2283,4 +2285,158 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
       status: "APPLIED_DIFFERENT_DATE",
     },
   ],
+};
+
+// ---------------------------------------------------------------------------
+// Setting an agreement's application dates (#419). The agreement in force,
+// sent to the distributor on 10/02/2025, with one coefficient of each kind the
+// prefill treats apart, and the supplies observed sharing saw leave with it.
+// ---------------------------------------------------------------------------
+
+export const APPLICATION_DATES_AGREEMENT: SharingAgreementResponse = {
+  ...(PUBLISHED_AGREEMENT as SharingAgreementResponse),
+  distributorFileSentOn: "2025-02-10",
+};
+
+const APPLICATION_DATES_PREVIOUS = { id: "00000000-1111-2222-3333-444444444444", name: "Reparto original 2022", status: "PUBLISHED" } as const;
+
+const pendingCoefficient = (
+  coefficientId: string,
+  supply: SupplyReferenceResponse,
+  coefficient: number,
+): SharingAgreementPartitionCoefficientResponse => ({
+  coefficientId,
+  supply,
+  coefficient,
+  applicationState: "PENDING",
+  validFrom: null,
+  validTo: null,
+  endState: "OPEN",
+  endDate: null,
+  currentCoefficient: null,
+});
+
+export const APPLICATION_DATES_COEFFICIENTS: SharingAgreementPartitionCoefficientResponse[] = [
+  pendingCoefficient("dates-norte", OBSERVED_SUPPLIES.norte, 0.0315),
+  pendingCoefficient("dates-sur", OBSERVED_SUPPLIES.sur, 0.0315),
+  pendingCoefficient("dates-este", OBSERVED_SUPPLIES.este, 0.05),
+  pendingCoefficient("dates-oeste", OBSERVED_SUPPLIES.oeste, 0.03),
+  {
+    ...pendingCoefficient("dates-taller", OBSERVED_SUPPLIES.taller, 0.02),
+    applicationState: "APPLIED",
+    // Madrid midnight of 15/03/2025.
+    validFrom: "2025-03-14T23:00:00Z",
+  },
+];
+
+const observedCoefficient = (
+  coefficient: SharingAgreementPartitionCoefficientResponse,
+  fields: Partial<SharingAgreementObservationResponse["coefficients"][number]>,
+): SharingAgreementObservationResponse["coefficients"][number] => ({
+  coefficientId: coefficient.coefficientId,
+  supply: coefficient.supply,
+  coefficient: coefficient.coefficient,
+  storedValidFrom: null,
+  storedValidTo: null,
+  observedDate: null,
+  proposedDate: null,
+  observedBeta: coefficient.coefficient,
+  observedValidDays: 540,
+  status: "PENDING_APPLICATION",
+  ...fields,
+});
+
+const [DATES_NORTE, DATES_SUR, DATES_ESTE, DATES_OESTE, DATES_TALLER] = APPLICATION_DATES_COEFFICIENTS;
+
+/**
+ * Observed exactly (Norte), in a range (Sur), not distinguishable with an
+ * exact proposed date (Este), without data (Oeste), and already dated but
+ * observed on another day (Taller); one supply leaving on an exact day and one
+ * on an open date.
+ */
+export const APPLICATION_DATES_OBSERVATION: SharingAgreementObservationResponse = {
+  ...FIXED_AGREEMENT_OBSERVATION,
+  coefficients: [
+    observedCoefficient(DATES_NORTE, { observedDate: { from: "2025-03-01", to: "2025-03-01" } }),
+    observedCoefficient(DATES_SUR, { observedDate: { from: "2025-02-26", to: "2025-03-04" } }),
+    observedCoefficient(DATES_ESTE, { proposedDate: { from: "2025-03-01", to: "2025-03-01" }, status: "NOT_DISTINGUISHABLE" }),
+    observedCoefficient(DATES_OESTE, { observedBeta: null, observedValidDays: 0, status: "NO_DATA" }),
+    observedCoefficient(DATES_TALLER, {
+      storedValidFrom: "2025-03-15",
+      observedDate: { from: "2025-03-01", to: "2025-03-01" },
+      status: "APPLIED_DIFFERENT_DATE",
+    }),
+  ],
+  leavingRows: [
+    { ...FIXED_AGREEMENT_OBSERVATION.leavingRows[0], previousSharingAgreement: APPLICATION_DATES_PREVIOUS },
+    {
+      ...FIXED_AGREEMENT_OBSERVATION.leavingRows[0],
+      supply: OBSERVED_SUPPLIES.almacen,
+      previousCoefficientId: "observed-almacen-previous",
+      previousSharingAgreement: APPLICATION_DATES_PREVIOUS,
+      observedLeavingDate: { from: null, to: "2025-03-01" },
+    },
+  ],
+};
+
+/**
+ * The dry run of the observed dates: Norte and Este from 01/03/2025, Este
+ * before the file was sent; Norte's previous coefficient shortened; Escuela
+ * closed as listed and Almacén by default; the previous agreement superseded;
+ * and the community start moved back.
+ */
+export const APPLICATION_DATES_PREVIEW: CoefficientDatesEffectsResponse = {
+  coefficients: [
+    {
+      coefficient: { id: DATES_NORTE.coefficientId },
+      supply: DATES_NORTE.supply,
+      validFromBefore: null,
+      validFromAfter: "2025-02-28T23:00:00Z",
+      validToBefore: null,
+      validToAfter: null,
+    },
+    {
+      coefficient: { id: DATES_ESTE.coefficientId },
+      supply: DATES_ESTE.supply,
+      validFromBefore: null,
+      validFromAfter: "2025-01-31T23:00:00Z",
+      validToBefore: null,
+      validToAfter: null,
+    },
+  ],
+  neighbours: [
+    {
+      coefficient: { id: "previous-norte" },
+      sharingAgreement: { ...APPLICATION_DATES_PREVIOUS, status: "SUPERSEDED" },
+      supply: DATES_NORTE.supply,
+      validToBefore: null,
+      validToAfter: "2025-02-28T23:00:00Z",
+    },
+  ],
+  leavingClosures: [
+    {
+      coefficient: { id: "observed-escuela-previous" },
+      sharingAgreement: { ...APPLICATION_DATES_PREVIOUS, status: "SUPERSEDED" },
+      supply: OBSERVED_SUPPLIES.escuela,
+      source: "REQUEST",
+      validToBefore: null,
+      validToAfter: "2025-03-31T22:00:00Z",
+    },
+    {
+      coefficient: { id: "observed-almacen-previous" },
+      sharingAgreement: { ...APPLICATION_DATES_PREVIOUS, status: "SUPERSEDED" },
+      supply: OBSERVED_SUPPLIES.almacen,
+      source: "DEFAULT",
+      validToBefore: null,
+      validToAfter: "2025-01-31T23:00:00Z",
+    },
+  ],
+  agreementStatuses: [
+    {
+      sharingAgreement: { ...APPLICATION_DATES_PREVIOUS, status: "SUPERSEDED" },
+      statusBefore: "PUBLISHED",
+      statusAfter: "SUPERSEDED",
+    },
+  ],
+  communityStart: { before: "2025-03-14T23:00:00Z", after: "2025-01-31T23:00:00Z" },
 };

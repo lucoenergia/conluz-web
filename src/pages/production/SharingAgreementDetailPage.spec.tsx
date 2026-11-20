@@ -514,3 +514,95 @@ describe("SharingAgreementDetailPage", () => {
     });
   });
 });
+
+// The three ways into the set application dates flow (#419): the agreement's
+// menu, the "Aplicación del reparto" panel and the next-step banner.
+describe("SharingAgreementDetailPage — set application dates entry points", () => {
+  const FLOW_PATH = "/plants/plant-1/sharing-agreements/agreement-1/application-dates";
+  const pendingAndApplied = [coefficient("1", "APPLIED"), coefficient("2", "PENDING"), coefficient("3", "PENDING")];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useUpdateSharingAgreement).mockReturnValue(mutation.idle({ mutateAsync: mockUpdateMutateAsync }));
+    vi.mocked(useDeleteSharingAgreement).mockReturnValue(mutation.idle({ mutateAsync: mockDeleteMutateAsync }));
+    vi.mocked(usePublishSharingAgreement).mockReturnValue(mutation.idle({ mutateAsync: mockPublishMutateAsync }));
+    vi.mocked(useRevertSharingAgreementToDraft).mockReturnValue(mutation.idle({ mutateAsync: mockRevertMutateAsync }));
+    vi.mocked(useGetPlantActivePartitionCoefficients).mockImplementation((_plantId, options) =>
+      options?.query?.enabled ? query.success<typeof getPlantActivePartitionCoefficients>([]) : query.disabled(),
+    );
+    vi.mocked(getSharingAgreementById).mockRejectedValue(new Error("No agreement fixture"));
+  });
+
+  function published(capabilities = MANAGEABLE, coefficients = pendingAndApplied) {
+    mockData({
+      agreement: agreementFixture({ status: SharingAgreementResponseStatus.PUBLISHED, capabilities }),
+      coefficients,
+      coefficientsData: coefficients,
+    });
+    setup();
+  }
+
+  const panel = () => screen.getByText("Aplicación del reparto").closest(".MuiPaper-root") as HTMLElement;
+
+  test("the agreement's menu opens the flow", async () => {
+    const user = userEvent.setup();
+    published();
+
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
+    await user.click(screen.getByRole("menuitem", { name: "Fijar fechas de aplicación" }));
+
+    expect(mockNavigate).toHaveBeenCalledWith(FLOW_PATH, undefined);
+  });
+
+  test("the 'Aplicación del reparto' panel opens the flow beside its progress", async () => {
+    const user = userEvent.setup();
+    published();
+
+    expect(within(panel()).getByText("1 de 3 puntos con fecha de aplicación")).toBeVisible();
+    await user.click(within(panel()).getByRole("button", { name: "Fijar fechas de aplicación" }));
+
+    expect(mockNavigate).toHaveBeenCalledWith(FLOW_PATH, undefined);
+  });
+
+  test("the next-step banner opens the flow while coefficients are undated, counting them", async () => {
+    const user = userEvent.setup();
+    published();
+
+    await user.click(screen.getByRole("button", { name: "Fijar fechas de aplicación (2 pendientes)" }));
+
+    expect(mockNavigate).toHaveBeenCalledWith(FLOW_PATH, undefined);
+  });
+
+  test("with every coefficient dated, only the menu offers the flow", async () => {
+    const user = userEvent.setup();
+    published(MANAGEABLE, [coefficient("1", "APPLIED"), coefficient("2", "APPLIED")]);
+
+    expect(screen.queryByText("Aplicación del reparto")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Fijar fechas de aplicación \(/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
+    expect(screen.getByRole("menuitem", { name: "Fijar fechas de aplicación" })).toBeInTheDocument();
+  });
+
+  test("a caller the agreement does not let manage it is offered none of the three", () => {
+    published(buildSharingAgreementCapabilities({ canRead: true }));
+
+    expect(screen.queryByRole("button", { name: "Más opciones del acuerdo" })).not.toBeInTheDocument();
+    expect(within(panel()).queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Fijar fechas de aplicación/ })).not.toBeInTheDocument();
+  });
+
+  test("a draft, whose dates the backend refuses, offers no way into the flow", async () => {
+    const user = userEvent.setup();
+    mockData({
+      agreement: agreementFixture({ status: SharingAgreementResponseStatus.DRAFT }),
+      coefficients: pendingAndApplied,
+      coefficientsData: pendingAndApplied,
+    });
+    setup();
+
+    await user.click(screen.getByRole("button", { name: "Más opciones del acuerdo" }));
+    expect(screen.getByRole("menuitem", { name: "Editar datos del acuerdo" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Fijar fechas de aplicación" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Fijar fechas de aplicación/ })).not.toBeInTheDocument();
+  });
+});
