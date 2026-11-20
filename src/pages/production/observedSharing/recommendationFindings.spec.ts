@@ -29,6 +29,10 @@ describe("recommendationFindings", () => {
       tone: "accent",
       title: "Fechas distintas de las registradas",
       detail: "1 aplicado en otra fecha · 1 salida en otra fecha",
+      link: {
+        label: "Fijar fechas",
+        to: "/plants/plant-a/sharing-agreements/agreement-a/application-dates?desde=reparto-observado",
+      },
     });
   });
 

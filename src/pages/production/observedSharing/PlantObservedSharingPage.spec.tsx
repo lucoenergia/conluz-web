@@ -249,7 +249,7 @@ describe("PlantObservedSharingPage", () => {
 
     const revised = findings("Reparto 2025");
     expect(revised.map((item) => item.textContent)).toEqual([
-      "Fechas distintas de las registradas2 aplicados en otra fecha · 1 salida en otra fecha",
+      "Fechas distintas de las registradas2 aplicados en otra fecha · 1 salida en otra fechaFijar fechas",
       "2 anomalías1 coeficiente desconocido · 1 vuelve a un coeficiente anteriorVer anomalías",
     ]);
     expect(within(revised[1]).getByRole("link", { name: "Ver anomalías" })).toHaveAttribute(
@@ -274,16 +274,20 @@ describe("PlantObservedSharingPage", () => {
     expect(within(initial).queryByText("Qué revisar")).not.toBeInTheDocument();
     expect(within(initial).queryByText(/Ninguna/)).not.toBeInTheDocument();
     for (const label of ["Fijar fechas", "Desactivar", "Revisar anomalías"]) {
-      expect(screen.queryByText(label)).not.toBeInTheDocument();
+      expect(within(initial).queryByText(label)).not.toBeInTheDocument();
     }
   });
 
-  // The set-dates flow ships with #419; until then the finding is shown, with nothing to press.
-  test("UI-AGR-023: dates different from the registered ones offer no action", () => {
+  // The finding leads to the set-dates flow, prefilled from this observation (#419).
+  test("UI-AGR-023: dates different from the registered ones link to 'Fijar fechas'", () => {
     renderPage();
     const revised = card("Reparto 2025");
 
-    expect(within(revised).getAllByRole("link").map((link) => link.textContent)).toEqual(["Reparto 2025", "Ver anomalías"]);
+    expect(within(revised).getAllByRole("link").map((link) => link.textContent)).toEqual([
+      "Reparto 2025",
+      "Fijar fechas",
+      "Ver anomalías",
+    ]);
     expect(within(revised).queryByRole("button")).not.toBeInTheDocument();
   });
 

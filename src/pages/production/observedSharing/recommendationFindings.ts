@@ -5,6 +5,7 @@ import {
 } from "../../../api/models";
 import { ANOMALY_COUNT_ORDER } from "./observedSharingLabels";
 import { agreementObservationPath, OBSERVED_ANOMALIES_ANCHOR } from "./observedSharingRoutes";
+import { applicationDatesPath } from "../applicationDates/applicationDatesRoutes";
 
 /** How a finding's icon reads: the dates in the accent, anomalies as a warning, the rest neutral. */
 export type FindingTone = "accent" | "neutral" | "warning";
@@ -16,7 +17,7 @@ export interface RecommendationFinding {
   title: string;
   /** Empty when there is nothing to detail. */
   detail: string;
-  /** Where to act on it, worded apart from the title; none for "set dates" until #419. */
+  /** Where to act on it, worded apart from the title. */
   link?: { label: string; to: string };
 }
 
@@ -60,6 +61,12 @@ export function recommendationFindings(
                 counted(coefficients.notDistinguishable, "no distinguible", "no distinguibles"),
               leaving > 0 && counted(leaving, "salida en otra fecha", "salidas en otra fecha"),
             ]),
+            // Opens the flow with the observed and proposed dates prefilled
+            // (#419, UI-AGR-032). Like "Ir a desactivar", the link is not
+            // gated here: these pages already require the plant's
+            // canListSharingAgreements, and the flow itself sends home a
+            // caller the agreement does not let manage it.
+            link: { label: "Fijar fechas", to: applicationDatesPath(plantId, agreementId, { fromObserved: true }) },
           },
         ];
       }

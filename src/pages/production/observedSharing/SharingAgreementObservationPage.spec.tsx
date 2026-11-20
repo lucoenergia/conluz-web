@@ -393,20 +393,23 @@ describe("SharingAgreementObservationPage", () => {
     expect(within(leavingSection()).getByRole("heading", { name: "Salen del reparto (1)" })).toBeInTheDocument();
   });
 
-  test("UI-AGR-023: the findings show under 'Qué revisar' in the order returned, the dates with no link", () => {
+  test("UI-AGR-023: the findings show under 'Qué revisar' in the order returned, each with its link", () => {
     renderPage();
     const section = screen.getByRole("region", { name: "Qué revisar" });
 
     expect(within(section).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
-      "Fechas distintas de las registradas1 aplicado en otra fecha · 1 no distinguible · 1 salida en otra fecha",
+      "Fechas distintas de las registradas1 aplicado en otra fecha · 1 no distinguible · 1 salida en otra fechaFijar fechas",
       "1 anomalía1 vuelve a un coeficiente anteriorVer anomalías",
     ]);
-    expect(within(section).getAllByRole("link").map((link) => link.textContent)).toEqual(["Ver anomalías"]);
+    expect(within(section).getAllByRole("link").map((link) => link.textContent)).toEqual(["Fijar fechas", "Ver anomalías"]);
     expect(within(section).getByRole("link", { name: "Ver anomalías" })).toHaveAttribute(
       "href",
       `/plants/${PLANT_ID}/sharing-agreements/observed/${AGREEMENT_ID}#anomalias`,
     );
-    expect(within(section).queryByText("Fijar fechas")).not.toBeInTheDocument();
+    expect(within(section).getByRole("link", { name: "Fijar fechas" })).toHaveAttribute(
+      "href",
+      `/plants/${PLANT_ID}/sharing-agreements/${AGREEMENT_ID}/application-dates?desde=reparto-observado`,
+    );
   });
 
   test("UI-AGR-023: shows no 'Qué revisar' section when nothing is to review", () => {
