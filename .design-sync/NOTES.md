@@ -9,23 +9,9 @@
 - Build: `node .ds-sync/package-build.mjs --config .design-sync/config.json --node-modules ./node_modules --out ./ds-bundle`
   (the entry comes from `cfg.entry`; no `--entry` flag needed).
 - Included = components that render with only `ConluzProvider`. Excluded on purpose: anything calling
-  `src/hooks/actions/`, a generated query hook, auth/logged-user context or `useLogout`
-  (Header, ProfileMenu, PasswordChangeHeader, Auth routes, Errors/Success displays,
-  Csv/Import modals and CsvImportDialog (its `run` is an action), SharingAgreement{CoefficientSet,DetailHeader,FilePanel,FormDialog,
-  GenerateDialog,UploadDialog}, CoefficientHistoryDrawer, SupplyCoefficientHistorySection,
-  ScopeContext, AddSupplyDialog).
-- `NextStepBanner` (the "Siguiente paso" shell) IS synced, in the layout group.
-- `src/components/EnergyFigures/` (`PeriodUsageCard`, `PeriodTotals`, `PeriodHeader`, `NeutralNotice`,
-  `EstimatedPriceLabel`) renders with `ConluzProvider` alone, so it is eligible, but it is not synced
-  yet: it moved out of the historical analysis and home pages in #252 without design-system work.
-- `PlantSection` (`src/components/PlantSection/`), and `Swatch` and `LegendEntry` in
-  `src/components/EnergyFigures/`, render with `ConluzProvider` alone, so they are eligible, but they
-  are not synced: they moved out of the plant detail in #432 without design-system work.
-- `SupplySelector` (`src/components/SupplySelector/`) renders with `ConluzProvider` alone, so it is
-  eligible, but it is not synced: it moved out of the historical analysis page in #432, to be shared
-  with "Datos de hoy", without design-system work.
-- `MemberPicker` renders with `ConluzProvider` alone, so it is eligible, but it is not synced: it
-  came out of the supply form, which is not synced either, in #423, without design-system work.
+  `src/hooks/actions/`, a generated query hook, auth/logged-user context or `useLogout`. The list of
+  components that are not synced, each with its reason, is `NOT_SYNCED` in
+  `src/contracts/designSystemSync.spec.ts`; that test fails on a component in neither place.
 - `ConluzProvider` (`.design-sync/pkg/ConluzProvider.tsx`) mirrors `src/main.tsx`: ThemeProvider +
   StyledEngineProvider(enableCssLayer) + the shell's GlobalStyles + LocalizationProvider(dayjs, es) +
   MemoryRouter, plus an inert QueryClient and `CommunityProvider`. Without the last two, every
@@ -99,6 +85,29 @@
   card narrower than that still shows the table unless the viewport is narrow.
 - App facts noticed: SupportCard has no usages in `src/`; PaginationOutlined passes
   Tailwind classes via `className` (no effect, no Tailwind loaded); LoadingStat requires `label`.
+- App fact noticed (2026-11-19): LoadingAppAccordion's title is a bare `<Skeleton/>` in a shrink-to-fit
+  AccordionSummary, so it renders only a few px wide (in the app too). Not a preview defect.
+- Dialog previews capture as bottom sheets: the 900px capture width is below `md`. Expected.
+- ListTable and ResponsiveRecordList are `cardMode: "column"`: in the 3-column grid their member
+  column collapsed to one character per line, though the per-story review sheets looked fine. When
+  grading a list or table, look at the grid card `ds-bundle/_screenshots/<group>__<Name>.png` too.
+  SupplyStatsCard is column for the same reason: its stat bar clipped the last two percentages.
+- The per-story review sheets render narrower than a column card, so a column-mode component can look
+  squeezed there (SharingAgreementCoefficientTableRow, SupplyStatsCard): judge it on the grid card.
+- PeriodHeader is `cardMode: "column"`: in the 3-column grid its long titles wrapped under the
+  calendar icon, which then stood alone on a line. PeriodUsageCard, PeriodTotals and PlantSection are
+  column cards too (PeriodTotals shows its four tiles in one row only from `md`, which the 900px
+  capture reaches).
+- Energy previews take their colours from the exported `ENERGY_COLORS` / `SAVINGS_COLOR`, and their
+  figures are consistent with each other (self-consumption / assigned = the headline ratio).
+- Evolution previews build their view with the exported `toConsumptionSeriesView` from buckets shaped
+  like the membership consumption endpoints, and their period with `resolvePeriod`; the period pickers
+  take the exported presets (`LATEST`, `YEAR`, `LAST_12`, `LAST_7`, `LAST_30`, `DAY_YEAR`). Evolution,
+  both charts, ChartScrollArea and the two form field sets are column cards; the rows previews sit in
+  a 390px frame because the app draws rows only below `sm`.
+- The validator fails a card with no text (`rootEmpty`): ChartScrollArea's preview labels its bars.
+- Coefficients show four decimals of a percentage (`formatPercentage`, `12,3456 %`), which is six
+  decimals of the 0–1 coefficient. Previews follow the app.
 
 ## Known render warns
 
@@ -111,17 +120,18 @@
 
 - `.design-sync/pkg/index.ts` is a hand-kept export list: a new presentational component in
   `src/components/` is NOT synced until it is added there (and to a `docsMap` group).
-- `primitives.ts` icon list was taken from the app's imports on 2026-10-10; new icons the app starts
-  using are missing until added.
+  `src/contracts/designSystemSync.spec.ts` catches a component that is in neither the list nor
+  `NOT_SYNCED`, but only once the app's tests run.
+- `primitives.ts` icon list was taken from the app's imports (last brought up to date on
+  2026-11-20); new icons the app starts using are missing until added.
 - `ConluzProvider`'s GLOBAL_STYLES is a trimmed copy of `src/main.tsx`'s; drift there is not picked up.
 - `.d.ts` for props typed with API models carries the bare model name (e.g. `SharingAgreementResponse`)
   without its shape.
-
-## Re-sync risks
-
-- 2026-11-13: the upload into project `0f2a485c-…` was refused at the first write (HTTP 403, "This design
-  system moved to Claude. /design-sync can't send updates to Claude yet"). Nothing was written; the
-  project still holds the previous sync. Before the next run, check whether /design-sync can write to
-  it again; the local build, grades and diff can be regenerated with the driver at any time.
+- The original project "Conluz Web" (`0f2a485c-…`) stopped accepting /design-sync writes (2026-11-13:
+  HTTP 403, "This design system moved to Claude"); on 2026-11-19 it was readable but missing from the
+  writable list. That run created "Conluz Web Design System" (`c57d92b8-…`) and pinned it in
+  `config.json`. The old project keeps its last sync and receives no updates. If `list_projects`
+  ever stops listing the pinned project, the same thing has happened again: ask before creating
+  another.
 - `guidelines/data-shapes.md` is hand-tidied (field order, `ReactNode` instead of the expanded union),
   so diff it against `scripts/data-shapes.mjs` output per type and ignoring order, not line by line.

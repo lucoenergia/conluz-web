@@ -193,14 +193,18 @@ Use the tokens: `src/theme/tokens.ts` (`colors`, `alphas`, `shadows`, `radii`, `
 The presentational components are published to Claude Design from the inputs in `.design-sync/`
 (README section "Design System (Claude Design)"; recipes in the `conluz-web-design-system` skill).
 
-- **A component change carries its design-system change in the same PR.** Adding, removing or
-  renaming a synced component, or changing its props, means updating `.design-sync/` as well:
+- **A component change carries its design-system change in the same PR.** This covers any new
+  component under `src/components/`, including one moved or extracted from a page, as well as
+  removing or renaming a synced component or changing its props. Update `.design-sync/` as well:
   - its export in `.design-sync/pkg/index.ts`;
   - its `docsMap` group, plus any `overrides` / `dtsPropsFor` entries, in `.design-sync/config.json`;
   - its preview in `.design-sync/previews/<Name>.tsx`.
 - **Only components that render with `ConluzProvider` alone are synced.** A component that uses
   `src/hooks/actions/`, a generated query hook, auth/logged-user context or `useLogout` is never
   exported to the design system. One that starts depending on them is removed from it.
+- **Every component is classified.** `src/contracts/designSystemSync.spec.ts` fails on a component
+  under `src/components/` that is neither exported from `.design-sync/pkg/index.ts` nor listed in
+  its `NOT_SYNCED` with a reason. Sync an eligible component rather than listing it.
 - **Verify** with `npx tsc -p .design-sync/pkg/tsconfig.json` and
   `npx tsc -p .design-sync/previews/tsconfig.json`. ESLint ignores `.design-sync/` on purpose.
 - **Never run `/design-sync` or upload to Claude Design unless the user asks.** Say in the PR
