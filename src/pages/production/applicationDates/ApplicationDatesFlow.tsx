@@ -82,13 +82,14 @@ export const ApplicationDatesFlow: FC<ApplicationDatesFlowProps> = ({
   const currentKey = requestKey(request);
   const blocker = previewBlocker(rows, leavingDates);
 
-  // Each step starts at its heading, for the eye and for assistive technology.
-  const isFirstRender = useRef(true);
+  // Each step starts at its heading, for the eye and for assistive
+  // technology; the page arrives on the first step without moving focus.
+  // Compared with the step last focused, so an effect run twice on mount
+  // (StrictMode) does not count as a change.
+  const focusedStep = useRef<FlowStep>(step);
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
+    if (focusedStep.current === step) return;
+    focusedStep.current = step;
     window.scrollTo(0, 0);
     headingRef.current?.focus({ preventScroll: true });
   }, [step]);

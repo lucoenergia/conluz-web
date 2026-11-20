@@ -56,13 +56,16 @@ export const StepIndicator: FC<{ current: FlowStep }> = ({ current }) => {
                 fontSize: { xs: fontSizes.sm, sm: fontSizes.lg },
                 fontWeight: isCurrent ? 700 : 500,
                 color: isCurrent ? colors.text.primary : colors.text.subtle,
-                whiteSpace: "nowrap",
+                // A phone has no room for three labels on one line each.
+                whiteSpace: { xs: "normal", sm: "nowrap" },
+                lineHeight: 1.2,
+                minWidth: 0,
               }}
             >
               {label}
             </Typography>
             {index < STEPS.length - 1 && (
-              <Box aria-hidden sx={{ flex: 1, height: "1px", bgcolor: colors.border.light, minWidth: 12 }} />
+              <Box aria-hidden sx={{ flex: 1, height: "1px", bgcolor: colors.border.light, minWidth: { xs: 8, sm: 12 } }} />
             )}
           </Box>
         );

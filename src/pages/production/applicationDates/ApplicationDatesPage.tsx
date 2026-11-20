@@ -1,5 +1,5 @@
 import { useLayoutEffect, type FC, type ReactNode } from "react";
-import { Box, Link, Typography } from "@mui/material";
+import { Box, Link } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { Navigate, Link as RouterLink, useParams, useSearchParams } from "react-router";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -9,16 +9,13 @@ import SearchOffIcon from "@mui/icons-material/SearchOff";
 import EditCalendarOutlinedIcon from "@mui/icons-material/EditCalendarOutlined";
 import { SharingAgreementResponseStatus } from "../../../api/models";
 import { BreadCrumb } from "../../../components/Breadcrumb";
-import { CommunityScopeHeader } from "../../../components/CommunityScopeHeader";
 import { DetailHeader } from "../../../components/DetailHeader";
 import { EmptyState } from "../../../components/EmptyState";
 import { LoadErrorAlert } from "../../../components/LoadErrorAlert";
 import { Notice } from "../../../components/Notice";
 import { SharingAgreementStatusChip } from "../../../components/SharingAgreementStatusChip";
 import { useSharingAgreementCoefficientActions } from "../../../hooks/actions";
-import { useActiveCommunityName } from "../../../hooks/useActiveCommunityName";
 import { sxStyles } from "../../../theme/sx";
-import { colors, fontSizes } from "../../../theme/tokens";
 import { ObservationProgress } from "../observedSharing/ObservationProgress";
 import { agreementObservationPath } from "../observedSharing/observedSharingRoutes";
 import { useSharingAgreementObservationData } from "../observedSharing/useSharingAgreementObservationData";
@@ -33,6 +30,11 @@ import { APPLICATION_DATES_FROM_OBSERVED, isFromObserved } from "./applicationDa
  * observed sharing (`?desde=reparto-observado`), they start from what it
  * observed (UI-AGR-032).
  *
+ * The community the dates are written in is stated by the layout's scope
+ * strip, which reads "Comunidad activa" and "Los datos y los cambios de esta
+ * página pertenecen a esta comunidad" on a phone as on every page; the page
+ * does not repeat it.
+ *
  * The route admits whoever may list the plant's agreements; the write is the
  * agreement's own `canManage`, so the page renders the flow only once the
  * agreement hands it over, and sends a caller it refuses home.
@@ -41,7 +43,6 @@ export const ApplicationDatesPage: FC = () => {
   const { plantId = "", sharingAgreementId = "" } = useParams();
   const [searchParams] = useSearchParams();
   const fromObserved = isFromObserved(searchParams);
-  const communityName = useActiveCommunityName();
 
   const { agreement, plant, coefficientsData, isLoading, isNotFound, error } = useSharingAgreementDetailData(
     plantId,
@@ -120,25 +121,7 @@ export const ApplicationDatesPage: FC = () => {
 
   return (
     <Box sx={sxStyles.pageRoot}>
-      {/* On a phone the page says which community the dates are written in
-          (#419); from md up the scope strip of the layout already does. */}
-      <Box
-        sx={{
-          display: { xs: "block", md: "none" },
-          bgcolor: colors.background.paper,
-          borderBottom: `1px solid ${colors.divider}`,
-          px: 2,
-          pt: 1.5,
-          pb: 1.5,
-        }}
-      >
-        <CommunityScopeHeader name={communityName} />
-        <Typography sx={{ fontSize: fontSizes.sm, color: colors.text.body, mt: -0.75 }}>
-          Los datos y los cambios de esta página pertenecen a esta comunidad.
-        </Typography>
-      </Box>
-
-      <Box sx={{ ...sxStyles.pageContainer, pt: { xs: 0, sm: 0 } }}>
+      <Box sx={{ ...sxStyles.pageContainer, pt: { xs: 2, sm: 0 } }}>
         <BreadCrumb
           steps={[
             { label: "Inicio", href: "/" },
