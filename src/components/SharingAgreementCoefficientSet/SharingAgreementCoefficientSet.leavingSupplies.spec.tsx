@@ -10,6 +10,7 @@ import {
   type SharingAgreementPartitionCoefficientResponse,
 } from "../../api/models";
 import { apiError } from "../../test/apiError";
+import { DRY_RUN_DELAY_MS } from "../../pages/production/applicationDates/dryRunDelay";
 import {
   OPEN_UNCLOSED,
   mockActivateMutateAsync,
@@ -17,7 +18,6 @@ import {
   openBatchAction,
   renderWithTheme,
   selectPendingRow,
-  typeDate,
 } from "./SharingAgreementCoefficientSet.testUtils";
 
 const { PENDING } = SharingAgreementPartitionCoefficientResponseApplicationState;
@@ -60,13 +60,19 @@ async function openActivationAt(day: string, month: string, year: string) {
   await selectPendingRow(user, "Vivienda A");
   await selectPendingRow(user, "Vivienda B");
   await openBatchAction(user, "Registrar fecha");
-  await typeDate(user, day, month, year);
+  // Typed here rather than with the shared typeDate, which waits for the dry
+  // run these tests are about.
+  await user.click(screen.getByRole("spinbutton", { name: "Dia" }));
+  await user.keyboard(day);
+  await user.keyboard(month);
+  await user.keyboard(year);
   return user;
 }
 
 describe("SharingAgreementCoefficientSet (activation and leaving supplies)", () => {
   beforeEach(() => {
     mockActivateMutateAsync.mockReset();
+    mockPreviewDatesMutateAsync.mockClear();
     mockActivateMutateAsync.mockResolvedValue({ coefficients: [], leavingClosures: [] });
     Element.prototype.scrollIntoView = vi.fn();
   });
@@ -74,7 +80,7 @@ describe("SharingAgreementCoefficientSet (activation and leaving supplies)", () 
   it("UI-AGR-037: asks the dry run with the selected coefficients at the chosen date and no listed closure", async () => {
     await openActivationAt("10", "01", "2026");
 
-    await vi.waitFor(() => expect(mockPreviewDatesMutateAsync).toHaveBeenCalled());
+    await vi.waitFor(() => expect(mockPreviewDatesMutateAsync).toHaveBeenCalled(), { timeout: 2000 });
     expect(mockPreviewDatesMutateAsync).toHaveBeenLastCalledWith({
       plantId: "plant-1",
       sharingAgreementId: "agreement-1",
@@ -86,6 +92,16 @@ describe("SharingAgreementCoefficientSet (activation and leaving supplies)", () 
         leavingClosures: [],
       },
     });
+  });
+
+  it("UI-AGR-037: typing a full date sends exactly one dry run, for the day the field rests on", async () => {
+    await openActivationAt("10", "01", "2026");
+
+    // Typing the year passes through 0002, 0020 and 0202, each a valid day.
+    await vi.waitFor(() => expect(mockPreviewDatesMutateAsync).toHaveBeenCalled(), { timeout: 2000 });
+    await new Promise((resolve) => setTimeout(resolve, DRY_RUN_DELAY_MS + 100));
+    expect(mockPreviewDatesMutateAsync).toHaveBeenCalledTimes(1);
+    expect(mockPreviewDatesMutateAsync.mock.calls[0][0].data.coefficients[0].validFrom).toBe("2026-01-10");
   });
 
   it("UI-AGR-037: on a first activation, lists the leaving supplies it closes, with their previous agreement and closing day", async () => {
@@ -113,7 +129,7 @@ describe("SharingAgreementCoefficientSet (activation and leaving supplies)", () 
     await openActivationAt("10", "01", "2026");
     const dialog = screen.getByRole("dialog");
 
-    await vi.waitFor(() => expect(within(dialog).getByRole("button", { name: "Registrar fecha" })).toBeEnabled());
+    await vi.waitFor(() => expect(within(dialog).getByRole("button", { name: "Registrar fecha" })).toBeEnabled(), { timeout: 2000 });
     expect(within(dialog).queryByRole("region", { name: /Salen del reparto/ })).not.toBeInTheDocument();
   });
 
@@ -162,7 +178,7 @@ describe("SharingAgreementCoefficientSet (activation and leaving supplies)", () 
 
     await user.click(within(dialog).getByRole("button", { name: "Reintentar" }));
 
-    await vi.waitFor(() => expect(within(dialog).getByRole("button", { name: "Registrar fecha" })).toBeEnabled());
+    await vi.waitFor(() => expect(within(dialog).getByRole("button", { name: "Registrar fecha" })).toBeEnabled(), { timeout: 2000 });
     await user.click(within(dialog).getByRole("button", { name: "Registrar fecha" }));
     expect(mockActivateMutateAsync).toHaveBeenCalledWith({
       plantId: "plant-1",

@@ -15,6 +15,7 @@ import type { CoefficientDatesRequest, CoefficientDatesResult } from "../../../h
 import { supplyDisplayLabel } from "../../../utils/supplyDisplayLabel";
 import { isCoefficientDateValid } from "../coefficientDateValidation";
 import { StepIndicator, type FlowStep } from "./ApplicationDatesParts";
+import { DRY_RUN_DELAY_MS } from "./dryRunDelay";
 import {
   buildDatesRequest,
   initialDateRows,
@@ -28,8 +29,6 @@ import { DatesStep } from "./DatesStep";
 import { PreviewStep, type NamedRowError, type PreviewState } from "./PreviewStep";
 import { ResultStep, type WriteOutcome } from "./ResultStep";
 
-/** How long the preview waits after a closing date changes before it runs again. */
-export const PREVIEW_RERUN_DELAY_MS = 500;
 
 type DatesAction = Action<[CoefficientDatesRequest], CoefficientDatesResult>;
 
@@ -122,7 +121,7 @@ export const ApplicationDatesFlow: FC<ApplicationDatesFlowProps> = ({
   const previewKey = preview?.key;
   useEffect(() => {
     if (step !== "preview" || previewKey === undefined || previewKey === currentKey) return;
-    const timer = setTimeout(() => rerun.current(), PREVIEW_RERUN_DELAY_MS);
+    const timer = setTimeout(() => rerun.current(), DRY_RUN_DELAY_MS);
     return () => clearTimeout(timer);
   }, [step, currentKey, previewKey]);
 

@@ -52,6 +52,7 @@ import {
   type LeavingSuppliesPreview,
 } from "../Modals/ApplyCoefficientDateConfirmationModal";
 import { formatEffectDay } from "../../pages/production/applicationDates/applicationDatesEffects";
+import { DRY_RUN_DELAY_MS } from "../../pages/production/applicationDates/dryRunDelay";
 import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 import { CorrectCoefficientDateConfirmationModal } from "../Modals/CorrectCoefficientDateConfirmationModal";
 import { DeactivateOrReopenCoefficientConfirmationModal } from "../Modals/DeactivateOrReopenCoefficientConfirmationModal";
@@ -439,9 +440,12 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // it (UI-AGR-037). Only the latest date's answer is kept.
   const [leavingSupplies, setLeavingSupplies] = useState<LeavingSuppliesPreview>({ status: "waiting" });
   const leavingSuppliesRequest = useRef(0);
+  const leavingSuppliesTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(leavingSuppliesTimer.current), []);
 
   useEffect(() => {
     leavingSuppliesRequest.current += 1;
+    clearTimeout(leavingSuppliesTimer.current);
     setLeavingSupplies({ status: "waiting" });
   }, [activeDialog]);
 
@@ -668,17 +672,19 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
    * same coefficients at the same date and no listed closure reports exactly
    * those closures as DEFAULT; on a later activation it reports none.
    */
-  const previewLeavingSupplies = (date: Dayjs | null, isValid: boolean) => {
-    // Typing a year passes through valid years ("0202") on its way; each
-    // answer but the one for the day the field rests on is dropped.
+  const previewLeavingSupplies = (date: Dayjs | null, isValid: boolean, delay = DRY_RUN_DELAY_MS) => {
+    // Asked once the date has rested for DRY_RUN_DELAY_MS: typing a year
+    // passes through valid years ("0202") on its way. An answer that arrives
+    // after a newer date is dropped.
     const request = ++leavingSuppliesRequest.current;
+    clearTimeout(leavingSuppliesTimer.current);
     if (!isValid || !date || !previewDates || !activeDialog) {
       setLeavingSupplies({ status: "waiting" });
       return;
     }
     const targetIds = [...activeDialog.targetIds];
     setLeavingSupplies({ status: "loading" });
-    void (async () => {
+    leavingSuppliesTimer.current = setTimeout(async () => {
       const result = await previewDates.run({
         coefficients: targetIds.map((coefficientId) => ({ coefficientId, validFrom: date })),
         leavingClosures: [],
@@ -700,9 +706,9 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
       } else if (result.kind === "refused") {
         setLeavingSupplies({ status: "refused", messages: [...result.rows.map((row) => row.message), ...result.general] });
       } else {
-        setLeavingSupplies({ status: "failed", onRetry: () => previewLeavingSupplies(date, true) });
+        setLeavingSupplies({ status: "failed", onRetry: () => previewLeavingSupplies(date, true, 0) });
       }
-    })();
+    }, delay);
   };
 
   const handleConfirmDeactivateOrReopen = async () => {

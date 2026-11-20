@@ -6,8 +6,8 @@
  * substitutes in SharingAgreementCoefficientSet.mocks.ts; this module sets
  * their results before every test and renders through the shared harness.
  */
-import { beforeEach, vi } from "vitest";
-import { screen } from "@testing-library/react";
+import { beforeEach, expect, vi } from "vitest";
+import { screen, waitFor } from "@testing-library/react";
 import type { ReactElement } from "react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
@@ -161,6 +161,18 @@ export async function typeDate(user: ReturnType<typeof userEvent.setup>, day: st
   await user.keyboard(day);
   await user.keyboard(month);
   await user.keyboard(year);
+  await waitForLeavingSupplies();
+}
+
+/**
+ * Waits for "Registrar fecha"'s dry run of the leaving supplies, which runs
+ * once the date has rested (UI-AGR-037). A no-op in any other date dialog,
+ * where the text never shows.
+ */
+export async function waitForLeavingSupplies() {
+  await waitFor(() => expect(screen.queryByText("Calculando qué puntos salen del reparto…")).not.toBeInTheDocument(), {
+    timeout: 2000,
+  });
 }
 
 /** Opens the batch bar's "Acciones" menu and selects the item by its (visible) label — the entry point for every batch-dialog test since Part A's inline field was replaced. */

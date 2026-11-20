@@ -43,7 +43,7 @@ import {
   buildSharingAgreementReference,
 } from "../../../test/fixtures";
 import { ApplicationDatesPage } from "./ApplicationDatesPage";
-import { PREVIEW_RERUN_DELAY_MS } from "./ApplicationDatesFlow";
+import { DRY_RUN_DELAY_MS } from "./dryRunDelay";
 
 vi.mock(import("../../../api/plants/plants"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -553,7 +553,7 @@ describe("ApplicationDatesPage", () => {
       await waitFor(() => expect(previewAsync).toHaveBeenCalledTimes(1));
 
       await typeDay(user, closingGroup("Kiosco"), dayjs("2025-02-20"));
-      await act(() => new Promise((resolve) => setTimeout(resolve, PREVIEW_RERUN_DELAY_MS + 50)));
+      await act(() => new Promise((resolve) => setTimeout(resolve, DRY_RUN_DELAY_MS + 50)));
 
       await waitFor(() => expect(previewAsync).toHaveBeenCalledTimes(2));
       expect(sentBody(1).leavingClosures).toEqual([

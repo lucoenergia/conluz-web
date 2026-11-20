@@ -159,6 +159,8 @@ describe("Activating the last pending coefficient — the refetch hides the appl
     await user.keyboard("10");
     await user.keyboard("01");
     await user.keyboard("2026");
+    // The dialog asks which supplies leave once the date has rested (UI-AGR-037).
+    await waitFor(() => expect(screen.getByRole("button", { name: "Registrar fecha" })).toBeEnabled(), { timeout: 2000 });
     await user.click(screen.getByRole("button", { name: "Registrar fecha" }));
 
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Aplicación del reparto" })).not.toBeInTheDocument());
