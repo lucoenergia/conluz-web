@@ -200,7 +200,7 @@ describe("PlantObservedSharingPage", () => {
         "No distinguible0",
         "Sin observar0",
         "Sin datos de Datadis1",
-        "Coeficiente desconocido1",
+        "Coeficiente no registrado1",
         "Vuelve a un coeficiente anterior1",
       ]),
     );
@@ -334,11 +334,11 @@ describe("PlantObservedSharingPage", () => {
 
     expect(within(section).getByRole("button", { name: /Casa Norte.*1 anomalía/ })).toHaveAttribute("aria-expanded", "false");
     // Collapsed on this page, so the rows are reached with hidden: true.
-    expect(within(section).getByRole("row", { name: /Coeficiente desconocido/, hidden: true })).toHaveTextContent(
-      "Coeficiente desconocido01/05/202530/06/2025Recibe 3,0500 % en 21 días válidos.",
+    expect(within(section).getByRole("row", { name: /Coeficiente no registrado/, hidden: true })).toHaveTextContent(
+      "Coeficiente no registrado01/05/202530/06/2025Recibe 3,0500 % en 21 días medibles.",
     );
     expect(within(section).getByRole("row", { name: /Vuelve a un coeficiente anterior/, hidden: true })).toHaveTextContent(
-      "Vuelve a un coeficiente anterior01/03/2025 o antesen cursoRecibe 4,1200 % en 1 día válido.",
+      "Vuelve a un coeficiente anterior01/03/2025 o antesen cursoRecibe 4,1200 % en 1 día medible.",
     );
   });
 
@@ -358,7 +358,7 @@ describe("PlantObservedSharingPage", () => {
 
     // Collapsed on this page, so the regions are reached with hidden: true.
     const norte = within(section).getByRole("region", { name: /^Casa Norte/, hidden: true });
-    expect(within(norte).getByRole("row", { name: /Coeficiente desconocido/, hidden: true })).toBeInTheDocument();
+    expect(within(norte).getByRole("row", { name: /Coeficiente no registrado/, hidden: true })).toBeInTheDocument();
     expect(within(section).getByRole("button", { name: /^Casa Norte/ })).toHaveAttribute("aria-controls", norte.id);
 
     const sur = within(section).getAllByRole("region", { name: /^Casa Sur/, hidden: true });

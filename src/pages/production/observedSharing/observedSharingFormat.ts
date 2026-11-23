@@ -50,9 +50,9 @@ export function betaMatches(observed: number, registered: number): boolean {
   return Math.abs(Math.round(observed * COEFFICIENT_SCALE) - Math.round(registered * COEFFICIENT_SCALE)) <= EQUAL_TOLERANCE;
 }
 
-/** The evidence behind an anomaly: "Recibe 4,1200 % en 21 días válidos." */
+/** The evidence behind an anomaly: "Recibe 4,1200 % en 21 días medibles." */
 export function formatAnomalyDetail(observedBeta: number, validDays: number): string {
-  return `Recibe ${formatBeta(observedBeta)} en ${validDays} ${validDays === 1 ? "día válido" : "días válidos"}.`;
+  return `Recibe ${formatBeta(observedBeta)} en ${validDays} ${validDays === 1 ? "día medible" : "días medibles"}.`;
 }
 
 /** An anomaly's end: its last day, or "en curso" while it lasts until the end of the data. */

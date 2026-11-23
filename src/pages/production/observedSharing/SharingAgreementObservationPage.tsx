@@ -159,8 +159,8 @@ const CoefficientRows: FC<{
     <RowStatus label={COEFFICIENT_STATUS_LABEL[row.status]} tone={STATUS_TONE[row.status]} anomalyLabels={anomalyLabels(row)} />
   );
   const fields = (row: CoefficientObservationResponse): RecordField[] => [
-    { label: "β registrado", value: formatBeta(row.coefficient) },
-    { label: "β observado", value: <ObservedBeta observed={row.observedBeta} registered={row.coefficient} /> },
+    { label: "β registrada", value: formatBeta(row.coefficient) },
+    { label: "β observada", value: <ObservedBeta observed={row.observedBeta} registered={row.coefficient} /> },
     { label: "Periodo registrado", value: formatRegisteredPeriod(row.storedValidFrom, row.storedValidTo) },
     {
       label: "Aplicación observada",
@@ -195,10 +195,10 @@ const CoefficientRows: FC<{
             width: "20%",
           }}
           columns={[
-            { key: "registered", header: "β registrado", render: (row) => formatBeta(row.coefficient), width: "11%" },
+            { key: "registered", header: "β registrada", render: (row) => formatBeta(row.coefficient), width: "11%" },
             {
               key: "observed",
-              header: "β observado",
+              header: "β observada",
               render: (row) => <ObservedBeta observed={row.observedBeta} registered={row.coefficient} />,
               width: "11%",
             },
@@ -256,7 +256,7 @@ const LeavingRows: FC<{ rows: LeavingObservationResponse[] }> = ({ rows }) => {
             fields: [
               { label: "Acuerdo anterior", value: row.previousSharingAgreement.name },
               { label: "β anterior", value: formatBeta(row.previousCoefficient) },
-              { label: "β observado", value: formatBeta(row.observedBeta) },
+              { label: "β observada", value: formatBeta(row.observedBeta) },
               { label: "Salida observada", value: leaving(row) },
               { label: "Fin registrado", value: registeredEnd(row) },
             ],
@@ -277,7 +277,7 @@ const LeavingRows: FC<{ rows: LeavingObservationResponse[] }> = ({ rows }) => {
           columns={[
             { key: "previous", header: "Acuerdo anterior", render: (row) => row.previousSharingAgreement.name, width: "15%" },
             { key: "previousBeta", header: "β anterior", render: (row) => formatBeta(row.previousCoefficient), width: "11%" },
-            { key: "observedBeta", header: "β observado", render: (row) => formatBeta(row.observedBeta), width: "11%" },
+            { key: "observedBeta", header: "β observada", render: (row) => formatBeta(row.observedBeta), width: "11%" },
             { key: "leaving", header: "Salida observada", render: leaving },
             { key: "end", header: "Fin registrado", render: registeredEnd, width: "13%" },
             { key: "status", header: "Estado", render: status, width: "16%" },

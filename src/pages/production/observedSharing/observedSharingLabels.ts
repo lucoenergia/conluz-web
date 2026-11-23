@@ -65,7 +65,7 @@ export const STATUS_COUNT_ORDER: { status: ObservationStatus; count: keyof Obser
 ];
 
 export const ANOMALY_TYPE_LABEL: Record<SharingAnomalyResponseType, string> = {
-  UNKNOWN_COEFFICIENT: "Coeficiente desconocido",
+  UNKNOWN_COEFFICIENT: "Coeficiente no registrado",
   REVERTED: "Vuelve a un coeficiente anterior",
   ENERGY_OUTSIDE_AGREEMENT: "Recibe energía fuera del acuerdo",
   NO_ENERGY_IN_AGREEMENT: "No recibe energía en el acuerdo",

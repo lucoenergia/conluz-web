@@ -84,7 +84,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("button", { name: "Todos (5)" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Salen del reparto (1)" })).toBeVisible();
     // The agreement's anomalies are open on its own page.
-    await expect(page.getByText("Recibe 4,1200 % en 420 días válidos.")).toBeVisible();
+    await expect(page.getByText("Recibe 4,1200 % en 420 días medibles.")).toBeVisible();
     await settleForCapture(page);
 
     await expect(page).toHaveScreenshot("observed-sharing-agreement.png", await mainRegion(page));
