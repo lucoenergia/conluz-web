@@ -103,7 +103,7 @@ test.describe("Visual baselines", () => {
 
     await expect(page.getByText("Observada").first()).toBeVisible();
     await expect(page.getByText("Propuesta", { exact: true })).toBeVisible();
-    await expect(page.getByText("Elige una fecha")).toBeVisible();
+    await expect(page.getByText("Elige una fecha", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Ver vista previa" })).toBeEnabled();
     await settleForCapture(page);
 
