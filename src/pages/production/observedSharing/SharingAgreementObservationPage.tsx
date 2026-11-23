@@ -28,6 +28,7 @@ import { ObservationNotComputable } from "./ObservationNotComputable";
 import { ObservationProgress } from "./ObservationProgress";
 import { filterObservationRows, type ObservationFilter } from "./observationFilter";
 import { ObservedAnomalies } from "./ObservedAnomalies";
+import { ObservedSharingHelp } from "./ObservedSharingHelp";
 import {
   ANOMALY_TYPE_LABEL,
   COEFFICIENT_STATUS_LABEL,
@@ -462,6 +463,7 @@ export const SharingAgreementObservationPage: FC = () => {
                 </>
               }
               status={summary && <SharingAgreementStatusChip status={summary.sharingAgreement.status} />}
+              actions={<ObservedSharingHelp />}
               isLoading={isLoading}
               wrapFactValues
               keyFacts={

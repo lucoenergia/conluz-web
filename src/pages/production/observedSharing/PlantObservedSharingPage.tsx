@@ -19,6 +19,7 @@ import { groupAnomalies } from "./anomalyGroups";
 import { ObservationChip } from "./ObservationChip";
 import { ObservedAgreementCard } from "./ObservedAgreementCard";
 import { ObservedAnomalies } from "./ObservedAnomalies";
+import { ObservedSharingHelp } from "./ObservedSharingHelp";
 import { ObservationNotComputable } from "./ObservationNotComputable";
 import { ObservationProgress } from "./ObservationProgress";
 import { actionableRecommendations } from "./observedSharingLabels";
@@ -271,6 +272,7 @@ export const PlantObservedSharingPage: FC = () => {
                   {READ_ONLY_NOTE}
                 </>
               }
+              actions={<ObservedSharingHelp />}
               isLoading={isLoading}
               wrapFactValues
               keyFacts={facts?.keyFacts}
