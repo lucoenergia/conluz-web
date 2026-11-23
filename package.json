@@ -18,7 +18,9 @@
     "test": "vitest",
     "test:visual": "playwright test",
     "test:visual:mobile": "playwright test --project=mobile",
-    "test:visual:desktop": "playwright test --project=desktop"
+    "test:visual:desktop": "playwright test --project=desktop",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -38,6 +40,7 @@
   "devDependencies": {
     "@eslint/js": "^9.29.0",
     "@playwright/test": "^1.60.0",
+    "@storybook/react-vite": "10.6.6",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -52,6 +55,7 @@
     "jsdom": "^26.1.0",
     "orval": "^8.45.0",
     "react-router-dom": "^7.6.3",
+    "storybook": "10.6.6",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.34.1",
     "vite": "^7.3.7",

@@ -414,7 +414,7 @@ const OVERLAY_AND_CHART_IMPORT_RESTRICTION = {
 export default tseslint.config([
   // .design-sync/ holds the claude.ai/design sync inputs (previews import from a
   // virtual "conluz-web" package); .ds-sync/ and ds-bundle/ are its tooling and output.
-  globalIgnores(["dist", ".design-sync", ".ds-sync", "ds-bundle"]),
+  globalIgnores(["dist", "storybook-static", ".design-sync", ".ds-sync", "ds-bundle"]),
   {
     // Base rules for all TS/TSX source (includes tests, excludes api/ via ignore below)
     files: ["**/*.{ts,tsx}"],

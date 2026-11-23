@@ -199,6 +199,7 @@ The presentational components are published to Claude Design from the inputs in 
   - its export in `.design-sync/pkg/index.ts`;
   - its `docsMap` group, plus any `overrides` / `dtsPropsFor` entries, in `.design-sync/config.json`;
   - its preview in `.design-sync/previews/<Name>.tsx`.
+- **A component with a colocated `*.stories.tsx` keeps its story and its `.design-sync/previews/<Name>.tsx` in step**: a change to one is made in the other, until the previews become adapters that render the stories (#439).
 - **Only components that render with `ConluzProvider` alone are synced.** A component that uses
   `src/hooks/actions/`, a generated query hook, auth/logged-user context or `useLogout` is never
   exported to the design system. One that starts depending on them is removed from it.
