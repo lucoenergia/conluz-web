@@ -45,6 +45,7 @@ export const COEFFICIENT_STATUS_MEANING: Record<CoefficientObservationResponseSt
     "tiene el mismo valor que el coeficiente anterior, así que en Datadis no se ve cuándo cambió. La fecha que se muestra es una propuesta.",
   NOT_OBSERVED: "hay días medibles, pero el coeficiente no aparece nunca y el acuerdo no tiene fecha de envío.",
   NO_DATA: "el punto no tiene ningún día medible.",
+  NOT_OBSERVABLE: "la energía de este punto en Datadis es la producción de la planta, así que su parte no se puede medir.",
 };
 
 /** What each leaving status means: a coefficient's meaning, applied to the day the previous coefficient ends. */
@@ -58,6 +59,8 @@ export const LEAVING_STATUS_MEANING: Record<LeavingObservationResponseStatus, st
   NOT_OBSERVED:
     "hay días medibles, pero no se ve que el punto deje de recibir su coeficiente anterior y el acuerdo no tiene fecha de envío.",
   NO_DATA: "el punto no tiene ningún día medible.",
+  NOT_OBSERVABLE:
+    "la energía de este punto en Datadis es la producción de la planta, así que no se puede medir cuándo deja de recibir su coeficiente anterior.",
 };
 
 /** What each anomaly type means. */

@@ -2126,6 +2126,7 @@ const NO_COUNTS = {
   notDistinguishable: 0,
   notObserved: 0,
   noData: 0,
+  notObservable: 0,
 };
 
 const ORIGINAL_OBSERVED: SharingAgreementObservationSummaryResponse = {
@@ -2151,6 +2152,7 @@ const IN_FORCE_ANOMALIES: SharingAgreementObservationSummaryResponse["anomalies"
     // Clearly off its registered 3.15 %: within ±0.1 points it would match.
     observedBeta: 0.025,
     observedValidDays: 61,
+    expectedBeta: 0.0315,
   },
   {
     id: "anomaly-sur",
@@ -2160,6 +2162,7 @@ const IN_FORCE_ANOMALIES: SharingAgreementObservationSummaryResponse["anomalies"
     end: null,
     observedBeta: 0.0412,
     observedValidDays: 420,
+    expectedBeta: 0.0315,
   },
 ];
 
@@ -2191,6 +2194,8 @@ export const FIXED_PLANT_OBSERVATION: PlantSharingObservationResponse = {
       end: "2024-01-31",
       observedBeta: 0.02,
       observedValidDays: 31,
+      // Attributed to no agreement: nothing was expected.
+      expectedBeta: null,
     },
   ],
 };
@@ -2231,6 +2236,7 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
       proposedDate: null,
       observedBeta: 0.0318,
       observedValidDays: 540,
+      windowDays: 590,
       status: "APPLIED_SAME_DATE",
     },
     {
@@ -2244,6 +2250,7 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
       proposedDate: null,
       observedBeta: 0.0412,
       observedValidDays: 540,
+      windowDays: 600,
       status: "APPLIED_DIFFERENT_DATE",
     },
     {
@@ -2256,6 +2263,7 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
       proposedDate: { from: "2025-02-26", to: "2025-03-04" },
       observedBeta: 0.05,
       observedValidDays: 540,
+      windowDays: 600,
       status: "NOT_DISTINGUISHABLE",
     },
     {
@@ -2268,6 +2276,7 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
       proposedDate: null,
       observedBeta: null,
       observedValidDays: 0,
+      windowDays: 600,
       status: "NO_DATA",
     },
   ],
@@ -2282,6 +2291,7 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
       proposedDate: null,
       observedBeta: 0,
       observedValidDays: 540,
+      windowDays: 560,
       status: "APPLIED_DIFFERENT_DATE",
     },
   ],
@@ -2342,6 +2352,7 @@ const observedCoefficient = (
   proposedDate: null,
   observedBeta: coefficient.coefficient,
   observedValidDays: 540,
+  windowDays: 600,
   status: "PENDING_APPLICATION",
   ...fields,
 });

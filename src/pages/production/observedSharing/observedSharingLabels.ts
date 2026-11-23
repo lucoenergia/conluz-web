@@ -36,6 +36,7 @@ export const COEFFICIENT_STATUS_LABEL: Record<ObservationStatus, string> = {
   NOT_DISTINGUISHABLE: "No distinguible",
   NOT_OBSERVED: "Sin observar",
   NO_DATA: "Sin datos de Datadis",
+  NOT_OBSERVABLE: "No observable · punto de la planta",
 };
 
 /** A leaving row says "Salida" where it was applied; its other statuses read as a coefficient's. */
@@ -52,6 +53,7 @@ export const STATUS_TONE: Record<ObservationStatus, ObservationTone> = {
   NOT_DISTINGUISHABLE: "neutral",
   NOT_OBSERVED: "warning",
   NO_DATA: "neutral",
+  NOT_OBSERVABLE: "neutral",
 };
 
 /** The status counts in the order the card lists them, with the field each reads. */
@@ -62,6 +64,7 @@ export const STATUS_COUNT_ORDER: { status: ObservationStatus; count: keyof Obser
   { status: CoefficientObservationResponseStatus.NOT_DISTINGUISHABLE, count: "notDistinguishable" },
   { status: CoefficientObservationResponseStatus.NOT_OBSERVED, count: "notObserved" },
   { status: CoefficientObservationResponseStatus.NO_DATA, count: "noData" },
+  { status: CoefficientObservationResponseStatus.NOT_OBSERVABLE, count: "notObservable" },
 ];
 
 export const ANOMALY_TYPE_LABEL: Record<SharingAnomalyResponseType, string> = {
