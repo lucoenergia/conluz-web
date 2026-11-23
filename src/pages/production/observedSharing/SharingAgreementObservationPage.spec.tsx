@@ -885,6 +885,15 @@ describe("SharingAgreementObservationPage", () => {
       expect(cell).toHaveTextContent(/^410 de 426del 09\/01\/2025 al 31\/10\/2026$/);
     });
 
+    test("UI-AGR-042: the interval wraps only before 'al', never inside a date", () => {
+      renderWithWindows();
+      const cell = daysCell(supplyRow("Casa Norte"), suppliesSection());
+
+      for (const part of ["del 09/01/2025", "al 31/10/2026"]) {
+        expect(declaredStyle(within(cell).getByText(part))["white-space"], part).toBe("nowrap");
+      }
+    });
+
     test("UI-AGR-042: a leaving row adds its own window", () => {
       renderWithWindows();
       const escuela = within(leavingSection()).getByRole("row", { name: /Escuela/ });
