@@ -598,6 +598,7 @@ describe("PlantObservedSharingPage", () => {
               analysedTo: "2026-10-31",
               suppliesWithValidDays: [NORTE, SUR, ESTE],
               suppliesWithoutValidDays,
+              notComputableSupplies: [TALLER],
             }),
             sharingAgreements: [{ ...REVISED, unallocatedShare }, INITIAL, CURRENT],
           }),
@@ -623,7 +624,7 @@ describe("PlantObservedSharingPage", () => {
     test("UI-AGR-040: the formula and the old name are nowhere on the page", () => {
       renderWithShare({ days: 422, unallocated: 0.0303, registeredShareWithoutData: 0.0437 });
 
-      expect(document.body.textContent).not.toMatch(/1 − Σβ|sin explicar/i);
+      expect(document.body.textContent).not.toMatch(/Σβ|sin explicar/i);
     });
 
     test("UI-AGR-041: 3,03 % with 4,37 % of supplies without data reads '4,4 %' and 'Resto: −1,3 pp' with its sentence", () => {

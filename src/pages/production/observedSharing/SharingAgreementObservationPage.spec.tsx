@@ -617,7 +617,7 @@ describe("SharingAgreementObservationPage", () => {
           "Parte de la producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la aplicación de este acuerdo (422 días medibles).",
         ),
       ).toBeInTheDocument();
-      expect(document.body.textContent).not.toMatch(/1 − Σβ|sin explicar/i);
+      expect(document.body.textContent).not.toMatch(/Σβ|sin explicar/i);
     });
 
     test("UI-AGR-041: 3,03 % with 4,37 % of supplies without data reads '4,4 %' and 'Resto: −1,3 pp' with its sentence", async () => {
