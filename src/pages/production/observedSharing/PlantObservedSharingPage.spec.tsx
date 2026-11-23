@@ -581,4 +581,102 @@ describe("PlantObservedSharingPage", () => {
       expect(within(revised).queryByText("Reparto mayor que la producción")).not.toBeInTheDocument();
     });
   });
+
+  describe("the unattributed production on a card", () => {
+    const EXPLANATION =
+      "Parte de la producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la aplicación de este acuerdo (422 días medibles).";
+
+    function renderWithShare(
+      unallocatedShare: { days: number; unallocated: number; registeredShareWithoutData: number },
+      suppliesWithoutValidDays = [OESTE],
+    ) {
+      renderPage({
+        observation: query.success<typeof getPlantSharingObservation>(
+          observationFixture({
+            analysis: buildObservationAnalysis({
+              analysedFrom: "2023-04-01",
+              analysedTo: "2026-10-31",
+              suppliesWithValidDays: [NORTE, SUR, ESTE],
+              suppliesWithoutValidDays,
+            }),
+            sharingAgreements: [{ ...REVISED, unallocatedShare }, INITIAL, CURRENT],
+          }),
+        ),
+      });
+      return card("Reparto 2025");
+    }
+
+    test("UI-AGR-040: it is 'Producción no atribuida', with what it is and over how many measurable days, always shown", () => {
+      const revised = renderWithShare({ days: 422, unallocated: 0.0303, registeredShareWithoutData: 0.0437 });
+
+      expect(within(revised).getByText("Producción no atribuida")).toBeInTheDocument();
+      expect(within(revised).getByText("3,0 %")).toBeInTheDocument();
+      expect(within(revised).getByText(EXPLANATION)).toBeVisible();
+    });
+
+    test("UI-AGR-040: one measurable day is said in the singular", () => {
+      const revised = renderWithShare({ days: 1, unallocated: 0.0303, registeredShareWithoutData: 0 });
+
+      expect(within(revised).getByText(/\(1 día medible\)\.$/)).toBeInTheDocument();
+    });
+
+    test("UI-AGR-040: the formula and the old name are nowhere on the page", () => {
+      renderWithShare({ days: 422, unallocated: 0.0303, registeredShareWithoutData: 0.0437 });
+
+      expect(document.body.textContent).not.toMatch(/1 − Σβ|sin explicar/i);
+    });
+
+    test("UI-AGR-041: 3,03 % with 4,37 % of supplies without data reads '4,4 %' and 'Resto: −1,3 pp' with its sentence", () => {
+      const revised = renderWithShare({ days: 422, unallocated: 0.0303, registeredShareWithoutData: 0.0437 });
+
+      expect(within(revised).getByText("4,4 % corresponde a puntos que no tenían datos esos días")).toBeInTheDocument();
+      expect(
+        within(revised).getByText("Resto: -1,3 pp. Los puntos con datos recibieron más de lo registrado."),
+      ).toBeInTheDocument();
+    });
+
+    test("UI-AGR-041: the share of supplies without data shows even when every supply has some measurable day", () => {
+      const revised = renderWithShare({ days: 422, unallocated: 0.0303, registeredShareWithoutData: 0.0437 }, []);
+
+      expect(within(revised).getByText("4,4 % corresponde a puntos que no tenían datos esos días")).toBeInTheDocument();
+    });
+
+    test("UI-AGR-041: with no registered share of supplies without data, there is no such line, and the rest is the whole share", () => {
+      const revised = renderWithShare({ days: 422, unallocated: 0.0574, registeredShareWithoutData: 0 });
+
+      expect(within(revised).queryByText(/corresponde a puntos que no tenían datos/)).not.toBeInTheDocument();
+      expect(within(revised).getByText("Resto: +5,7 pp. Producción que no llegó a ningún punto registrado.")).toBeInTheDocument();
+    });
+
+    test("UI-AGR-041: a rest within ±0,1 points is rounding", () => {
+      const revised = renderWithShare({ days: 422, unallocated: 0.0445, registeredShareWithoutData: 0.0437 });
+
+      expect(within(revised).getByText("Resto: +0,1 pp. Dentro del margen de redondeo.")).toBeInTheDocument();
+    });
+
+    test("UI-AGR-041: an impossible share keeps its warning, and its breakdown", () => {
+      const revised = renderWithShare({ days: 422, unallocated: -0.4748, registeredShareWithoutData: 0.0437 });
+
+      expect(within(revised).getByText(/^Imposible: /)).toBeInTheDocument();
+      expect(
+        within(revised).getByText("Resto: -51,9 pp. Los puntos con datos recibieron más de lo registrado."),
+      ).toBeInTheDocument();
+    });
+
+    test("UI-AGR-040: with no share, the card shows '—' and nothing under it", () => {
+      renderPage();
+      const current = card("Reparto 2026");
+
+      expect(within(current).getByText("—")).toBeInTheDocument();
+      expect(within(current).queryByText(/^Parte de la producción|^Resto:/)).not.toBeInTheDocument();
+    });
+  });
+
+  test("UI-AGR-023: a card with a sent date says 'Fichero enviado el …', and one without says 'Fichero enviado: sin registrar'", () => {
+    renderPage();
+
+    expect(within(card("Reparto 2025")).getByText("Fichero enviado el 10/02/2025")).toBeInTheDocument();
+    expect(within(card("Reparto 2026")).getByText("Fichero enviado: sin registrar")).toBeInTheDocument();
+    expect(within(card("Reparto 2026")).queryByText("Sin registrar")).not.toBeInTheDocument();
+  });
 });

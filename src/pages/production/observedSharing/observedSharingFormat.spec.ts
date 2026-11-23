@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { buildObservationSummary } from "../../../test/fixtures";
+import { buildCoefficientObservation, buildObservationSummary } from "../../../test/fixtures";
 import {
   betaMatches,
   formatAgreementApplication,
@@ -8,8 +8,10 @@ import {
   formatBeta,
   formatDataRange,
   formatDataRangeInSentence,
+  formatMeasurableDays,
   formatObservedDate,
   formatRegisteredPeriod,
+  unattributedRemainder,
 } from "./observedSharingFormat";
 
 // Intl writes a no-break space between the figure and the percent sign.
@@ -72,5 +74,70 @@ describe("observed sharing formatting", () => {
     );
     expect(application({ distributorFileSentOn: "2026-10-15" })).toBe("Pendiente de aplicar · enviado el 15/10/2026");
     expect(application({})).toBe("Sin observar");
+  });
+});
+
+describe("the unattributed production's rest", () => {
+  const rest = (unallocated: number, registeredShareWithoutData: number) =>
+    unattributedRemainder({ days: 422, unallocated, registeredShareWithoutData });
+
+  test("UI-AGR-041: 3,03 % with 4,37 % of supplies without data leaves −1,3 points: the supplies with data received more", () => {
+    expect(rest(0.0303, 0.0437)).toEqual({ text: "-1,3 pp", kind: "receivedMore" });
+  });
+
+  test("UI-AGR-041: a positive rest beyond 0,1 points is production that reached no registered supply, with its sign", () => {
+    expect(rest(0.0574, 0)).toEqual({ text: "+5,7 pp", kind: "notDelivered" });
+  });
+
+  test("UI-AGR-041: ±0,1 points is rounding, its edges included, and one millionth beyond is not", () => {
+    expect(rest(0.031, 0.03)).toEqual({ text: "+0,1 pp", kind: "rounding" });
+    expect(rest(0.029, 0.03)).toEqual({ text: "-0,1 pp", kind: "rounding" });
+    expect(rest(0.03, 0.03)).toEqual({ text: "0,0 pp", kind: "rounding" });
+    expect(rest(0.031001, 0.03).kind).toBe("notDelivered");
+    expect(rest(0.028999, 0.03).kind).toBe("receivedMore");
+  });
+});
+
+describe("a row's measurable days", () => {
+  const EXACT_START = { from: "2025-03-01", to: "2025-03-01" };
+  const days = (
+    observedDate: { from: string | null; to: string } | null,
+    mostFrequentObservedDate: { from: string | null; to: string } | null = EXACT_START,
+    windowDays: number | null = 422,
+  ) =>
+    formatMeasurableDays(
+      buildCoefficientObservation({ observedDate, observedValidDays: 120 }),
+      buildObservationSummary({
+        mostFrequentObservedDate,
+        unallocatedShare: windowDays === null ? null : { days: windowDays, unallocated: 0, registeredShareWithoutData: 0 },
+      }),
+    );
+
+  test("UI-AGR-042: a row with no observed date rests on the whole window: 'N de D'", () => {
+    expect(days(null)).toBe("120 de 422");
+  });
+
+  test("UI-AGR-042: a row observed on the window's first day rests on the whole window, whatever the shape of its own date", () => {
+    expect(days({ from: "2025-03-01", to: "2025-03-01" })).toBe("120 de 422");
+    expect(days({ from: "2025-02-20", to: "2025-03-01" })).toBe("120 de 422");
+    expect(days({ from: null, to: "2025-03-01" })).toBe("120 de 422");
+  });
+
+  test("UI-AGR-042: a row observed after the window starts rests on fewer days: only N", () => {
+    expect(days({ from: "2025-03-02", to: "2025-03-02" })).toBe("120");
+  });
+
+  test("UI-AGR-042: a row observed before the window starts counts days from before it: only N", () => {
+    expect(days({ from: "2025-02-28", to: "2025-02-28" })).toBe("120");
+  });
+
+  test("UI-AGR-042: when the window starts on a range or an open date, an observed row shows only N", () => {
+    expect(days({ from: "2025-03-04", to: "2025-03-04" }, { from: "2025-02-26", to: "2025-03-04" })).toBe("120");
+    expect(days({ from: null, to: "2025-03-01" }, { from: null, to: "2025-03-01" })).toBe("120");
+    expect(days(null, { from: "2025-02-26", to: "2025-03-04" })).toBe("120 de 422");
+  });
+
+  test("UI-AGR-042: with no unattributed share, there is no D: only N", () => {
+    expect(days(null, EXACT_START, null)).toBe("120");
   });
 });

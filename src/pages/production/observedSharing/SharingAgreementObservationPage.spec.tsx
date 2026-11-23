@@ -595,4 +595,85 @@ describe("SharingAgreementObservationPage", () => {
       expect(findingTitles()).not.toContain("Reparto mayor que la producción");
     });
   });
+
+  describe("the unattributed production in the header", () => {
+    async function renderWithShare(unallocatedShare: { days: number; unallocated: number; registeredShareWithoutData: number }) {
+      const fixture = observationFixture();
+      renderPage({
+        observation: query.success<typeof getSharingAgreementObservation>({
+          ...fixture,
+          summary: { ...fixture.summary, unallocatedShare },
+        }),
+      });
+      await userEvent.setup().click(screen.getByRole("button", { name: /^Ver \d+ datos? más$/ }));
+    }
+
+    test("UI-AGR-040: it is 'Producción no atribuida', with what it is and over how many measurable days", async () => {
+      await renderWithShare({ days: 422, unallocated: 0.0303, registeredShareWithoutData: 0.0437 });
+
+      expect(screen.getByText("Producción no atribuida")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Parte de la producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la aplicación de este acuerdo (422 días medibles).",
+        ),
+      ).toBeInTheDocument();
+      expect(document.body.textContent).not.toMatch(/1 − Σβ|sin explicar/i);
+    });
+
+    test("UI-AGR-041: 3,03 % with 4,37 % of supplies without data reads '4,4 %' and 'Resto: −1,3 pp' with its sentence", async () => {
+      await renderWithShare({ days: 422, unallocated: 0.0303, registeredShareWithoutData: 0.0437 });
+
+      expect(screen.getByText("4,4 % corresponde a puntos que no tenían datos esos días")).toBeInTheDocument();
+      expect(screen.getByText("Resto: -1,3 pp. Los puntos con datos recibieron más de lo registrado.")).toBeInTheDocument();
+    });
+
+    test("UI-AGR-041: with no registered share of supplies without data, there is no such line", async () => {
+      await renderWithShare({ days: 422, unallocated: 0.0574, registeredShareWithoutData: 0 });
+
+      expect(screen.queryByText(/corresponde a puntos que no tenían datos/)).not.toBeInTheDocument();
+      expect(screen.getByText("Resto: +5,7 pp. Producción que no llegó a ningún punto registrado.")).toBeInTheDocument();
+    });
+  });
+
+  describe("the measurable days of each row", () => {
+    // The fixture's window starts on 01/03/2025, a single day, over 200 measurable days.
+    const EXPECTED = [
+      ["Casa Norte", "120 de 200"], // observed on the window's first day
+      ["Casa Sur", "120"], // observed later: a shorter window
+      ["Casa Este", "120 de 200"], // no observed date
+      ["Casa Oeste", "0 de 200"], // no observed date, no measurable day
+      ["Taller", "60 de 200"], // an open date whose last day is the window's first
+    ];
+
+    test("UI-AGR-042: the table shows 'Días medibles', 'N de D' for a row on the whole window and only N otherwise", () => {
+      renderPage();
+      const column = within(suppliesSection())
+        .getAllByRole("columnheader")
+        .findIndex((header) => header.textContent === "Días medibles");
+
+      expect(column).toBeGreaterThan(-1);
+      for (const [name, days] of EXPECTED) {
+        // Cells and header cells, in the order of the column headers.
+        const cells = supplyRow(name).querySelectorAll("td, th");
+        expect(cells[column], name).toHaveTextContent(new RegExp(`^${days}$`));
+      }
+    });
+
+    test("UI-AGR-042: on a phone, each stacked row shows its 'Días medibles'", () => {
+      const width = window.innerWidth;
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
+      try {
+        renderPage();
+        const list = screen.getByRole("list", { name: "Puntos de suministro del acuerdo" });
+        for (const [name, days] of EXPECTED) {
+          const item = within(list)
+            .getAllByRole("listitem")
+            .find((candidate) => candidate.textContent?.startsWith(name));
+          expect(within(item!).getByText("Días medibles").nextElementSibling, name).toHaveTextContent(new RegExp(`^${days}$`));
+        }
+      } finally {
+        Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+      }
+    });
+  });
 });
