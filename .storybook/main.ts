@@ -7,6 +7,7 @@ const config: StorybookConfig = {
   stories: ["../src/**/*.stories.tsx"],
   // The self-hosted Inter files preview-head.html points at.
   staticDirs: ["../public"],
+  core: { disableTelemetry: true },
 };
 
 export default config;
