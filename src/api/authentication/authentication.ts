@@ -261,7 +261,7 @@ export const useRequestPasswordReset = <TError = ErrorType<RestError>,
  * `<web client>/reset-password#<token>`. It requires no authentication, and any token presented with
  * it is ignored.
  *
- * The new password must meet the same policy as a password change: between 15 and 64 characters,
+ * The new password must meet the same policy as a password change: between 10 and 64 characters,
  * counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. It must
  * differ from the current password.
  *

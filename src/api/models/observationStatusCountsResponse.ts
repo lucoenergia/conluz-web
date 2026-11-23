@@ -15,6 +15,8 @@ export interface ObservationStatusCountsResponse {
   noData: number;
   /** Rows whose value equals the supply's value in the agreement observed before, so their application cannot be observed */
   notDistinguishable: number;
+  /** Rows of the plant's own supply, whose share cannot be observed from Datadis */
+  notObservable: number;
   /** Rows not observed, of an agreement whose distributor file was not sent */
   notObserved: number;
   /** Rows not observed, of an agreement whose distributor file was sent */

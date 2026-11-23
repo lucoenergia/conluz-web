@@ -13,8 +13,8 @@ export interface AcceptInvitationBody {
      */
   confirmationCode?: string | null;
   /**
-     * The account's first password. Between 15 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed.
-     * @minLength 15
+     * The account's first password. Between 10 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed.
+     * @minLength 10
      */
   newPassword: string;
   /** The token from the invitation link: everything after the `#` of `<web client>/accept-invitation#<token>`, exactly as it appears there. */

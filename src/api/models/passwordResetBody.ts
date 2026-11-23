@@ -8,8 +8,8 @@
 
 export interface PasswordResetBody {
   /**
-     * The new password. Between 15 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed. It must differ from the current password.
-     * @minLength 15
+     * The new password. Between 10 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed. It must differ from the current password.
+     * @minLength 10
      */
   newPassword: string;
   /** The token from the password reset link: everything after the `#` of `<web client>/reset-password#<token>`, exactly as it appears there. */

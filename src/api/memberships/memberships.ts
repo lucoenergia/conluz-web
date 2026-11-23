@@ -1066,7 +1066,7 @@ export const useUpdateMembershipRole = <TError = ErrorType<RestError>,
  * The energy figures add up only the supplies with data that day; a day on which
  * no supply has data reports zero energy. `savingsEur` is an
  * **estimate** of what the day's self-consumed energy was worth, pricing the
- * **energy term before taxes** only, exactly as the per-supply series does. It is
+ * **energy term with electricity tax and VAT**, exactly as the per-supply series does. It is
  * `null` when no supply has data that day (`suppliesWithData` is 0), and only
  * then: a day without data is a different statement from a day that saved
  * nothing, which reports `0.00` -- as does a day whose published self-consumption
@@ -1266,7 +1266,7 @@ export function useGetMembershipDailyConsumption<TData = Awaited<ReturnType<type
  * The energy figures add up only the supplies with data that hour; an hour in which
  * no supply has data reports zero energy. `savingsEur` is an
  * **estimate** of what the hour's self-consumed energy was worth, pricing the
- * **energy term before taxes** only, exactly as the per-supply series does. It is
+ * **energy term with electricity tax and VAT**, exactly as the per-supply series does. It is
  * `null` when no supply has data that hour (`suppliesWithData` is 0), and only
  * then: an hour without data is a different statement from an hour that saved
  * nothing, which reports `0.00` -- as does an hour whose published self-consumption
@@ -1465,7 +1465,7 @@ export function useGetMembershipHourlyConsumption<TData = Awaited<ReturnType<typ
  *
  * **Savings:**
  * `savingsEur` is an **estimate** of what the month's self-consumed energy was
- * worth, pricing the **energy term before taxes** only, exactly as the per-supply
+ * worth, pricing the **energy term with electricity tax and VAT**, exactly as the per-supply
  * series does. It is `null` when no supply has data that month, and only then: a
  * month without data is a different statement from a month that saved nothing,
  * which reports `0.00` -- as does a month whose published self-consumption is zero,
@@ -1826,7 +1826,7 @@ export const useEnableMembership = <TError = ErrorType<RestError>,
  *
  * **Savings:**
  * `savings.amountEur` is an **estimate** of what the self-consumed energy of all
- * the member's supplies was worth, pricing the **energy term before taxes** only,
+ * the member's supplies was worth, pricing the **energy term with electricity tax and VAT**,
  * exactly as the per-supply endpoint does, and summed before being rounded.
  * It is `null` only when no period could be resolved; whenever a period exists it
  * is a figure, `0.00` when nothing was priced. An explicit period always resolves,
@@ -2475,9 +2475,9 @@ export const useSendInvitation = <TError = ErrorType<RestError>,
  *
  * `savedEur` is the estimated value of the self-consumed energy of **all** the
  * member's supplies in this community, from `startDate` until now, priced per
- * tariff segment. It prices the **energy term before taxes** only: the power term,
- * access tolls, charges and electricity tax are all excluded, and VAT is applied
- * only where the resolved tariff carries a rate. It is computed on each request and
+ * tariff segment. It prices the **energy term with electricity tax and VAT**,
+ * each at the rate in force on the day the energy was consumed: the power term,
+ * access tolls and charges are excluded. It is computed on each request and
  * never stored, so it reflects both new consumption and any later correction.
  * Supplies in the member's other communities are not counted.
  *
@@ -2686,7 +2686,7 @@ export const useUpdateMemberRecord = <TError = ErrorType<RestError>,
  * the emailed link `<web client>/accept-invitation#<token>` and the account's first password. It
  * requires no authentication, and any token presented with it is ignored.
  *
- * The password must meet the same policy as a password change: between 15 and 64 characters,
+ * The password must meet the same policy as a password change: between 10 and 64 characters,
  * counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded.
  *
  * On success the server answers 204 with no body: the token is used up, the password is set, the

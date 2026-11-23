@@ -7,6 +7,6 @@
  */
 
 export interface EstimatedPriceResponse {
-  /** Estimated price of the energy term, in euros per kWh, before taxes. The power term, access tolls, charges, electricity tax and VAT are not included. Returned exactly as configured, without rounding. */
+  /** Estimated price of the energy term, in euros per kWh, before taxes. The savings priced with it add the electricity tax and VAT in force on the day the energy was consumed on top of it; the power term, access tolls and charges are not included. Returned exactly as configured, without rounding. */
   eurPerKWh: number;
 }

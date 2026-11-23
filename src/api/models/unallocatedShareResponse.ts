@@ -9,7 +9,7 @@
 export interface UnallocatedShareResponse {
   /** Number of the plant's valid days the figures rest on */
   days: number;
-  /** The share the agreement registers for the supplies without data on each day, on a 0-1 scale, weighted by the plant's daily production */
+  /** The share the agreement registers for the supplies without data and for the plant's own supply on each day, on a 0-1 scale, weighted by the plant's daily production */
   registeredShareWithoutData: number;
   /** 1 − Σβ: the production no supply with data received, on a 0-1 scale, weighted by the plant's daily production */
   unallocated: number;

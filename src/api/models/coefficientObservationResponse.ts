@@ -26,7 +26,7 @@ export interface CoefficientObservationResponse {
   observedValidDays: number;
   /** For NOT_DISTINGUISHABLE, the agreement's most frequent observed application date. Null otherwise, or when nothing of the agreement was observed. */
   proposedDate: CoefficientObservationResponseProposedDate;
-  /** How its observed application compares with what is stored */
+  /** How its observed application compares with what is stored. NOT_OBSERVABLE for a coefficient of the plant's own supply, whose share cannot be observed from Datadis */
   status: CoefficientObservationResponseStatus;
   /**
      * Local day the coefficient is stored to start applying. Null when pending.
@@ -40,4 +40,6 @@ export interface CoefficientObservationResponse {
   storedValidTo: string | null;
   /** Supply the coefficient belongs to */
   supply: SupplyReferenceResponse;
+  /** Number of plant-valid days in the row's window: from its observed application date (the latest day of a range or of an open date), or from the start of the agreement's applied window when it has none, to the end of the agreement's applied window. The days observedValidDays is counted over, so never less than it. 0 when the agreement has no applied window or the row's start falls after its end. */
+  windowDays: number;
 }

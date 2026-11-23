@@ -574,7 +574,7 @@ export function useGetCurrentUser<TData = Awaited<ReturnType<typeof getCurrentUs
  * This endpoint lets the authenticated user replace their own password. It always acts on the
  * caller, so it cannot be used to change anybody else's password.
  *
- * The current password must be supplied and must match. The new password must be between 15 and
+ * The current password must be supplied and must match. The new password must be between 10 and
  * 64 characters long, counting each Unicode code point as one, and no more than 72 bytes once
  * UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no
  * composition rules, and the value is never trimmed or transformed. The new password must differ
