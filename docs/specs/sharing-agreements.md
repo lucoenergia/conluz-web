@@ -540,17 +540,20 @@ is in force today.
 ### UI-AGR-038 — Both observed sharing pages explain every term, status and anomaly they show
 
 - **Status:** Active
-- **Rule:** The plant's observed sharing page and the agreement's MUST offer "¿Qué significa cada
-  estado?" in their header. It MUST open "Cómo leer el reparto observado", which MUST define β
-  registrada, β esperada, β observada, día medible (with why a period has fewer measurable days
-  than calendar days), the agreement's application period, each supply's period and producción no
-  atribuida (1 − Σβ), and MUST list every coefficient status, leaving status and anomaly type of
+- **Rule:** The plant's observed sharing page and the agreement's MUST offer one way into the help:
+  a link in their header, labelled "Cómo leer el reparto observado" as the dialog it opens, shown on
+  a phone too. Nothing else on either page, such as a column header, MUST open it. The dialog MUST
+  define β registrada, β esperada, β observada, día medible (with why a period has fewer measurable
+  days than calendar days), the agreement's application period, each supply's period and producción
+  no atribuida (1 − Σβ), and MUST list every coefficient status, leaving status and anomaly type of
   the client, each under the label the view shows it with.
 - **Rationale:** The view is read by admins who are not analysts; a status or a figure is only
   useful when its meaning is one tap away from where it is shown. Listing from the client's values
-  means a status the backend adds cannot reach the view unexplained. The measurable days of a
-  figure only make sense with the period they come from; the view states no window dates until the
-  backend reports them (lucoenergia/conluz#618).
+  means a status the backend adds cannot reach the view unexplained. One entry point, named as the
+  dialog: the help explains every term of the page, so a second way in to one of its entries adds a
+  control without adding an answer. The measurable days of a figure only make sense with the period
+  they come from; the view states no window dates until the backend reports them
+  (lucoenergia/conluz#618).
 - **Implements:** n/a
 - **Source:** #419
 
@@ -621,17 +624,15 @@ is in force today.
   in each table and a field in each stacked row on a phone, not sortable. It MUST read "N de M", N
   being the row's `observedValidDays` and M its `windowDays`. The view MUST NOT use the agreement's
   measurable days (the unattributed production's) as M. A NOT_OBSERVABLE row MUST show no
-  measurable days: an empty cell, and no field in its stacked row. Each table's "Días medibles"
-  header MUST carry an info button, "Ayuda sobre los días medibles", that opens the help dialog at
-  "Periodo de cada punto", which takes focus; on a phone the field MUST be labelled "Días medibles
-  de su periodo". The view MUST NOT compute a window's dates.
+  measurable days: an empty cell, and no field in its stacked row. On a phone the field MUST be
+  labelled "Días medibles de su periodo". The view MUST NOT compute a window's dates.
 - **Rationale:** A row's measurable days run from its own observed date to the end of the
   agreement's applied window, so a row observed before that window counts more days than the
   window has: rows observed "on or before 01/09/2025" had 426 against 335. Only the row's own
   window, which the backend returns, is a denominator for it. A row of the plant's own supply
   cannot be observed, so it has no days to show.
 - **Implements:** n/a
-- **Source:** #419; `windowDays`: lucoenergia/conluz#611; the period's help and label: #419
+- **Source:** #419; `windowDays`: lucoenergia/conluz#611; the stacked label: #419
 
 ## States
 
