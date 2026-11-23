@@ -22,6 +22,7 @@ import {
   PUBLISHED_AGREEMENT,
   ROUTE_MOUNT_TIMEOUT_MS,
   injectAuthToken,
+  hideAppBar,
   mainRegion,
   mockAllApiRoutes,
   mockObservedSharingRoutes,
@@ -71,6 +72,8 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("article")).toHaveCount(2);
     await expect(page.getByRole("heading", { name: "Anomalías (3)" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "No calculables" })).toBeVisible();
+    await expect(page.getByText(/^Tienen coeficiente en esta planta y en otra\./)).toBeVisible();
+    await expect(page.getByRole("button", { name: "¿Qué significa cada estado?" })).toBeVisible();
     await settleForCapture(page);
 
     // Layout subject: the main region, with the app bar masked (see mainRegion).
@@ -88,6 +91,26 @@ test.describe("Visual baselines", () => {
     await settleForCapture(page);
 
     await expect(page).toHaveScreenshot("observed-sharing-agreement.png", await mainRegion(page));
+  });
+
+  // Admitted: the help is a phone sheet whose height comes from its content:
+  // its four sections of terms, each meaning set below its term with its
+  // first letter raised by CSS, between a fixed header and a "Cerrar" footer.
+  // Every term and its meaning are asserted in Vitest
+  // (ObservedSharingHelp.spec.tsx); how the sheet fills a phone is not.
+  test("observed sharing help on a phone", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "From md up the help is the shared centred dialog; the sheet is the phone's.");
+
+    await openObservedSharing(page, `/plants/${FIXED_PLANT_ID}/sharing-agreements/observed`);
+    await expect(page.getByRole("article", { name: "Reparto vecinos bloque A" })).toBeVisible();
+    await page.getByRole("button", { name: "¿Qué significa cada estado?" }).click();
+
+    const dialog = page.getByRole("dialog", { name: "Cómo leer el reparto observado" });
+    await expect(dialog.getByRole("heading", { name: "Términos" })).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Cerrar" })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(dialog).toHaveScreenshot("observed-sharing-help-mobile.png", await hideAppBar(page));
   });
 
   test("observed sharing of a plant whose supply has no data", async ({ page }) => {
