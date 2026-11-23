@@ -9,6 +9,7 @@ import {
   formatDataRange,
   formatDataRangeInSentence,
   formatMeasurableDays,
+  formatWindow,
   formatObservedDate,
   formatRegisteredPeriod,
   unattributedRemainder,
@@ -113,5 +114,15 @@ describe("a row's measurable days", () => {
 
   test("UI-AGR-042: none for a NOT_OBSERVABLE row", () => {
     expect(formatMeasurableDays({ status: "NOT_OBSERVABLE", observedValidDays: 0, windowDays: 0 })).toBeNull();
+  });
+});
+
+describe("a figure's window", () => {
+  test("UI-AGR-042: 'del DD/MM/AAAA al DD/MM/AAAA', both days the backend's", () => {
+    expect(formatWindow("2025-01-09", "2026-10-31")).toBe("del 09/01/2025 al 31/10/2026");
+  });
+
+  test("UI-AGR-042: none without dates", () => {
+    expect(formatWindow(null, null)).toBeNull();
   });
 });

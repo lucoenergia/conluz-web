@@ -630,7 +630,7 @@ describe("PlantObservedSharingPage", () => {
       "Parte de la producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la aplicación de este acuerdo (422 días medibles del 01/03/2025 al 26/04/2026).";
 
     function renderWithShare(
-      unallocatedShare: { days: number; unallocated: number; registeredShareWithoutData: number },
+      unallocatedShare: { days: number; unallocated: number; registeredShareWithoutData: number; from?: string; to?: string },
       suppliesWithoutValidDays = [OESTE],
     ) {
       renderPage({
@@ -643,7 +643,7 @@ describe("PlantObservedSharingPage", () => {
               suppliesWithoutValidDays,
               notComputableSupplies: [TALLER],
             }),
-            sharingAgreements: [{ ...REVISED, unallocatedShare: { ...unallocatedShare, ...APPLIED_WINDOW } }, INITIAL, CURRENT],
+            sharingAgreements: [{ ...REVISED, unallocatedShare: { ...APPLIED_WINDOW, ...unallocatedShare } }, INITIAL, CURRENT],
           }),
         ),
       });
@@ -656,6 +656,18 @@ describe("PlantObservedSharingPage", () => {
       expect(within(revised).getByText("Producción no atribuida")).toBeInTheDocument();
       expect(within(revised).getByText("3,0 %")).toBeInTheDocument();
       expect(within(revised).getByText(EXPLANATION)).toBeVisible();
+    });
+
+    test("UI-AGR-040: the card's line gives its agreement's applied window, from the backend's from and to", () => {
+      const revised = renderWithShare({
+        days: 422,
+        unallocated: 0.0303,
+        registeredShareWithoutData: 0,
+        from: "2025-03-04",
+        to: "2026-10-31",
+      });
+
+      expect(within(revised).getByText(/\(422 días medibles del 04\/03\/2025 al 31\/10\/2026\)\.$/)).toBeVisible();
     });
 
     test("UI-AGR-040: one measurable day is said in the singular", () => {

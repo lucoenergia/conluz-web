@@ -825,6 +825,124 @@ describe("SharingAgreementObservationPage", () => {
     expect(screen.getByText("β esperada 0,0000 % · β observada 4,1200 % · 21 días medibles")).toBeInTheDocument();
   });
 
+  describe("the window behind each row's measurable days", () => {
+    /**
+     * Casa Norte with its own window, Casa Sur with none (windowDays 0), Casa
+     * Este the plant's own supply, dates and all, and Escuela leaving with its
+     * own window.
+     */
+    function renderWithWindows() {
+      const fixture = observationFixture();
+      renderPage({
+        observation: query.success<typeof getSharingAgreementObservation>({
+          ...fixture,
+          coefficients: fixture.coefficients.map((row) => {
+            if (row.supply.id === NORTE.id) {
+              return { ...row, observedValidDays: 410, windowDays: 426, windowFrom: "2025-01-09", windowTo: "2026-10-31" };
+            }
+            if (row.supply.id === SUR.id) return { ...row, observedValidDays: 0, windowDays: 0, windowFrom: null, windowTo: null };
+            if (row.supply.id === ESTE.id) {
+              return {
+                ...row,
+                status: Status.NOT_OBSERVABLE,
+                observedBeta: null,
+                observedValidDays: 0,
+                windowDays: 426,
+                windowFrom: "2025-01-09",
+                windowTo: "2026-10-31",
+              };
+            }
+            return row;
+          }),
+          leavingRows: fixture.leavingRows.map((row) =>
+            row.supply.id === ESCUELA.id
+              ? { ...row, observedValidDays: 380, windowDays: 400, windowFrom: "2025-04-01", windowTo: "2026-10-31" }
+              : row,
+          ),
+        }),
+      });
+    }
+
+    const daysCell = (row: HTMLElement, section: HTMLElement) => {
+      const column = within(section)
+        .getAllByRole("columnheader")
+        .findIndex((header) => header.textContent === "Días medibles");
+      return row.querySelectorAll("td, th")[column] as HTMLElement;
+    };
+
+    /** A stacked row's "Días medibles de su periodo" value, or undefined when it has none. */
+    const stackedDays = (listName: string, name: string) => {
+      const item = within(screen.getByRole("list", { name: listName }))
+        .getAllByRole("listitem")
+        .find((candidate) => candidate.textContent?.startsWith(name))!;
+      return within(item).queryByText("Días medibles de su periodo")?.nextElementSibling;
+    };
+
+    test("UI-AGR-042: a coefficient row keeps 'N de M' and adds its window under it", () => {
+      renderWithWindows();
+      const cell = daysCell(supplyRow("Casa Norte"), suppliesSection());
+
+      expect(cell).toHaveTextContent(/^410 de 426del 09\/01\/2025 al 31\/10\/2026$/);
+      expect(within(cell).getByText("del 09/01/2025 al 31/10/2026")).toBeInTheDocument();
+    });
+
+    test("UI-AGR-042: a leaving row adds its own window", () => {
+      renderWithWindows();
+      const escuela = within(leavingSection()).getByRole("row", { name: /Escuela/ });
+
+      expect(daysCell(escuela, leavingSection())).toHaveTextContent(/^380 de 400del 01\/04\/2025 al 31\/10\/2026$/);
+    });
+
+    test("UI-AGR-042: a row with no window (null dates, windowDays 0) shows no interval", () => {
+      renderWithWindows();
+
+      expect(daysCell(supplyRow("Casa Sur"), suppliesSection())).toHaveTextContent(/^0 de 0$/);
+    });
+
+    test("UI-AGR-042: a NOT_OBSERVABLE row shows neither its days nor its window, even when it has one", () => {
+      renderWithWindows();
+
+      expect(daysCell(supplyRow("Casa Este"), suppliesSection())).toHaveTextContent(/^$/);
+      expect(screen.getAllByText("del 09/01/2025 al 31/10/2026")).toHaveLength(1);
+    });
+
+    test("UI-AGR-042: on a phone, each stacked row gives its window under 'N de M'; none without one, nothing for NOT_OBSERVABLE", () => {
+      const width = window.innerWidth;
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
+      try {
+        renderWithWindows();
+
+        expect(stackedDays("Puntos de suministro del acuerdo", "Casa Norte")).toHaveTextContent(
+          /^410 de 426del 09\/01\/2025 al 31\/10\/2026$/,
+        );
+        expect(stackedDays("Puntos de suministro del acuerdo", "Casa Sur")).toHaveTextContent(/^0 de 0$/);
+        expect(stackedDays("Puntos de suministro del acuerdo", "Casa Este")).toBeUndefined();
+        expect(stackedDays("Puntos que salen del reparto", "Escuela")).toHaveTextContent(
+          /^380 de 400del 01\/04\/2025 al 31\/10\/2026$/,
+        );
+      } finally {
+        Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+      }
+    });
+
+    test("UI-AGR-040: the explanatory line gives the agreement's applied window, from the backend's from and to", async () => {
+      const fixture = observationFixture();
+      renderPage({
+        observation: query.success<typeof getSharingAgreementObservation>({
+          ...fixture,
+          summary: {
+            ...fixture.summary,
+            unallocatedShare: { days: 422, unallocated: 0.03, registeredShareWithoutData: 0, from: "2025-03-04", to: "2026-10-31" },
+          },
+        }),
+      });
+
+      await userEvent.setup().click(screen.getByRole("button", { name: /^Ver \d+ datos? más$/ }));
+
+      expect(screen.getByText(/\(422 días medibles del 04\/03\/2025 al 31\/10\/2026\)\.$/)).toBeInTheDocument();
+    });
+  });
+
   describe("the period the measurable days cover", () => {
     test("UI-AGR-042: on a phone, a stacked row labels its figure 'Días medibles de su periodo', and no row says 'Días medibles' alone", () => {
       const width = window.innerWidth;
