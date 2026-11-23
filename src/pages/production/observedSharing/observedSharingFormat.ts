@@ -1,8 +1,10 @@
-import type {
-  ObservedDateResponse,
-  SharingAgreementObservationSummaryResponse,
-  SharingAnomalyResponse,
-  UnallocatedShareResponse,
+import {
+  CoefficientObservationResponseStatus,
+  type LeavingObservationResponseStatus,
+  type ObservedDateResponse,
+  type SharingAgreementObservationSummaryResponse,
+  type SharingAnomalyResponse,
+  type UnallocatedShareResponse,
 } from "../../../api/models";
 import { formatLocalDate, SHORT_CALENDAR_DATE } from "../../../utils/formatCalendarDate";
 import { formatPercentage } from "../../../utils/formatPercentage";
@@ -93,6 +95,22 @@ export function unattributedRemainder(share: UnallocatedShareResponse): {
     millionths < -EQUAL_TOLERANCE ? "receivedMore" : millionths > EQUAL_TOLERANCE ? "notDelivered" : "rounding";
   // A percentage point is 10 000 millionths of the 0-1 scale.
   return { text: `${SIGNED_POINTS.format(millionths / 10_000)} pp`, kind };
+}
+
+/**
+ * A row's measurable days, "N de M": N its observedValidDays, M the
+ * plant-valid days of its own window, both the backend's (UI-AGR-042). Each
+ * row's window starts on its own observed date, so no other count is its M.
+ * Null for a row of the plant's own supply, which cannot be observed.
+ */
+export function formatMeasurableDays(row: {
+  status: CoefficientObservationResponseStatus | LeavingObservationResponseStatus;
+  observedValidDays: number;
+  windowDays: number;
+}): string | null {
+  return row.status === CoefficientObservationResponseStatus.NOT_OBSERVABLE
+    ? null
+    : `${row.observedValidDays} de ${row.windowDays}`;
 }
 
 /**

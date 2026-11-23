@@ -118,6 +118,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         // 0.1 percentage points above the registered β: still equal.
         observedBeta: 0.0325,
         observedValidDays: 120,
+        windowDays: 200,
         status: Status.APPLIED_SAME_DATE,
       }),
       buildCoefficientObservation({
@@ -131,6 +132,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         // Just beyond 0.1 percentage points: it differs.
         observedBeta: 0.032501,
         observedValidDays: 120,
+        windowDays: 200,
         status: Status.APPLIED_DIFFERENT_DATE,
       }),
       buildCoefficientObservation({
@@ -142,6 +144,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         proposedDate: { from: "2025-03-01", to: "2025-03-01" },
         observedBeta: 0.05,
         observedValidDays: 120,
+        windowDays: 200,
         status: Status.NOT_DISTINGUISHABLE,
       }),
       buildCoefficientObservation({
@@ -151,6 +154,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         storedValidFrom: null,
         observedBeta: null,
         observedValidDays: 0,
+        windowDays: 200,
         status: Status.NO_DATA,
       }),
       buildCoefficientObservation({
@@ -161,6 +165,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         observedDate: { from: null, to: "2025-03-01" },
         observedBeta: 0.02,
         observedValidDays: 60,
+        windowDays: 200,
         status: Status.APPLIED_SAME_DATE,
       }),
     ],
@@ -174,6 +179,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         observedLeavingDate: { from: "2025-03-01", to: "2025-03-01" },
         observedBeta: 0,
         observedValidDays: 90,
+        windowDays: 150,
         status: LeavingStatus.APPLIED_SAME_DATE,
       }),
       buildLeavingObservation({
@@ -185,6 +191,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         observedLeavingDate: { from: "2025-04-01", to: "2025-04-01" },
         observedBeta: 0,
         observedValidDays: 75,
+        windowDays: 150,
         status: LeavingStatus.APPLIED_DIFFERENT_DATE,
       }),
       // Not observed leaving: the supply has valid days before this agreement,
@@ -199,6 +206,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         observedLeavingDate: null,
         observedBeta: null,
         observedValidDays: 0,
+        windowDays: 200,
         status: LeavingStatus.PENDING_APPLICATION,
       }),
     ],
@@ -264,7 +272,7 @@ describe("SharingAgreementObservationPage", () => {
   test("UI-AGR-031: every row shows the observed β the backend returned, and '—' when it returned none", () => {
     renderPage();
 
-    expect(supplyRow("Casa Oeste")).toHaveTextContent(/^Casa Oeste.*3,0000 %—0Sin fecha—Sin datos de Datadis$/);
+    expect(supplyRow("Casa Oeste")).toHaveTextContent(/^Casa Oeste.*3,0000 %—0 de 200Sin fecha—Sin datos de Datadis$/);
     expect(within(leavingSection()).getByRole("row", { name: /Escuela/ })).toHaveTextContent("4,0000 %0,0000 %");
     expect(within(leavingSection()).getByRole("row", { name: /Bar/ })).toHaveTextContent("1,0000 %0,0000 %");
     expect(within(leavingSection()).getByRole("row", { name: /Kiosco/ })).toHaveTextContent("1,5000 %—");
@@ -373,10 +381,10 @@ describe("SharingAgreementObservationPage", () => {
 
     expect(within(section).getByRole("heading", { name: "Salen del reparto (3)" })).toBeInTheDocument();
     expect(within(section).getByRole("row", { name: /Escuela/ })).toHaveTextContent(
-      "Reparto inicial 20234,0000 %0,0000 %01/03/2025Observada01/03/2025Salida · misma fecha",
+      "Reparto inicial 20234,0000 %0,0000 %90 de 15001/03/2025Observada01/03/2025Salida · misma fecha",
     );
     expect(within(section).getByRole("row", { name: /Bar/ })).toHaveTextContent(
-      "Reparto inicial 20231,0000 %0,0000 %01/04/2025ObservadaSin fecha de finSalida · otra fecha",
+      "Reparto inicial 20231,0000 %0,0000 %75 de 15001/04/2025ObservadaSin fecha de finSalida · otra fecha",
     );
   });
 
@@ -636,16 +644,16 @@ describe("SharingAgreementObservationPage", () => {
   });
 
   describe("the measurable days of each row", () => {
-    // Each row's own observedValidDays, whatever its observed date.
+    // Each row's observedValidDays against its own windowDays.
     const EXPECTED = [
-      ["Casa Norte", "120"],
-      ["Casa Sur", "120"],
-      ["Casa Este", "120"],
-      ["Casa Oeste", "0"],
-      ["Taller", "60"],
+      ["Casa Norte", "120 de 200"],
+      ["Casa Sur", "120 de 200"],
+      ["Casa Este", "120 de 200"],
+      ["Casa Oeste", "0 de 200"],
+      ["Taller", "60 de 200"],
     ];
 
-    test("UI-AGR-042: the table shows 'Días medibles', each row's N", () => {
+    test("UI-AGR-042: the table shows 'Días medibles', each row's N de M", () => {
       renderPage();
       const column = within(suppliesSection())
         .getAllByRole("columnheader")
@@ -657,30 +665,6 @@ describe("SharingAgreementObservationPage", () => {
         const cells = supplyRow(name).querySelectorAll("td, th");
         expect(cells[column], name).toHaveTextContent(new RegExp(`^${days}$`));
       }
-    });
-
-    test("UI-AGR-042: every row shows N only, even one observed before the agreement's window", () => {
-      // A row observed on or before a day earlier than the window counts more days than the window has.
-      const fixture = observationFixture();
-      renderPage({
-        observation: query.success<typeof getSharingAgreementObservation>({
-          ...fixture,
-          summary: { ...fixture.summary, unallocatedShare: { days: 335, unallocated: 0.03, registeredShareWithoutData: 0 } },
-          coefficients: fixture.coefficients.map((row) =>
-            row.supply.id === NORTE.id ? { ...row, observedDate: { from: null, to: "2025-01-09" }, observedValidDays: 426 } : row,
-          ),
-        }),
-      });
-      const column = within(suppliesSection())
-        .getAllByRole("columnheader")
-        .findIndex((header) => header.textContent === "Días medibles");
-      const values = within(suppliesSection())
-        .getAllByRole("row")
-        .slice(1)
-        .map((row) => row.querySelectorAll("td, th")[column]?.textContent);
-
-      expect(values).toEqual(["426", "120", "120", "0", "60"]);
-      expect(values.every((value) => /^\d+$/.test(value ?? ""))).toBe(true);
     });
 
     test("UI-AGR-042: on a phone, each stacked row shows its 'Días medibles'", () => {

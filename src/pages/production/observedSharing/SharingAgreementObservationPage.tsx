@@ -42,6 +42,7 @@ import {
   formatAgreementApplication,
   formatBeta,
   formatDay,
+  formatMeasurableDays,
   formatObservedDate,
   formatRegisteredPeriod,
   NO_VALUE,
@@ -149,6 +150,12 @@ const FilterChips: FC<{
   </Box>
 );
 
+/** A stacked row's "Días medibles", left out for a row that cannot be observed (UI-AGR-042). */
+const measurableDaysField = (row: Parameters<typeof formatMeasurableDays>[0]): RecordField[] => {
+  const days = formatMeasurableDays(row);
+  return days === null ? [] : [{ label: "Días medibles", value: days }];
+};
+
 const CoefficientRows: FC<{
   rows: CoefficientObservationResponse[];
   anomalyLabelsBySupply: Map<string, string[]>;
@@ -163,9 +170,7 @@ const CoefficientRows: FC<{
   const fields = (row: CoefficientObservationResponse): RecordField[] => [
     { label: "β registrada", value: formatBeta(row.coefficient) },
     { label: "β observada", value: <ObservedBeta observed={row.observedBeta} registered={row.coefficient} /> },
-    // The days its observed β rests on, alone: each row counts from its own
-    // observed date, so no shared denominator fits every row (UI-AGR-042).
-    { label: "Días medibles", value: String(row.observedValidDays) },
+    ...measurableDaysField(row),
     { label: "Periodo registrado", value: formatRegisteredPeriod(row.storedValidFrom, row.storedValidTo) },
     {
       label: "Aplicación observada",
@@ -210,7 +215,7 @@ const CoefficientRows: FC<{
             {
               key: "measurableDays",
               header: "Días medibles",
-              render: (row) => String(row.observedValidDays),
+              render: formatMeasurableDays,
               width: "10%",
             },
             {
@@ -268,6 +273,7 @@ const LeavingRows: FC<{ rows: LeavingObservationResponse[] }> = ({ rows }) => {
               { label: "Acuerdo anterior", value: row.previousSharingAgreement.name },
               { label: "β anterior", value: formatBeta(row.previousCoefficient) },
               { label: "β observada", value: formatBeta(row.observedBeta) },
+              ...measurableDaysField(row),
               { label: "Salida observada", value: leaving(row) },
               { label: "Fin registrado", value: registeredEnd(row) },
             ],
@@ -286,11 +292,12 @@ const LeavingRows: FC<{ rows: LeavingObservationResponse[] }> = ({ rows }) => {
             width: "20%",
           }}
           columns={[
-            { key: "previous", header: "Acuerdo anterior", render: (row) => row.previousSharingAgreement.name, width: "15%" },
+            { key: "previous", header: "Acuerdo anterior", render: (row) => row.previousSharingAgreement.name, width: "13%" },
             { key: "previousBeta", header: "β anterior", render: (row) => formatBeta(row.previousCoefficient), width: "11%" },
             { key: "observedBeta", header: "β observada", render: (row) => formatBeta(row.observedBeta), width: "11%" },
+            { key: "measurableDays", header: "Días medibles", render: formatMeasurableDays, width: "10%" },
             { key: "leaving", header: "Salida observada", render: leaving },
-            { key: "end", header: "Fin registrado", render: registeredEnd, width: "13%" },
+            { key: "end", header: "Fin registrado", render: registeredEnd, width: "11%" },
             { key: "status", header: "Estado", render: status, width: "16%" },
           ]}
         />
