@@ -554,6 +554,25 @@ describe("PlantObservedSharingPage", () => {
       expect(within(revised).queryByText("Reparto mayor que la producción")).not.toBeInTheDocument();
     });
 
+    test("UI-AGR-039: the finding counts no agreement as to review and leaves the all-clear notice as it is", async () => {
+      // Nothing recommended and no anomaly, but an impossible share.
+      renderPage({
+        observation: query.success<typeof getPlantSharingObservation>(
+          observationFixture({
+            sharingAgreements: [
+              { ...INITIAL, unallocatedShare: { days: 400, unallocated: -0.4748, registeredShareWithoutData: 0 } },
+            ],
+            unattributedAnomalies: [],
+          }),
+        ),
+      });
+
+      expect(within(card("Reparto inicial 2023")).getByText("Reparto mayor que la producción")).toBeInTheDocument();
+      expect(screen.getByRole("note")).toHaveTextContent("Todo aplicado, sin anomalías.");
+      await userEvent.setup().click(screen.getByRole("button", { name: /más/i }));
+      expect(screen.getByText("0 de 1")).toBeInTheDocument();
+    });
+
     test("UI-AGR-039: 5,74 % shows with no warning and no finding", () => {
       const revised = renderWithUnexplained(0.0574);
 
