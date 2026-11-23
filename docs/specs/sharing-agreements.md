@@ -588,21 +588,17 @@ is in force today.
 - **Implements:** n/a
 - **Source:** #419
 
-### UI-AGR-042 — Each coefficient row of an agreement shows its measurable days
+### UI-AGR-042 — Each coefficient row of an agreement shows its measurable days alone
 
 - **Status:** Active
 - **Rule:** The agreement's coefficient rows MUST show "Días medibles", a column in the table and a
-  field in each stacked row on a phone, not sortable. It MUST read "N de D", N being the row's
-  `observedValidDays` and D the unattributed production's days, when the row rests on the
-  agreement's whole applied window: when it has no observed date, or when the last day of its
-  observed date is the agreement's most frequent observed date and that date is a single day. It
-  MUST read N alone otherwise, and when the analysis gives no unattributed production.
-- **Rationale:** "N de D" says how much of the period a row's β rests on, but only when both count
-  the same days. The applied window starts on the agreement's most frequent observed date, and a
-  row's days run from the last day of its own observed date to the window's end: a row observed
-  later rests on fewer days, and one observed earlier counts days from before the window, so N
-  could even exceed D. When the most frequent date is a range or an open date, the API does not say
-  which of its days the window starts on, so no observed row can be placed against it.
+  field in each stacked row on a phone, not sortable. It MUST read N alone, N being the row's
+  `observedValidDays`, in every row: no row MUST show a denominator.
+- **Rationale:** A row's measurable days run from its own observed date to the end of the
+  agreement's applied window, so a row observed before that window counts more days than the
+  window has: rows observed "on or before 01/09/2025" had 426 against 335. The unattributed
+  production's days are therefore no denominator for any row, and one format for every row keeps
+  them comparable. lucoenergia/conluz#611 adds each row's own window days.
 - **Implements:** n/a
 - **Source:** #419
 
