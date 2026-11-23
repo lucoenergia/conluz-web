@@ -17,7 +17,8 @@ coefficient's end date is shown and worded (#420), the distributor file sent dat
 observed sharing view: a plant's agreements and one agreement compared with what Datadis shows
 (#418), and setting an agreement's application dates after a dry run of every effect, with the
 activation confirmation that lists the supplies a first activation closes (#419), and the terms,
-counts and help that make the observed sharing readable (#419). Not exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
+counts and help that make the observed sharing readable, the unattributed production and its
+breakdown, and each row's measurable days (#419). Not exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
 list shares, the agreement list among them, are in [`record-lists.md`](record-lists.md).
 
 ## Purpose
@@ -305,9 +306,9 @@ is in force today.
 
 - **Status:** Active
 - **Rule:** The plant's observed sharing MUST show one card per agreement, in the order the analysis
-  returns them. Each card MUST show the distributor file sent date or "Sin registrar", the
+  returns them. Each card MUST show "Fichero enviado el <fecha>", or "Fichero enviado: sin registrar", the
   application the analysis observed, its supplies' status counts, its leaving counts when there is
-  any, its anomaly counts by type, and the part no supply with data received (1 − Σβ). Each status
+  any, its anomaly counts by type, and its unattributed production (UI-AGR-040). Each status
   and anomaly count MUST come before its label, in tabular figures so the counts align, and a zero
   count MUST read in the secondary text colour. Each card
   and the agreement's page MUST show every recommendation returned, in order, as a finding under
@@ -326,7 +327,8 @@ is in force today.
   rows stand out from those that hold none.
 - **Implements:** n/a
 - **Source:** #418; findings layout: maintainer decision in the #418 review; the "Fijar fechas"
-  link, the count before its label, and the impossible share's finding: #419
+  link, the count before its label, the impossible share's finding and the sent date's wording:
+  #419
 
 ### UI-AGR-024 — Anomalies are grouped by agreement and supply, with their evidence
 
@@ -388,7 +390,7 @@ is in force today.
   that cannot be computed MUST show "No calculable", with no reason of its own; the "No
   calculables" section MUST say, in one line under its title, that its supplies hold a coefficient
   in this plant and in another, that their energy cannot be split between the plants, and that they
-  are left out of the analysis and of Σβ.
+  are left out of the analysis. It MUST NOT name Σβ (UI-AGR-040).
 - **Rationale:** The application cannot know why data is missing. It does know what makes a supply
   not computable: the analysis defines it, the same for every supply listed.
 - **Implements:** n/a
@@ -517,18 +519,19 @@ is in force today.
 - **Status:** Active
 - **Rule:** The plant's observed sharing page and the agreement's MUST offer "¿Qué significa cada
   estado?" in their header. It MUST open "Cómo leer el reparto observado", which MUST define β
-  registrada, β observada, día medible and 1 − Σβ, and MUST list every coefficient status, leaving
-  status and anomaly type of the client, each under the label the view shows it with.
+  registrada, β observada, día medible and producción no atribuida (1 − Σβ), and MUST list every
+  coefficient status, leaving status and anomaly type of the client, each under the label the view
+  shows it with.
 - **Rationale:** The view is read by admins who are not analysts; a status or a figure is only
   useful when its meaning is one tap away from where it is shown. Listing from the client's values
   means a status the backend adds cannot reach the view unexplained.
 - **Implements:** n/a
 - **Source:** #419
 
-### UI-AGR-039 — An impossible unexplained share is shown, flagged and listed under "Qué revisar"
+### UI-AGR-039 — An impossible unattributed production is shown, flagged and listed under "Qué revisar"
 
 - **Status:** Active
-- **Rule:** Where "Sin explicar (1 − Σβ)" is shown, on each agreement card of the plant's observed
+- **Rule:** Where "Producción no atribuida" is shown, on each agreement card of the plant's observed
   sharing and on the agreement's page, a value below −0.1 percentage points MUST still be shown, in
   the warning tone, with "Imposible: los puntos reciben más energía de la que produce la planta.
   Algún dato de Datadis es erróneo; revisa las anomalías con β observada muy alta." under it. That
@@ -538,7 +541,7 @@ is in force today.
   agreement has an anomaly, and MUST have no link when it has none. A value between −0.1 points and
   0 MUST read as any other value, with neither the warning nor the finding. The finding MUST NOT
   count as an agreement to review, and MUST NOT change the "Todo aplicado" notice. The help MUST
-  say, under 1 − Σβ, that a negative share means wrong data.
+  say, under "Producción no atribuida (1 − Σβ)", that a negative total means wrong Datadis data.
 - **Rationale:** Supplies cannot receive more than the plant produces, so a share below the
   tolerance always means wrong Datadis data: one supply whose records were a copy of the plant's
   for five months gave −47.5 %. Shown as an ordinary figure, it reads as a plausible result. The
@@ -546,6 +549,60 @@ is in force today.
   tolerance the view already uses for β (UI-AGR-026). The finding presents a value the API returns;
   counting the agreement as one to review would be a conclusion the backend does not draw. It comes
   first because it puts every other figure of the agreement in doubt.
+- **Implements:** n/a
+- **Source:** #419
+
+### UI-AGR-040 — The unattributed production is named in words and says what it is
+
+- **Status:** Active
+- **Rule:** The production no supply with data received, on each agreement card of the plant's
+  observed sharing and in the agreement page's header details, MUST be labelled "Producción no
+  atribuida". When the analysis gives it, an always-visible line MUST follow the value: "Parte de la
+  producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la
+  aplicación de este acuerdo (N días medibles).", N being the share's days ("1 día medible" for
+  one). When the analysis gives none, the value MUST read "—" with nothing under it. The formula,
+  1 − Σβ or Σβ alone, MUST appear only in the help dialog.
+- **Rationale:** Admins understood neither the figure nor where it came from: the label was a
+  formula. A name in words and a sentence beside the value say what it is where it is read; the
+  formula stays in the help, for those who want it.
+- **Implements:** n/a
+- **Source:** #419
+
+### UI-AGR-041 — The unattributed production is broken down into its two parts
+
+- **Status:** Active
+- **Rule:** When the analysis gives the unattributed production, it MUST show "X % corresponde a
+  puntos que no tenían datos esos días", X being `registeredShareWithoutData`, whenever that is above
+  0, whether or not some supply has no measurable day at all. It MUST always show "Resto: Y pp", Y
+  being `unallocated − registeredShareWithoutData` in percentage points, with its sign and one
+  decimal, followed by "Los puntos con datos recibieron más de lo registrado." when Y is below −0.1
+  points, "Producción que no llegó a ningún punto registrado." when it is above 0.1 points, and
+  "Dentro del margen de redondeo." from −0.1 to 0.1 points, both included. An impossible share keeps
+  its warning (UI-AGR-039).
+- **Rationale:** The registered share of the supplies without data those days is expected and is
+  not an error; showing it apart leaves the rest, whose sign says what to look at. It is a
+  subtraction of two values the API returns, compared with the tolerance the view already uses for
+  β (UI-AGR-026). It was shown only when some supply had no measurable day at all, which hid it for
+  supplies missing only some days. "Resto" shows when the share of supplies without data is 0 too,
+  so its sentence still says which way the figure points.
+- **Implements:** n/a
+- **Source:** #419
+
+### UI-AGR-042 — Each coefficient row of an agreement shows its measurable days
+
+- **Status:** Active
+- **Rule:** The agreement's coefficient rows MUST show "Días medibles", a column in the table and a
+  field in each stacked row on a phone, not sortable. It MUST read "N de D", N being the row's
+  `observedValidDays` and D the unattributed production's days, when the row rests on the
+  agreement's whole applied window: when it has no observed date, or when the last day of its
+  observed date is the agreement's most frequent observed date and that date is a single day. It
+  MUST read N alone otherwise, and when the analysis gives no unattributed production.
+- **Rationale:** "N de D" says how much of the period a row's β rests on, but only when both count
+  the same days. The applied window starts on the agreement's most frequent observed date, and a
+  row's days run from the last day of its own observed date to the window's end: a row observed
+  later rests on fewer days, and one observed earlier counts days from before the window, so N
+  could even exceed D. When the most frequent date is a range or an open date, the API does not say
+  which of its days the window starts on, so no observed row can be placed against it.
 - **Implements:** n/a
 - **Source:** #419
 
