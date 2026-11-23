@@ -16,6 +16,7 @@ const row = (name: string, date: dayjs.Dayjs | null, selected = true): Coefficie
   hint: undefined,
   noData: false,
   unselectedReason: "Sin cambios",
+  notObserved: false,
 });
 
 const past = dayjs("2025-03-01");

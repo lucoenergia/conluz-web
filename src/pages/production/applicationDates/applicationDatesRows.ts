@@ -13,7 +13,7 @@ import { pluralize } from "../../../utils/pluralize";
 import { supplyDisplayLabel } from "../../../utils/supplyDisplayLabel";
 import { localDateAt } from "../../../utils/zonedTime";
 import { isCoefficientDateValid } from "../coefficientDateValidation";
-import { formatDay, formatObservedDate, joinNames } from "../observedSharing/observedSharingFormat";
+import { formatBeta, formatDay, formatObservedDate, joinNames } from "../observedSharing/observedSharingFormat";
 
 /**
  * Where a prefilled date came from (UI-AGR-032). An observed date is evidence;
@@ -48,6 +48,12 @@ export interface CoefficientDateRow {
   noData: boolean;
   /** What the field says below itself while its row is unselected (UI-AGR-032). */
   unselectedReason: string;
+  /**
+   * Datadis shows the supply's days but never this coefficient applied, and
+   * the agreement has no sent date: its reason is a warning, kept while the
+   * row is marked, with a link to the observation (UI-AGR-032).
+   */
+  notObserved: boolean;
 }
 
 /** A supply that leaves the distribution, as observed sharing saw it. */
@@ -73,6 +79,28 @@ const NO_CHANGE = "Sin cambios";
 
 const NOT_OBSERVABLE_REASON =
   "Punto de la planta: Datadis no permite observar su fecha. Normalmente es la misma que la del resto del acuerdo; márcalo y ponla a mano.";
+
+const NO_DATA_REASON = "Sin datos de Datadis: no se puede comprobar. Pon la fecha a mano si la conoces.";
+
+/** Why a NOT_OBSERVED row is unselected: the β Datadis does show, when the analysis gave one. */
+function notObservedReason(observedBeta: number | null): string {
+  const received = observedBeta === null ? "" : ` (recibe un ${formatBeta(observedBeta)})`;
+  return `Datadis nunca muestra este coeficiente aplicado${received}. Compruébalo en el reparto observado antes de fijar una fecha.`;
+}
+
+/** Why a row the observation could not date is unselected. */
+function undatedReason(observed: CoefficientObservationResponse | undefined): string {
+  switch (observed?.status) {
+    case CoefficientObservationResponseStatus.NOT_OBSERVABLE:
+      return NOT_OBSERVABLE_REASON;
+    case CoefficientObservationResponseStatus.NOT_OBSERVED:
+      return notObservedReason(observed.observedBeta);
+    case CoefficientObservationResponseStatus.NO_DATA:
+      return NO_DATA_REASON;
+    default:
+      return NO_CHANGE;
+  }
+}
 
 const REFERENCE_WORD = { observed: "Observada", proposed: "Propuesta" } as const;
 
@@ -130,6 +158,7 @@ export function initialDateRows(
       hint: undefined,
       noData: false,
       unselectedReason: NO_CHANGE,
+      notObserved: false,
     };
 
     if (!observation) return { ...base, selected: storedDate === null };
@@ -151,8 +180,8 @@ export function initialDateRows(
       ...base,
       date: storedDate ? toDay(storedDate) : null,
       noData: observed?.status === CoefficientObservationResponseStatus.NO_DATA,
-      unselectedReason:
-        observed?.status === CoefficientObservationResponseStatus.NOT_OBSERVABLE ? NOT_OBSERVABLE_REASON : NO_CHANGE,
+      unselectedReason: undatedReason(observed),
+      notObserved: observed?.status === CoefficientObservationResponseStatus.NOT_OBSERVED,
     };
   });
 }

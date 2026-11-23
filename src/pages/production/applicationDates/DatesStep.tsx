@@ -1,4 +1,4 @@
-import { useState, type FC, type Ref } from "react";
+import { useState, type FC, type ReactNode, type Ref } from "react";
 import { Box, Button, Checkbox, Link, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router";
 import type { Dayjs } from "dayjs";
@@ -39,7 +39,11 @@ const REFERENCE_LABEL = { observed: "Observada", proposed: "Propuesta" } as cons
  * was prefilled with once edited, and the observed range or open date it
  * still needs a day for (UI-AGR-032).
  */
-const DateNotes: FC<{ row: CoefficientDateRow; errors: string[] }> = ({ row, errors }) => {
+const DateNotes: FC<{ row: CoefficientDateRow; errors: string[]; observationPath: string }> = ({
+  row,
+  errors,
+  observationPath,
+}) => {
   const edited = isEdited(row.date, row.reference?.date);
   // An unmarked dated row holds no day: its reason says what was observed.
   const reference = row.selected || row.date !== null ? row.reference : undefined;
@@ -61,6 +65,11 @@ const DateNotes: FC<{ row: CoefficientDateRow; errors: string[] }> = ({ row, err
         </Typography>
       )}
       {row.hint && row.date === null && <ObservationChip label="Elige una fecha" tone="neutral" />}
+      {row.notObserved && (
+        <Link component={RouterLink} to={observationPath} variant="body2">
+          Ver en el reparto observado
+        </Link>
+      )}
       {errors.map((message) => (
         <Typography key={message} variant="body2" sx={{ color: "error.main", fontWeight: 600 }}>
           {message}
@@ -70,12 +79,24 @@ const DateNotes: FC<{ row: CoefficientDateRow; errors: string[] }> = ({ row, err
   );
 };
 
-/** What the field says below itself: why it is off, why its day is refused, or what to choose from. */
-function helperTextOf(row: CoefficientDateRow): string | undefined {
-  if (!row.selected) return row.unselectedReason;
-  if (row.date !== null && !isCoefficientDateValid(row.date, row.dateError)) {
+/**
+ * What the field says below itself: why it is off, why its day is refused, or
+ * what to choose from. A NOT_OBSERVED row's warning stays while it is marked:
+ * that is when a date would be set over it (UI-AGR-032).
+ */
+function helperTextOf(row: CoefficientDateRow): ReactNode {
+  if (row.selected && row.date !== null && !isCoefficientDateValid(row.date, row.dateError)) {
     return row.dateError === "maxDate" || row.dateError === "disableFuture" ? "No puede ser una fecha futura" : "Fecha no válida";
   }
+  if (row.notObserved) {
+    // A disabled field greys its helper text; the warning keeps its own tone.
+    return (
+      <Box component="span" sx={{ color: colors.warning.main }}>
+        {row.unselectedReason}
+      </Box>
+    );
+  }
+  if (!row.selected) return row.unselectedReason;
   if (row.hint) return row.hint;
   if (row.noData && row.date === null) return "Sin datos de Datadis: escribe la fecha";
   return undefined;
@@ -85,8 +106,9 @@ const DateRow: FC<{
   row: CoefficientDateRow;
   errors: string[];
   readOnly: boolean;
+  observationPath: string;
   onChange: (patch: Partial<CoefficientDateRow>) => void;
-}> = ({ row, errors, readOnly, onChange }) => {
+}> = ({ row, errors, readOnly, observationPath, onChange }) => {
   const name = supplyDisplayLabel(row.supply);
   const invalid = row.selected && row.date !== null && !isCoefficientDateValid(row.date, row.dateError);
   return (
@@ -130,7 +152,7 @@ const DateRow: FC<{
           helperText={helperTextOf(row)}
           error={invalid || errors.length > 0}
         />
-        <DateNotes row={row} errors={errors} />
+        <DateNotes row={row} errors={errors} observationPath={observationPath} />
       </Box>
     </Box>
   );
@@ -298,6 +320,7 @@ export const DatesStep: FC<DatesStepProps> = ({
                 row={row}
                 errors={rowErrors.get(row.coefficientId) ?? []}
                 readOnly={false}
+                observationPath={observationPath}
                 onChange={(patch) => patchRow(row.coefficientId, patch)}
               />
             ))}

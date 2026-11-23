@@ -620,7 +620,7 @@ describe("ApplicationDatesPage", () => {
       ).toBeVisible();
     });
 
-    test("UI-AGR-032: a row with no observation, without data or not observed, keeps 'Sin cambios'", () => {
+    test("UI-AGR-032: a row with no observation keeps 'Sin cambios'; one without data or not observed says why instead", () => {
       renderPage({
         route: FROM_OBSERVED,
         coefficients,
@@ -641,8 +641,14 @@ describe("ApplicationDatesPage", () => {
         }),
       });
 
-      expect(within(rowOf("Casa Sur")).getByText("Sin cambios")).toBeVisible();
-      expect(within(rowOf("Casa Este")).getByText("Sin cambios")).toBeVisible();
+      expect(
+        within(rowOf("Casa Sur")).getByText("Sin datos de Datadis: no se puede comprobar. Pon la fecha a mano si la conoces."),
+      ).toBeVisible();
+      expect(
+        within(rowOf("Casa Este")).getByText(
+          "Datadis nunca muestra este coeficiente aplicado. Compruébalo en el reparto observado antes de fijar una fecha.",
+        ),
+      ).toBeVisible();
       // Casa Norte is in no observation row at all.
       expect(checkbox("Casa Norte")).not.toBeChecked();
       expect(within(rowOf("Casa Norte")).getByText("Sin cambios")).toBeVisible();
