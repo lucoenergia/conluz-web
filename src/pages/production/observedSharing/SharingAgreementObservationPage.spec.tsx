@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { screen, waitFor, within } from "@testing-library/react";
+import { cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router";
 import { renderWithProviders } from "../../../test/renderWithProviders";
@@ -667,6 +667,68 @@ describe("SharingAgreementObservationPage", () => {
       }
     });
 
+    /** The fixture with Casa Norte observed before the agreement's window, and Casa Este the plant's own supply. */
+    function renderWithOwnWindows() {
+      const fixture = observationFixture();
+      renderPage({
+        observation: query.success<typeof getSharingAgreementObservation>({
+          ...fixture,
+          // The agreement's window: 335 measurable days.
+          summary: { ...fixture.summary, unallocatedShare: { days: 335, unallocated: 0.03, registeredShareWithoutData: 0 } },
+          coefficients: fixture.coefficients.map((row) => {
+            if (row.supply.id === NORTE.id) {
+              return { ...row, observedDate: { from: null, to: "2025-01-09" }, observedValidDays: 426, windowDays: 426 };
+            }
+            if (row.supply.id === ESTE.id) {
+              return { ...row, status: Status.NOT_OBSERVABLE, observedBeta: null, observedValidDays: 0, windowDays: 0 };
+            }
+            return row;
+          }),
+          leavingRows: fixture.leavingRows.map((row) =>
+            row.supply.id === ESCUELA.id ? { ...row, observedValidDays: 410, windowDays: 426 } : row,
+          ),
+        }),
+      });
+    }
+
+    const cellIn = (row: HTMLElement, section: HTMLElement) => {
+      const column = within(section)
+        .getAllByRole("columnheader")
+        .findIndex((header) => header.textContent === "Días medibles");
+      return row.querySelectorAll("td, th")[column];
+    };
+
+    test("UI-AGR-042: a row reads against its own window, '426 de 426', not the agreement's 335 days", () => {
+      renderWithOwnWindows();
+
+      expect(cellIn(supplyRow("Casa Norte"), suppliesSection())).toHaveTextContent(/^426 de 426$/);
+      expect(cellIn(within(leavingSection()).getByRole("row", { name: /Escuela/ }), leavingSection())).toHaveTextContent(
+        /^410 de 426$/,
+      );
+      expect(document.body.textContent).not.toMatch(/de 335/);
+    });
+
+    test("UI-AGR-042: a NOT_OBSERVABLE row shows no measurable days, in the table and on a phone", () => {
+      renderWithOwnWindows();
+      expect(cellIn(supplyRow("Casa Este"), suppliesSection())).toHaveTextContent(/^$/);
+      cleanup();
+
+      const width = window.innerWidth;
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
+      try {
+        renderWithOwnWindows();
+        const list = screen.getByRole("list", { name: "Puntos de suministro del acuerdo" });
+        const items = within(list).getAllByRole("listitem");
+        const este = items.find((candidate) => candidate.textContent?.startsWith("Casa Este"))!;
+        const norte = items.find((candidate) => candidate.textContent?.startsWith("Casa Norte"))!;
+
+        expect(within(este).queryByText("Días medibles")).not.toBeInTheDocument();
+        expect(within(norte).getByText("Días medibles")).toBeInTheDocument();
+      } finally {
+        Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+      }
+    });
+
     test("UI-AGR-042: on a phone, each stacked row shows its 'Días medibles'", () => {
       const width = window.innerWidth;
       Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
@@ -683,5 +745,36 @@ describe("SharingAgreementObservationPage", () => {
         Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
       }
     });
+  });
+
+  test("UI-AGR-024: an attributed anomaly shows the backend's expected β before its observed one", () => {
+    const fixture = observationFixture();
+    renderPage({
+      observation: query.success<typeof getSharingAgreementObservation>({
+        ...fixture,
+        summary: {
+          ...fixture.summary,
+          anomalies: fixture.summary.anomalies.map((anomaly) => ({ ...anomaly, expectedBeta: 0.0315 })),
+        },
+      }),
+    });
+    const anomalies = screen.getByRole("region", { name: /^Anomalías de este acuerdo/ });
+
+    expect(within(anomalies).getByText("β esperada 3,1500 % · β observada 4,1200 % · 21 días medibles")).toBeInTheDocument();
+  });
+
+  test("UI-AGR-024: an expected β of 0, a supply with no coefficient in the agreement, is shown as 0", () => {
+    const fixture = observationFixture();
+    renderPage({
+      observation: query.success<typeof getSharingAgreementObservation>({
+        ...fixture,
+        summary: {
+          ...fixture.summary,
+          anomalies: fixture.summary.anomalies.map((anomaly) => ({ ...anomaly, expectedBeta: 0 })),
+        },
+      }),
+    });
+
+    expect(screen.getByText("β esperada 0,0000 % · β observada 4,1200 % · 21 días medibles")).toBeInTheDocument();
   });
 });

@@ -8,6 +8,7 @@ import {
   formatBeta,
   formatDataRange,
   formatDataRangeInSentence,
+  formatMeasurableDays,
   formatObservedDate,
   formatRegisteredPeriod,
   unattributedRemainder,
@@ -98,5 +99,16 @@ describe("the unattributed production's rest", () => {
     expect(rest(0.03, 0.03)).toEqual({ text: "0,0 pp", kind: "rounding" });
     expect(rest(0.031001, 0.03).kind).toBe("notDelivered");
     expect(rest(0.028999, 0.03).kind).toBe("receivedMore");
+  });
+});
+
+describe("a row's measurable days", () => {
+  test("UI-AGR-042: N de M, both from the row, for a coefficient and a leaving row", () => {
+    expect(formatMeasurableDays({ status: "APPLIED_SAME_DATE", observedValidDays: 426, windowDays: 426 })).toBe("426 de 426");
+    expect(formatMeasurableDays({ status: "NO_DATA", observedValidDays: 0, windowDays: 335 })).toBe("0 de 335");
+  });
+
+  test("UI-AGR-042: none for a NOT_OBSERVABLE row", () => {
+    expect(formatMeasurableDays({ status: "NOT_OBSERVABLE", observedValidDays: 0, windowDays: 0 })).toBeNull();
   });
 });

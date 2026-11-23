@@ -680,4 +680,14 @@ describe("PlantObservedSharingPage", () => {
     expect(within(card("Reparto 2026")).getByText("Fichero enviado: sin registrar")).toBeInTheDocument();
     expect(within(card("Reparto 2026")).queryByText("Sin registrar")).not.toBeInTheDocument();
   });
+
+  test("UI-AGR-024: an anomaly attributed to no agreement has no expected β, and its detail leaves it out", () => {
+    renderPage();
+    const section = screen.getByRole("region", { name: "Anomalías (3)" });
+
+    expect(within(section).getByRole("row", { name: /Recibe energía fuera del acuerdo/, hidden: true })).toHaveTextContent(
+      /β observada 2,0000 % · 30 días medibles$/,
+    );
+    expect(document.body.textContent).not.toMatch(/β esperada/);
+  });
 });
