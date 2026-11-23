@@ -6,7 +6,6 @@ import {
   CoefficientObservationResponseStatus,
   type CoefficientObservationResponse,
   type LeavingObservationResponse,
-  type SharingAgreementObservationSummaryResponse,
   type SharingAgreementObservationResponse,
 } from "../../../api/models";
 import { BreadCrumb } from "../../../components/Breadcrumb";
@@ -45,7 +44,6 @@ import {
   formatDay,
   formatObservedDate,
   formatRegisteredPeriod,
-  formatMeasurableDays,
   NO_VALUE,
 } from "./observedSharingFormat";
 import { OBSERVED_ANOMALIES_ANCHOR, observedSharingPath } from "./observedSharingRoutes";
@@ -153,10 +151,9 @@ const FilterChips: FC<{
 
 const CoefficientRows: FC<{
   rows: CoefficientObservationResponse[];
-  summary: SharingAgreementObservationSummaryResponse;
   anomalyLabelsBySupply: Map<string, string[]>;
   header: ReactNode;
-}> = ({ rows, summary, anomalyLabelsBySupply, header }) => {
+}> = ({ rows, anomalyLabelsBySupply, header }) => {
   const [showAll, setShowAll] = useState(false);
   const shown = showAll ? rows : rows.slice(0, INITIAL_ROWS);
   const anomalyLabels = (row: CoefficientObservationResponse) => anomalyLabelsBySupply.get(row.supply.id) ?? [];
@@ -166,7 +163,9 @@ const CoefficientRows: FC<{
   const fields = (row: CoefficientObservationResponse): RecordField[] => [
     { label: "β registrada", value: formatBeta(row.coefficient) },
     { label: "β observada", value: <ObservedBeta observed={row.observedBeta} registered={row.coefficient} /> },
-    { label: "Días medibles", value: formatMeasurableDays(row, summary) },
+    // The days its observed β rests on, alone: each row counts from its own
+    // observed date, so no shared denominator fits every row (UI-AGR-042).
+    { label: "Días medibles", value: String(row.observedValidDays) },
     { label: "Periodo registrado", value: formatRegisteredPeriod(row.storedValidFrom, row.storedValidTo) },
     {
       label: "Aplicación observada",
@@ -211,7 +210,7 @@ const CoefficientRows: FC<{
             {
               key: "measurableDays",
               header: "Días medibles",
-              render: (row) => formatMeasurableDays(row, summary),
+              render: (row) => String(row.observedValidDays),
               width: "10%",
             },
             {
@@ -340,7 +339,6 @@ const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservat
         />
         <CoefficientRows
           rows={shown.coefficients}
-          summary={summary}
           anomalyLabelsBySupply={anomalyLabelsBySupply}
           header={<FilterChips filter={filter} onChange={setFilter} counts={{ all: all.count, warnings: warnings.count }} />}
         />

@@ -1,5 +1,4 @@
 import type {
-  CoefficientObservationResponse,
   ObservedDateResponse,
   SharingAgreementObservationSummaryResponse,
   UnallocatedShareResponse,
@@ -93,36 +92,6 @@ export function unattributedRemainder(share: UnallocatedShareResponse): {
     millionths < -EQUAL_TOLERANCE ? "receivedMore" : millionths > EQUAL_TOLERANCE ? "notDelivered" : "rounding";
   // A percentage point is 10 000 millionths of the 0-1 scale.
   return { text: `${SIGNED_POINTS.format(millionths / 10_000)} pp`, kind };
-}
-
-/**
- * Whether a row's measurable days rest on its agreement's whole applied window
- * (UI-AGR-042). The window starts on the agreement's most frequent observed
- * date, and a row's days run from the last day of its own observed date to the
- * window's end. A row with no observed date rests on the whole window. One
- * observed on the window's first day does too, but that day is known only when
- * the most frequent date is a single day: for a range or an open date the
- * contract does not say which of its days the window starts on. A row observed
- * earlier counts days from before the window, and one observed later, fewer.
- */
-function restsOnWholeWindow(observed: ObservedDateResponse | null, windowStart: ObservedDateResponse | null): boolean {
-  if (observed === null) return true;
-  return windowStart !== null && windowStart.from === windowStart.to && observed.to === windowStart.to;
-}
-
-/**
- * A row's measurable days: "N de D" when they rest on the agreement's whole
- * applied window, D being the plant's measurable days in it; only N otherwise,
- * and when the analysis gave no window (UI-AGR-042).
- */
-export function formatMeasurableDays(
-  row: CoefficientObservationResponse,
-  summary: SharingAgreementObservationSummaryResponse,
-): string {
-  const windowDays = summary.unallocatedShare?.days;
-  return windowDays !== undefined && restsOnWholeWindow(row.observedDate, summary.mostFrequentObservedDate)
-    ? `${row.observedValidDays} de ${windowDays}`
-    : String(row.observedValidDays);
 }
 
 /**

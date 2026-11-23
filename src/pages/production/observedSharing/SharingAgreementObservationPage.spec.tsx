@@ -264,7 +264,7 @@ describe("SharingAgreementObservationPage", () => {
   test("UI-AGR-031: every row shows the observed β the backend returned, and '—' when it returned none", () => {
     renderPage();
 
-    expect(supplyRow("Casa Oeste")).toHaveTextContent(/^Casa Oeste.*3,0000 %—0 de 200Sin fecha—Sin datos de Datadis$/);
+    expect(supplyRow("Casa Oeste")).toHaveTextContent(/^Casa Oeste.*3,0000 %—0Sin fecha—Sin datos de Datadis$/);
     expect(within(leavingSection()).getByRole("row", { name: /Escuela/ })).toHaveTextContent("4,0000 %0,0000 %");
     expect(within(leavingSection()).getByRole("row", { name: /Bar/ })).toHaveTextContent("1,0000 %0,0000 %");
     expect(within(leavingSection()).getByRole("row", { name: /Kiosco/ })).toHaveTextContent("1,5000 %—");
@@ -636,16 +636,16 @@ describe("SharingAgreementObservationPage", () => {
   });
 
   describe("the measurable days of each row", () => {
-    // The fixture's window starts on 01/03/2025, a single day, over 200 measurable days.
+    // Each row's own observedValidDays, whatever its observed date.
     const EXPECTED = [
-      ["Casa Norte", "120 de 200"], // observed on the window's first day
-      ["Casa Sur", "120"], // observed later: a shorter window
-      ["Casa Este", "120 de 200"], // no observed date
-      ["Casa Oeste", "0 de 200"], // no observed date, no measurable day
-      ["Taller", "60 de 200"], // an open date whose last day is the window's first
+      ["Casa Norte", "120"],
+      ["Casa Sur", "120"],
+      ["Casa Este", "120"],
+      ["Casa Oeste", "0"],
+      ["Taller", "60"],
     ];
 
-    test("UI-AGR-042: the table shows 'Días medibles', 'N de D' for a row on the whole window and only N otherwise", () => {
+    test("UI-AGR-042: the table shows 'Días medibles', each row's N", () => {
       renderPage();
       const column = within(suppliesSection())
         .getAllByRole("columnheader")
