@@ -42,4 +42,14 @@ export interface CoefficientObservationResponse {
   supply: SupplyReferenceResponse;
   /** Number of plant-valid days in the row's window: from its observed application date (the latest day of a range or of an open date), or from the start of the agreement's applied window when it has none, to the end of the agreement's applied window. The days observedValidDays is counted over, so never less than it. 0 when the agreement has no applied window or the row's start falls after its end. */
   windowDays: number;
+  /**
+     * First local day of the row's window: its observed application date (the latest day of a range or of an open date), or the start of the agreement's applied window when it has none. Null when the row has no window (windowDays 0): the agreement has no applied window or the row's start falls after its end.
+     * @nullable
+     */
+  windowFrom: string | null;
+  /**
+     * Last local day of the row's window: the end of the agreement's applied window. Null when the row has no window (windowDays 0).
+     * @nullable
+     */
+  windowTo: string | null;
 }

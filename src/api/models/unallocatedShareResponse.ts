@@ -9,8 +9,12 @@
 export interface UnallocatedShareResponse {
   /** Number of the plant's valid days the figures rest on */
   days: number;
+  /** First local day of the agreement's applied window, which the figures are computed over: its most frequent observed application date (the latest day of a range or of an open date) */
+  from: string;
   /** The share the agreement registers for the supplies without data and for the plant's own supply on each day, on a 0-1 scale, weighted by the plant's daily production */
   registeredShareWithoutData: number;
+  /** Last local day of the agreement's applied window: the day before the next agreement's most frequent observed application date, or the end of the analysed range */
+  to: string;
   /** 1 − Σβ: the production no supply with data received, on a 0-1 scale, weighted by the plant's daily production */
   unallocated: number;
 }

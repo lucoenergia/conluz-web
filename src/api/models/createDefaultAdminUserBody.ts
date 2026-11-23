@@ -14,7 +14,7 @@ export interface CreateDefaultAdminUserBody {
   /** @minLength 1 */
   fullName: string;
   /**
-     * The default admin's password. Between 10 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed. The default admin chooses it, so they are not flagged as having to change it.
+     * The default admin's password. Between 10 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed. A password that is common or has appeared in data breaches, compared case-insensitively against a list bundled with the application, is refused. The default admin chooses it, so they are not flagged as having to change it.
      * @minLength 10
      */
   password: string;

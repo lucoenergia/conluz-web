@@ -13,7 +13,7 @@ export interface AcceptInvitationBody {
      */
   confirmationCode?: string | null;
   /**
-     * The account's first password. Between 10 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed.
+     * The account's first password. Between 10 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed. A password that is common or has appeared in data breaches, compared case-insensitively against a list bundled with the application, is refused.
      * @minLength 10
      */
   newPassword: string;
