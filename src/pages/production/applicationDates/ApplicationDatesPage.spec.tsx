@@ -472,6 +472,191 @@ describe("ApplicationDatesPage", () => {
     });
   });
 
+  describe("why an unselected row is unselected", () => {
+    // Casa Sur and Casa Este already dated on 15/03/2025; the others pending.
+    const DATED_ON_15_MARCH = { applicationState: APPLIED, validFrom: "2025-03-14T23:00:00Z" };
+    const coefficients = [
+      buildCoefficient({
+        coefficientId: "c-norte",
+        supply: NORTE,
+        coefficient: 0.0315,
+        applicationState: PENDING,
+      }),
+      buildCoefficient({
+        coefficientId: "c-sur",
+        supply: SUR,
+        coefficient: 0.0325,
+        ...DATED_ON_15_MARCH,
+      }),
+      buildCoefficient({
+        coefficientId: "c-este",
+        supply: ESTE,
+        coefficient: 0.05,
+        ...DATED_ON_15_MARCH,
+      }),
+      buildCoefficient({
+        coefficientId: "c-oeste",
+        supply: OESTE,
+        coefficient: 0.03,
+        applicationState: PENDING,
+      }),
+      buildCoefficient({
+        coefficientId: "c-taller",
+        supply: TALLER,
+        coefficient: 0.02,
+        applicationState: PENDING,
+      }),
+    ];
+    const observation = buildSharingAgreementObservation({
+      coefficients: [
+        buildCoefficientObservation({
+          coefficientId: "c-norte",
+          supply: NORTE,
+          observedDate: { from: null, to: "2023-04-01" },
+          status: Status.PENDING_APPLICATION,
+        }),
+        buildCoefficientObservation({
+          coefficientId: "c-sur",
+          supply: SUR,
+          storedValidFrom: "2025-03-15",
+          observedDate: { from: "2025-03-15", to: "2025-03-15" },
+          status: Status.APPLIED_SAME_DATE,
+        }),
+        buildCoefficientObservation({
+          coefficientId: "c-este",
+          supply: ESTE,
+          storedValidFrom: "2025-03-15",
+          observedDate: { from: "2025-03-01", to: "2025-03-01" },
+          status: Status.APPLIED_DIFFERENT_DATE,
+        }),
+        buildCoefficientObservation({
+          coefficientId: "c-oeste",
+          supply: OESTE,
+          status: Status.NOT_OBSERVABLE,
+        }),
+        buildCoefficientObservation({
+          coefficientId: "c-taller",
+          supply: TALLER,
+          observedDate: { from: "2025-02-26", to: "2025-03-04" },
+          status: Status.PENDING_APPLICATION,
+        }),
+      ],
+      leavingRows: [],
+    });
+    const renderReasons = () => renderPage({ route: FROM_OBSERVED, coefficients, observation });
+
+    test("UI-AGR-032: an open observed date says Datadis has no earlier data and to choose the real date", () => {
+      renderReasons();
+
+      expect(checkbox("Casa Norte")).not.toBeChecked();
+      expect(
+        within(rowOf("Casa Norte")).getByText(
+          "Observada el 01/04/2023 o antes: Datadis no tiene datos anteriores. Elige la fecha real y márcalo.",
+        ),
+      ).toBeVisible();
+    });
+
+    test("UI-AGR-032: an observed range says between which days, and to choose one", () => {
+      renderReasons();
+
+      expect(checkbox("Taller")).not.toBeChecked();
+      expect(
+        within(rowOf("Taller")).getByText("Observada entre el 26/02/2025 y el 04/03/2025. Elige una fecha y márcalo."),
+      ).toBeVisible();
+    });
+
+    test("UI-AGR-032: a dated row observed on its stored day says the stored date is correct, and its field stays empty", () => {
+      renderReasons();
+
+      expect(checkbox("Casa Sur")).not.toBeChecked();
+      expect(within(rowOf("Casa Sur")).getByText("Fecha registrada correcta.")).toBeVisible();
+      expect(sections(dateGroup("Casa Sur"))).toEqual(["DD", "MM", "AAAA"]);
+      expect(within(rowOf("Casa Sur")).queryByText("Observada")).not.toBeInTheDocument();
+    });
+
+    test("UI-AGR-032: a dated row observed on another day names both, and its field does not show the observed one", () => {
+      renderReasons();
+      const este = rowOf("Casa Este");
+
+      expect(checkbox("Casa Este")).not.toBeChecked();
+      expect(
+        within(este).getByText("Registrada 15/03/2025 · Observada 01/03/2025. Márcalo para corregirla."),
+      ).toBeVisible();
+      expect(sections(dateGroup("Casa Este"))).toEqual(["DD", "MM", "AAAA"]);
+      expect(within(este).queryByText(/Editada/)).not.toBeInTheDocument();
+    });
+
+    test("UI-AGR-032: marking a dated row prefills its observed date, marked 'Observada'; unmarking it empties the field again", async () => {
+      const user = userEvent.setup({ delay: null });
+      renderReasons();
+
+      await user.click(checkbox("Casa Este"));
+      expect(sections(dateGroup("Casa Este"))).toEqual(["01", "03", "2025"]);
+      expect(within(rowOf("Casa Este")).getByText("Observada")).toBeVisible();
+
+      await user.click(checkbox("Casa Este"));
+      expect(sections(dateGroup("Casa Este"))).toEqual(["DD", "MM", "AAAA"]);
+      expect(within(rowOf("Casa Este")).queryByText("Observada")).not.toBeInTheDocument();
+    });
+
+    test("UI-AGR-032: marking every row prefills each dated row's observed date", async () => {
+      const user = userEvent.setup({ delay: null });
+      renderReasons();
+
+      await user.click(screen.getByRole("checkbox", { name: "Seleccionar todos los puntos" }));
+
+      expect(sections(dateGroup("Casa Sur"))).toEqual(["15", "03", "2025"]);
+      expect(sections(dateGroup("Casa Este"))).toEqual(["01", "03", "2025"]);
+    });
+
+    test("UI-AGR-032: the plant's own supply says Datadis cannot observe its date, and to mark it and write it", () => {
+      renderReasons();
+
+      expect(checkbox("Casa Oeste")).not.toBeChecked();
+      expect(
+        within(rowOf("Casa Oeste")).getByText(
+          "Punto de la planta: Datadis no permite observar su fecha. Normalmente es la misma que la del resto del acuerdo; márcalo y ponla a mano.",
+        ),
+      ).toBeVisible();
+    });
+
+    test("UI-AGR-032: a row with no observation, without data or not observed, keeps 'Sin cambios'", () => {
+      renderPage({
+        route: FROM_OBSERVED,
+        coefficients,
+        observation: buildSharingAgreementObservation({
+          coefficients: [
+            buildCoefficientObservation({
+              coefficientId: "c-sur",
+              supply: SUR,
+              status: Status.NO_DATA,
+            }),
+            buildCoefficientObservation({
+              coefficientId: "c-este",
+              supply: ESTE,
+              status: Status.NOT_OBSERVED,
+            }),
+          ],
+          leavingRows: [],
+        }),
+      });
+
+      expect(within(rowOf("Casa Sur")).getByText("Sin cambios")).toBeVisible();
+      expect(within(rowOf("Casa Este")).getByText("Sin cambios")).toBeVisible();
+      // Casa Norte is in no observation row at all.
+      expect(checkbox("Casa Norte")).not.toBeChecked();
+      expect(within(rowOf("Casa Norte")).getByText("Sin cambios")).toBeVisible();
+    });
+
+    test("UI-AGR-032: opened from the agreement, an unselected row keeps 'Sin cambios'", () => {
+      renderPage({ coefficients, observation });
+
+      expect(checkbox("Casa Este")).not.toBeChecked();
+      expect(within(rowOf("Casa Este")).getByText("Sin cambios")).toBeVisible();
+      expect(sections(dateGroup("Casa Este"))).toEqual(["DD", "MM", "AAAA"]);
+    });
+  });
+
   describe("the preview", () => {
     async function openPreview(route = FROM_OBSERVED) {
       const user = userEvent.setup({ delay: null });
