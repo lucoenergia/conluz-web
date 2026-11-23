@@ -511,6 +511,46 @@ describe("PlantObservedSharingPage", () => {
     expect(await screen.findByRole("dialog", { name: "Cómo leer el reparto observado" })).toBeInTheDocument();
   });
 
+  test("UI-AGR-038: the header link is the page's one way into the help", () => {
+    renderPage();
+
+    expect(screen.getAllByRole("button", { name: /reparto observado|significa|ayuda/i })).toHaveLength(1);
+  });
+
+  test("UI-AGR-038: on a phone, 'Cómo leer el reparto observado' stays in the header and opens the help", async () => {
+    const width = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
+    // jsdom has no layout: answer the header's (max-width) query, and any (min-width) one, as a 390-px phone would.
+    vi.stubGlobal("matchMedia", (query: string) => {
+      const min = /min-width:\s*([\d.]+)px/.exec(query)?.[1];
+      const max = /max-width:\s*([\d.]+)px/.exec(query)?.[1];
+      return {
+        matches: (min === undefined || Number(min) <= 390) && (max === undefined || 390 <= Number(max)),
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      } as MediaQueryList;
+    });
+    try {
+      renderPage();
+      const heading = screen.getByRole("heading", { level: 1 });
+      const link = screen.getByRole("button", { name: "Cómo leer el reparto observado" });
+
+      // In the compact header the link sits in the title block, after the heading.
+      expect(heading.parentElement?.parentElement).toContainElement(link);
+      await userEvent.setup().click(link);
+
+      expect(await screen.findByRole("dialog", { name: "Cómo leer el reparto observado" })).toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+    }
+  });
+
   describe("UI-AGR-039: an impossible unattributed production share", () => {
     const WARNING =
       "Imposible: los puntos reciben más energía de la que produce la planta. Algún dato de Datadis es erróneo; revisa las anomalías con β observada muy alta.";
