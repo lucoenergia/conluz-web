@@ -114,6 +114,17 @@ export function formatMeasurableDays(row: {
 }
 
 /**
+ * The days a figure is counted over, "del DD/MM/AAAA al DD/MM/AAAA", both
+ * the backend's (UI-AGR-040, UI-AGR-042). Null when it gives none: a row
+ * with no window (windowDays 0) has neither date.
+ */
+export function formatWindow(from: string, to: string): string;
+export function formatWindow(from: string | null, to: string | null): string | null;
+export function formatWindow(from: string | null, to: string | null): string | null {
+  return from === null || to === null ? null : `del ${formatDay(from)} al ${formatDay(to)}`;
+}
+
+/**
  * The evidence behind an anomaly (UI-AGR-024): "β esperada 3,1500 % ·
  * β observada 4,1200 % · 21 días medibles". The expected β is the backend's,
  * never derived here (UI-AGR-031); an anomaly attributed to no agreement has

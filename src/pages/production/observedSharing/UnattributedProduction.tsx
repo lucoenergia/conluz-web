@@ -4,6 +4,7 @@ import type { UnallocatedShareResponse } from "../../../api/models";
 import { colors } from "../../../theme/tokens";
 import {
   formatPercentageOrNone,
+  formatWindow,
   isImpossibleUnattributedShare,
   unattributedRemainder,
   type UnattributedRemainderKind,
@@ -18,8 +19,8 @@ const REMAINDER_MEANING: Record<UnattributedRemainderKind, string> = {
   rounding: "Dentro del margen de redondeo.",
 };
 
-const explanation = (days: number) =>
-  `Parte de la producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la aplicación de este acuerdo (${days} ${days === 1 ? "día medible" : "días medibles"} del periodo de aplicación del acuerdo).`;
+const explanation = ({ days, from, to }: UnallocatedShareResponse) =>
+  `Parte de la producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la aplicación de este acuerdo (${days} ${days === 1 ? "día medible" : "días medibles"} ${formatWindow(from, to)}).`;
 
 const lineSx = { color: colors.text.subtle, fontWeight: 400 } as const;
 
@@ -55,7 +56,7 @@ export const UnattributedProduction: FC<{ share: UnallocatedShareResponse | null
       {share && remainder && (
         <>
           <Typography variant="body2" sx={lineSx}>
-            {explanation(share.days)}
+            {explanation(share)}
           </Typography>
           {share.registeredShareWithoutData > 0 && (
             <Typography variant="body2" sx={lineSx}>

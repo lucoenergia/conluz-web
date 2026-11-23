@@ -43,6 +43,7 @@ import {
   formatBeta,
   formatDay,
   formatMeasurableDays,
+  formatWindow,
   formatObservedDate,
   formatRegisteredPeriod,
   NO_VALUE,
@@ -150,11 +151,31 @@ const FilterChips: FC<{
   </Box>
 );
 
-/** A stacked row's measurable days, left out for a row that cannot be observed (UI-AGR-042). */
-const measurableDaysField = (row: Parameters<typeof formatMeasurableDays>[0]): RecordField[] => {
+type MeasurableDaysRow = Parameters<typeof formatMeasurableDays>[0] & { windowFrom: string | null; windowTo: string | null };
+
+/**
+ * A row's measurable days, "N de M", with the days of its window under them
+ * when it has one; nothing for a row that cannot be observed (UI-AGR-042).
+ */
+const measurableDays = (row: MeasurableDaysRow): ReactNode => {
   const days = formatMeasurableDays(row);
-  return days === null ? [] : [{ label: "Días medibles de su periodo", value: days }];
+  if (days === null) return null;
+  const window = formatWindow(row.windowFrom, row.windowTo);
+  return (
+    <>
+      {days}
+      {window && (
+        <Typography component="span" variant="body2" sx={{ display: "block", color: colors.text.subtle }}>
+          {window}
+        </Typography>
+      )}
+    </>
+  );
 };
+
+/** A stacked row's measurable days, left out for a row that cannot be observed (UI-AGR-042). */
+const measurableDaysField = (row: MeasurableDaysRow): RecordField[] =>
+  formatMeasurableDays(row) === null ? [] : [{ label: "Días medibles de su periodo", value: measurableDays(row) }];
 
 const CoefficientRows: FC<{
   rows: CoefficientObservationResponse[];
@@ -215,7 +236,7 @@ const CoefficientRows: FC<{
             {
               key: "measurableDays",
               header: "Días medibles",
-              render: formatMeasurableDays,
+              render: measurableDays,
               width: "10%",
             },
             {
@@ -295,7 +316,7 @@ const LeavingRows: FC<{ rows: LeavingObservationResponse[] }> = ({ rows }) => {
             { key: "previous", header: "Acuerdo anterior", render: (row) => row.previousSharingAgreement.name, width: "13%" },
             { key: "previousBeta", header: "β anterior", render: (row) => formatBeta(row.previousCoefficient), width: "11%" },
             { key: "observedBeta", header: "β observada", render: (row) => formatBeta(row.observedBeta), width: "11%" },
-            { key: "measurableDays", header: "Días medibles", render: formatMeasurableDays, width: "10%" },
+            { key: "measurableDays", header: "Días medibles", render: measurableDays, width: "10%" },
             { key: "leaving", header: "Salida observada", render: leaving },
             { key: "end", header: "Fin registrado", render: registeredEnd, width: "11%" },
             { key: "status", header: "Estado", render: status, width: "16%" },

@@ -57,11 +57,11 @@ describe("ObservedSharingHelp", () => {
       ],
       [
         "Periodo de aplicación del acuerdo",
-        "desde la fecha en que Datadis lo ve aplicado en la mayoría de puntos hasta el día antes de que se aplique el siguiente acuerdo, o hasta el último dato disponible. La producción no atribuida se calcula sobre sus días medibles.",
+        "desde la fecha en que Datadis lo ve aplicado en la mayoría de puntos hasta el día antes de que se aplique el siguiente acuerdo, o hasta el último dato disponible. La producción no atribuida se calcula sobre sus días medibles. Sus fechas se muestran junto a los días medibles.",
       ],
       [
         "Periodo de cada punto",
-        "desde la fecha en que Datadis ve aplicado el coeficiente de ese punto hasta el final del periodo del acuerdo. Si el punto se ve aplicado antes que el resto, su periodo es más largo; si no tiene fecha observada, es el del acuerdo.",
+        "desde la fecha en que Datadis ve aplicado el coeficiente de ese punto hasta el final del periodo del acuerdo. Si el punto se ve aplicado antes que el resto, su periodo es más largo; si no tiene fecha observada, es el del acuerdo. Sus fechas se muestran junto a los días medibles.",
       ],
       [
         "Producción no atribuida (1 − Σβ)",

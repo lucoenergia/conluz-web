@@ -669,7 +669,7 @@ describe("SharingAgreementObservationPage", () => {
       expect(screen.getByText("Producción no atribuida")).toBeInTheDocument();
       expect(
         screen.getByText(
-          "Parte de la producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la aplicación de este acuerdo (422 días medibles del periodo de aplicación del acuerdo).",
+          "Parte de la producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la aplicación de este acuerdo (422 días medibles del 01/03/2025 al 26/04/2026).",
         ),
       ).toBeInTheDocument();
       expect(document.body.textContent).not.toMatch(/Σβ|sin explicar/i);
@@ -840,12 +840,12 @@ describe("SharingAgreementObservationPage", () => {
       }
     });
 
-    test("UI-AGR-040: the explanatory line says its days are those of the agreement's application period", async () => {
+    test("UI-AGR-040: the explanatory line says the dates of the agreement's application period", async () => {
       renderPage();
 
       await userEvent.setup().click(screen.getByRole("button", { name: /^Ver \d+ datos? más$/ }));
 
-      expect(screen.getByText(/días medibles del periodo de aplicación del acuerdo\)\.$/)).toBeInTheDocument();
+      expect(screen.getByText(/días medibles del 01\/03\/2025 al 26\/04\/2026\)\.$/)).toBeInTheDocument();
     });
   });
 });
