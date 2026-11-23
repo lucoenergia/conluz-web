@@ -549,4 +549,50 @@ describe("SharingAgreementObservationPage", () => {
 
     expect(await screen.findByRole("dialog", { name: "Cómo leer el reparto observado" })).toBeInTheDocument();
   });
+
+  describe("UI-AGR-039: an impossible unexplained share", () => {
+    const WARNING =
+      "Imposible: los puntos reciben más energía de la que produce la planta. Algún dato de Datadis es erróneo; revisa las anomalías con β observada muy alta.";
+
+    async function renderWithUnexplained(unallocated: number) {
+      const fixture = observationFixture();
+      renderPage({
+        observation: query.success<typeof getSharingAgreementObservation>({
+          ...fixture,
+          summary: { ...fixture.summary, unallocatedShare: { days: 200, unallocated, registeredShareWithoutData: 0.03 } },
+        }),
+      });
+      await userEvent.setup().click(screen.getByRole("button", { name: /^Ver \d+ datos? más$/ }));
+    }
+
+    const findingTitles = () =>
+      within(screen.getByRole("region", { name: "Qué revisar" }))
+        .getAllByRole("listitem")
+        .map((item) => item.firstElementChild?.nextElementSibling?.firstElementChild?.textContent);
+
+    test("UI-AGR-039: −47,48 % keeps its value, in the warning tone, with the warning under it and the finding first", async () => {
+      await renderWithUnexplained(-0.4748);
+
+      expect(declaredStyle(screen.getByText("-47,5 %")).color).toBe(colors.warning.main);
+      expect(screen.getByText(WARNING)).toBeInTheDocument();
+      expect(findingTitles()[0]).toBe("Reparto mayor que la producción");
+      expect(screen.getByText("Los puntos reciben un 47,5 % más de lo que produce la planta.")).toBeInTheDocument();
+    });
+
+    test("UI-AGR-039: −0,05 % is rounding: shown as it is, with no warning and no finding", async () => {
+      await renderWithUnexplained(-0.0005);
+
+      expect(declaredStyle(screen.getByText("-0,1 %")).color).toBeUndefined();
+      expect(screen.queryByText(WARNING)).not.toBeInTheDocument();
+      expect(findingTitles()).not.toContain("Reparto mayor que la producción");
+    });
+
+    test("UI-AGR-039: 5,74 % shows with no warning and no finding", async () => {
+      await renderWithUnexplained(0.0574);
+
+      expect(declaredStyle(screen.getByText("5,7 %")).color).toBeUndefined();
+      expect(screen.queryByText(WARNING)).not.toBeInTheDocument();
+      expect(findingTitles()).not.toContain("Reparto mayor que la producción");
+    });
+  });
 });

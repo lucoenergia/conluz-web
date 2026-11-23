@@ -115,4 +115,15 @@ describe("ObservedSharingHelp", () => {
 
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
+
+  test("UI-AGR-039: 'Sin explicar (1 − Σβ)' says a negative share means wrong data", async () => {
+    const { dialog } = await openHelp();
+
+    expect(entries(within(dialog).getByRole("region", { name: "Términos" }))).toContainEqual([
+      "Sin explicar (1 − Σβ)",
+      expect.stringContaining(
+        "Si es negativa, los datos son erróneos: los puntos no pueden recibir más de lo que produce la planta.",
+      ),
+    ]);
+  });
 });
