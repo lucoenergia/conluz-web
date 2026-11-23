@@ -252,7 +252,7 @@ describe("PlantObservedSharingPage", () => {
     const revised = findings("Reparto 2025");
     expect(revised.map((item) => item.textContent)).toEqual([
       "Fechas distintas de las registradas2 aplicados en otra fecha · 1 salida en otra fechaFijar fechas",
-      "2 anomalías1 coeficiente desconocido · 1 vuelve a un coeficiente anteriorVer anomalías",
+      "2 anomalías1 coeficiente no registrado · 1 vuelve a un coeficiente anteriorVer anomalías",
     ]);
     expect(within(revised[1]).getByRole("link", { name: "Ver anomalías" })).toHaveAttribute(
       "href",

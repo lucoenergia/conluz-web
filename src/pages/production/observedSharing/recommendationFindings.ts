@@ -25,7 +25,7 @@ const counted = (count: number, singular: string, plural: string) => `${count} $
 
 /** An anomaly type in a count: lowercase, agreeing with the number. */
 const ANOMALY_TYPE_COUNTED: Record<SharingAnomalyResponseType, [singular: string, plural: string]> = {
-  UNKNOWN_COEFFICIENT: ["coeficiente desconocido", "coeficientes desconocidos"],
+  UNKNOWN_COEFFICIENT: ["coeficiente no registrado", "coeficientes no registrados"],
   REVERTED: ["vuelve a un coeficiente anterior", "vuelven a un coeficiente anterior"],
   ENERGY_OUTSIDE_AGREEMENT: ["recibe energía fuera del acuerdo", "reciben energía fuera del acuerdo"],
   NO_ENERGY_IN_AGREEMENT: ["no recibe energía en el acuerdo", "no reciben energía en el acuerdo"],

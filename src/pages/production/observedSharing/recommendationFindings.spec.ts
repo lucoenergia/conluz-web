@@ -71,7 +71,7 @@ describe("recommendationFindings", () => {
     expect([one.title, one.detail]).toEqual(["1 anomalía", "1 vuelve a un coeficiente anterior"]);
     expect([many.title, many.detail]).toEqual([
       "10 anomalías",
-      "2 coeficientes desconocidos · 2 vuelven a un coeficiente anterior · 2 reciben energía fuera del acuerdo · " +
+      "2 coeficientes no registrados · 2 vuelven a un coeficiente anterior · 2 reciben energía fuera del acuerdo · " +
         "2 no reciben energía en el acuerdo · 2 aplicados antes del envío",
     ]);
     expect(many.link).toEqual({ label: "Ver anomalías", to: "/plants/plant-a/sharing-agreements/observed/agreement-a#anomalias" });
