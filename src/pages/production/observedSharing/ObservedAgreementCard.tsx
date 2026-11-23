@@ -13,13 +13,32 @@ import { recommendationFindings } from "./recommendationFindings";
 
 const sectionLabelSx = { color: colors.text.subtle, fontWeight: 600 } as const;
 
+/**
+ * A count before its label, in a column of tabular figures so the counts
+ * align. A zero reads in the secondary text colour, so the rows that hold
+ * something stand out (UI-AGR-023).
+ */
 const CountRow: FC<{ label: string; count: number }> = ({ label, count }) => (
-  <Box component="li" sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
-    <Typography variant="body2" sx={{ color: colors.text.body }}>
-      {label}
-    </Typography>
-    <Typography variant="body2" sx={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+  <Box
+    component="li"
+    sx={{ display: "flex", alignItems: "baseline", gap: 1, color: count === 0 ? "text.secondary" : colors.text.body }}
+  >
+    <Typography
+      component="span"
+      variant="body2"
+      sx={{
+        minWidth: "3ch",
+        flexShrink: 0,
+        textAlign: "right",
+        fontWeight: count === 0 ? 400 : 600,
+        fontVariantNumeric: "tabular-nums",
+        color: "inherit",
+      }}
+    >
       {count}
+    </Typography>{" "}
+    <Typography component="span" variant="body2" sx={{ color: "inherit" }}>
+      {label}
     </Typography>
   </Box>
 );

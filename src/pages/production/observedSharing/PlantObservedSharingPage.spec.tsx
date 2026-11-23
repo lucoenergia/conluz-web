@@ -194,14 +194,14 @@ describe("PlantObservedSharingPage", () => {
     const counts = within(revised).getAllByRole("listitem").map((item) => item.textContent);
     expect(counts).toEqual(
       expect.arrayContaining([
-        "Aplicado · misma fecha1",
-        "Aplicado · otra fecha2",
-        "Pendiente0",
-        "No distinguible0",
-        "Sin observar0",
-        "Sin datos de Datadis1",
-        "Coeficiente no registrado1",
-        "Vuelve a un coeficiente anterior1",
+        "1 Aplicado · misma fecha",
+        "2 Aplicado · otra fecha",
+        "0 Pendiente",
+        "0 No distinguible",
+        "0 Sin observar",
+        "1 Sin datos de Datadis",
+        "1 Coeficiente no registrado",
+        "1 Vuelve a un coeficiente anterior",
       ]),
     );
     expect(within(revised).getByText("Salen del reparto: 2 · 1 con fecha distinta")).toBeInTheDocument();
