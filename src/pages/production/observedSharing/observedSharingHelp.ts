@@ -12,6 +12,9 @@ export interface HelpTerm {
   parts?: string[];
 }
 
+/** The term the "Días medibles" column's header opens the help at (UI-AGR-042). */
+export const ROW_PERIOD_TERM = "Periodo de cada punto";
+
 /** The terms the view's figures rest on, in the order the help dialog lists them. */
 export const HELP_TERMS: HelpTerm[] = [
   { term: "β registrada", meaning: "el coeficiente guardado en el acuerdo." },
@@ -28,7 +31,17 @@ export const HELP_TERMS: HelpTerm[] = [
   {
     term: "Día medible",
     meaning:
-      "un día con datos completos del punto y de la planta en Datadis, en el que la planta produjo al menos 12 kWh (o 0,5 kWh por kWp si es más). Solo estos días se usan para comparar; no indica que el día sea correcto o incorrecto.",
+      "un día con datos completos del punto y de la planta en Datadis, en el que la planta produjo al menos 12 kWh (o 0,5 kWh por kWp si es más). Solo estos días se usan para comparar; no indica que el día sea correcto o incorrecto. Por eso un periodo tiene menos días medibles que días naturales: se descartan los días de poca producción (sobre todo en invierno) y los días sin datos completos.",
+  },
+  {
+    term: "Periodo de aplicación del acuerdo",
+    meaning:
+      "desde la fecha en que Datadis lo ve aplicado en la mayoría de puntos hasta el día antes de que se aplique el siguiente acuerdo, o hasta el último dato disponible. La producción no atribuida se calcula sobre sus días medibles.",
+  },
+  {
+    term: ROW_PERIOD_TERM,
+    meaning:
+      "desde la fecha en que Datadis ve aplicado el coeficiente de ese punto hasta el final del periodo del acuerdo. Si el punto se ve aplicado antes que el resto, su periodo es más largo; si no tiene fecha observada, es el del acuerdo.",
   },
   {
     term: "Producción no atribuida (1 − Σβ)",

@@ -622,7 +622,7 @@ describe("SharingAgreementObservationPage", () => {
       expect(screen.getByText("Producción no atribuida")).toBeInTheDocument();
       expect(
         screen.getByText(
-          "Parte de la producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la aplicación de este acuerdo (422 días medibles).",
+          "Parte de la producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la aplicación de este acuerdo (422 días medibles del periodo de aplicación del acuerdo).",
         ),
       ).toBeInTheDocument();
       expect(document.body.textContent).not.toMatch(/Σβ|sin explicar/i);
@@ -722,14 +722,14 @@ describe("SharingAgreementObservationPage", () => {
         const este = items.find((candidate) => candidate.textContent?.startsWith("Casa Este"))!;
         const norte = items.find((candidate) => candidate.textContent?.startsWith("Casa Norte"))!;
 
-        expect(within(este).queryByText("Días medibles")).not.toBeInTheDocument();
-        expect(within(norte).getByText("Días medibles")).toBeInTheDocument();
+        expect(within(este).queryByText("Días medibles de su periodo")).not.toBeInTheDocument();
+        expect(within(norte).getByText("Días medibles de su periodo")).toBeInTheDocument();
       } finally {
         Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
       }
     });
 
-    test("UI-AGR-042: on a phone, each stacked row shows its 'Días medibles'", () => {
+    test("UI-AGR-042: on a phone, each stacked row shows its 'Días medibles de su periodo'", () => {
       const width = window.innerWidth;
       Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
       try {
@@ -739,7 +739,7 @@ describe("SharingAgreementObservationPage", () => {
           const item = within(list)
             .getAllByRole("listitem")
             .find((candidate) => candidate.textContent?.startsWith(name));
-          expect(within(item!).getByText("Días medibles").nextElementSibling, name).toHaveTextContent(new RegExp(`^${days}$`));
+          expect(within(item!).getByText("Días medibles de su periodo").nextElementSibling, name).toHaveTextContent(new RegExp(`^${days}$`));
         }
       } finally {
         Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });

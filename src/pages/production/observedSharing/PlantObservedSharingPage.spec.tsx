@@ -584,7 +584,7 @@ describe("PlantObservedSharingPage", () => {
 
   describe("the unattributed production on a card", () => {
     const EXPLANATION =
-      "Parte de la producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la aplicación de este acuerdo (422 días medibles).";
+      "Parte de la producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la aplicación de este acuerdo (422 días medibles del periodo de aplicación del acuerdo).";
 
     function renderWithShare(
       unallocatedShare: { days: number; unallocated: number; registeredShareWithoutData: number },
@@ -618,7 +618,7 @@ describe("PlantObservedSharingPage", () => {
     test("UI-AGR-040: one measurable day is said in the singular", () => {
       const revised = renderWithShare({ days: 1, unallocated: 0.0303, registeredShareWithoutData: 0 });
 
-      expect(within(revised).getByText(/\(1 día medible\)\.$/)).toBeInTheDocument();
+      expect(within(revised).getByText(/\(1 día medible del periodo de aplicación del acuerdo\)\.$/)).toBeInTheDocument();
     });
 
     test("UI-AGR-040: the formula and the old name are nowhere on the page", () => {

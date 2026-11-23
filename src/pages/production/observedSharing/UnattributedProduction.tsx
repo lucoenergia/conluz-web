@@ -19,7 +19,7 @@ const REMAINDER_MEANING: Record<UnattributedRemainderKind, string> = {
 };
 
 const explanation = (days: number) =>
-  `Parte de la producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la aplicación de este acuerdo (${days} ${days === 1 ? "día medible" : "días medibles"}).`;
+  `Parte de la producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la aplicación de este acuerdo (${days} ${days === 1 ? "día medible" : "días medibles"} del periodo de aplicación del acuerdo).`;
 
 const lineSx = { color: colors.text.subtle, fontWeight: 400 } as const;
 

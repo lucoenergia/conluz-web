@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FC, type ReactNode } from "react";
-import { Box, Button, Chip, Link, Typography } from "@mui/material";
+import { Box, Button, Chip, IconButton, Link, Typography } from "@mui/material";
 import { Link as RouterLink, useLocation, useParams } from "react-router";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import {
   CoefficientObservationResponseStatus,
@@ -11,7 +12,7 @@ import {
 import { BreadCrumb } from "../../../components/Breadcrumb";
 import { DetailHeader } from "../../../components/DetailHeader";
 import { EmptyState } from "../../../components/EmptyState";
-import { ListTable } from "../../../components/ListTable";
+import { ListTable, ListTableHeaderText } from "../../../components/ListTable";
 import { LoadErrorAlert } from "../../../components/LoadErrorAlert";
 import { Notice } from "../../../components/Notice";
 import { RecordList, type RecordField } from "../../../components/RecordList";
@@ -28,7 +29,8 @@ import { ObservationNotComputable } from "./ObservationNotComputable";
 import { ObservationProgress } from "./ObservationProgress";
 import { filterObservationRows, type ObservationFilter } from "./observationFilter";
 import { ObservedAnomalies } from "./ObservedAnomalies";
-import { ObservedSharingHelp } from "./ObservedSharingHelp";
+import { ObservedSharingHelp, ObservedSharingHelpDialog } from "./ObservedSharingHelp";
+import { ROW_PERIOD_TERM } from "./observedSharingHelp";
 import {
   ANOMALY_TYPE_LABEL,
   COEFFICIENT_STATUS_LABEL,
@@ -150,17 +152,28 @@ const FilterChips: FC<{
   </Box>
 );
 
-/** A stacked row's "Días medibles", left out for a row that cannot be observed (UI-AGR-042). */
+/** A stacked row's measurable days, left out for a row that cannot be observed (UI-AGR-042). */
 const measurableDaysField = (row: Parameters<typeof formatMeasurableDays>[0]): RecordField[] => {
   const days = formatMeasurableDays(row);
-  return days === null ? [] : [{ label: "Días medibles", value: days }];
+  return days === null ? [] : [{ label: "Días medibles de su periodo", value: days }];
 };
+
+/** The "Días medibles" header, whose icon opens the help at the row's period (UI-AGR-042). */
+const MeasurableDaysHeader: FC<{ onExplain: () => void }> = ({ onExplain }) => (
+  <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+    <ListTableHeaderText>Días medibles</ListTableHeaderText>
+    <IconButton size="small" aria-label="Ayuda sobre los días medibles" onClick={onExplain} sx={{ color: colors.text.subtle }}>
+      <InfoOutlinedIcon aria-hidden sx={{ fontSize: 18 }} />
+    </IconButton>
+  </Box>
+);
 
 const CoefficientRows: FC<{
   rows: CoefficientObservationResponse[];
   anomalyLabelsBySupply: Map<string, string[]>;
   header: ReactNode;
-}> = ({ rows, anomalyLabelsBySupply, header }) => {
+  onExplainMeasurableDays: () => void;
+}> = ({ rows, anomalyLabelsBySupply, header, onExplainMeasurableDays }) => {
   const [showAll, setShowAll] = useState(false);
   const shown = showAll ? rows : rows.slice(0, INITIAL_ROWS);
   const anomalyLabels = (row: CoefficientObservationResponse) => anomalyLabelsBySupply.get(row.supply.id) ?? [];
@@ -214,7 +227,7 @@ const CoefficientRows: FC<{
             },
             {
               key: "measurableDays",
-              header: "Días medibles",
+              header: <MeasurableDaysHeader onExplain={onExplainMeasurableDays} />,
               render: formatMeasurableDays,
               width: "10%",
             },
@@ -249,7 +262,10 @@ const CoefficientRows: FC<{
   );
 };
 
-const LeavingRows: FC<{ rows: LeavingObservationResponse[] }> = ({ rows }) => {
+const LeavingRows: FC<{ rows: LeavingObservationResponse[]; onExplainMeasurableDays: () => void }> = ({
+  rows,
+  onExplainMeasurableDays,
+}) => {
   const status = (row: LeavingObservationResponse) => (
     <RowStatus label={LEAVING_STATUS_LABEL[row.status]} tone={STATUS_TONE[row.status]} anomalyLabels={[]} />
   );
@@ -295,7 +311,12 @@ const LeavingRows: FC<{ rows: LeavingObservationResponse[] }> = ({ rows }) => {
             { key: "previous", header: "Acuerdo anterior", render: (row) => row.previousSharingAgreement.name, width: "13%" },
             { key: "previousBeta", header: "β anterior", render: (row) => formatBeta(row.previousCoefficient), width: "11%" },
             { key: "observedBeta", header: "β observada", render: (row) => formatBeta(row.observedBeta), width: "11%" },
-            { key: "measurableDays", header: "Días medibles", render: formatMeasurableDays, width: "10%" },
+            {
+              key: "measurableDays",
+              header: <MeasurableDaysHeader onExplain={onExplainMeasurableDays} />,
+              render: formatMeasurableDays,
+              width: "10%",
+            },
             { key: "leaving", header: "Salida observada", render: leaving },
             { key: "end", header: "Fin registrado", render: registeredEnd, width: "11%" },
             { key: "status", header: "Estado", render: status, width: "16%" },
@@ -309,6 +330,8 @@ const LeavingRows: FC<{ rows: LeavingObservationResponse[] }> = ({ rows }) => {
 const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservationResponse }> = ({ plantId, observation }) => {
   const { summary } = observation;
   const [filter, setFilter] = useState<ObservationFilter>("all");
+  const [periodHelpOpen, setPeriodHelpOpen] = useState(false);
+  const explainMeasurableDays = () => setPeriodHelpOpen(true);
   const all = useMemo(() => filterObservationRows(observation, "all"), [observation]);
   const warnings = useMemo(() => filterObservationRows(observation, "warnings"), [observation]);
   const shown = filter === "all" ? all : warnings;
@@ -327,6 +350,11 @@ const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservat
 
   return (
     <>
+      <ObservedSharingHelpDialog
+        open={periodHelpOpen}
+        onClose={() => setPeriodHelpOpen(false)}
+        focusTerm={ROW_PERIOD_TERM}
+      />
       {findings.length > 0 && (
         <Box component="section" aria-labelledby="observation-recommendations" sx={sxStyles.pageContainer}>
           <Box sx={sxStyles.softPanel}>
@@ -348,6 +376,7 @@ const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservat
           rows={shown.coefficients}
           anomalyLabelsBySupply={anomalyLabelsBySupply}
           header={<FilterChips filter={filter} onChange={setFilter} counts={{ all: all.count, warnings: warnings.count }} />}
+          onExplainMeasurableDays={explainMeasurableDays}
         />
       </Box>
 
@@ -358,7 +387,7 @@ const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservat
             title={`Salen del reparto (${shown.leavingRows.length})`}
             description="Tenían coeficiente en el acuerdo anterior y no están en este. La salida observada es lo que muestra Datadis."
           />
-          <LeavingRows rows={shown.leavingRows} />
+          <LeavingRows rows={shown.leavingRows} onExplainMeasurableDays={explainMeasurableDays} />
         </Box>
       )}
 

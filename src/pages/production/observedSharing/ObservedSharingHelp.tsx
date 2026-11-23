@@ -1,4 +1,4 @@
-import { useId, useState, type FC } from "react";
+import { useCallback, useId, useState, type FC } from "react";
 import { Box, Button, Link, Typography } from "@mui/material";
 import { ResponsiveOverlay } from "../../../components/ResponsiveOverlay";
 import { colors } from "../../../theme/tokens";
@@ -24,8 +24,10 @@ const HELP_TITLE = "Cómo leer el reparto observado";
  * to follow its term ("β registrada: el coeficiente…"); set below it, its first
  * letter is shown upper case.
  */
-const HelpSection: FC<{ title: string; terms: HelpTerm[] }> = ({ title, terms }) => {
+const HelpSection: FC<{ title: string; terms: HelpTerm[]; focusTerm?: string }> = ({ title, terms, focusTerm }) => {
   const headingId = useId();
+  // Focused as it mounts, before the dialog's focus trap looks for focus, so it keeps it.
+  const focusOnMount = useCallback((element: HTMLDivElement | null) => element?.focus(), []);
   return (
     <Box component="section" aria-labelledby={headingId}>
       <Typography id={headingId} variant="subtitle1" component="h3" sx={{ fontWeight: 700, mb: 1 }}>
@@ -33,7 +35,10 @@ const HelpSection: FC<{ title: string; terms: HelpTerm[] }> = ({ title, terms })
       </Typography>
       <Box component="dl" sx={{ m: 0, display: "flex", flexDirection: "column", gap: 1.25 }}>
         {terms.map(({ term, meaning, parts }) => (
-          <div key={term}>
+          <Box
+            key={term}
+            {...(term === focusTerm && { ref: focusOnMount, tabIndex: -1, sx: { "&:focus": { outline: "none" } } })}
+          >
             <Typography component="dt" variant="body2" sx={{ fontWeight: 600 }}>
               {term}
             </Typography>
@@ -51,7 +56,7 @@ const HelpSection: FC<{ title: string; terms: HelpTerm[] }> = ({ title, terms })
                 </Box>
               )}
             </Typography>
-          </div>
+          </Box>
         ))}
       </Box>
     </Box>
@@ -65,48 +70,57 @@ const STATUSES = STATUS_COUNT_ORDER.map(({ status }) => status);
 const ANOMALY_TYPES = ANOMALY_COUNT_ORDER.map(({ type }) => type);
 
 /**
- * "¿Qué significa cada estado?" and the dialog it opens (UI-AGR-038): what the
- * view's terms, every coefficient and leaving status and every anomaly type
- * mean, with the labels the view shows them under.
+ * The help dialog (UI-AGR-038): what the view's terms, every coefficient and
+ * leaving status and every anomaly type mean, with the labels the view shows
+ * them under. Opened at a term, it takes focus there, so it is read first and
+ * scrolled into view.
  */
+export const ObservedSharingHelpDialog: FC<{ open: boolean; onClose: () => void; focusTerm?: string }> = ({
+  open,
+  onClose: close,
+  focusTerm,
+}) => (
+  <ResponsiveOverlay
+    open={open}
+    onClose={close}
+    title={HELP_TITLE}
+    size="form"
+    hideCloseIcon
+    actions={
+      <Button variant="contained" onClick={close}>
+        Cerrar
+      </Button>
+    }
+  >
+    <HelpSection title="Términos" terms={HELP_TERMS} focusTerm={focusTerm} />
+    <HelpSection
+      title="Estados de los coeficientes"
+      terms={STATUSES.map((status) => ({
+        term: COEFFICIENT_STATUS_LABEL[status],
+        meaning: COEFFICIENT_STATUS_MEANING[status],
+      }))}
+    />
+    <HelpSection
+      title="Estados de las salidas del reparto"
+      terms={STATUSES.map((status) => ({ term: LEAVING_STATUS_LABEL[status], meaning: LEAVING_STATUS_MEANING[status] }))}
+    />
+    <HelpSection
+      title="Anomalías"
+      terms={ANOMALY_TYPES.map((type) => ({ term: ANOMALY_TYPE_LABEL[type], meaning: ANOMALY_TYPE_MEANING[type] }))}
+    />
+  </ResponsiveOverlay>
+);
+
+/** "¿Qué significa cada estado?" and the help dialog it opens at the top (UI-AGR-038). */
 export const ObservedSharingHelp: FC = () => {
   const [open, setOpen] = useState(false);
-  const close = () => setOpen(false);
 
   return (
     <>
       <Link component="button" type="button" variant="body2" onClick={() => setOpen(true)} sx={{ textAlign: "left" }}>
         ¿Qué significa cada estado?
       </Link>
-      <ResponsiveOverlay
-        open={open}
-        onClose={close}
-        title={HELP_TITLE}
-        size="form"
-        hideCloseIcon
-        actions={
-          <Button variant="contained" onClick={close}>
-            Cerrar
-          </Button>
-        }
-      >
-        <HelpSection title="Términos" terms={HELP_TERMS} />
-        <HelpSection
-          title="Estados de los coeficientes"
-          terms={STATUSES.map((status) => ({
-            term: COEFFICIENT_STATUS_LABEL[status],
-            meaning: COEFFICIENT_STATUS_MEANING[status],
-          }))}
-        />
-        <HelpSection
-          title="Estados de las salidas del reparto"
-          terms={STATUSES.map((status) => ({ term: LEAVING_STATUS_LABEL[status], meaning: LEAVING_STATUS_MEANING[status] }))}
-        />
-        <HelpSection
-          title="Anomalías"
-          terms={ANOMALY_TYPES.map((type) => ({ term: ANOMALY_TYPE_LABEL[type], meaning: ANOMALY_TYPE_MEANING[type] }))}
-        />
-      </ResponsiveOverlay>
+      <ObservedSharingHelpDialog open={open} onClose={() => setOpen(false)} />
     </>
   );
 };
