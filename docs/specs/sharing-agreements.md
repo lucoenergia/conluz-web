@@ -552,8 +552,7 @@ is in force today.
   means a status the backend adds cannot reach the view unexplained. One entry point, named as the
   dialog: the help explains every term of the page, so a second way in to one of its entries adds a
   control without adding an answer. The measurable days of a figure only make sense with the period
-  they come from; the view states no window dates until the backend reports them
-  (lucoenergia/conluz#618).
+  they come from; both periods say their dates are shown beside the measurable days.
 - **Implements:** n/a
 - **Source:** #419
 
@@ -588,14 +587,16 @@ is in force today.
   observed sharing and in the agreement page's header details, MUST be labelled "Producción no
   atribuida". When the analysis gives it, an always-visible line MUST follow the value: "Parte de la
   producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la
-  aplicación de este acuerdo (N días medibles del periodo de aplicación del acuerdo).", N being
-  the share's days ("1 día medible del periodo de aplicación del acuerdo" for one). When the analysis gives none, the value MUST read "—" with nothing under it. The formula,
-  1 − Σβ or Σβ alone, MUST appear only in the help dialog.
+  aplicación de este acuerdo (N días medibles del D1 al D2).", N being the share's `days` and D1
+  and D2 its `from` and `to` as DD/MM/AAAA ("1 día medible del D1 al D2" for one); the view MUST
+  NOT compute either date. When the analysis gives none, the value MUST read "—" with nothing under
+  it. The formula, 1 − Σβ or Σβ alone, MUST appear only in the help dialog.
 - **Rationale:** Admins understood neither the figure nor where it came from: the label was a
   formula. A name in words and a sentence beside the value say what it is where it is read; the
-  formula stays in the help, for those who want it.
+  formula stays in the help, for those who want it. The days are only checkable against the period
+  they were counted over.
 - **Implements:** n/a
-- **Source:** #419
+- **Source:** #419; the dates: lucoenergia/conluz#618
 
 ### UI-AGR-041 — The unattributed production is broken down into its two parts
 
@@ -622,17 +623,21 @@ is in force today.
 - **Status:** Active
 - **Rule:** The agreement's coefficient rows and leaving rows MUST show "Días medibles", a column
   in each table and a field in each stacked row on a phone, not sortable. It MUST read "N de M", N
-  being the row's `observedValidDays` and M its `windowDays`. The view MUST NOT use the agreement's
-  measurable days (the unattributed production's) as M. A NOT_OBSERVABLE row MUST show no
-  measurable days: an empty cell, and no field in its stacked row. On a phone the field MUST be
-  labelled "Días medibles de su periodo". The view MUST NOT compute a window's dates.
+  being the row's `observedValidDays` and M its `windowDays`, followed, on a line of its own, by
+  "del D1 al D2", the row's `windowFrom` and `windowTo`, in the table and in the stacked row. A row
+  whose window dates are null (windowDays 0) MUST show "N de M" with no interval. The view MUST NOT
+  use the agreement's measurable days (the unattributed production's) as M. A NOT_OBSERVABLE row
+  MUST show no measurable days, interval included: an empty cell, and no field in its stacked row.
+  On a phone the field MUST be labelled "Días medibles de su periodo". The view MUST NOT compute a
+  window's dates.
 - **Rationale:** A row's measurable days run from its own observed date to the end of the
   agreement's applied window, so a row observed before that window counts more days than the
   window has: rows observed "on or before 01/09/2025" had 426 against 335. Only the row's own
   window, which the backend returns, is a denominator for it. A row of the plant's own supply
   cannot be observed, so it has no days to show.
 - **Implements:** n/a
-- **Source:** #419; `windowDays`: lucoenergia/conluz#611; the stacked label: #419
+- **Source:** #419; `windowDays`: lucoenergia/conluz#611; the stacked label: #419;
+  `windowFrom`/`windowTo`: lucoenergia/conluz#618
 
 ## States
 
