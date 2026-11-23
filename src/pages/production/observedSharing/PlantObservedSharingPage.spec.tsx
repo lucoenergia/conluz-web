@@ -6,6 +6,8 @@ import { Route, Routes } from "react-router";
 import { renderWithProviders } from "../../../test/renderWithProviders";
 import { query } from "../../../test/queryState";
 import { apiError } from "../../../test/apiError";
+import { declaredStyle } from "../../../test/declaredStyle";
+import { colors } from "../../../theme/tokens";
 import { useGetPlantById, type getPlantById } from "../../../api/plants/plants";
 import {
   useGetPlantSharingObservation,
@@ -367,7 +369,7 @@ describe("PlantObservedSharingPage", () => {
     expect(within(sur[1]).getByRole("row", { name: /No recibe energía en el acuerdo/, hidden: true })).toBeInTheDocument();
   });
 
-  test("UI-AGR-028: supplies without data are named in the notice, and not computable ones say only 'No calculable'", () => {
+  test("UI-AGR-028: supplies without data are named in the notice, and each not computable row says only 'No calculable'", () => {
     renderPage();
 
     expect(screen.getByRole("note")).toHaveTextContent(
@@ -465,5 +467,47 @@ describe("PlantObservedSharingPage", () => {
       PLANT_ID,
       expect.objectContaining({ query: expect.objectContaining({ enabled: false }) }),
     );
+  });
+
+  test("UI-AGR-023: each count comes before its label, in tabular figures, and a zero one reads in the secondary text colour", () => {
+    renderPage();
+    const items = within(card("Reparto 2025")).getAllByRole("listitem");
+    const item = (label: string) => items.find((element) => element.textContent?.endsWith(` ${label}`))!;
+
+    for (const label of ["Aplicado · otra fecha", "Pendiente", "Vuelve a un coeficiente anterior"]) {
+      const count = item(label).firstElementChild!;
+      expect(count.textContent).toMatch(/^\d+$/);
+      expect(declaredStyle(count)["font-variant-numeric"]).toBe("tabular-nums");
+    }
+    expect(declaredStyle(item("Pendiente")).color).toBe(colors.text.secondary);
+    expect(declaredStyle(item("Aplicado · otra fecha")).color).toBe(colors.text.body);
+    expect(declaredStyle(item("Vuelve a un coeficiente anterior")).color).toBe(colors.text.body);
+  });
+
+  test("UI-AGR-024: no text speaks of valid days: the days a figure rests on are measurable", () => {
+    renderPage();
+
+    expect(document.body.textContent).not.toMatch(/válid/i);
+    expect(screen.getAllByText(/días? medibles?\.$/).length).toBeGreaterThan(0);
+  });
+
+  test("UI-AGR-028: 'No calculables' says once, under its title, why its supplies are left out", () => {
+    renderPage();
+    const notComputable = screen.getByRole("region", { name: "No calculables" });
+
+    expect(
+      within(notComputable).getByText(
+        "Tienen coeficiente en esta planta y en otra. Datadis da su energía total y no se puede separar la parte de cada planta, así que quedan fuera del análisis y de Σβ.",
+      ),
+    ).toBeInTheDocument();
+    expect(within(notComputable).getByRole("row", { name: /Taller/ })).toHaveTextContent(`Taller${TALLER.code}No calculable`);
+  });
+
+  test("UI-AGR-038: the header offers '¿Qué significa cada estado?', which opens the help", async () => {
+    renderPage();
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "¿Qué significa cada estado?" }));
+
+    expect(await screen.findByRole("dialog", { name: "Cómo leer el reparto observado" })).toBeInTheDocument();
   });
 });

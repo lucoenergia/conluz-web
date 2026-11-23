@@ -520,4 +520,33 @@ describe("SharingAgreementObservationPage", () => {
     expect(screen.getByText("Calculando el reparto observado…")).toBeInTheDocument();
     expect(screen.queryByText("Fichero enviado")).not.toBeInTheDocument();
   });
+
+  test("UI-AGR-026: β is feminine: the coefficient and leaving columns read 'β registrada', 'β observada' and 'β anterior'", () => {
+    renderPage();
+    const headers = (section: HTMLElement) =>
+      within(section)
+        .getAllByRole("columnheader")
+        .map((header) => header.textContent)
+        .filter((text) => text?.startsWith("β"));
+
+    expect(headers(suppliesSection())).toEqual(["β registrada", "β observada"]);
+    expect(headers(leavingSection())).toEqual(["β anterior", "β observada"]);
+    expect(document.body.textContent).not.toMatch(/β (registrado|observado)|el β/);
+  });
+
+  test("UI-AGR-024: an anomaly's evidence is its observed β and the measurable days it rests on", () => {
+    renderPage();
+    const anomalies = screen.getByRole("region", { name: /^Anomalías de este acuerdo/ });
+
+    expect(within(anomalies).getByText("β observada 4,1200 % en 21 días medibles.")).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/válid|Recibe \d/i);
+  });
+
+  test("UI-AGR-038: the header offers '¿Qué significa cada estado?', which opens the help", async () => {
+    renderPage();
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "¿Qué significa cada estado?" }));
+
+    expect(await screen.findByRole("dialog", { name: "Cómo leer el reparto observado" })).toBeInTheDocument();
+  });
 });
