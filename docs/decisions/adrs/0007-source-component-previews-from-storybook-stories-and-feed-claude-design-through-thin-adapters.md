@@ -1,6 +1,6 @@
 # ADR-0007 - Source component previews from Storybook stories and feed Claude Design through thin adapters
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-23
 - **Deciders:** Víctor Cañizares Mata
 - **Applies to:** `lucoenergia/conluz-web`: the component catalogue (`.storybook/`, `src/**/*.stories.tsx`) and the Claude Design inputs in `.design-sync/`
@@ -123,22 +123,20 @@ D4 planned to move `ConluzProvider` and `primitives` to a location shared by Sto
 - **Args:** the meta's `args` under the story's `args`, merged shallowly (a story key replaces the meta key).
 - **Rendering:** the story's `render(args, context)`; without one, the meta's `render`; without either, `createElement(meta.component, args)`.
 - **Decorators:** the story's `decorators` inside the meta's `decorators`. Within each array, the first entry is innermost, as in Storybook. Each decorator is called as `decorator(Story, context)`.
-- **Context:** `context` holds `args` and `parameters`, nothing else. `parameters` holds the adapter's capture overrides only, never the story's or the meta's own.
+- **Context:** `context` holds `args` and `parameters`, nothing else; any other field (`id`, `name`, `viewMode`, `loaded`) is undefined. `parameters` holds the adapter's capture overrides only, never the story's or the meta's own.
 - **Provider:** `ConluzProvider` comes from the sync's card harness, not from a decorator.
 
 The spike's helper (`5da34738`) did not support the story's decorators or the meta's `render`; the migration's helper adds both.
 
-Stories that feed an adapter must not use any other feature, because the helper ignores it silently and the Claude Design card renders differently from Storybook. Unsupported:
+Stories that feed an adapter must not use any other feature, because the helper ignores it silently and the Claude Design card renders differently from Storybook. Forbidden:
 
-- `loaders`, and the `loaded` context they fill;
-- `play`, `beforeEach`, `beforeAll` and `mount`;
-- the story's or the meta's `parameters`, read from a `render` or decorator (only the adapter's overrides reach `context.parameters`);
-- `argTypes`, including their defaults and their `mapping`;
-- `globals`, and any other context field (`id`, `name`, `viewMode`, `globals`, `loaded`);
-- project-level annotations in `.storybook/preview.tsx` other than the provider: its decorators, parameters, args, argTypes and loaders;
-- any value imported from `storybook/*` or `@storybook/*` (`fn`, `expect`, `userEvent` from `storybook/test`), since the sync replaces it with a stub. Type-only imports (`Meta`, `StoryObj`) are fine.
+- `loaders`, `play`, `beforeEach`, `beforeAll` or `mount`;
+- any story-level or meta-level `parameters`. Only the adapter's overrides reach `context.parameters`. A parameter nothing reads would be harmless, but whether a `render` or decorator reads one cannot be told reliably from the source, so none is allowed;
+- `argTypes` (including their defaults and `mapping`) or `globals`;
+- project-level annotations in `.storybook/preview.tsx` other than the provider decorator: no other decorators, and no parameters, args, argTypes, globals or loaders;
+- values imported from `storybook/*` or `@storybook/*` (`fn`, `expect`, `userEvent` from `storybook/test`), since the sync replaces them with a stub. Type-only imports (`Meta`, `StoryObj`) are allowed.
 
-The migration adds a check that fails when a story module feeding an adapter uses any of these.
+The migration adds a check that enforces exactly this list. It fails when a story module feeding an adapter uses any of the story-level or meta-level items, or when `.storybook/preview.tsx` declares anything besides the provider decorator.
 
 ## What the sync behaviours mean
 
@@ -171,7 +169,7 @@ The migration adds a check that fails when a story module feeding an adapter use
 - Every story module needs an adapter file in `.design-sync/previews/`. A story without one is not synced. The migration must add a check that pairs them, as `designSystemSync.spec.ts` pairs components with exports today.
 - **Adapters and stories must not lose `extraEntries: ["@mui/material"]`.** Removing it, or a story importing MUI some other way, silently publishes unthemed previews. No check catches this today.
 - The compose helper re-implements part of what `composeStories` does. Stories that feed an adapter are limited to the features listed in Decision 5, and the check the migration adds is what keeps them there.
-- The chart adapter renders a source copy of `EvolutionCharts.tsx`, not the shipped component, because the file is not named after the component it exports. A `storyImports.shim` entry in `config.json` would send it to the bundle; the migration decides.
+- The chart adapter renders a source copy of `EvolutionCharts.tsx`, not the shipped component, because the file is not named after the component it exports. The migration renames the file to `EnergyEvolutionChart.tsx`, so the preview resolves the chart from the bundle with no `storyImports.shim` entry.
 - `.design-sync/` cannot be removed: `pkg/`, `previews/` (as adapters) and `config.json` stay.
 - The colocated stories are now matched by `NOT_COMPONENT_FILES` in `src/contracts/designSystemSync.spec.ts`. Without that, the contract test reads every story as an unclassified component.
 
