@@ -450,7 +450,12 @@ is in force today.
   another day, "Registrada D · Observada D'. Márcalo para corregirla."; a dated row with a proposed
   date, on any day, "Registrada D · Propuesta D'. Márcalo para usarla."; the plant's own supply
   (NOT_OBSERVABLE), "Punto de la planta: Datadis no permite observar su fecha. Normalmente es la
-  misma que la del resto del acuerdo; márcalo y ponla a mano."; any other row, "Sin cambios".
+  misma que la del resto del acuerdo; márcalo y ponla a mano."; a NOT_OBSERVED row, in the warning
+  tone and still while marked, "Datadis nunca muestra este coeficiente aplicado (recibe un X %).
+  Compruébalo en el reparto observado antes de fijar una fecha.", X its `observedBeta` in % with 4
+  decimals and the parenthesis left out when the analysis gave none, with "Ver en el reparto
+  observado" linking to the agreement's observation; a NO_DATA row, "Sin datos de Datadis: no se
+  puede comprobar. Pon la fecha a mano si la conoces."; any other row, "Sin cambios".
   A date edited away from the one it was prefilled with MUST show that one beside it. A leaving
   supply observed leaving on an exact day MUST start with that day as its closing date, marked
   "Observada"; one observed on a range or open date MUST start without one, with its hint.
@@ -459,7 +464,8 @@ is in force today.
   Changing a stored date rewrites a period production was attributed by, so it is never preselected.
   "Sin cambios" on every unselected row left the admin unable to tell a row waiting for a date from
   a correct one. A proposed date is no evidence, so it never confirms a stored date. A greyed
-  observed date in a disabled field read as a value already set.
+  observed date in a disabled field read as a value already set. A NOT_OBSERVED coefficient may
+  never have been applied by the distributor, and a date set over it would hide that.
 - **Implements:** n/a
 - **Source:** #419; the unselected rows' reasons: #419 review
 
