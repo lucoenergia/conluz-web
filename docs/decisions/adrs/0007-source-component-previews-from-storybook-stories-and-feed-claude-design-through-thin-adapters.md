@@ -34,7 +34,16 @@ Storybook 10.6.6 (`storybook`, `@storybook/react-vite`, pinned) was added with `
 - `Layout/RecordList`;
 - `Charts/EnergyEvolutionChart`.
 
-The issue named `SupplyCard` inside `CardGrid` and `GraphBar`. Both had been deleted (#364, #408), so `RecordList` and `EnergyEvolutionChart` replaced them. The `CardGrid` fade-in workaround was therefore not tested. `EnergyEvolutionChart` still covers the CommonJS chart library (`react-apexcharts`).
+The issue named `SupplyCard` inside `CardGrid` and `GraphBar`. Both had been deleted (#364, #408), so `RecordList` and `EnergyEvolutionChart` replaced them. The `CardGrid` fade-in workaround was therefore not tested.
+
+`EnergyEvolutionChart` does render through `react-apexcharts`, a CommonJS-only package (`src/components/evolution/EvolutionCharts.tsx` imports it), so the spike exercised the sync's CommonJS shim:
+- In Storybook, Vite unwraps the CommonJS default export.
+- In the sync's adapter preview, `.design-sync/pkg/tsconfig.bundle.json` points `react-apexcharts` at `.design-sync/pkg/shims/react-apexcharts.ts`, and the preview bundler applies the same paths.
+- A local rebuild on 2026-11-23 confirmed it: the compiled `_preview/EnergyEvolutionChart.js` (899 KB) contains the shim module.
+- `EvolutionCharts.tsx` is not named after an exported component, so the preview bundled its own source copy of the chart rather than using the shipped one. It rendered correctly.
+- The native route's compiled preview was not inspected for the shim.
+
+During the trial syncs the `MenuTemplate` story carried the capture's 300 ms open delay as `parameters.designSync`, and the adapter passed the same value. Under the chosen route the delay belongs in the `MenuTemplate` adapter only (D2 in #439), so the story now opens the menu at once, with no Claude Design–specific logic.
 
 #439 fixes the acceptance criteria for each route (decision D1):
 
@@ -79,13 +88,13 @@ D1 rules the native route out on criterion (a) alone, and the adapter route meet
 
 | Route | Criterion | Result | Evidence |
 |---|---|---|---|
-| Native | (a) official documentation | **Fail** | None of these mentions Storybook as an input: [Set up your design system in Claude Design](https://support.claude.com/en/articles/14604397-set-up-your-design-system-in-claude-design) (`/design-sync` "reads your tokens and components directly" from a React design system), [Get started with Claude Design](https://support.claude.com/en/articles/14604416-get-started-with-claude-design), [Claude Design stays on brand](https://claude.com/resources/articles/claude-design-stays-on-brand-for-daily-work), and [Commands](https://code.claude.com/docs/en/commands) (`/design-sync` converts "your repo's React design system"). Only about 70 % of the Commands page was checked word for word. |
+| Native | (a) official documentation | **Fail** | None of these mentions Storybook as an input: [Set up your design system in Claude Design](https://support.claude.com/en/articles/14604397-set-up-your-design-system-in-claude-design) (`/design-sync` "reads your tokens and components directly" from a React design system), [Get started with Claude Design](https://support.claude.com/en/articles/14604416-get-started-with-claude-design), [Claude Design stays on brand](https://claude.com/resources/articles/claude-design-stays-on-brand-for-daily-work), [Commands](https://code.claude.com/docs/en/commands) (`/design-sync` converts "your repo's React design system"; the whole page, 56,822 characters through "See also", was searched on 2026-11-23 and contains no "Storybook" in any case), and [Move from standalone Claude Design to Claude](https://support.claude.com/en/articles/17440474-migrate-from-standalone-claude-design-to-claude), which the Commands page links. |
 | Native | (b) every component themed | Pass, with `extraEntries: ["@mui/material"]` | The maintainer's sync. Without the setting, the story-local MUI rendered unthemed (avatars in MUI's default blue). |
 | Native | (c) dialog and menu captured open | Pass, checked by hand | `ConfirmationModal` could not be checked by the sync's comparison. That comparison waits for content inside `#storybook-root`, and the dialog renders into `document.body` through a portal. The maintainer compared the Storybook page with the preview by hand. The `MenuTemplate` menu is captured open, but the reference shot clips it at the root's bounds. |
-| Native | (d) one documented exception per component | Pass | `ConfirmationModal`: the hand comparison above. `MenuTemplate`: `parameters.designSync.openDelayMs`, read by the story's own render. |
+| Native | (d) one documented exception per component | Pass | `ConfirmationModal`: the hand comparison above. `MenuTemplate`: `parameters.designSync.openDelayMs`, read by the story's own render during the trial. |
 | Adapters | (b) every component themed | Pass, with `extraEntries: ["@mui/material"]` | The maintainer checked every story of the five adapters: Conluz indigo, Inter, complete renders. |
 | Adapters | (c) dialog and menu captured open | Pass | Both adapters are graded like any other preview on this route. The portal problem of the native route does not arise. |
-| Adapters | (d) one documented exception per component | Pass | `MenuTemplate` only: the adapter passes `openDelayMs: 300`, with a one-line comment. Opened at once, the menu lands about 120 px below its trigger. |
+| Adapters | (d) one documented exception per component | Pass | `MenuTemplate` only: the 300 ms open delay, which lives in its adapter with a one-line comment. Opened at once, the menu lands about 120 px below its trigger in the capture. |
 | Adapters | Single MUI instance | Pass, with `extraEntries: ["@mui/material"]`; **fail** without it | Without the setting: local build measurements, 240 to 383 KB per adapter, `#1976d2` avatars, Roboto. With it, the stories' MUI imports resolve to the themed copy in `window.ConluzWeb`. |
 
 All 101 components uploaded on the adapter route with no broken render. The only warning was `RouteFallback`, which renders just a spinner, as `NOTES.md` expects.
@@ -100,12 +109,36 @@ The adapters and `"extraEntries": ["@mui/material"]` in `.design-sync/config.jso
 
 ### 4. Final locations (D4 in #439)
 
-D4 planned to move `ConluzProvider` and `primitives` to a location shared by Storybook and the sync, and to turn the fixture data into typed shared fixtures. The spike confirms part of this and corrects part:
+D4 planned to move `ConluzProvider` and `primitives` to a location shared by Storybook and the sync, and to turn the fixture data into typed shared fixtures. The spike confirms this, and settles which folder stays:
 
-- **`ConluzProvider` and `primitives` stay in `.design-sync/pkg/`.** `.storybook/preview.tsx` imports `ConluzProvider` in place, and on the adapter route `pkg/` stays the bundle's entry. A move is not needed for either consumer. D4 is corrected.
-- **`.design-sync/previews/` stays, holding only adapters** (one per story module). The compose helper they share moves into one module in that folder rather than being repeated in each file. It was repeated in the spike, so whether the sync's preview discovery accepts a non-component module there was not tested. The migration checks it first.
+- **`ConluzProvider` and `primitives` move out of `.design-sync/`** during the migration, to a module under `src/`. Storybook is the vendor-neutral source and must not depend on the Claude Design sync folder; `.design-sync/pkg/index.ts` re-exports them from there, so the bundle's entry does not change. They stay where they are until then: `.storybook/preview.tsx` imports `ConluzProvider` from `.design-sync/pkg/` today, which the spike showed works, but that import is temporary.
+- **`.design-sync/previews/` stays, holding only adapters** (one per story module), generated by a script committed to the repo from one template and a per-component list of capture overrides. The compose helper they share moves into one module in that folder rather than being repeated in each file. It was repeated in the spike, so whether the sync's preview discovery accepts a non-component module there was not tested. The migration checks it first.
 - **`config.json`, `NOTES.md` and `conventions.md` stay.** `config.json` keeps `docsMap`, `overrides` and `projectId`, and gains `extraEntries`.
 - **Fixtures.** The spike's stories carry their data inline, typed against `src/api/models` where an API type exists (`EnergyEvolutionChart`). Where shared typed fixtures should live was not tested, so the migration decides it. Confirmed only as a direction.
+
+### 5. Adapters compose stories by hand, so stories that feed one use a subset of Storybook
+
+`composeStories` cannot run in a sync bundle: the sync replaces every `@storybook/*` and `storybook/*` import with an inert stub (rule 4 above). The shared compose helper therefore re-implements part of Storybook's story composition. Exactly these features are supported:
+
+- **Args:** the meta's `args` under the story's `args`, merged shallowly (a story key replaces the meta key).
+- **Rendering:** the story's `render(args, context)`; without one, the meta's `render`; without either, `createElement(meta.component, args)`.
+- **Decorators:** the story's `decorators` inside the meta's `decorators`. Within each array, the first entry is innermost, as in Storybook. Each decorator is called as `decorator(Story, context)`.
+- **Context:** `context` holds `args` and `parameters`, nothing else. `parameters` holds the adapter's capture overrides only, never the story's or the meta's own.
+- **Provider:** `ConluzProvider` comes from the sync's card harness, not from a decorator.
+
+The spike's helper (`5da34738`) did not support the story's decorators or the meta's `render`; the migration's helper adds both.
+
+Stories that feed an adapter must not use any other feature, because the helper ignores it silently and the Claude Design card renders differently from Storybook. Unsupported:
+
+- `loaders`, and the `loaded` context they fill;
+- `play`, `beforeEach`, `beforeAll` and `mount`;
+- the story's or the meta's `parameters`, read from a `render` or decorator (only the adapter's overrides reach `context.parameters`);
+- `argTypes`, including their defaults and their `mapping`;
+- `globals`, and any other context field (`id`, `name`, `viewMode`, `globals`, `loaded`);
+- project-level annotations in `.storybook/preview.tsx` other than the provider: its decorators, parameters, args, argTypes and loaders;
+- any value imported from `storybook/*` or `@storybook/*` (`fn`, `expect`, `userEvent` from `storybook/test`), since the sync replaces it with a stub. Type-only imports (`Meta`, `StoryObj`) are fine.
+
+The migration adds a check that fails when a story module feeding an adapter uses any of these.
 
 ## What the sync behaviours mean
 
@@ -115,9 +148,7 @@ D4 planned to move `ConluzProvider` and `primitives` to a location shared by Sto
 
 ## Alternatives considered
 
-**The native route.** `/design-sync` builds Storybook and reads its `index.json`, so stories would need no adapters at all. It was rejected on criterion (a): no official Anthropic documentation describes Storybook input, so the route rests on an undocumented tool behaviour, after an unannounced change (2026-11-13) has already blocked syncing once. The trial sync also showed two costs the criteria do not name:
-- it published **only components with a story**: 5 cards, not 94. The other previews were dropped as stale. The design system would shrink until every component had a story, so the migration could not land in steps;
-- portal-rendered stories cannot be verified by its comparison, so every dialog would need a hand check.
+**The native route.** `/design-sync` builds Storybook and reads its `index.json`, so stories would need no adapters at all. It was rejected on criterion (a) alone: no official Anthropic documentation describes Storybook input, so the route rests on an undocumented tool behaviour, after an unannounced change (2026-11-13) has already blocked syncing once. It met (b), (c) and (d) in the trial sync.
 
 **Keep `.design-sync/` only.** This is zero work, and the previews keep working. It was rejected because it leaves contributors without a catalogue, and keeps every preview's value tied to one vendor's tooling.
 
@@ -139,7 +170,8 @@ D4 planned to move `ConluzProvider` and `primitives` to a location shared by Sto
 
 - Every story module needs an adapter file in `.design-sync/previews/`. A story without one is not synced. The migration must add a check that pairs them, as `designSystemSync.spec.ts` pairs components with exports today.
 - **Adapters and stories must not lose `extraEntries: ["@mui/material"]`.** Removing it, or a story importing MUI some other way, silently publishes unthemed previews. No check catches this today.
-- The compose helper re-implements part of what `composeStories` does (meta args, render, decorators). It ignores loaders, `beforeEach` and global decorators. A story that relies on any of these renders differently in Claude Design.
+- The compose helper re-implements part of what `composeStories` does. Stories that feed an adapter are limited to the features listed in Decision 5, and the check the migration adds is what keeps them there.
+- The chart adapter renders a source copy of `EvolutionCharts.tsx`, not the shipped component, because the file is not named after the component it exports. A `storyImports.shim` entry in `config.json` would send it to the bundle; the migration decides.
 - `.design-sync/` cannot be removed: `pkg/`, `previews/` (as adapters) and `config.json` stay.
 - The colocated stories are now matched by `NOT_COMPONENT_FILES` in `src/contracts/designSystemSync.spec.ts`. Without that, the contract test reads every story as an unclassified component.
 
@@ -150,7 +182,7 @@ D4 planned to move `ConluzProvider` and `primitives` to a location shared by Sto
 
 ## Revisit if
 
-- Anthropic's official documentation describes Storybook as an input to `/design-sync` or its successor. Then try the native route again, provided it can also sync components without a story, or every component has one.
+- Anthropic's official documentation describes Storybook as an input to `/design-sync` or its successor. Then evaluate the native route again against criteria (b) to (d).
 - The sync tooling changes how preview imports resolve (rules 1 to 4 above), stops supporting `extraEntries`, or starts honouring `composeStories`.
 - Claude Design is dropped. The adapters and `.design-sync/` can then be deleted, and the stories stay.
 
