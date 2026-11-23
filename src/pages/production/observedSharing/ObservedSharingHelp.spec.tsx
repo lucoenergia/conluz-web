@@ -44,6 +44,10 @@ describe("ObservedSharingHelp", () => {
     expect(entries(within(dialog).getByRole("region", { name: "Términos" }))).toEqual([
       ["β registrada", "el coeficiente guardado en el acuerdo."],
       [
+        "β esperada",
+        "el coeficiente registrado del punto en el acuerdo al que se atribuye la anomalía (0 si no tiene coeficiente en él).",
+      ],
+      [
         "β observada",
         "la parte de la producción de la planta que el punto recibió según Datadis, como mediana de sus días medibles.",
       ],

@@ -444,7 +444,7 @@ describe("SharingAgreementObservationPage", () => {
     const region = within(section).getByRole("region", { name: /^Taller/ });
     expect(within(section).getByRole("button", { name: /Taller/ })).toHaveAttribute("aria-controls", region.id);
     expect(within(section).getByRole("row", { name: /Vuelve a un coeficiente anterior/ })).toHaveTextContent(
-      "Vuelve a un coeficiente anterior01/05/2025en cursoβ observada 4,1200 % en 21 días medibles.",
+      "Vuelve a un coeficiente anterior01/05/2025en cursoβ observada 4,1200 % · 21 días medibles",
     );
   });
 
@@ -538,7 +538,7 @@ describe("SharingAgreementObservationPage", () => {
     renderPage();
     const anomalies = screen.getByRole("region", { name: /^Anomalías de este acuerdo/ });
 
-    expect(within(anomalies).getByText("β observada 4,1200 % en 21 días medibles.")).toBeInTheDocument();
+    expect(within(anomalies).getByText("β observada 4,1200 % · 21 días medibles")).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/válid|Recibe \d/i);
   });
 

@@ -1,6 +1,7 @@
 import type {
   ObservedDateResponse,
   SharingAgreementObservationSummaryResponse,
+  SharingAnomalyResponse,
   UnallocatedShareResponse,
 } from "../../../api/models";
 import { formatLocalDate, SHORT_CALENDAR_DATE } from "../../../utils/formatCalendarDate";
@@ -95,12 +96,22 @@ export function unattributedRemainder(share: UnallocatedShareResponse): {
 }
 
 /**
- * The evidence behind an anomaly: "β observada 4,1200 % en 21 días medibles."
- * No expected β beside it: the analysis does not return one, and deriving it
- * here would restate the backend's attribution (UI-AGR-031).
+ * The evidence behind an anomaly (UI-AGR-024): "β esperada 3,1500 % ·
+ * β observada 4,1200 % · 21 días medibles". The expected β is the backend's,
+ * never derived here (UI-AGR-031); an anomaly attributed to no agreement has
+ * none, and leaves it out.
  */
-export function formatAnomalyDetail(observedBeta: number, validDays: number): string {
-  return `β observada ${formatBeta(observedBeta)} en ${validDays} ${validDays === 1 ? "día medible" : "días medibles"}.`;
+export function formatAnomalyDetail(
+  anomaly: Pick<SharingAnomalyResponse, "expectedBeta" | "observedBeta" | "observedValidDays">,
+): string {
+  const days = anomaly.observedValidDays;
+  return [
+    anomaly.expectedBeta !== null && `β esperada ${formatBeta(anomaly.expectedBeta)}`,
+    `β observada ${formatBeta(anomaly.observedBeta)}`,
+    `${days} ${days === 1 ? "día medible" : "días medibles"}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 /** An anomaly's end: its last day, or "en curso" while it lasts until the end of the data. */
