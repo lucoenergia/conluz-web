@@ -16,14 +16,10 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /** The profile menu's content, opened at its avatar button on mount. */
-const ProfileMenu = ({ openDelayMs }: { openDelayMs: number }) => {
+const ProfileMenu = () => {
   const [trigger, setTrigger] = useState<HTMLButtonElement | null>(null);
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  useEffect(() => {
-    if (!trigger) return;
-    const timer = setTimeout(() => setAnchor(trigger), openDelayMs);
-    return () => clearTimeout(timer);
-  }, [trigger, openDelayMs]);
+  useEffect(() => setAnchor(trigger), [trigger]);
   return (
     <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-start", pr: 4, pt: 2, minHeight: 300 }}>
       <IconButton ref={setTrigger} aria-label="Abrir menú de usuario" onClick={(event) => setAnchor(event.currentTarget)}>
@@ -67,8 +63,5 @@ const ProfileMenu = ({ openDelayMs }: { openDelayMs: number }) => {
 
 export const ProfileMenuOpen: Story = {
   args: { anchorElement: null, onClose: () => {}, children: null },
-  // The design-system capture screenshots before layout settles: opened at
-  // once, the menu lands about 120 px below its trigger there.
-  parameters: { designSync: { openDelayMs: 300 } },
-  render: (_args, { parameters }) => <ProfileMenu openDelayMs={parameters.designSync?.openDelayMs ?? 0} />,
+  render: () => <ProfileMenu />,
 };
