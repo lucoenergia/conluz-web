@@ -11,6 +11,9 @@ import {
 } from "../../../test/fixtures";
 import { recommendationFindings } from "./recommendationFindings";
 
+/** The agreement's applied window, which a share's figures are computed over. */
+const APPLIED_WINDOW = { from: "2025-03-01", to: "2026-04-26" };
+
 const summary = (overrides: Parameters<typeof buildObservationSummary>[0]) =>
   buildObservationSummary({ sharingAgreement: buildSharingAgreementReference({ id: "agreement-a" }), ...overrides });
 
@@ -98,7 +101,7 @@ describe("recommendationFindings", () => {
 
   describe("UI-AGR-039: an impossible unattributed production share", () => {
     const withUnattributed = (unallocated: number, overrides: Parameters<typeof buildObservationSummary>[0] = {}) =>
-      summary({ unallocatedShare: { days: 200, unallocated, registeredShareWithoutData: 0 }, ...overrides });
+      summary({ unallocatedShare: { days: 200, unallocated, registeredShareWithoutData: 0, ...APPLIED_WINDOW }, ...overrides });
 
     test("UI-AGR-039: below −0,1 points it is the first finding, stating by how much, with the agreement's anomalies", () => {
       const findings = recommendationFindings(

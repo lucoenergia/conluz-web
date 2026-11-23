@@ -32,6 +32,9 @@ import {
 } from "../../../test/fixtures";
 import { PlantObservedSharingPage } from "./PlantObservedSharingPage";
 
+/** The agreement's applied window, which a share's figures are computed over. */
+const APPLIED_WINDOW = { from: "2025-03-01", to: "2026-04-26" };
+
 vi.mock(import("../../../api/plants/plants"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetPlantById: vi.fn(),
@@ -73,7 +76,7 @@ const INITIAL = buildObservationSummary({
   distributorFileSentOn: "2023-03-15",
   mostFrequentObservedDate: { from: null, to: "2023-04-01" },
   coefficientStatusCounts: buildObservationStatusCounts({ appliedSameDate: 3 }),
-  unallocatedShare: { days: 400, unallocated: 0.012, registeredShareWithoutData: 0 },
+  unallocatedShare: { days: 400, unallocated: 0.012, registeredShareWithoutData: 0, ...APPLIED_WINDOW },
   recommendations: [Recommendation.NONE],
 });
 
@@ -108,7 +111,7 @@ const REVISED = buildObservationSummary({
     }),
   ],
   anomalyCounts: buildSharingAnomalyCounts({ unknownCoefficient: 1, reverted: 1 }),
-  unallocatedShare: { days: 200, unallocated: 0.067, registeredShareWithoutData: 0.03 },
+  unallocatedShare: { days: 200, unallocated: 0.067, registeredShareWithoutData: 0.03, ...APPLIED_WINDOW },
   recommendations: [Recommendation.SET_DATES, Recommendation.REVIEW_ANOMALIES],
 });
 
@@ -560,7 +563,7 @@ describe("PlantObservedSharingPage", () => {
         observation: query.success<typeof getPlantSharingObservation>(
           observationFixture({
             sharingAgreements: [
-              { ...REVISED, unallocatedShare: { days: 200, unallocated, registeredShareWithoutData: 0.03 } },
+              { ...REVISED, unallocatedShare: { days: 200, unallocated, registeredShareWithoutData: 0.03, ...APPLIED_WINDOW } },
               INITIAL,
               CURRENT,
             ],
@@ -600,7 +603,7 @@ describe("PlantObservedSharingPage", () => {
         observation: query.success<typeof getPlantSharingObservation>(
           observationFixture({
             sharingAgreements: [
-              { ...INITIAL, unallocatedShare: { days: 400, unallocated: -0.4748, registeredShareWithoutData: 0 } },
+              { ...INITIAL, unallocatedShare: { days: 400, unallocated: -0.4748, registeredShareWithoutData: 0, ...APPLIED_WINDOW } },
             ],
             unattributedAnomalies: [],
           }),
@@ -640,7 +643,7 @@ describe("PlantObservedSharingPage", () => {
               suppliesWithoutValidDays,
               notComputableSupplies: [TALLER],
             }),
-            sharingAgreements: [{ ...REVISED, unallocatedShare }, INITIAL, CURRENT],
+            sharingAgreements: [{ ...REVISED, unallocatedShare: { ...unallocatedShare, ...APPLIED_WINDOW } }, INITIAL, CURRENT],
           }),
         ),
       });

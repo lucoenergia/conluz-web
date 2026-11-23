@@ -14,6 +14,9 @@ import {
   unattributedRemainder,
 } from "./observedSharingFormat";
 
+/** The agreement's applied window, which a share's figures are computed over. */
+const APPLIED_WINDOW = { from: "2025-03-01", to: "2026-04-26" };
+
 // Intl writes a no-break space between the figure and the percent sign.
 const percent = (text: string) => text.replace(" %", "\u00a0%");
 
@@ -83,7 +86,7 @@ describe("observed sharing formatting", () => {
 
 describe("the unattributed production's rest", () => {
   const rest = (unallocated: number, registeredShareWithoutData: number) =>
-    unattributedRemainder({ days: 422, unallocated, registeredShareWithoutData });
+    unattributedRemainder({ days: 422, unallocated, registeredShareWithoutData, ...APPLIED_WINDOW });
 
   test("UI-AGR-041: 3,03 % with 4,37 % of supplies without data leaves −1,3 points: the supplies with data received more", () => {
     expect(rest(0.0303, 0.0437)).toEqual({ text: "-1,3 pp", kind: "receivedMore" });

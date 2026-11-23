@@ -36,6 +36,9 @@ import {
 } from "../../../test/fixtures";
 import { SharingAgreementObservationPage } from "./SharingAgreementObservationPage";
 
+/** The agreement's applied window, which a share's figures are computed over. */
+const APPLIED_WINDOW = { from: "2025-03-01", to: "2026-04-26" };
+
 vi.mock(import("../../../api/plants/plants"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetPlantById: vi.fn(),
@@ -104,7 +107,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         }),
       ],
       anomalyCounts: buildSharingAnomalyCounts({ reverted: 1 }),
-      unallocatedShare: { days: 200, unallocated: 0.067, registeredShareWithoutData: 0.03 },
+      unallocatedShare: { days: 200, unallocated: 0.067, registeredShareWithoutData: 0.03, ...APPLIED_WINDOW },
       recommendations: [Recommendation.SET_DATES, Recommendation.REVIEW_ANOMALIES],
     }),
     coefficients: [
@@ -611,7 +614,7 @@ describe("SharingAgreementObservationPage", () => {
       renderPage({
         observation: query.success<typeof getSharingAgreementObservation>({
           ...fixture,
-          summary: { ...fixture.summary, unallocatedShare: { days: 200, unallocated, registeredShareWithoutData: 0.03 } },
+          summary: { ...fixture.summary, unallocatedShare: { days: 200, unallocated, registeredShareWithoutData: 0.03, ...APPLIED_WINDOW } },
         }),
       });
       await userEvent.setup().click(screen.getByRole("button", { name: /^Ver \d+ datos? más$/ }));
@@ -654,7 +657,7 @@ describe("SharingAgreementObservationPage", () => {
       renderPage({
         observation: query.success<typeof getSharingAgreementObservation>({
           ...fixture,
-          summary: { ...fixture.summary, unallocatedShare },
+          summary: { ...fixture.summary, unallocatedShare: { ...unallocatedShare, ...APPLIED_WINDOW } },
         }),
       });
       await userEvent.setup().click(screen.getByRole("button", { name: /^Ver \d+ datos? más$/ }));
@@ -718,7 +721,7 @@ describe("SharingAgreementObservationPage", () => {
         observation: query.success<typeof getSharingAgreementObservation>({
           ...fixture,
           // The agreement's window: 335 measurable days.
-          summary: { ...fixture.summary, unallocatedShare: { days: 335, unallocated: 0.03, registeredShareWithoutData: 0 } },
+          summary: { ...fixture.summary, unallocatedShare: { days: 335, unallocated: 0.03, registeredShareWithoutData: 0, ...APPLIED_WINDOW } },
           coefficients: fixture.coefficients.map((row) => {
             if (row.supply.id === NORTE.id) {
               return { ...row, observedDate: { from: null, to: "2025-01-09" }, observedValidDays: 426, windowDays: 426 };
