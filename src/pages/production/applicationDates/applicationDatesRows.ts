@@ -13,8 +13,7 @@ import { pluralize } from "../../../utils/pluralize";
 import { supplyDisplayLabel } from "../../../utils/supplyDisplayLabel";
 import { localDateAt } from "../../../utils/zonedTime";
 import { isCoefficientDateValid } from "../coefficientDateValidation";
-import { formatObservedDate } from "../observedSharing/observedSharingFormat";
-import { joinNames } from "../observedSharing/observedSharingFormat";
+import { formatDay, formatObservedDate, joinNames } from "../observedSharing/observedSharingFormat";
 
 /**
  * Where a prefilled date came from (UI-AGR-032). An observed date is evidence;
@@ -47,6 +46,8 @@ export interface CoefficientDateRow {
   hint: string | undefined;
   /** A coefficient Datadis gives no data for. */
   noData: boolean;
+  /** What the field says below itself while its row is unselected (UI-AGR-032). */
+  unselectedReason: string;
 }
 
 /** A supply that leaves the distribution, as observed sharing saw it. */
@@ -68,6 +69,32 @@ const isUncertain = (date: ObservedDateResponse | null): date is ObservedDateRes
 /** The date a row carries, or null: never a day the backend did not give (#419 out of scope). */
 const toDay = (localDate: string) => dayjs(localDate);
 
+const NO_CHANGE = "Sin cambios";
+
+const NOT_OBSERVABLE_REASON =
+  "Punto de la planta: Datadis no permite observar su fecha. Normalmente es la misma que la del resto del acuerdo; márcalo y ponla a mano.";
+
+const REFERENCE_WORD = { observed: "Observada", proposed: "Propuesta" } as const;
+
+/** Why a row with an observed or proposed range, or an open date, is unselected. */
+function uncertainReason(kind: PrefillKind, date: ObservedDateResponse): string {
+  if (date.from === null) {
+    return `${REFERENCE_WORD[kind]} el ${formatDay(date.to)} o antes: Datadis no tiene datos anteriores. Elige la fecha real y márcalo.`;
+  }
+  return `${REFERENCE_WORD[kind]} entre el ${formatDay(date.from)} y el ${formatDay(date.to)}. Elige una fecha y márcalo.`;
+}
+
+/**
+ * Why an already dated row with an exact observed or proposed date is
+ * unselected. A proposed date is no evidence, so it never confirms the stored one.
+ */
+function datedReason(storedDate: string, reference: DateReference): string {
+  if (reference.kind === "observed" && reference.date === storedDate) return "Fecha registrada correcta.";
+  return `Registrada ${formatDay(storedDate)} · ${REFERENCE_WORD[reference.kind]} ${formatDay(reference.date)}. Márcalo para ${
+    reference.kind === "observed" ? "corregirla" : "usarla"
+  }.`;
+}
+
 /**
  * Step 1's rows, in the order the agreement lists its coefficients.
  *
@@ -78,7 +105,8 @@ const toDay = (localDate: string) => dayjs(localDate);
  * value as a hint; any other row shows its stored date, or nothing. A row with
  * a prefilled date is selected; a range or open row is not, nor is a row
  * already dated, whatever the observation says: a correction is an explicit
- * choice.
+ * choice. An already dated row gets its exact observed or proposed date only
+ * once it is marked (`withSelection`). Each row carries why it is unselected.
  */
 export function initialDateRows(
   coefficients: SharingAgreementPartitionCoefficientResponse[],
@@ -101,6 +129,7 @@ export function initialDateRows(
       reference: undefined,
       hint: undefined,
       noData: false,
+      unselectedReason: NO_CHANGE,
     };
 
     if (!observation) return { ...base, selected: storedDate === null };
@@ -111,22 +140,31 @@ export function initialDateRows(
     const kind: PrefillKind = isNotDistinguishable ? "proposed" : "observed";
 
     if (isExact(candidate)) {
-      return {
-        ...base,
-        selected: storedDate === null,
-        date: toDay(candidate.to),
-        reference: { kind, date: candidate.to },
-      };
+      const reference: DateReference = { kind, date: candidate.to };
+      if (storedDate !== null) return { ...base, reference, unselectedReason: datedReason(storedDate, reference) };
+      return { ...base, selected: true, date: toDay(candidate.to), reference };
     }
     if (isUncertain(candidate)) {
-      return { ...base, hint: formatObservedDate(candidate) };
+      return { ...base, hint: formatObservedDate(candidate), unselectedReason: uncertainReason(kind, candidate) };
     }
     return {
       ...base,
       date: storedDate ? toDay(storedDate) : null,
       noData: observed?.status === CoefficientObservationResponseStatus.NO_DATA,
+      unselectedReason:
+        observed?.status === CoefficientObservationResponseStatus.NOT_OBSERVABLE ? NOT_OBSERVABLE_REASON : NO_CHANGE,
     };
   });
+}
+
+/**
+ * A row marked or unmarked. An already dated row holds its exact observed or
+ * proposed date only while marked, so an unmarked one never shows it as the
+ * field's value (UI-AGR-032).
+ */
+export function withSelection(row: CoefficientDateRow, selected: boolean): CoefficientDateRow {
+  if (row.storedDate === null || row.reference === undefined) return { ...row, selected };
+  return { ...row, selected, date: selected ? toDay(row.reference.date) : null, dateError: null };
 }
 
 /** The supplies observed sharing saw leave the distribution with this agreement. */

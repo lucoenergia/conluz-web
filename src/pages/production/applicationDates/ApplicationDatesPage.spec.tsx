@@ -416,7 +416,9 @@ describe("ApplicationDatesPage", () => {
       renderPage({ route: FROM_OBSERVED });
 
       expect(checkbox("Casa Sur")).not.toBeChecked();
-      expect(within(rowOf("Casa Sur")).getByText("Sin cambios")).toBeVisible();
+      expect(
+        within(rowOf("Casa Sur")).getByText("Registrada 15/03/2025 · Observada 01/03/2025. Márcalo para corregirla."),
+      ).toBeVisible();
     });
 
     test("UI-AGR-032: a row with no observation keeps its stored date, or none, unmarked", () => {

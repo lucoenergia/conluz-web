@@ -11,7 +11,7 @@ import { isCoefficientDateValid } from "../coefficientDateValidation";
 import { ObservationChip } from "../observedSharing/ObservationChip";
 import { formatBeta, formatDay, joinNames } from "../observedSharing/observedSharingFormat";
 import { DayField, FlowActionBar } from "./ApplicationDatesParts";
-import { isEdited, type CoefficientDateRow, type ObservedLeaving } from "./applicationDatesRows";
+import { isEdited, withSelection, type CoefficientDateRow, type ObservedLeaving } from "./applicationDatesRows";
 
 /** How many rows show before "Mostrar todos". */
 const INITIAL_ROWS = 10;
@@ -41,21 +41,23 @@ const REFERENCE_LABEL = { observed: "Observada", proposed: "Propuesta" } as cons
  */
 const DateNotes: FC<{ row: CoefficientDateRow; errors: string[] }> = ({ row, errors }) => {
   const edited = isEdited(row.date, row.reference?.date);
+  // An unmarked dated row holds no day: its reason says what was observed.
+  const reference = row.selected || row.date !== null ? row.reference : undefined;
   return (
     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5, mt: 0.5 }}>
-      {row.reference && !edited && (
+      {reference && !edited && (
         <>
-          <ObservationChip label={REFERENCE_LABEL[row.reference.kind]} tone={row.reference.kind} />
-          {row.reference.kind === "proposed" && (
+          <ObservationChip label={REFERENCE_LABEL[reference.kind]} tone={reference.kind} />
+          {reference.kind === "proposed" && (
             <Typography variant="body2" sx={{ color: colors.text.subtle }}>
               {PROPOSED_DATE_EXPLANATION}
             </Typography>
           )}
         </>
       )}
-      {row.reference && edited && (
+      {reference && edited && (
         <Typography variant="body2" sx={{ color: colors.text.subtle }}>
-          Editada · la {row.reference.kind === "observed" ? "observada" : "propuesta"} es {formatDay(row.reference.date)}
+          Editada · la {reference.kind === "observed" ? "observada" : "propuesta"} es {formatDay(reference.date)}
         </Typography>
       )}
       {row.hint && row.date === null && <ObservationChip label="Elige una fecha" tone="neutral" />}
@@ -70,7 +72,7 @@ const DateNotes: FC<{ row: CoefficientDateRow; errors: string[] }> = ({ row, err
 
 /** What the field says below itself: why it is off, why its day is refused, or what to choose from. */
 function helperTextOf(row: CoefficientDateRow): string | undefined {
-  if (!row.selected) return "Sin cambios";
+  if (!row.selected) return row.unselectedReason;
   if (row.date !== null && !isCoefficientDateValid(row.date, row.dateError)) {
     return row.dateError === "maxDate" || row.dateError === "disableFuture" ? "No puede ser una fecha futura" : "Fecha no válida";
   }
@@ -94,7 +96,7 @@ const DateRow: FC<{
           size="small"
           checked={row.selected}
           disabled={readOnly}
-          onChange={(event) => onChange({ selected: event.target.checked })}
+          onChange={(event) => onChange(withSelection(row, event.target.checked))}
           inputProps={{ "aria-label": `Seleccionar ${name}` }}
         />
       </Box>
@@ -174,7 +176,7 @@ export const DatesStep: FC<DatesStepProps> = ({
   const patchRow = (coefficientId: string, patch: Partial<CoefficientDateRow>) =>
     onRowsChange(rows.map((row) => (row.coefficientId === coefficientId ? { ...row, ...patch } : row)));
 
-  const selectAll = (selected: boolean) => onRowsChange(rows.map((row) => ({ ...row, selected })));
+  const selectAll = (selected: boolean) => onRowsChange(rows.map((row) => withSelection(row, selected)));
 
   const applySameDate = () => {
     if (!sameDate || !isCoefficientDateValid(sameDate, sameDateError)) return;
