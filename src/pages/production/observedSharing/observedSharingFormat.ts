@@ -115,8 +115,9 @@ export function formatMeasurableDays(row: {
 
 /**
  * The days a figure is counted over, "del DD/MM/AAAA al DD/MM/AAAA", both
- * the backend's (UI-AGR-040, UI-AGR-042). Null when it gives none: a row
- * with no window (windowDays 0) has neither date.
+ * the backend's (UI-AGR-040). Null when it gives none: a row with no window
+ * (windowDays 0) has neither date. A row's window (UI-AGR-042) reads the
+ * same, drawn with each date kept on one line.
  */
 export function formatWindow(from: string, to: string): string;
 export function formatWindow(from: string | null, to: string | null): string | null;

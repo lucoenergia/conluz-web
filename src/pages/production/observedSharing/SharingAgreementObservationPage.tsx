@@ -43,7 +43,6 @@ import {
   formatBeta,
   formatDay,
   formatMeasurableDays,
-  formatWindow,
   formatObservedDate,
   formatRegisteredPeriod,
   NO_VALUE,
@@ -160,13 +159,15 @@ type MeasurableDaysRow = Parameters<typeof formatMeasurableDays>[0] & { windowFr
 const measurableDays = (row: MeasurableDaysRow): ReactNode => {
   const days = formatMeasurableDays(row);
   if (days === null) return null;
-  const window = formatWindow(row.windowFrom, row.windowTo);
+  const { windowFrom: from, windowTo: to } = row;
   return (
     <>
       {days}
-      {window && (
+      {from !== null && to !== null && (
+        // "del 04/03/2025 al 31/10/2026": the column wraps it before "al", never inside a date.
         <Typography component="span" variant="body2" sx={{ display: "block", color: colors.text.subtle }}>
-          {window}
+          <Box component="span" sx={{ whiteSpace: "nowrap" }}>del {formatDay(from)}</Box>{" "}
+          <Box component="span" sx={{ whiteSpace: "nowrap" }}>al {formatDay(to)}</Box>
         </Typography>
       )}
     </>
@@ -226,7 +227,7 @@ const CoefficientRows: FC<{
             width: "20%",
           }}
           columns={[
-            { key: "registered", header: "β registrada", render: (row) => formatBeta(row.coefficient), width: "11%" },
+            { key: "registered", header: "β registrada", render: (row) => formatBeta(row.coefficient), width: "10%" },
             {
               key: "observed",
               header: "β observada",
@@ -237,13 +238,13 @@ const CoefficientRows: FC<{
               key: "measurableDays",
               header: "Días medibles",
               render: measurableDays,
-              width: "10%",
+              width: "13%",
             },
             {
               key: "period",
               header: "Periodo registrado",
               render: (row) => formatRegisteredPeriod(row.storedValidFrom, row.storedValidTo),
-              width: "15%",
+              width: "13%",
             },
             {
               key: "applied",
@@ -313,10 +314,10 @@ const LeavingRows: FC<{ rows: LeavingObservationResponse[] }> = ({ rows }) => {
             width: "20%",
           }}
           columns={[
-            { key: "previous", header: "Acuerdo anterior", render: (row) => row.previousSharingAgreement.name, width: "13%" },
-            { key: "previousBeta", header: "β anterior", render: (row) => formatBeta(row.previousCoefficient), width: "11%" },
-            { key: "observedBeta", header: "β observada", render: (row) => formatBeta(row.observedBeta), width: "11%" },
-            { key: "measurableDays", header: "Días medibles", render: measurableDays, width: "10%" },
+            { key: "previous", header: "Acuerdo anterior", render: (row) => row.previousSharingAgreement.name, width: "12%" },
+            { key: "previousBeta", header: "β anterior", render: (row) => formatBeta(row.previousCoefficient), width: "10%" },
+            { key: "observedBeta", header: "β observada", render: (row) => formatBeta(row.observedBeta), width: "10%" },
+            { key: "measurableDays", header: "Días medibles", render: measurableDays, width: "13%" },
             { key: "leaving", header: "Salida observada", render: leaving },
             { key: "end", header: "Fin registrado", render: registeredEnd, width: "11%" },
             { key: "status", header: "Estado", render: status, width: "16%" },

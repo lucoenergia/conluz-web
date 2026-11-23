@@ -883,7 +883,6 @@ describe("SharingAgreementObservationPage", () => {
       const cell = daysCell(supplyRow("Casa Norte"), suppliesSection());
 
       expect(cell).toHaveTextContent(/^410 de 426del 09\/01\/2025 al 31\/10\/2026$/);
-      expect(within(cell).getByText("del 09/01/2025 al 31/10/2026")).toBeInTheDocument();
     });
 
     test("UI-AGR-042: a leaving row adds its own window", () => {
@@ -903,7 +902,7 @@ describe("SharingAgreementObservationPage", () => {
       renderWithWindows();
 
       expect(daysCell(supplyRow("Casa Este"), suppliesSection())).toHaveTextContent(/^$/);
-      expect(screen.getAllByText("del 09/01/2025 al 31/10/2026")).toHaveLength(1);
+      expect(document.body.textContent?.match(/del 09\/01\/2025 al 31\/10\/2026/g)).toHaveLength(1);
     });
 
     test("UI-AGR-042: on a phone, each stacked row gives its window under 'N de M'; none without one, nothing for NOT_OBSERVABLE", () => {
