@@ -314,7 +314,8 @@ is in force today.
   "Qué revisar": a title stating what was found, a detail from the backend's counts, and a link
   worded apart from the title. "Fechas distintas de las registradas" MUST link to "Fijar fechas",
   which opens the set application dates flow from this agreement's observation (UI-AGR-032), and
-  still counts as an agreement to review. A "none" recommendation MUST show nothing. On
+  still counts as an agreement to review. A "none" recommendation MUST show nothing. An impossible
+  unexplained share adds a finding of its own, before the recommendations (UI-AGR-039). On
   the agreement's page, "Con avisos" MUST keep the coefficient rows applied on another
   date, not distinguishable, or of a supply with an anomaly of the agreement, and the leaving rows
   that left on another date; its count MUST equal the rows it shows.
@@ -325,7 +326,7 @@ is in force today.
   rows stand out from those that hold none.
 - **Implements:** n/a
 - **Source:** #418; findings layout: maintainer decision in the #418 review; the "Fijar fechas"
-  link, and the count before its label: #419
+  link, the count before its label, and the impossible share's finding: #419
 
 ### UI-AGR-024 — Anomalies are grouped by agreement and supply, with their evidence
 
@@ -521,6 +522,30 @@ is in force today.
 - **Rationale:** The view is read by admins who are not analysts; a status or a figure is only
   useful when its meaning is one tap away from where it is shown. Listing from the client's values
   means a status the backend adds cannot reach the view unexplained.
+- **Implements:** n/a
+- **Source:** #419
+
+### UI-AGR-039 — An impossible unexplained share is shown, flagged and listed under "Qué revisar"
+
+- **Status:** Active
+- **Rule:** Where "Sin explicar (1 − Σβ)" is shown, on each agreement card of the plant's observed
+  sharing and on the agreement's page, a value below −0.1 percentage points MUST still be shown, in
+  the warning tone, with "Imposible: los puntos reciben más energía de la que produce la planta.
+  Algún dato de Datadis es erróneo; revisa las anomalías con β observada muy alta." under it. That
+  agreement's "Qué revisar" MUST then list "Reparto mayor que la producción", with the warning icon,
+  before its recommendations, with the detail "Los puntos reciben un X % más de lo que produce la
+  planta.", X being the share without its sign. The finding MUST link to "Ver anomalías" when the
+  agreement has an anomaly, and MUST have no link when it has none. A value between −0.1 points and
+  0 MUST read as any other value, with neither the warning nor the finding. The finding MUST NOT
+  count as an agreement to review, and MUST NOT change the "Todo aplicado" notice. The help MUST
+  say, under 1 − Σβ, that a negative share means wrong data.
+- **Rationale:** Supplies cannot receive more than the plant produces, so a share below the
+  tolerance always means wrong Datadis data: one supply whose records were a copy of the plant's
+  for five months gave −47.5 %. Shown as an ordinary figure, it reads as a plausible result. The
+  value stays, so the admin can judge its size. Down to −0.1 points it is rounding, within the
+  tolerance the view already uses for β (UI-AGR-026). The finding presents a value the API returns;
+  counting the agreement as one to review would be a conclusion the backend does not draw. It comes
+  first because it puts every other figure of the agreement in doubt.
 - **Implements:** n/a
 - **Source:** #419
 
