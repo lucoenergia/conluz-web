@@ -430,7 +430,7 @@ is in force today.
 - **Implements:** n/a
 - **Source:** #418, lucoenergia/conluz#597
 
-### UI-AGR-032 — Prefilled dates are marked; uncertain dates are left for the admin
+### UI-AGR-032 — Prefilled dates are marked; uncertain dates are left for the admin; every unselected row says why
 
 - **Status:** Active
 - **Rule:** Opened from the agreement, every date of the set application dates flow MUST start
@@ -441,14 +441,27 @@ is in force today.
   with the observed value as its hint and "Elige una fecha". Any other row MUST show its stored
   date, or none, unmarked. A row with a prefilled date MUST start selected; a row with a range or
   open date MUST start unselected, and so MUST a row already dated, whatever the observation says.
+  An already dated row MUST NOT hold its exact observed or proposed date while unselected; marking
+  it MUST prefill that date, and unmarking it MUST empty the field. Below its field, an unselected
+  row MUST say why it is unselected: an open date, "Observada el D o antes: Datadis no tiene datos
+  anteriores. Elige la fecha real y márcalo."; a range, "Observada entre el D1 y el D2. Elige una
+  fecha y márcalo." ("Propuesta" in place of "Observada" for a proposed open date or range); a dated
+  row observed on its stored local day, "Fecha registrada correcta."; a dated row observed on
+  another day, "Registrada D · Observada D'. Márcalo para corregirla."; a dated row with a proposed
+  date, on any day, "Registrada D · Propuesta D'. Márcalo para usarla."; the plant's own supply
+  (NOT_OBSERVABLE), "Punto de la planta: Datadis no permite observar su fecha. Normalmente es la
+  misma que la del resto del acuerdo; márcalo y ponla a mano."; any other row, "Sin cambios".
   A date edited away from the one it was prefilled with MUST show that one beside it. A leaving
   supply observed leaving on an exact day MUST start with that day as its closing date, marked
   "Observada"; one observed on a range or open date MUST start without one, with its hint.
 - **Rationale:** The admin decides the dates. An observed date is evidence and a proposed one is
   not, so neither may pass for the other, and the client infers no day the backend did not give.
   Changing a stored date rewrites a period production was attributed by, so it is never preselected.
+  "Sin cambios" on every unselected row left the admin unable to tell a row waiting for a date from
+  a correct one. A proposed date is no evidence, so it never confirms a stored date. A greyed
+  observed date in a disabled field read as a value already set.
 - **Implements:** n/a
-- **Source:** #419
+- **Source:** #419; the unselected rows' reasons: #419 review
 
 ### UI-AGR-033 — The preview is not reachable with a missing or future date
 
