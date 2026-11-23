@@ -5,6 +5,8 @@ import userEvent from "@testing-library/user-event";
 import dayjs from "dayjs";
 import { Route, Routes } from "react-router";
 import { renderWithProviders } from "../../../test/renderWithProviders";
+import { declaredStyle } from "../../../test/declaredStyle";
+import { colors } from "../../../theme/tokens";
 import { mutation, query } from "../../../test/queryState";
 import { apiError } from "../../../test/apiError";
 import { useGetPlantById, type getPlantById } from "../../../api/plants/plants";
@@ -651,6 +653,107 @@ describe("ApplicationDatesPage", () => {
       ).toBeVisible();
       // Casa Norte is in no observation row at all.
       expect(checkbox("Casa Norte")).not.toBeChecked();
+      expect(within(rowOf("Casa Norte")).getByText("Sin cambios")).toBeVisible();
+    });
+
+    describe("a NOT_OBSERVED row", () => {
+      const NOT_OBSERVED_WARNING =
+        "Datadis nunca muestra este coeficiente aplicado (recibe un 0,0000 %). Compruébalo en el reparto observado antes de fijar una fecha.";
+      const renderNotObserved = (observedBeta: number | null) =>
+        renderPage({
+          route: FROM_OBSERVED,
+          coefficients,
+          observation: buildSharingAgreementObservation({
+            coefficients: [
+              buildCoefficientObservation({
+                coefficientId: "c-norte",
+                supply: NORTE,
+                observedBeta,
+                observedValidDays: 120,
+                status: Status.NOT_OBSERVED,
+              }),
+            ],
+            leavingRows: [],
+          }),
+        });
+
+      test("UI-AGR-032: is left unselected and empty, warning in the warning tone with the β Datadis shows", () => {
+        renderNotObserved(0);
+        const norte = rowOf("Casa Norte");
+
+        expect(checkbox("Casa Norte")).not.toBeChecked();
+        expect(sections(dateGroup("Casa Norte"))).toEqual(["DD", "MM", "AAAA"]);
+        expect(declaredStyle(within(norte).getByText(NOT_OBSERVED_WARNING)).color).toBe(colors.warning.main);
+        expect(within(norte).queryByText("Sin cambios")).not.toBeInTheDocument();
+      });
+
+      test("UI-AGR-032: writes the observed β in % with 4 decimals", () => {
+        renderNotObserved(0.0012);
+
+        expect(
+          within(rowOf("Casa Norte")).getByText(
+            "Datadis nunca muestra este coeficiente aplicado (recibe un 0,1200 %). Compruébalo en el reparto observado antes de fijar una fecha.",
+          ),
+        ).toBeVisible();
+      });
+
+      test("UI-AGR-032: leaves out the parenthesis when the analysis gave no observed β", () => {
+        renderNotObserved(null);
+
+        expect(
+          within(rowOf("Casa Norte")).getByText(
+            "Datadis nunca muestra este coeficiente aplicado. Compruébalo en el reparto observado antes de fijar una fecha.",
+          ),
+        ).toBeVisible();
+      });
+
+      test("UI-AGR-032: links to the agreement's observation", () => {
+        renderNotObserved(0);
+
+        expect(within(rowOf("Casa Norte")).getByRole("link", { name: "Ver en el reparto observado" })).toHaveAttribute(
+          "href",
+          `/plants/${PLANT_ID}/sharing-agreements/observed/${AGREEMENT_ID}`,
+        );
+        // Only that row: the others are not NOT_OBSERVED.
+        expect(within(rowOf("Casa Sur")).queryByRole("link", { name: "Ver en el reparto observado" })).not.toBeInTheDocument();
+      });
+
+      test("UI-AGR-032: keeps its warning, unprefilled, once marked", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderNotObserved(0);
+
+        await user.click(checkbox("Casa Norte"));
+
+        expect(sections(dateGroup("Casa Norte"))).toEqual(["DD", "MM", "AAAA"]);
+        expect(declaredStyle(within(rowOf("Casa Norte")).getByText(NOT_OBSERVED_WARNING)).color).toBe(colors.warning.main);
+      });
+    });
+
+    test("UI-AGR-032: a row without data says it cannot be checked, in place of 'Sin cambios'", () => {
+      renderPage({
+        route: FROM_OBSERVED,
+        coefficients,
+        observation: buildSharingAgreementObservation({
+          coefficients: [buildCoefficientObservation({ coefficientId: "c-sur", supply: SUR, status: Status.NO_DATA })],
+          leavingRows: [],
+        }),
+      });
+      const sur = rowOf("Casa Sur");
+
+      expect(checkbox("Casa Sur")).not.toBeChecked();
+      expect(within(sur).getByText("Sin datos de Datadis: no se puede comprobar. Pon la fecha a mano si la conoces.")).toBeVisible();
+      expect(within(sur).queryByText("Sin cambios")).not.toBeInTheDocument();
+      expect(declaredStyle(within(sur).getByText(/Sin datos de Datadis/)).color).not.toBe(colors.warning.main);
+    });
+
+    test("UI-AGR-032: a row the observation does not list keeps 'Sin cambios'", () => {
+      renderPage({
+        route: FROM_OBSERVED,
+        coefficients,
+        observation: buildSharingAgreementObservation({ coefficients: [], leavingRows: [] }),
+      });
+
+      expect(within(rowOf("Casa Sur")).getByText("Sin cambios")).toBeVisible();
       expect(within(rowOf("Casa Norte")).getByText("Sin cambios")).toBeVisible();
     });
 
