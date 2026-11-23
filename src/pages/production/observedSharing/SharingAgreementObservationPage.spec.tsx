@@ -777,4 +777,74 @@ describe("SharingAgreementObservationPage", () => {
 
     expect(screen.getByText("β esperada 0,0000 % · β observada 4,1200 % · 21 días medibles")).toBeInTheDocument();
   });
+
+  describe("the period the measurable days cover", () => {
+    const explainButtons = () => screen.getAllByRole("button", { name: "Ayuda sobre los días medibles" });
+    /** The help entry that holds focus: a term and its meaning. */
+    const focusedEntry = () => within(document.activeElement as HTMLElement).getByRole("term");
+
+    test("UI-AGR-042: each table's 'Días medibles' header has an info button", () => {
+      renderPage();
+
+      expect(within(suppliesSection()).getByRole("button", { name: "Ayuda sobre los días medibles" })).toBeInTheDocument();
+      expect(within(leavingSection()).getByRole("button", { name: "Ayuda sobre los días medibles" })).toBeInTheDocument();
+      expect(explainButtons()).toHaveLength(2);
+    });
+
+    test("UI-AGR-042: the header's info button opens the help at 'Periodo de cada punto'", async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(within(suppliesSection()).getByRole("button", { name: "Ayuda sobre los días medibles" }));
+
+      const dialog = await screen.findByRole("dialog", { name: "Cómo leer el reparto observado" });
+      expect(dialog).toContainElement(document.activeElement as HTMLElement);
+      expect(focusedEntry()).toHaveTextContent(/^Periodo de cada punto$/);
+    });
+
+    test("UI-AGR-042: the leaving table's info button opens it at the same entry, and closing returns to the button", async () => {
+      const user = userEvent.setup();
+      renderPage();
+      const button = within(leavingSection()).getByRole("button", { name: "Ayuda sobre los días medibles" });
+
+      await user.click(button);
+      await screen.findByRole("dialog", { name: "Cómo leer el reparto observado" });
+      expect(focusedEntry()).toHaveTextContent(/^Periodo de cada punto$/);
+
+      await user.click(screen.getByRole("button", { name: "Cerrar" }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+      expect(button).toHaveFocus();
+    });
+
+    test("UI-AGR-038: '¿Qué significa cada estado?' still opens the help at the top, not at an entry", async () => {
+      renderPage();
+
+      await userEvent.setup().click(screen.getByRole("button", { name: "¿Qué significa cada estado?" }));
+
+      const dialog = await screen.findByRole("dialog", { name: "Cómo leer el reparto observado" });
+      expect(within(dialog).queryAllByRole("term").some((term) => term.parentElement === document.activeElement)).toBe(false);
+    });
+
+    test("UI-AGR-042: on a phone, a stacked row labels its figure 'Días medibles de su periodo', and no row says 'Días medibles' alone", () => {
+      const width = window.innerWidth;
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
+      try {
+        renderPage();
+
+        expect(within(suppliesSection()).getAllByText("Días medibles de su periodo").length).toBeGreaterThan(0);
+        expect(within(leavingSection()).getAllByText("Días medibles de su periodo").length).toBeGreaterThan(0);
+        expect(screen.queryByText("Días medibles")).not.toBeInTheDocument();
+      } finally {
+        Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+      }
+    });
+
+    test("UI-AGR-040: the explanatory line says its days are those of the agreement's application period", async () => {
+      renderPage();
+
+      await userEvent.setup().click(screen.getByRole("button", { name: /^Ver \d+ datos? más$/ }));
+
+      expect(screen.getByText(/días medibles del periodo de aplicación del acuerdo\)\.$/)).toBeInTheDocument();
+    });
+  });
 });

@@ -72,6 +72,26 @@ describe("ObservedSharingHelp", () => {
     ]);
   });
 
+  test("UI-AGR-038: lists the agreement's period and each supply's period after 'Día medible', before the unattributed production", async () => {
+    const { dialog } = await openHelp();
+
+    expect(terms(within(dialog).getByRole("region", { name: "Términos" })).slice(3, 6)).toEqual([
+      "Día medible",
+      "Periodo de aplicación del acuerdo",
+      "Periodo de cada punto",
+    ]);
+  });
+
+  test("UI-AGR-038: 'Día medible' says why a period has fewer measurable days than calendar days", async () => {
+    const { dialog } = await openHelp();
+
+    const [, meaning] = entries(within(dialog).getByRole("region", { name: "Términos" })).find(([term]) => term === "Día medible")!;
+
+    expect(meaning).toMatch(
+      /Por eso un periodo tiene menos días medibles que días naturales: se descartan los días de poca producción \(sobre todo en invierno\) y los días sin datos completos\.$/,
+    );
+  });
+
   test("UI-AGR-038: lists every coefficient status of the client, under the label the view shows it with", async () => {
     const { dialog } = await openHelp();
     const section = within(dialog).getByRole("region", { name: "Estados de los coeficientes" });
