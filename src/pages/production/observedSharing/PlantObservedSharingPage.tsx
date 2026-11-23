@@ -103,7 +103,7 @@ const LoadingState: FC = () => (
  * out, said once for the section; no supply gets a reason of its own (UI-AGR-028).
  */
 const NOT_COMPUTABLE_EXPLANATION =
-  "Tienen coeficiente en esta planta y en otra. Datadis da su energía total y no se puede separar la parte de cada planta, así que quedan fuera del análisis y de Σβ.";
+  "Tienen coeficiente en esta planta y en otra. Datadis da su energía total y no se puede separar la parte de cada planta, así que quedan fuera del análisis.";
 
 /** Supplies holding coefficients in this plant and in another: not analysed. */
 const NotComputableSupplies: FC<{ observation: PlantSharingObservationResponse }> = ({ observation }) => {

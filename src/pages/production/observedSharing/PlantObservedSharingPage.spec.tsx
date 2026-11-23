@@ -497,7 +497,7 @@ describe("PlantObservedSharingPage", () => {
 
     expect(
       within(notComputable).getByText(
-        "Tienen coeficiente en esta planta y en otra. Datadis da su energía total y no se puede separar la parte de cada planta, así que quedan fuera del análisis y de Σβ.",
+        "Tienen coeficiente en esta planta y en otra. Datadis da su energía total y no se puede separar la parte de cada planta, así que quedan fuera del análisis.",
       ),
     ).toBeInTheDocument();
     expect(within(notComputable).getByRole("row", { name: /Taller/ })).toHaveTextContent(`Taller${TALLER.code}No calculable`);
