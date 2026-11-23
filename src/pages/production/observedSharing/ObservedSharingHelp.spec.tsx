@@ -14,7 +14,7 @@ import { ANOMALY_TYPE_LABEL, COEFFICIENT_STATUS_LABEL, LEAVING_STATUS_LABEL } fr
 async function openHelp() {
   const user = userEvent.setup();
   renderWithProviders(<ObservedSharingHelp />);
-  await user.click(screen.getByRole("button", { name: "¿Qué significa cada estado?" }));
+  await user.click(screen.getByRole("button", { name: "Cómo leer el reparto observado" }));
   return { user, dialog: await screen.findByRole("dialog", { name: "Cómo leer el reparto observado" }) };
 }
 
@@ -27,7 +27,7 @@ const entries = (section: HTMLElement) =>
 const terms = (section: HTMLElement) => entries(section).map(([term]) => term);
 
 describe("ObservedSharingHelp", () => {
-  test("UI-AGR-038: '¿Qué significa cada estado?' opens 'Cómo leer el reparto observado' with its four sections", async () => {
+  test("UI-AGR-038: the link 'Cómo leer el reparto observado' opens the dialog of the same name, with its four sections", async () => {
     const { dialog } = await openHelp();
 
     expect(within(dialog).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual([

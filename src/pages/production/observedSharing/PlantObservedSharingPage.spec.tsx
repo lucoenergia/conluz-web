@@ -503,10 +503,10 @@ describe("PlantObservedSharingPage", () => {
     expect(within(notComputable).getByRole("row", { name: /Taller/ })).toHaveTextContent(`Taller${TALLER.code}No calculable`);
   });
 
-  test("UI-AGR-038: the header offers '¿Qué significa cada estado?', which opens the help", async () => {
+  test("UI-AGR-038: the header offers 'Cómo leer el reparto observado', which opens the help", async () => {
     renderPage();
 
-    await userEvent.setup().click(screen.getByRole("button", { name: "¿Qué significa cada estado?" }));
+    await userEvent.setup().click(screen.getByRole("button", { name: "Cómo leer el reparto observado" }));
 
     expect(await screen.findByRole("dialog", { name: "Cómo leer el reparto observado" })).toBeInTheDocument();
   });

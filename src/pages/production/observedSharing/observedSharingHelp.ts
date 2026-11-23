@@ -12,9 +12,6 @@ export interface HelpTerm {
   parts?: string[];
 }
 
-/** The term the "Días medibles" column's header opens the help at (UI-AGR-042). */
-export const ROW_PERIOD_TERM = "Periodo de cada punto";
-
 /** The terms the view's figures rest on, in the order the help dialog lists them. */
 export const HELP_TERMS: HelpTerm[] = [
   { term: "β registrada", meaning: "el coeficiente guardado en el acuerdo." },
@@ -39,7 +36,7 @@ export const HELP_TERMS: HelpTerm[] = [
       "desde la fecha en que Datadis lo ve aplicado en la mayoría de puntos hasta el día antes de que se aplique el siguiente acuerdo, o hasta el último dato disponible. La producción no atribuida se calcula sobre sus días medibles.",
   },
   {
-    term: ROW_PERIOD_TERM,
+    term: "Periodo de cada punto",
     meaning:
       "desde la fecha en que Datadis ve aplicado el coeficiente de ese punto hasta el final del periodo del acuerdo. Si el punto se ve aplicado antes que el resto, su periodo es más largo; si no tiene fecha observada, es el del acuerdo.",
   },

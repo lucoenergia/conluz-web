@@ -73,7 +73,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("heading", { name: "Anomalías (3)" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "No calculables" })).toBeVisible();
     await expect(page.getByText(/^Tienen coeficiente en esta planta y en otra\./)).toBeVisible();
-    await expect(page.getByRole("button", { name: "¿Qué significa cada estado?" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Cómo leer el reparto observado" })).toBeVisible();
     await settleForCapture(page);
 
     // Layout subject: the main region, with the app bar masked (see mainRegion).
@@ -103,7 +103,7 @@ test.describe("Visual baselines", () => {
 
     await openObservedSharing(page, `/plants/${FIXED_PLANT_ID}/sharing-agreements/observed`);
     await expect(page.getByRole("article", { name: "Reparto vecinos bloque A" })).toBeVisible();
-    await page.getByRole("button", { name: "¿Qué significa cada estado?" }).click();
+    await page.getByRole("button", { name: "Cómo leer el reparto observado" }).click();
 
     const dialog = page.getByRole("dialog", { name: "Cómo leer el reparto observado" });
     await expect(dialog.getByRole("heading", { name: "Términos" })).toBeVisible();
