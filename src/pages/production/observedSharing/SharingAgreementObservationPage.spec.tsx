@@ -659,6 +659,30 @@ describe("SharingAgreementObservationPage", () => {
       }
     });
 
+    test("UI-AGR-042: every row shows N only, even one observed before the agreement's window", () => {
+      // A row observed on or before a day earlier than the window counts more days than the window has.
+      const fixture = observationFixture();
+      renderPage({
+        observation: query.success<typeof getSharingAgreementObservation>({
+          ...fixture,
+          summary: { ...fixture.summary, unallocatedShare: { days: 335, unallocated: 0.03, registeredShareWithoutData: 0 } },
+          coefficients: fixture.coefficients.map((row) =>
+            row.supply.id === NORTE.id ? { ...row, observedDate: { from: null, to: "2025-01-09" }, observedValidDays: 426 } : row,
+          ),
+        }),
+      });
+      const column = within(suppliesSection())
+        .getAllByRole("columnheader")
+        .findIndex((header) => header.textContent === "Días medibles");
+      const values = within(suppliesSection())
+        .getAllByRole("row")
+        .slice(1)
+        .map((row) => row.querySelectorAll("td, th")[column]?.textContent);
+
+      expect(values).toEqual(["426", "120", "120", "0", "60"]);
+      expect(values.every((value) => /^\d+$/.test(value ?? ""))).toBe(true);
+    });
+
     test("UI-AGR-042: on a phone, each stacked row shows its 'Días medibles'", () => {
       const width = window.innerWidth;
       Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
