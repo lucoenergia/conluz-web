@@ -44,11 +44,13 @@ import {
   formatObservedDate,
   formatPercentageOrNone,
   formatRegisteredPeriod,
+  isImpossibleUnexplainedShare,
   NO_VALUE,
 } from "./observedSharingFormat";
 import { OBSERVED_ANOMALIES_ANCHOR, observedSharingPath } from "./observedSharingRoutes";
 import { RecommendationFindings } from "./RecommendationFindings";
 import { recommendationFindings } from "./recommendationFindings";
+import { ImpossibleShareWarning, UnexplainedShareValue } from "./UnexplainedShare";
 import { useSharingAgreementObservationData } from "./useSharingAgreementObservationData";
 
 /** How many coefficient rows show before "Mostrar todos". */
@@ -484,10 +486,18 @@ export const SharingAgreementObservationPage: FC = () => {
                   ? [
                       {
                         label: "Sin explicar (1 − Σβ)",
-                        value:
-                          unallocated && unallocated.registeredShareWithoutData > 0 && suppliesWithoutData > 0
-                            ? `${formatPercentageOrNone(unallocated.unallocated, 1)} · ${formatPercentageOrNone(unallocated.registeredShareWithoutData, 1)} es ${suppliesWithoutData === 1 ? "del punto sin datos" : `de los ${suppliesWithoutData} puntos sin datos`}`
-                            : formatPercentageOrNone(unallocated?.unallocated, 1),
+                        value: (
+                          <>
+                            <UnexplainedShareValue unallocated={unallocated?.unallocated} />
+                            {unallocated &&
+                              unallocated.registeredShareWithoutData > 0 &&
+                              suppliesWithoutData > 0 &&
+                              ` · ${formatPercentageOrNone(unallocated.registeredShareWithoutData, 1)} es ${suppliesWithoutData === 1 ? "del punto sin datos" : `de los ${suppliesWithoutData} puntos sin datos`}`}
+                            <ImpossibleShareWarning unallocated={unallocated?.unallocated} />
+                          </>
+                        ),
+                        // The warning under an impossible share takes the whole row (UI-AGR-039).
+                        wide: isImpossibleUnexplainedShare(unallocated?.unallocated),
                       },
                     ]
                   : undefined

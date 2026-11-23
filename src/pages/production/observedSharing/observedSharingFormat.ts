@@ -51,6 +51,19 @@ export function betaMatches(observed: number, registered: number): boolean {
 }
 
 /**
+ * Whether an unexplained share (1 − Σβ) is impossible: below −0.1 percentage
+ * points, the tolerance of the analysis, the supplies received more energy
+ * than the plant produced, which only wrong Datadis data explains. Between
+ * that and 0 it is rounding (UI-AGR-039). Compared in millionths, as
+ * `betaMatches` is. A share the analysis did not give is not impossible.
+ */
+export function isImpossibleUnexplainedShare(unallocated: number | null | undefined): unallocated is number {
+  return (
+    unallocated !== null && unallocated !== undefined && Math.round(unallocated * COEFFICIENT_SCALE) < -EQUAL_TOLERANCE
+  );
+}
+
+/**
  * The evidence behind an anomaly: "β observada 4,1200 % en 21 días medibles."
  * No expected β beside it: the analysis does not return one, and deriving it
  * here would restate the backend's attribution (UI-AGR-031).

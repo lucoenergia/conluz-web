@@ -25,7 +25,8 @@ export const HELP_TERMS: HelpTerm[] = [
   },
   {
     term: "Sin explicar (1 − Σβ)",
-    meaning: "la parte de la producción que no se atribuye a ningún punto con datos.",
+    meaning:
+      "la parte de la producción que no se atribuye a ningún punto con datos. Si es negativa, los datos son erróneos: los puntos no pueden recibir más de lo que produce la planta.",
   },
 ];
 

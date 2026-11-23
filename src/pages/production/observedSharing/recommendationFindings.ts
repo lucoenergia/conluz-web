@@ -4,15 +4,20 @@ import {
   type SharingAgreementObservationSummaryResponse,
 } from "../../../api/models";
 import { ANOMALY_COUNT_ORDER } from "./observedSharingLabels";
+import { formatPercentageOrNone, isImpossibleUnexplainedShare } from "./observedSharingFormat";
 import { agreementObservationPath, OBSERVED_ANOMALIES_ANCHOR } from "./observedSharingRoutes";
 import { applicationDatesPath } from "../applicationDates/applicationDatesRoutes";
 
 /** How a finding's icon reads: the dates in the accent, anomalies as a warning, the rest neutral. */
 export type FindingTone = "accent" | "neutral" | "warning";
 
-/** A recommendation stated as what the analysis found (#418). */
+/**
+ * What the analysis found (#418): a recommendation, or an impossible
+ * unexplained share, which is a value the analysis returned and not one of its
+ * recommendations (UI-AGR-039).
+ */
 export interface RecommendationFinding {
-  recommendation: Exclude<Recommendation, "NONE">;
+  kind: Exclude<Recommendation, "NONE"> | "IMPOSSIBLE_SHARE";
   tone: FindingTone;
   title: string;
   /** Empty when there is nothing to detail. */
@@ -34,24 +39,53 @@ const ANOMALY_TYPE_COUNTED: Record<SharingAnomalyResponseType, [singular: string
 
 const joinNonEmpty = (parts: (string | false)[]) => parts.filter(Boolean).join(" · ");
 
+/** Where an agreement's anomalies are listed. */
+const anomaliesLink = (plantId: string, agreementId: string) => ({
+  label: "Ver anomalías",
+  to: `${agreementObservationPath(plantId, agreementId)}#${OBSERVED_ANOMALIES_ANCHOR}`,
+});
+
 /**
- * An agreement's recommendations as findings, in the order the analysis
- * returned them. "None" is no finding, so an agreement with nothing to review
- * has none. Figures come from the backend's counts; nothing proposes a value.
+ * An impossible unexplained share as a finding (UI-AGR-039): by how much the
+ * supplies received more than the plant produced, read from the share itself
+ * and nothing else, with the agreement's anomalies when it has any.
+ */
+function impossibleShareFinding(
+  plantId: string,
+  summary: SharingAgreementObservationSummaryResponse,
+): RecommendationFinding[] {
+  const unallocated = summary.unallocatedShare?.unallocated;
+  if (!isImpossibleUnexplainedShare(unallocated)) return [];
+  return [
+    {
+      kind: "IMPOSSIBLE_SHARE",
+      tone: "warning",
+      title: "Reparto mayor que la producción",
+      detail: `Los puntos reciben un ${formatPercentageOrNone(-unallocated, 1)} más de lo que produce la planta.`,
+      link: summary.anomalies.length > 0 ? anomaliesLink(plantId, summary.sharingAgreement.id) : undefined,
+    },
+  ];
+}
+
+/**
+ * An agreement's findings: an impossible unexplained share first, as it puts
+ * every other figure in doubt, then its recommendations in the order the
+ * analysis returned them. "None" is no finding, so an agreement with nothing to
+ * review has none. Figures come from the backend; nothing proposes a value.
  */
 export function recommendationFindings(
   plantId: string,
   summary: SharingAgreementObservationSummaryResponse,
 ): RecommendationFinding[] {
   const agreementId = summary.sharingAgreement.id;
-  return summary.recommendations.flatMap((recommendation): RecommendationFinding[] => {
+  const recommended = summary.recommendations.flatMap((recommendation): RecommendationFinding[] => {
     switch (recommendation) {
       case Recommendation.SET_DATES: {
         const coefficients = summary.coefficientStatusCounts;
         const leaving = summary.leavingStatusCounts.appliedDifferentDate;
         return [
           {
-            recommendation,
+            kind: recommendation,
             tone: "accent",
             title: "Fechas distintas de las registradas",
             detail: joinNonEmpty([
@@ -73,7 +107,7 @@ export function recommendationFindings(
       case Recommendation.DEACTIVATE:
         return [
           {
-            recommendation,
+            kind: recommendation,
             tone: "neutral",
             title: "Sin aplicación observada",
             detail: "No se observa ningún coeficiente y no consta fecha de envío.",
@@ -85,16 +119,13 @@ export function recommendationFindings(
         const total = byType.reduce((sum, { count }) => sum + summary.anomalyCounts[count], 0);
         return [
           {
-            recommendation,
+            kind: recommendation,
             tone: "warning",
             title: counted(total, "anomalía", "anomalías"),
             detail: joinNonEmpty(
               byType.map(({ type, count }) => counted(summary.anomalyCounts[count], ...ANOMALY_TYPE_COUNTED[type])),
             ),
-            link: {
-              label: "Ver anomalías",
-              to: `${agreementObservationPath(plantId, agreementId)}#${OBSERVED_ANOMALIES_ANCHOR}`,
-            },
+            link: anomaliesLink(plantId, agreementId),
           },
         ];
       }
@@ -102,4 +133,5 @@ export function recommendationFindings(
         return [];
     }
   });
+  return [...impossibleShareFinding(plantId, summary), ...recommended];
 }

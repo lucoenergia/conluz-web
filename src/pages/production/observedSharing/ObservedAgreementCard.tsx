@@ -9,6 +9,7 @@ import { formatAgreementApplication, formatDay, formatPercentageOrNone } from ".
 import { agreementObservationPath } from "./observedSharingRoutes";
 import type { SharingAgreementObservationSummaryResponse } from "../../../api/models";
 import { RecommendationFindings } from "./RecommendationFindings";
+import { ImpossibleShareWarning, UnexplainedShareValue } from "./UnexplainedShare";
 import { recommendationFindings } from "./recommendationFindings";
 
 const sectionLabelSx = { color: colors.text.subtle, fontWeight: 600 } as const;
@@ -143,9 +144,10 @@ export const ObservedAgreementCard: FC<ObservedAgreementCardProps> = ({ plantId,
         <Typography variant="body2" sx={sectionLabelSx}>
           Sin explicar (1 − Σβ)
         </Typography>
-        <Typography sx={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
-          {formatPercentageOrNone(unallocated?.unallocated, 1)}
+        <Typography sx={{ fontWeight: 600 }}>
+          <UnexplainedShareValue unallocated={unallocated?.unallocated} />
         </Typography>
+        <ImpossibleShareWarning unallocated={unallocated?.unallocated} />
         {unallocated && unallocated.registeredShareWithoutData > 0 && suppliesWithoutDataCount > 0 && (
           <Typography variant="body2" sx={{ color: colors.text.subtle }}>
             {formatPercentageOrNone(unallocated.registeredShareWithoutData, 1)} es{" "}

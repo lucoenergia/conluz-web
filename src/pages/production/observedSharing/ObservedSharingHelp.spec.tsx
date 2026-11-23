@@ -51,7 +51,10 @@ describe("ObservedSharingHelp", () => {
         "Día medible",
         "un día con datos completos del punto y de la planta en Datadis, en el que la planta produjo al menos 12 kWh (o 0,5 kWh por kWp si es más). Solo estos días se usan para comparar; no indica que el día sea correcto o incorrecto.",
       ],
-      ["Sin explicar (1 − Σβ)", "la parte de la producción que no se atribuye a ningún punto con datos."],
+      [
+        "Sin explicar (1 − Σβ)",
+        "la parte de la producción que no se atribuye a ningún punto con datos. Si es negativa, los datos son erróneos: los puntos no pueden recibir más de lo que produce la planta.",
+      ],
     ]);
   });
 

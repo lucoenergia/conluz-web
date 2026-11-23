@@ -25,7 +25,7 @@ describe("recommendationFindings", () => {
     );
 
     expect(finding).toEqual({
-      recommendation: Recommendation.SET_DATES,
+      kind: Recommendation.SET_DATES,
       tone: "accent",
       title: "Fechas distintas de las registradas",
       detail: "1 aplicado en otra fecha · 1 salida en otra fecha",
