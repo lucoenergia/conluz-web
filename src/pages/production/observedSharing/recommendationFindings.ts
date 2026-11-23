@@ -4,7 +4,7 @@ import {
   type SharingAgreementObservationSummaryResponse,
 } from "../../../api/models";
 import { ANOMALY_COUNT_ORDER } from "./observedSharingLabels";
-import { formatPercentageOrNone, isImpossibleUnexplainedShare } from "./observedSharingFormat";
+import { formatPercentageOrNone, isImpossibleUnattributedShare } from "./observedSharingFormat";
 import { agreementObservationPath, OBSERVED_ANOMALIES_ANCHOR } from "./observedSharingRoutes";
 import { applicationDatesPath } from "../applicationDates/applicationDatesRoutes";
 
@@ -13,7 +13,7 @@ export type FindingTone = "accent" | "neutral" | "warning";
 
 /**
  * What the analysis found (#418): a recommendation, or an impossible
- * unexplained share, which is a value the analysis returned and not one of its
+ * unattributed production share, which is a value the analysis returned and not one of its
  * recommendations (UI-AGR-039).
  */
 export interface RecommendationFinding {
@@ -46,7 +46,7 @@ const anomaliesLink = (plantId: string, agreementId: string) => ({
 });
 
 /**
- * An impossible unexplained share as a finding (UI-AGR-039): by how much the
+ * An impossible unattributed production share as a finding (UI-AGR-039): by how much the
  * supplies received more than the plant produced, read from the share itself
  * and nothing else, with the agreement's anomalies when it has any.
  */
@@ -55,7 +55,7 @@ function impossibleShareFinding(
   summary: SharingAgreementObservationSummaryResponse,
 ): RecommendationFinding[] {
   const unallocated = summary.unallocatedShare?.unallocated;
-  if (!isImpossibleUnexplainedShare(unallocated)) return [];
+  if (!isImpossibleUnattributedShare(unallocated)) return [];
   return [
     {
       kind: "IMPOSSIBLE_SHARE",
@@ -68,7 +68,7 @@ function impossibleShareFinding(
 }
 
 /**
- * An agreement's findings: an impossible unexplained share first, as it puts
+ * An agreement's findings: an impossible unattributed production share first, as it puts
  * every other figure in doubt, then its recommendations in the order the
  * analysis returned them. "None" is no finding, so an agreement with nothing to
  * review has none. Figures come from the backend; nothing proposes a value.

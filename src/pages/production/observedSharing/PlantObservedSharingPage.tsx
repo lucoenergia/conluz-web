@@ -72,7 +72,7 @@ const AnalysisNotice: FC<{ observation: PlantSharingObservationResponse }> = ({ 
     <Notice severity={isAllClear(observation) ? "success" : "info"}>
       {`Datos de Datadis ${formatDataRangeInSentence(analysis.analysedFrom!, analysis.analysedTo!)}.`}
       {withoutData.length > 0 &&
-        ` ${withoutData.length} ${withoutData.length === 1 ? "punto sin datos" : "puntos sin datos"} de Datadis: ${joinNames(withoutData)}. Su parte aparece como «sin explicar».`}
+        ` ${withoutData.length} ${withoutData.length === 1 ? "punto sin datos" : "puntos sin datos"} de Datadis: ${joinNames(withoutData)}. Su parte aparece como «producción no atribuida».`}
       {isAllClear(observation) &&
         " Todo aplicado, sin anomalías. Datadis muestra cada acuerdo aplicado desde su fecha registrada y todos los puntos reciben su coeficiente."}
     </Notice>
@@ -149,7 +149,6 @@ const AnalysedState: FC<{ plantId: string; observation: PlantSharingObservationR
   );
   const anomalyCount = groups.reduce((sum, group) => sum + group.count, 0);
   const allClear = isAllClear(observation);
-  const suppliesWithoutDataCount = observation.analysis.suppliesWithoutValidDays.length;
 
   return (
     <>
@@ -175,7 +174,6 @@ const AnalysedState: FC<{ plantId: string; observation: PlantSharingObservationR
                 key={summary.sharingAgreement.id}
                 plantId={plantId}
                 summary={summary}
-                suppliesWithoutDataCount={suppliesWithoutDataCount}
               />
             ))}
           </Box>

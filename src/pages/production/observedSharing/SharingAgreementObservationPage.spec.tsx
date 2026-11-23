@@ -264,7 +264,7 @@ describe("SharingAgreementObservationPage", () => {
   test("UI-AGR-031: every row shows the observed β the backend returned, and '—' when it returned none", () => {
     renderPage();
 
-    expect(supplyRow("Casa Oeste")).toHaveTextContent(/^Casa Oeste.*3,0000 %—Sin fecha—Sin datos de Datadis$/);
+    expect(supplyRow("Casa Oeste")).toHaveTextContent(/^Casa Oeste.*3,0000 %—0 de 200Sin fecha—Sin datos de Datadis$/);
     expect(within(leavingSection()).getByRole("row", { name: /Escuela/ })).toHaveTextContent("4,0000 %0,0000 %");
     expect(within(leavingSection()).getByRole("row", { name: /Bar/ })).toHaveTextContent("1,0000 %0,0000 %");
     expect(within(leavingSection()).getByRole("row", { name: /Kiosco/ })).toHaveTextContent("1,5000 %—");
@@ -550,11 +550,11 @@ describe("SharingAgreementObservationPage", () => {
     expect(await screen.findByRole("dialog", { name: "Cómo leer el reparto observado" })).toBeInTheDocument();
   });
 
-  describe("UI-AGR-039: an impossible unexplained share", () => {
+  describe("UI-AGR-039: an impossible unattributed production share", () => {
     const WARNING =
       "Imposible: los puntos reciben más energía de la que produce la planta. Algún dato de Datadis es erróneo; revisa las anomalías con β observada muy alta.";
 
-    async function renderWithUnexplained(unallocated: number) {
+    async function renderWithUnattributed(unallocated: number) {
       const fixture = observationFixture();
       renderPage({
         observation: query.success<typeof getSharingAgreementObservation>({
@@ -571,7 +571,7 @@ describe("SharingAgreementObservationPage", () => {
         .map((item) => item.firstElementChild?.nextElementSibling?.firstElementChild?.textContent);
 
     test("UI-AGR-039: −47,48 % keeps its value, in the warning tone, with the warning under it and the finding first", async () => {
-      await renderWithUnexplained(-0.4748);
+      await renderWithUnattributed(-0.4748);
 
       expect(declaredStyle(screen.getByText("-47,5 %")).color).toBe(colors.warning.main);
       expect(screen.getByText(WARNING)).toBeInTheDocument();
@@ -580,7 +580,7 @@ describe("SharingAgreementObservationPage", () => {
     });
 
     test("UI-AGR-039: −0,05 % is rounding: shown as it is, with no warning and no finding", async () => {
-      await renderWithUnexplained(-0.0005);
+      await renderWithUnattributed(-0.0005);
 
       expect(declaredStyle(screen.getByText("-0,1 %")).color).toBeUndefined();
       expect(screen.queryByText(WARNING)).not.toBeInTheDocument();
@@ -588,7 +588,7 @@ describe("SharingAgreementObservationPage", () => {
     });
 
     test("UI-AGR-039: 5,74 % shows with no warning and no finding", async () => {
-      await renderWithUnexplained(0.0574);
+      await renderWithUnattributed(0.0574);
 
       expect(declaredStyle(screen.getByText("5,7 %")).color).toBeUndefined();
       expect(screen.queryByText(WARNING)).not.toBeInTheDocument();

@@ -96,14 +96,14 @@ describe("recommendationFindings", () => {
     expect(recommendationFindings("plant-a", summary({ recommendations: [Recommendation.NONE] }))).toEqual([]);
   });
 
-  describe("UI-AGR-039: an impossible unexplained share", () => {
-    const withUnexplained = (unallocated: number, overrides: Parameters<typeof buildObservationSummary>[0] = {}) =>
+  describe("UI-AGR-039: an impossible unattributed production share", () => {
+    const withUnattributed = (unallocated: number, overrides: Parameters<typeof buildObservationSummary>[0] = {}) =>
       summary({ unallocatedShare: { days: 200, unallocated, registeredShareWithoutData: 0 }, ...overrides });
 
     test("UI-AGR-039: below −0,1 points it is the first finding, stating by how much, with the agreement's anomalies", () => {
       const findings = recommendationFindings(
         "plant-a",
-        withUnexplained(-0.4748, {
+        withUnattributed(-0.4748, {
           anomalies: [buildSharingAnomaly()],
           recommendations: [Recommendation.REVIEW_ANOMALIES],
         }),
@@ -121,17 +121,17 @@ describe("recommendationFindings", () => {
     });
 
     test("UI-AGR-039: with no anomaly in the agreement, the finding has no link", () => {
-      const [finding] = recommendationFindings("plant-a", withUnexplained(-0.4748, { recommendations: [Recommendation.NONE] }));
+      const [finding] = recommendationFindings("plant-a", withUnattributed(-0.4748, { recommendations: [Recommendation.NONE] }));
 
       expect(finding.kind).toBe("IMPOSSIBLE_SHARE");
       expect(finding.link).toBeUndefined();
     });
 
     test.each([-0.0005, -0.001, 0, 0.0574])("UI-AGR-039: %s is no finding", (unallocated) => {
-      expect(recommendationFindings("plant-a", withUnexplained(unallocated, { recommendations: [Recommendation.NONE] }))).toEqual([]);
+      expect(recommendationFindings("plant-a", withUnattributed(unallocated, { recommendations: [Recommendation.NONE] }))).toEqual([]);
     });
 
-    test("UI-AGR-039: an agreement without an unexplained share has no such finding", () => {
+    test("UI-AGR-039: an agreement without an unattributed production share has no such finding", () => {
       expect(recommendationFindings("plant-a", summary({ unallocatedShare: null, recommendations: [Recommendation.NONE] }))).toEqual([]);
     });
   });

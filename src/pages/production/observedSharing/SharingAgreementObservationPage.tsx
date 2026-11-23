@@ -6,6 +6,7 @@ import {
   CoefficientObservationResponseStatus,
   type CoefficientObservationResponse,
   type LeavingObservationResponse,
+  type SharingAgreementObservationSummaryResponse,
   type SharingAgreementObservationResponse,
 } from "../../../api/models";
 import { BreadCrumb } from "../../../components/Breadcrumb";
@@ -34,6 +35,7 @@ import {
   COEFFICIENT_STATUS_LABEL,
   LEAVING_STATUS_LABEL,
   STATUS_TONE,
+  UNATTRIBUTED_PRODUCTION_LABEL,
   type ObservationTone,
 } from "./observedSharingLabels";
 import {
@@ -42,15 +44,14 @@ import {
   formatBeta,
   formatDay,
   formatObservedDate,
-  formatPercentageOrNone,
   formatRegisteredPeriod,
-  isImpossibleUnexplainedShare,
+  formatMeasurableDays,
   NO_VALUE,
 } from "./observedSharingFormat";
 import { OBSERVED_ANOMALIES_ANCHOR, observedSharingPath } from "./observedSharingRoutes";
 import { RecommendationFindings } from "./RecommendationFindings";
 import { recommendationFindings } from "./recommendationFindings";
-import { ImpossibleShareWarning, UnexplainedShareValue } from "./UnexplainedShare";
+import { UnattributedProduction } from "./UnattributedProduction";
 import { useSharingAgreementObservationData } from "./useSharingAgreementObservationData";
 
 /** How many coefficient rows show before "Mostrar todos". */
@@ -152,9 +153,10 @@ const FilterChips: FC<{
 
 const CoefficientRows: FC<{
   rows: CoefficientObservationResponse[];
+  summary: SharingAgreementObservationSummaryResponse;
   anomalyLabelsBySupply: Map<string, string[]>;
   header: ReactNode;
-}> = ({ rows, anomalyLabelsBySupply, header }) => {
+}> = ({ rows, summary, anomalyLabelsBySupply, header }) => {
   const [showAll, setShowAll] = useState(false);
   const shown = showAll ? rows : rows.slice(0, INITIAL_ROWS);
   const anomalyLabels = (row: CoefficientObservationResponse) => anomalyLabelsBySupply.get(row.supply.id) ?? [];
@@ -164,6 +166,7 @@ const CoefficientRows: FC<{
   const fields = (row: CoefficientObservationResponse): RecordField[] => [
     { label: "β registrada", value: formatBeta(row.coefficient) },
     { label: "β observada", value: <ObservedBeta observed={row.observedBeta} registered={row.coefficient} /> },
+    { label: "Días medibles", value: formatMeasurableDays(row, summary) },
     { label: "Periodo registrado", value: formatRegisteredPeriod(row.storedValidFrom, row.storedValidTo) },
     {
       label: "Aplicación observada",
@@ -206,10 +209,16 @@ const CoefficientRows: FC<{
               width: "11%",
             },
             {
+              key: "measurableDays",
+              header: "Días medibles",
+              render: (row) => formatMeasurableDays(row, summary),
+              width: "10%",
+            },
+            {
               key: "period",
               header: "Periodo registrado",
               render: (row) => formatRegisteredPeriod(row.storedValidFrom, row.storedValidTo),
-              width: "17%",
+              width: "15%",
             },
             {
               key: "applied",
@@ -331,6 +340,7 @@ const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservat
         />
         <CoefficientRows
           rows={shown.coefficients}
+          summary={summary}
           anomalyLabelsBySupply={anomalyLabelsBySupply}
           header={<FilterChips filter={filter} onChange={setFilter} counts={{ all: all.count, warnings: warnings.count }} />}
         />
@@ -413,8 +423,6 @@ export const SharingAgreementObservationPage: FC = () => {
     body = <ObservedState plantId={plantId} observation={observation} />;
   }
 
-  const suppliesWithoutData = observation?.analysis.suppliesWithoutValidDays.length ?? 0;
-  const unallocated = summary?.unallocatedShare;
 
   return (
     <Box sx={sxStyles.pageRoot}>
@@ -485,19 +493,10 @@ export const SharingAgreementObservationPage: FC = () => {
                 summary && observation.analysis.computable
                   ? [
                       {
-                        label: "Sin explicar (1 − Σβ)",
-                        value: (
-                          <>
-                            <UnexplainedShareValue unallocated={unallocated?.unallocated} />
-                            {unallocated &&
-                              unallocated.registeredShareWithoutData > 0 &&
-                              suppliesWithoutData > 0 &&
-                              ` · ${formatPercentageOrNone(unallocated.registeredShareWithoutData, 1)} es ${suppliesWithoutData === 1 ? "del punto sin datos" : `de los ${suppliesWithoutData} puntos sin datos`}`}
-                            <ImpossibleShareWarning unallocated={unallocated?.unallocated} />
-                          </>
-                        ),
-                        // The warning under an impossible share takes the whole row (UI-AGR-039).
-                        wide: isImpossibleUnexplainedShare(unallocated?.unallocated),
+                        label: UNATTRIBUTED_PRODUCTION_LABEL,
+                        value: <UnattributedProduction share={summary.unallocatedShare} variant="body2" />,
+                        // Its explanation and breakdown read as sentences, not in a quarter column.
+                        wide: true,
                       },
                     ]
                   : undefined

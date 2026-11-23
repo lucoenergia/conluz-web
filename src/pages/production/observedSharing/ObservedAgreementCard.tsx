@@ -4,12 +4,18 @@ import { Link as RouterLink } from "react-router";
 import { SharingAgreementStatusChip } from "../../../components/SharingAgreementStatusChip";
 import { sxStyles } from "../../../theme/sx";
 import { colors, radii } from "../../../theme/tokens";
-import { ANOMALY_COUNT_ORDER, ANOMALY_TYPE_LABEL, COEFFICIENT_STATUS_LABEL, STATUS_COUNT_ORDER } from "./observedSharingLabels";
-import { formatAgreementApplication, formatDay, formatPercentageOrNone } from "./observedSharingFormat";
+import {
+  ANOMALY_COUNT_ORDER,
+  ANOMALY_TYPE_LABEL,
+  COEFFICIENT_STATUS_LABEL,
+  STATUS_COUNT_ORDER,
+  UNATTRIBUTED_PRODUCTION_LABEL,
+} from "./observedSharingLabels";
+import { formatAgreementApplication, formatDay } from "./observedSharingFormat";
 import { agreementObservationPath } from "./observedSharingRoutes";
 import type { SharingAgreementObservationSummaryResponse } from "../../../api/models";
 import { RecommendationFindings } from "./RecommendationFindings";
-import { ImpossibleShareWarning, UnexplainedShareValue } from "./UnexplainedShare";
+import { UnattributedProduction } from "./UnattributedProduction";
 import { recommendationFindings } from "./recommendationFindings";
 
 const sectionLabelSx = { color: colors.text.subtle, fontWeight: 600 } as const;
@@ -58,8 +64,6 @@ function leavingText(summary: SharingAgreementObservationSummaryResponse): strin
 interface ObservedAgreementCardProps {
   plantId: string;
   summary: SharingAgreementObservationSummaryResponse;
-  /** Supplies of the plant without any valid day, whose registered share the unexplained part includes. */
-  suppliesWithoutDataCount: number;
 }
 
 /**
@@ -67,12 +71,11 @@ interface ObservedAgreementCardProps {
  * it was applied, its status counts, its anomalies by type, the part no supply
  * with data received, and its recommendations.
  */
-export const ObservedAgreementCard: FC<ObservedAgreementCardProps> = ({ plantId, summary, suppliesWithoutDataCount }) => {
+export const ObservedAgreementCard: FC<ObservedAgreementCardProps> = ({ plantId, summary }) => {
   const agreement = summary.sharingAgreement;
   const findings = recommendationFindings(plantId, summary);
   const anomalyCount = summary.anomalies.length;
   const leaving = leavingText(summary);
-  const unallocated = summary.unallocatedShare;
 
   return (
     <Box
@@ -99,7 +102,9 @@ export const ObservedAgreementCard: FC<ObservedAgreementCardProps> = ({ plantId,
         </Link>
         <SharingAgreementStatusChip status={agreement.status} />
         <Typography variant="body2" sx={{ color: colors.text.body }}>
-          {summary.distributorFileSentOn ? `Fichero enviado el ${formatDay(summary.distributorFileSentOn)}` : "Sin registrar"}
+          {summary.distributorFileSentOn
+            ? `Fichero enviado el ${formatDay(summary.distributorFileSentOn)}`
+            : "Fichero enviado: sin registrar"}
         </Typography>
         <Typography sx={{ fontWeight: 600 }}>{formatAgreementApplication(summary)}</Typography>
       </Box>
@@ -142,18 +147,9 @@ export const ObservedAgreementCard: FC<ObservedAgreementCardProps> = ({ plantId,
 
       <Box>
         <Typography variant="body2" sx={sectionLabelSx}>
-          Sin explicar (1 − Σβ)
+          {UNATTRIBUTED_PRODUCTION_LABEL}
         </Typography>
-        <Typography sx={{ fontWeight: 600 }}>
-          <UnexplainedShareValue unallocated={unallocated?.unallocated} />
-        </Typography>
-        <ImpossibleShareWarning unallocated={unallocated?.unallocated} />
-        {unallocated && unallocated.registeredShareWithoutData > 0 && suppliesWithoutDataCount > 0 && (
-          <Typography variant="body2" sx={{ color: colors.text.subtle }}>
-            {formatPercentageOrNone(unallocated.registeredShareWithoutData, 1)} es{" "}
-            {suppliesWithoutDataCount === 1 ? "del punto sin datos" : `de los ${suppliesWithoutDataCount} puntos sin datos`}
-          </Typography>
-        )}
+        <UnattributedProduction share={summary.unallocatedShare} variant="body1" />
       </Box>
 
       {findings.length > 0 && (

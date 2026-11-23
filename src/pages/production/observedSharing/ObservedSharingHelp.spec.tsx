@@ -52,8 +52,10 @@ describe("ObservedSharingHelp", () => {
         "un día con datos completos del punto y de la planta en Datadis, en el que la planta produjo al menos 12 kWh (o 0,5 kWh por kWp si es más). Solo estos días se usan para comparar; no indica que el día sea correcto o incorrecto.",
       ],
       [
-        "Sin explicar (1 − Σβ)",
-        "la parte de la producción que no se atribuye a ningún punto con datos. Si es negativa, los datos son erróneos: los puntos no pueden recibir más de lo que produce la planta.",
+        "Producción no atribuida (1 − Σβ)",
+        "de toda la energía que produjo la planta en los días medibles en que se aplicaba el acuerdo, la parte que Datadis no muestra en ningún punto con datos. Σβ es la suma de lo que recibieron los puntos. Se divide en dos:" +
+          "la parte registrada de los puntos que no tenían datos esos días, que es normal y no indica un error;" +
+          "un resto. Cerca de 0 es redondeo. Positivo: producción que no llegó a ningún punto registrado (puede haber un punto sin registrar o coeficientes que no suman 100 %). Negativo: los puntos con datos recibieron más de lo registrado, y si la cifra total es negativa, algún dato de Datadis es erróneo.",
       ],
     ]);
   });
@@ -116,14 +118,12 @@ describe("ObservedSharingHelp", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 
-  test("UI-AGR-039: 'Sin explicar (1 − Σβ)' says a negative share means wrong data", async () => {
+  test("UI-AGR-039: 'Producción no atribuida (1 − Σβ)' says a negative share means wrong data", async () => {
     const { dialog } = await openHelp();
 
     expect(entries(within(dialog).getByRole("region", { name: "Términos" }))).toContainEqual([
-      "Sin explicar (1 − Σβ)",
-      expect.stringContaining(
-        "Si es negativa, los datos son erróneos: los puntos no pueden recibir más de lo que produce la planta.",
-      ),
+      "Producción no atribuida (1 − Σβ)",
+      expect.stringContaining("si la cifra total es negativa, algún dato de Datadis es erróneo."),
     ]);
   });
 });

@@ -32,7 +32,7 @@ const HelpSection: FC<{ title: string; terms: HelpTerm[] }> = ({ title, terms })
         {title}
       </Typography>
       <Box component="dl" sx={{ m: 0, display: "flex", flexDirection: "column", gap: 1.25 }}>
-        {terms.map(({ term, meaning }) => (
+        {terms.map(({ term, meaning, parts }) => (
           <div key={term}>
             <Typography component="dt" variant="body2" sx={{ fontWeight: 600 }}>
               {term}
@@ -43,6 +43,13 @@ const HelpSection: FC<{ title: string; terms: HelpTerm[] }> = ({ title, terms })
               sx={{ m: 0, color: colors.text.body, "&::first-letter": { textTransform: "uppercase" } }}
             >
               {meaning}
+              {parts && (
+                <Box component="ul" sx={{ m: 0, mt: 0.5, pl: 2.5 }}>
+                  {parts.map((part) => (
+                    <li key={part}>{part}</li>
+                  ))}
+                </Box>
+              )}
             </Typography>
           </div>
         ))}

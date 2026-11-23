@@ -187,7 +187,7 @@ describe("PlantObservedSharingPage", () => {
     ]);
   });
 
-  test("UI-AGR-023: a card shows the sent date, the application, the status, leaving and anomaly counts, and the unexplained part", () => {
+  test("UI-AGR-023: a card shows the sent date, the application, the status, leaving and anomaly counts, and the unattributed production", () => {
     renderPage();
     const revised = card("Reparto 2025");
 
@@ -209,14 +209,14 @@ describe("PlantObservedSharingPage", () => {
     expect(within(revised).getByText("Salen del reparto: 2 · 1 con fecha distinta")).toBeInTheDocument();
     expect(within(revised).getByText("Anomalías · 2")).toBeInTheDocument();
     expect(within(revised).getByText("6,7 %")).toBeInTheDocument();
-    expect(within(revised).getByText("3,0 % es del punto sin datos")).toBeInTheDocument();
+    expect(within(revised).getByText("3,0 % corresponde a puntos que no tenían datos esos días")).toBeInTheDocument();
   });
 
   test("UI-AGR-023: a card with nothing observed says so, and leaves out the leaving and anomaly figures it has none of", () => {
     renderPage();
     const current = card("Reparto 2026");
 
-    expect(within(current).getByText("Sin registrar")).toBeInTheDocument();
+    expect(within(current).getByText("Fichero enviado: sin registrar")).toBeInTheDocument();
     // The counts list "Sin observar" too; this is the application line.
     expect(within(current).getByText("Sin observar", { ignore: "li *" })).toBeInTheDocument();
     expect(within(current).getByText("Sin anomalías")).toBeInTheDocument();
@@ -373,7 +373,7 @@ describe("PlantObservedSharingPage", () => {
     renderPage();
 
     expect(screen.getByRole("note")).toHaveTextContent(
-      "Datos de Datadis del 1 abr 2023 al 31 oct 2026. 1 punto sin datos de Datadis: Casa Oeste. Su parte aparece como «sin explicar».",
+      "Datos de Datadis del 1 abr 2023 al 31 oct 2026. 1 punto sin datos de Datadis: Casa Oeste. Su parte aparece como «producción no atribuida».",
     );
     const notComputable = screen.getByRole("region", { name: "No calculables" });
     expect(within(notComputable).getByRole("row", { name: /Taller/ })).toHaveTextContent(`Taller${TALLER.code}No calculable`);
@@ -511,11 +511,11 @@ describe("PlantObservedSharingPage", () => {
     expect(await screen.findByRole("dialog", { name: "Cómo leer el reparto observado" })).toBeInTheDocument();
   });
 
-  describe("UI-AGR-039: an impossible unexplained share", () => {
+  describe("UI-AGR-039: an impossible unattributed production share", () => {
     const WARNING =
       "Imposible: los puntos reciben más energía de la que produce la planta. Algún dato de Datadis es erróneo; revisa las anomalías con β observada muy alta.";
 
-    function renderWithUnexplained(unallocated: number) {
+    function renderWithUnattributed(unallocated: number) {
       renderPage({
         observation: query.success<typeof getPlantSharingObservation>(
           observationFixture({
@@ -531,7 +531,7 @@ describe("PlantObservedSharingPage", () => {
     }
 
     test("UI-AGR-039: −47,48 % keeps its value, in the warning tone, with the warning under it and the finding first", () => {
-      const revised = renderWithUnexplained(-0.4748);
+      const revised = renderWithUnattributed(-0.4748);
 
       expect(declaredStyle(within(revised).getByText("-47,5 %")).color).toBe(colors.warning.main);
       expect(within(revised).getByText("-47,5 %").closest("p")?.nextElementSibling).toHaveTextContent(WARNING);
@@ -547,7 +547,7 @@ describe("PlantObservedSharingPage", () => {
     });
 
     test("UI-AGR-039: −0,05 % is rounding: shown as it is, with no warning and no finding", () => {
-      const revised = renderWithUnexplained(-0.0005);
+      const revised = renderWithUnattributed(-0.0005);
 
       expect(declaredStyle(within(revised).getByText("-0,1 %")).color).toBeUndefined();
       expect(within(revised).queryByText(WARNING)).not.toBeInTheDocument();
@@ -574,7 +574,7 @@ describe("PlantObservedSharingPage", () => {
     });
 
     test("UI-AGR-039: 5,74 % shows with no warning and no finding", () => {
-      const revised = renderWithUnexplained(0.0574);
+      const revised = renderWithUnattributed(0.0574);
 
       expect(declaredStyle(within(revised).getByText("5,7 %")).color).toBeUndefined();
       expect(within(revised).queryByText(WARNING)).not.toBeInTheDocument();

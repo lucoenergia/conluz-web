@@ -87,3 +87,6 @@ export type ActionableRecommendation = Exclude<Recommendation, "NONE">;
 /** The recommendations that ask for something, in the order the analysis returned them. */
 export const actionableRecommendations = (recommendations: Recommendation[]): ActionableRecommendation[] =>
   recommendations.filter((item): item is ActionableRecommendation => item !== Recommendation.NONE);
+
+/** The name the unattributed production share is shown under; its formula is only in the help (UI-AGR-040). */
+export const UNATTRIBUTED_PRODUCTION_LABEL = "Producción no atribuida";

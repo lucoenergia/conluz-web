@@ -1,4 +1,9 @@
-import type { ObservedDateResponse, SharingAgreementObservationSummaryResponse } from "../../../api/models";
+import type {
+  CoefficientObservationResponse,
+  ObservedDateResponse,
+  SharingAgreementObservationSummaryResponse,
+  UnallocatedShareResponse,
+} from "../../../api/models";
 import { formatLocalDate, SHORT_CALENDAR_DATE } from "../../../utils/formatCalendarDate";
 import { formatPercentage } from "../../../utils/formatPercentage";
 import { COEFFICIENT_SCALE } from "../sharingAgreementCoefficientSums";
@@ -51,16 +56,73 @@ export function betaMatches(observed: number, registered: number): boolean {
 }
 
 /**
- * Whether an unexplained share (1 − Σβ) is impossible: below −0.1 percentage
- * points, the tolerance of the analysis, the supplies received more energy
- * than the plant produced, which only wrong Datadis data explains. Between
- * that and 0 it is rounding (UI-AGR-039). Compared in millionths, as
+ * Whether an unattributed production share (1 − Σβ) is impossible: below −0.1
+ * percentage points, the tolerance of the analysis, the supplies received more
+ * energy than the plant produced, which only wrong Datadis data explains.
+ * Between that and 0 it is rounding (UI-AGR-039). Compared in millionths, as
  * `betaMatches` is. A share the analysis did not give is not impossible.
  */
-export function isImpossibleUnexplainedShare(unallocated: number | null | undefined): unallocated is number {
+export function isImpossibleUnattributedShare(unallocated: number | null | undefined): unallocated is number {
   return (
     unallocated !== null && unallocated !== undefined && Math.round(unallocated * COEFFICIENT_SCALE) < -EQUAL_TOLERANCE
   );
+}
+
+/** What the rest of an unattributed share says: beyond ±0.1 points, which way it goes; within, rounding. */
+export type UnattributedRemainderKind = "receivedMore" | "notDelivered" | "rounding";
+
+const SIGNED_POINTS = new Intl.NumberFormat("es-ES", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+  signDisplay: "exceptZero",
+});
+
+/**
+ * The unattributed share left once the registered share of the supplies
+ * without data those days is taken out (UI-AGR-041): the subtraction of two
+ * values the analysis returned, in percentage points with its sign. Computed
+ * in millionths, so no float error moves it across the ±0.1 points edge.
+ */
+export function unattributedRemainder(share: UnallocatedShareResponse): {
+  text: string;
+  kind: UnattributedRemainderKind;
+} {
+  const unallocated = Math.round(share.unallocated * COEFFICIENT_SCALE);
+  const millionths = unallocated - Math.round(share.registeredShareWithoutData * COEFFICIENT_SCALE);
+  const kind: UnattributedRemainderKind =
+    millionths < -EQUAL_TOLERANCE ? "receivedMore" : millionths > EQUAL_TOLERANCE ? "notDelivered" : "rounding";
+  // A percentage point is 10 000 millionths of the 0-1 scale.
+  return { text: `${SIGNED_POINTS.format(millionths / 10_000)} pp`, kind };
+}
+
+/**
+ * Whether a row's measurable days rest on its agreement's whole applied window
+ * (UI-AGR-042). The window starts on the agreement's most frequent observed
+ * date, and a row's days run from the last day of its own observed date to the
+ * window's end. A row with no observed date rests on the whole window. One
+ * observed on the window's first day does too, but that day is known only when
+ * the most frequent date is a single day: for a range or an open date the
+ * contract does not say which of its days the window starts on. A row observed
+ * earlier counts days from before the window, and one observed later, fewer.
+ */
+function restsOnWholeWindow(observed: ObservedDateResponse | null, windowStart: ObservedDateResponse | null): boolean {
+  if (observed === null) return true;
+  return windowStart !== null && windowStart.from === windowStart.to && observed.to === windowStart.to;
+}
+
+/**
+ * A row's measurable days: "N de D" when they rest on the agreement's whole
+ * applied window, D being the plant's measurable days in it; only N otherwise,
+ * and when the analysis gave no window (UI-AGR-042).
+ */
+export function formatMeasurableDays(
+  row: CoefficientObservationResponse,
+  summary: SharingAgreementObservationSummaryResponse,
+): string {
+  const windowDays = summary.unallocatedShare?.days;
+  return windowDays !== undefined && restsOnWholeWindow(row.observedDate, summary.mostFrequentObservedDate)
+    ? `${row.observedValidDays} de ${windowDays}`
+    : String(row.observedValidDays);
 }
 
 /**
@@ -97,8 +159,8 @@ export function joinNames(names: string[]): string {
 }
 
 /**
- * A share of the production that is not a coefficient (1 − Σβ, the part of
- * the supplies without data), with as many decimals as the design gives it;
+ * A share of the production, such as the unattributed one or the registered
+ * share of the supplies without data, with as many decimals as the design gives it;
  * "—" when the analysis gave none.
  */
 export const formatPercentageOrNone = (value: number | null | undefined, decimals: number) =>
