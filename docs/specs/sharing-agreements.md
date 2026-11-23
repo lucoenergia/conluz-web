@@ -338,18 +338,22 @@ is in force today.
   agreement they MUST be grouped by supply, in the order each supply first appears, keeping the
   analysis order within a supply; an anomaly about the whole agreement sits under the supply it
   names. Each anomaly MUST show its type, its start (or range), its end (or "en curso") and its
-  evidence as "β observada X % en N días medibles": the β the backend observed and the days it
-  rests on. Wherever the view counts those days, it MUST call them "días medibles", never "días
-  válidos". UNKNOWN_COEFFICIENT MUST read "Coeficiente no registrado". The view MUST NOT show an
-  expected β until the backend returns one.
+  evidence as "β esperada X % · β observada Y % · N días medibles" ("1 día medible" for one): X
+  the backend's `expectedBeta`, 0 included, Y the β it observed, both in % with 4 decimals, and N
+  the days it rests on. An anomaly attributed to no agreement has no expected β, and its evidence
+  MUST leave out "β esperada X % · ". The view MUST NOT derive an expected β. Wherever the view
+  counts those days, it MUST call them "días medibles", never "días válidos". UNKNOWN_COEFFICIENT
+  MUST read "Coeficiente no registrado".
 - **Rationale:** An admin reviews them without a flood, and can check each against the evidence.
   "Recibe X %" read as the share the supply should get, and a "valid" day suggested the other days
   were wrong, when they only lack complete data. "Desconocido" said what the application does not
-  know; "no registrado" says what was seen. An expected β depends on the agreement the backend
-  attributes the anomaly to, which only the backend knows.
+  know; "no registrado" says what was seen. An observed β alone does not say how far off it is;
+  the expected one beside it does. It depends on the agreement the backend attributes the anomaly
+  to, which only the backend knows, so it comes from the API and is absent when nothing is
+  attributed.
 - **Implements:** n/a
 - **Source:** #418, lucoenergia/conluz#597; the evidence's wording, "días medibles" and
-  "Coeficiente no registrado": #419
+  "Coeficiente no registrado": #419; the expected β: lucoenergia/conluz#611
 
 ### UI-AGR-025 — Each kind of date reads one way
 
@@ -519,9 +523,9 @@ is in force today.
 - **Status:** Active
 - **Rule:** The plant's observed sharing page and the agreement's MUST offer "¿Qué significa cada
   estado?" in their header. It MUST open "Cómo leer el reparto observado", which MUST define β
-  registrada, β observada, día medible and producción no atribuida (1 − Σβ), and MUST list every
-  coefficient status, leaving status and anomaly type of the client, each under the label the view
-  shows it with.
+  registrada, β esperada, β observada, día medible and producción no atribuida (1 − Σβ), and MUST
+  list every coefficient status, leaving status and anomaly type of the client, each under the
+  label the view shows it with.
 - **Rationale:** The view is read by admins who are not analysts; a status or a figure is only
   useful when its meaning is one tap away from where it is shown. Listing from the client's values
   means a status the backend adds cannot reach the view unexplained.
@@ -588,19 +592,21 @@ is in force today.
 - **Implements:** n/a
 - **Source:** #419
 
-### UI-AGR-042 — Each coefficient row of an agreement shows its measurable days alone
+### UI-AGR-042 — Each row of an agreement shows its measurable days against its own window
 
 - **Status:** Active
-- **Rule:** The agreement's coefficient rows MUST show "Días medibles", a column in the table and a
-  field in each stacked row on a phone, not sortable. It MUST read N alone, N being the row's
-  `observedValidDays`, in every row: no row MUST show a denominator.
+- **Rule:** The agreement's coefficient rows and leaving rows MUST show "Días medibles", a column
+  in each table and a field in each stacked row on a phone, not sortable. It MUST read "N de M", N
+  being the row's `observedValidDays` and M its `windowDays`. The view MUST NOT use the agreement's
+  measurable days (the unattributed production's) as M. A NOT_OBSERVABLE row MUST show no
+  measurable days: an empty cell, and no field in its stacked row.
 - **Rationale:** A row's measurable days run from its own observed date to the end of the
   agreement's applied window, so a row observed before that window counts more days than the
-  window has: rows observed "on or before 01/09/2025" had 426 against 335. The unattributed
-  production's days are therefore no denominator for any row, and one format for every row keeps
-  them comparable. lucoenergia/conluz#611 adds each row's own window days.
+  window has: rows observed "on or before 01/09/2025" had 426 against 335. Only the row's own
+  window, which the backend returns, is a denominator for it. A row of the plant's own supply
+  cannot be observed, so it has no days to show.
 - **Implements:** n/a
-- **Source:** #419
+- **Source:** #419; `windowDays`: lucoenergia/conluz#611
 
 ## States
 
