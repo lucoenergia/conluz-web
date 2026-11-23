@@ -50,9 +50,13 @@ export function betaMatches(observed: number, registered: number): boolean {
   return Math.abs(Math.round(observed * COEFFICIENT_SCALE) - Math.round(registered * COEFFICIENT_SCALE)) <= EQUAL_TOLERANCE;
 }
 
-/** The evidence behind an anomaly: "Recibe 4,1200 % en 21 días medibles." */
+/**
+ * The evidence behind an anomaly: "β observada 4,1200 % en 21 días medibles."
+ * No expected β beside it: the analysis does not return one, and deriving it
+ * here would restate the backend's attribution (UI-AGR-031).
+ */
 export function formatAnomalyDetail(observedBeta: number, validDays: number): string {
-  return `Recibe ${formatBeta(observedBeta)} en ${validDays} ${validDays === 1 ? "día medible" : "días medibles"}.`;
+  return `β observada ${formatBeta(observedBeta)} en ${validDays} ${validDays === 1 ? "día medible" : "días medibles"}.`;
 }
 
 /** An anomaly's end: its last day, or "en curso" while it lasts until the end of the data. */

@@ -335,10 +335,10 @@ describe("PlantObservedSharingPage", () => {
     expect(within(section).getByRole("button", { name: /Casa Norte.*1 anomalía/ })).toHaveAttribute("aria-expanded", "false");
     // Collapsed on this page, so the rows are reached with hidden: true.
     expect(within(section).getByRole("row", { name: /Coeficiente no registrado/, hidden: true })).toHaveTextContent(
-      "Coeficiente no registrado01/05/202530/06/2025Recibe 3,0500 % en 21 días medibles.",
+      "Coeficiente no registrado01/05/202530/06/2025β observada 3,0500 % en 21 días medibles.",
     );
     expect(within(section).getByRole("row", { name: /Vuelve a un coeficiente anterior/, hidden: true })).toHaveTextContent(
-      "Vuelve a un coeficiente anterior01/03/2025 o antesen cursoRecibe 4,1200 % en 1 día medible.",
+      "Vuelve a un coeficiente anterior01/03/2025 o antesen cursoβ observada 4,1200 % en 1 día medible.",
     );
   });
 

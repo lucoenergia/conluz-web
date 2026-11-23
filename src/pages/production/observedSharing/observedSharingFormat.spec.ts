@@ -52,9 +52,9 @@ describe("observed sharing formatting", () => {
     expect(betaMatches(0.030499, 0.0315)).toBe(false);
   });
 
-  test("UI-AGR-024: an anomaly's detail is the β it received and the valid days it rests on", () => {
-    expect(formatAnomalyDetail(0.0412, 21)).toBe(percent("Recibe 4,1200 % en 21 días medibles."));
-    expect(formatAnomalyDetail(0.0412, 1)).toBe(percent("Recibe 4,1200 % en 1 día medible."));
+  test("UI-AGR-024: an anomaly's detail is its observed β and the measurable days it rests on", () => {
+    expect(formatAnomalyDetail(0.0412, 21)).toBe(percent("β observada 4,1200 % en 21 días medibles."));
+    expect(formatAnomalyDetail(0.0412, 1)).toBe(percent("β observada 4,1200 % en 1 día medible."));
   });
 
   test("UI-AGR-023: an agreement's application reads its most frequent observed date, or why there is none", () => {

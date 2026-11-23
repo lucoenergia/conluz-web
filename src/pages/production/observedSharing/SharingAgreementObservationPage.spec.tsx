@@ -444,7 +444,7 @@ describe("SharingAgreementObservationPage", () => {
     const region = within(section).getByRole("region", { name: /^Taller/ });
     expect(within(section).getByRole("button", { name: /Taller/ })).toHaveAttribute("aria-controls", region.id);
     expect(within(section).getByRole("row", { name: /Vuelve a un coeficiente anterior/ })).toHaveTextContent(
-      "Vuelve a un coeficiente anterior01/05/2025en cursoRecibe 4,1200 % en 21 días medibles.",
+      "Vuelve a un coeficiente anterior01/05/2025en cursoβ observada 4,1200 % en 21 días medibles.",
     );
   });
 
