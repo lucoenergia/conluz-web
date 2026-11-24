@@ -160,7 +160,10 @@ const CoefficientEffects: FC<{
     return row.leavesDistribution ? (
       <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5 }}>
         <span>{beta}</span>
-        <ObservationChip label={LEAVES_AT_ZERO_LABEL} tone="neutral" />
+        {/* A line, not a chip: the narrow column wraps it instead of cutting it. */}
+        <Typography variant="body2" sx={{ color: colors.text.body, fontWeight: 600 }}>
+          {LEAVES_AT_ZERO_LABEL}
+        </Typography>
       </Box>
     ) : (
       beta
