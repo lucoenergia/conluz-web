@@ -413,13 +413,22 @@ is in force today.
 ### UI-AGR-030 — Supplies leaving the distribution are shown with the agreement they leave
 
 - **Status:** Active
-- **Rule:** The agreement's page MUST list under "Salen del reparto" each supply that leaves the
-  distribution with it, with the agreement it leaves, its β there, its observed leaving date and
-  its status. A leaving row applied on its date MUST read "Salida · misma fecha", and on another
-  date "Salida · otra fecha"; any other status reads as a coefficient row's.
+- **Rule:** The agreement's page MUST list under "Salen del reparto" every supply that leaves the
+  distribution with it, with a "Motivo": each leaving row as "No está en este acuerdo", with the
+  agreement it leaves, its β there, its observed leaving date and its status; and each coefficient
+  row the backend flags with `leavesDistribution` as "Pasa a 0 %", with its β registrada, β
+  observada, observed date and status. The heading's count MUST include both. A flagged row MUST
+  also stay under "Por punto de suministro", marked "Sale del reparto". The view MUST NOT infer
+  from a coefficient's value that its supply leaves. A leaving row applied on its date MUST read
+  "Salida · misma fecha", and on another date "Salida · otra fecha"; any other status reads as a
+  coefficient row's.
 - **Rationale:** A leaving supply keeps receiving attributed production until its coefficient ends.
+  A supply whose coefficient drops to 0 % leaves as surely as one left out of the agreement, but
+  only the backend knows the previous agreement's value, so only its flag says so. The plant's
+  agreement card still counts absent supplies only: its summary carries no count of the flagged
+  rows.
 - **Implements:** n/a
-- **Source:** #418
+- **Source:** #418; the rows that drop to 0 %: #419, lucoenergia/conluz#621
 
 ### UI-AGR-031 — An observed β comes only from the backend, wherever a conclusion is stated
 
@@ -486,31 +495,36 @@ is in force today.
 - **Status:** Active
 - **Rule:** The preview MUST render what the dry run (`previewPartitionCoefficientDates`) returns:
   how many coefficients get a date, how many previous coefficients change their end and how many
-  supplies are closed; each coefficient's new period and each move of the end of a previous
-  coefficient of its supply; each leaving closure; each agreement whose status changes; and the
-  community's start date when it moves, explained as moving the payback. A closure the backend
-  applies by default on a first activation MUST be marked "Cierre por defecto: fecha más temprana
-  del acuerdo". A date before the day the agreement's file was sent MUST carry a note that does not
-  block confirming. Each leaving supply MUST have an editable closing date, and editing one MUST
-  run the dry run again with it listed. A refused dry run MUST show each row's error in the
-  catalogue's words. "Confirmar y aplicar" MUST be enabled only while the dry run on screen
-  answered, without error, for exactly what is entered.
+  supplies leave the distribution, the leaving closures and the coefficients flagged
+  `leavesDistribution`; each coefficient's new period, a flagged one marked "Sale del reparto (0
+  %)", and each move of the end of a previous coefficient of its supply; each leaving closure;
+  each agreement whose status changes; and the community's start date when it moves, explained as
+  moving the payback. A closure the backend applies by default on a first activation MUST be
+  marked "Cierre por defecto: fecha más temprana del acuerdo". A date before the day the
+  agreement's file was sent MUST carry a note that does not block confirming. Each leaving supply
+  MUST have an editable closing date, and editing one MUST run the dry run again with it listed. A
+  refused dry run MUST show each row's error in the catalogue's words. "Confirmar y aplicar" MUST
+  be enabled only while the dry run on screen answered, without error, for exactly what is
+  entered.
 - **Rationale:** Nothing may be written that the admin has not seen in full. A default closure is
   written without having been asked for, so it is the one most in need of saying so.
 - **Implements:** n/a
-- **Source:** #419, lucoenergia/conluz#583, lucoenergia/conluz#593
+- **Source:** #419, lucoenergia/conluz#583, lucoenergia/conluz#593; the coefficients that drop to
+  0 %: lucoenergia/conluz#621
 
 ### UI-AGR-035 — The result shows the effects as written, and every affected read is refreshed
 
 - **Status:** Active
 - **Rule:** After a write applies, the result MUST list the effects from the write's own response,
-  never the preview's. Every write that dates coefficients, setting the dates or activating, MUST
-  invalidate every agreement and coefficient set of the plant, the plant's active coefficients, its
-  observed sharing and each agreement's, every member's payback and the community's energy metrics.
+  never the preview's, each coefficient flagged `leavesDistribution` among the supplies that
+  leave, with the day it drops to 0 %. Every write that dates coefficients, setting the dates or
+  activating, MUST invalidate every agreement and coefficient set of the plant, the plant's active
+  coefficients, its observed sharing and each agreement's, every member's payback and the
+  community's energy metrics.
 - **Rationale:** There is no version token: the write validates again and may differ from the
   preview. A moved community start date moves every member's payback.
 - **Implements:** n/a
-- **Source:** #419
+- **Source:** #419; the coefficients that drop to 0 %: lucoenergia/conluz#621
 
 ### UI-AGR-036 — A refused write applies nothing and keeps the dates
 
@@ -540,13 +554,14 @@ is in force today.
 ### UI-AGR-038 — Both observed sharing pages explain every term, status and anomaly they show
 
 - **Status:** Active
-- **Rule:** The plant's observed sharing page and the agreement's MUST offer one way into the help:
-  a link in their header, labelled "Cómo leer el reparto observado" as the dialog it opens, shown on
-  a phone too. Nothing else on either page, such as a column header, MUST open it. The dialog MUST
-  define β registrada, β esperada, β observada, día medible (with why a period has fewer measurable
-  days than calendar days), the agreement's application period, each supply's period and producción
-  no atribuida (1 − Σβ), and MUST list every coefficient status, leaving status and anomaly type of
-  the client, each under the label the view shows it with.
+- **Rule:** The plant's observed sharing page and the agreement's MUST offer one way into the
+  help: a link in their header, labelled "Cómo leer el reparto observado" as the dialog it opens,
+  shown on a phone too. Nothing else on either page, such as a column header, MUST open it. The
+  dialog MUST define β registrada, β esperada, β observada, día medible (with why a period has
+  fewer measurable days than calendar days), the agreement's application period, each supply's
+  period, producción no atribuida (1 − Σβ) and sale del reparto, and MUST list every coefficient
+  status, leaving status and anomaly type of the client, each under the label the view shows it
+  with.
 - **Rationale:** The view is read by admins who are not analysts; a status or a figure is only
   useful when its meaning is one tap away from where it is shown. Listing from the client's values
   means a status the backend adds cannot reach the view unexplained. One entry point, named as the
