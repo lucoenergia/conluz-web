@@ -805,6 +805,48 @@ describe("ApplicationDatesPage", () => {
       expect(setAsync).not.toHaveBeenCalled();
     });
 
+    describe("a coefficient that drops to 0 %", () => {
+      /** The default effects with Casa Este flagged by the backend as leaving the distribution. */
+      const withEsteLeaving = (overrides: Partial<CoefficientDatesEffectsResponse> = {}) => {
+        const base = effects(overrides);
+        return {
+          ...base,
+          coefficients: base.coefficients.map((row) => (row.supply.id === ESTE.id ? { ...row, leavesDistribution: true } : row)),
+        };
+      };
+
+      test("UI-AGR-034: the supplies that leave count the closed one and the one dropping to 0 %", async () => {
+        previewAsync.mockResolvedValue(withEsteLeaving());
+        await openPreview();
+
+        expect(screen.getByText("puntos salen del reparto").previousSibling).toHaveTextContent("2");
+      });
+
+      test("UI-AGR-034: its row is marked 'Sale del reparto (0 %)'; an unflagged row is not", async () => {
+        previewAsync.mockResolvedValue(withEsteLeaving());
+        await openPreview();
+        const coefficients = screen.getByRole("region", { name: "Coeficientes de este acuerdo" });
+
+        expect(within(coefficients).getByRole("row", { name: /Casa Este/ })).toHaveTextContent("Sale del reparto (0 %)");
+        expect(within(coefficients).getByRole("row", { name: /Casa Norte/ })).not.toHaveTextContent("Sale del reparto");
+      });
+
+      test("UI-AGR-034: with no closure, the supply dropping to 0 % is the one that leaves", async () => {
+        previewAsync.mockResolvedValue(withEsteLeaving({ leavingClosures: [] }));
+        await openPreview();
+
+        expect(screen.getByText("punto sale del reparto").previousSibling).toHaveTextContent("1");
+        expect(screen.getByText("Sale del reparto (0 %)")).toBeVisible();
+      });
+
+      test("UI-AGR-034: with closures only, no row is marked as dropping to 0 %", async () => {
+        await openPreview();
+
+        expect(screen.getByText("punto sale del reparto").previousSibling).toHaveTextContent("1");
+        expect(screen.queryByText("Sale del reparto (0 %)")).not.toBeInTheDocument();
+      });
+    });
+
     test("UI-AGR-034: a previous coefficient of a supply no listed coefficient names still shows its new end", async () => {
       previewAsync.mockResolvedValue(
         effects({
@@ -1023,6 +1065,19 @@ describe("ApplicationDatesPage", () => {
         "href",
         `/plants/${PLANT_ID}/sharing-agreements/observed/${AGREEMENT_ID}`,
       );
+    });
+
+    test("UI-AGR-035: a coefficient that drops to 0 % is listed among the supplies that leave, with its day", async () => {
+      const written = effects();
+      setAsync.mockResolvedValue({
+        ...written,
+        coefficients: written.coefficients.map((row) => (row.supply.id === ESTE.id ? { ...row, leavesDistribution: true } : row)),
+      });
+      await confirm();
+
+      expect(await screen.findByText("Bar sale del reparto: su coeficiente se ha cerrado el 01/04/2025.")).toBeVisible();
+      expect(screen.getByText("Casa Este sale del reparto: su coeficiente pasa a 0 % desde el 01/02/2025.")).toBeVisible();
+      expect(screen.queryByText(/Casa Norte sale del reparto/)).not.toBeInTheDocument();
     });
 
     test("UI-AGR-035: the write sends the previewed request", async () => {

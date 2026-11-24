@@ -974,4 +974,95 @@ describe("SharingAgreementObservationPage", () => {
       expect(screen.getByText(/días medibles del 01\/03\/2025 al 26\/04\/2026\)\.$/)).toBeInTheDocument();
     });
   });
+  describe("supplies that drop to 0 %", () => {
+    /**
+     * Casa Sur flagged by the backend as leaving the distribution: 0 % here,
+     * a little observed, seen applied on 04/03/2025. `leavingRows` replaces
+     * the absent supplies when given.
+     */
+    function renderWithSurLeaving(leavingRows?: SharingAgreementObservationResponse["leavingRows"]) {
+      const fixture = observationFixture();
+      renderPage({
+        observation: query.success<typeof getSharingAgreementObservation>({
+          ...fixture,
+          coefficients: fixture.coefficients.map((row) =>
+            row.supply.id === SUR.id
+              ? {
+                  ...row,
+                  coefficient: 0,
+                  leavesDistribution: true,
+                  observedDate: { from: "2025-03-04", to: "2025-03-04" },
+                  observedBeta: 0.0002,
+                }
+              : row,
+          ),
+          leavingRows: leavingRows ?? fixture.leavingRows,
+        }),
+      });
+    }
+
+    test("UI-AGR-030: 'Salen del reparto' counts and lists both kinds, each with its reason", () => {
+      renderWithSurLeaving();
+      const section = leavingSection();
+
+      expect(within(section).getByRole("heading", { name: "Salen del reparto (4)" })).toBeInTheDocument();
+      expect(within(section).getAllByRole("columnheader").map((header) => header.textContent)).toContain("Motivo");
+      expect(supplyNames(section)).toEqual(["Escuela", "Bar", "Kiosco", "Casa Sur"]);
+      expect(within(section).getByRole("row", { name: /Escuela/ })).toHaveTextContent(/^Escuela\S+No está en este acuerdo/);
+    });
+
+    test("UI-AGR-030: a 'Pasa a 0 %' row shows its β registrada, β observada, observed date and status", () => {
+      renderWithSurLeaving();
+
+      expect(within(leavingSection()).getByRole("row", { name: /Casa Sur/ })).toHaveTextContent(
+        "Pasa a 0 %—0,0000 %0,0200 %120 de 20004/03/2025Observada—Aplicado · otra fecha",
+      );
+    });
+
+    test("UI-AGR-030: the 0 % row stays in 'Por punto de suministro', marked 'Sale del reparto'; the others are not", () => {
+      renderWithSurLeaving();
+
+      expect(supplyNames(suppliesSection())).toContain("Casa Sur");
+      expect(within(supplyRow("Casa Sur")).getByText("Sale del reparto")).toBeVisible();
+      expect(within(suppliesSection()).getAllByText("Sale del reparto")).toHaveLength(1);
+    });
+
+    test("UI-AGR-030: with absent supplies only, no row reads 'Pasa a 0 %' and none is marked", () => {
+      renderPage();
+
+      expect(within(leavingSection()).getByRole("heading", { name: "Salen del reparto (3)" })).toBeInTheDocument();
+      expect(screen.queryByText("Pasa a 0 %")).not.toBeInTheDocument();
+      expect(screen.queryByText("Sale del reparto")).not.toBeInTheDocument();
+      expect(within(leavingSection()).getAllByText("No está en este acuerdo")).toHaveLength(3);
+    });
+
+    test("UI-AGR-030: with only a supply dropping to 0 %, the section lists it alone", () => {
+      renderWithSurLeaving([]);
+      const section = leavingSection();
+
+      expect(within(section).getByRole("heading", { name: "Salen del reparto (1)" })).toBeInTheDocument();
+      expect(supplyNames(section)).toEqual(["Casa Sur"]);
+      expect(within(section).queryByText("No está en este acuerdo")).not.toBeInTheDocument();
+    });
+
+    test("UI-AGR-030: on a phone, the 0 % row's stacked fields give its reason, β and observed leaving", () => {
+      const width = window.innerWidth;
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
+      try {
+        renderWithSurLeaving();
+        const item = within(screen.getByRole("list", { name: "Puntos que salen del reparto" }))
+          .getAllByRole("listitem")
+          .find((candidate) => candidate.textContent?.startsWith("Casa Sur"))!;
+        const field = (label: string) => within(item).getByText(label).nextElementSibling;
+
+        expect(field("Motivo")).toHaveTextContent(/^Pasa a 0 %$/);
+        expect(field("β registrada")).toHaveTextContent(/^0,0000 %$/);
+        expect(field("β observada")).toHaveTextContent(/^0,0200 %$/);
+        expect(field("Salida observada")).toHaveTextContent(/^04\/03\/2025Observada$/);
+        expect(within(item).queryByText("Acuerdo anterior")).not.toBeInTheDocument();
+      } finally {
+        Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+      }
+    });
+  });
 });

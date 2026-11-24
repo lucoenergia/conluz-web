@@ -7,7 +7,7 @@ import {
   SharingAgreementReferenceResponseStatus,
   type CoefficientDatesEffectsResponse,
 } from "../../../api/models";
-import { isBeforeSentDate, writtenEffectSentences } from "./applicationDatesEffects";
+import { isBeforeSentDate, leavingSupplyCount, writtenEffectSentences } from "./applicationDatesEffects";
 
 const PREVIOUS: SharingAgreementReferenceResponse = { id: "initial", name: "Reparto inicial 2023", status: SharingAgreementReferenceResponseStatus.SUPERSEDED };
 const MIGRATION: SharingAgreementReferenceResponse = { id: "migration", name: "Migración", status: SharingAgreementReferenceResponseStatus.PUBLISHED };
@@ -126,6 +126,42 @@ describe("writtenEffectSentences", () => {
 
   it("UI-AGR-035: says nothing for a write that changed nothing", () => {
     expect(writtenEffectSentences(empty)).toEqual([]);
+  });
+
+  it("UI-AGR-035: a coefficient the backend flags as dropping to 0 % leaves the distribution on its day; an unflagged one does not", () => {
+    const sentences = writtenEffectSentences({
+      ...empty,
+      coefficients: [{ ...period("1", "2024-02-01"), leavesDistribution: true }, period("2", "2024-02-15")],
+    });
+
+    expect(sentences).toContain("Punto 1 sale del reparto: su coeficiente pasa a 0 % desde el 01/02/2024.");
+    expect(sentences.filter((sentence) => sentence.includes("sale del reparto"))).toHaveLength(1);
+  });
+});
+
+describe("leavingSupplyCount", () => {
+  const closure = {
+    coefficient: { id: "prev" },
+    sharingAgreement: PREVIOUS,
+    supply: supply("9", "Bar"),
+    source: LeavingClosureChangeResponseSource.REQUEST,
+    validToBefore: null,
+    validToAfter: midnight("2024-02-01"),
+  };
+
+  it("UI-AGR-034: counts the closed supplies and the coefficients flagged as dropping to 0 %", () => {
+    expect(
+      leavingSupplyCount({
+        ...empty,
+        coefficients: [{ ...period("1", "2024-02-01"), leavesDistribution: true }, period("2", "2024-02-01")],
+        leavingClosures: [closure],
+      }),
+    ).toBe(2);
+  });
+
+  it("UI-AGR-034: counts closed supplies alone, and flagged coefficients alone", () => {
+    expect(leavingSupplyCount({ ...empty, coefficients: [period("1", "2024-02-01")], leavingClosures: [closure] })).toBe(1);
+    expect(leavingSupplyCount({ ...empty, coefficients: [{ ...period("1", "2024-02-01"), leavesDistribution: true }] })).toBe(1);
   });
 });
 
