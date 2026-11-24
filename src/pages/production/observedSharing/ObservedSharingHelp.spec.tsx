@@ -69,6 +69,10 @@ describe("ObservedSharingHelp", () => {
           "la parte registrada de los puntos que no tenían datos esos días, que es normal y no indica un error;" +
           "un resto. Cerca de 0 es redondeo. Positivo: producción que no llegó a ningún punto registrado (puede haber un punto sin registrar o coeficientes que no suman 100 %). Negativo: los puntos con datos recibieron más de lo registrado, y si la cifra total es negativa, algún dato de Datadis es erróneo.",
       ],
+      [
+        "Sale del reparto",
+        "un punto que no está en este acuerdo, o que pasa a 0 % después de tener más de 0 en el acuerdo anterior.",
+      ],
     ]);
   });
 

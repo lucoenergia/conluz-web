@@ -792,7 +792,7 @@ describe("ApplicationDatesPage", () => {
 
       expect(screen.getByText("coeficientes de este acuerdo reciben fecha").previousSibling).toHaveTextContent("2");
       expect(screen.getByText("coeficiente anterior cambia su fin").previousSibling).toHaveTextContent("1");
-      expect(screen.getByText("punto sale del reparto y se cierra").previousSibling).toHaveTextContent("1");
+      expect(screen.getByText("punto sale del reparto").previousSibling).toHaveTextContent("1");
       const coefficients = screen.getByRole("region", { name: "Coeficientes de este acuerdo" });
       const norte = within(coefficients).getByRole("row", { name: /Casa Norte/ });
       expect(norte).toHaveTextContent("01/03/2025 – en curso");

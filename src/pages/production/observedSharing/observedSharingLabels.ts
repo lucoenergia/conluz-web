@@ -93,3 +93,9 @@ export const actionableRecommendations = (recommendations: Recommendation[]): Ac
 
 /** The name the unattributed production share is shown under; its formula is only in the help (UI-AGR-040). */
 export const UNATTRIBUTED_PRODUCTION_LABEL = "Producción no atribuida";
+
+/** The mark of a coefficient row whose supply leaves the distribution by dropping to 0 % (UI-AGR-030). */
+export const LEAVES_DISTRIBUTION_LABEL = "Sale del reparto";
+
+/** Why a row of "Salen del reparto" leaves (UI-AGR-030). */
+export const LEAVING_REASON = { absent: "No está en este acuerdo", zero: "Pasa a 0 %" } as const;

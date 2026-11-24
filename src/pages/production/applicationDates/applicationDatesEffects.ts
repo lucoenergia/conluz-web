@@ -40,6 +40,14 @@ export function neighboursBySupply(neighbours: NeighbourChangeResponse[]): Map<s
   return bySupply;
 }
 
+/**
+ * How many supplies leave the distribution: those closed for being absent
+ * from the agreement, and those whose coefficient drops to 0 %, as the
+ * backend flags them (`leavesDistribution`); never inferred from a value.
+ */
+export const leavingSupplyCount = (effects: CoefficientDatesEffectsResponse) =>
+  effects.leavingClosures.length + effects.coefficients.filter((row) => row.leavesDistribution).length;
+
 /** The agreements whose status the request changes; one whose status stays is no change. */
 export const statusChanges = (effects: CoefficientDatesEffectsResponse): AgreementStatusChangeResponse[] =>
   effects.agreementStatuses.filter((change) => change.statusBefore !== change.statusAfter);
@@ -102,6 +110,12 @@ export function writtenEffectSentences(effects: CoefficientDatesEffectsResponse)
   for (const closure of effects.leavingClosures) {
     sentences.push(
       `${supplyDisplayLabel(closure.supply)} sale del reparto: su coeficiente se ha cerrado el ${formatEffectDay(closure.validToAfter)}.`,
+    );
+  }
+
+  for (const row of effects.coefficients.filter((coefficient) => coefficient.leavesDistribution)) {
+    sentences.push(
+      `${supplyDisplayLabel(row.supply)} sale del reparto: su coeficiente pasa a 0 % desde el ${formatEffectDay(row.validFromAfter)}.`,
     );
   }
 

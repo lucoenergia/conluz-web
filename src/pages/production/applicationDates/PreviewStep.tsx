@@ -21,9 +21,9 @@ import type { CoefficientDatesRowErrorDetail } from "../../../errors/apiErrorCat
 import { sxStyles } from "../../../theme/sx";
 import { colors, fontFamilies, fontSizes } from "../../../theme/tokens";
 import {
-  closedSuppliesLabel,
   datedCoefficientsLabel,
   fixRowsHint,
+  leavingSuppliesLabel,
   movedEndsLabel,
   rowsWithErrors,
 } from "./applicationDatesCopy";
@@ -40,6 +40,7 @@ import {
   formatEffectPeriod,
   formatStatusChange,
   isBeforeSentDate,
+  leavingSupplyCount,
   neighboursBySupply,
   statusChanges,
 } from "./applicationDatesEffects";
@@ -63,6 +64,9 @@ export interface NamedRowError {
   name: string | undefined;
   message: string;
 }
+
+/** The mark of a coefficient the backend flags as taking its supply out of the distribution (UI-AGR-034). */
+export const LEAVES_AT_ZERO_LABEL = "Sale del reparto (0 %)";
 
 /** A supply leaving the distribution, as the preview lists it. */
 interface LeavingRow {
@@ -152,7 +156,15 @@ const CoefficientEffects: FC<{
   const otherNeighbours = effects.neighbours.filter((neighbour) => !listedSupplies.has(neighbour.supply.id));
   const value = (row: CoefficientPeriodChangeResponse) => {
     const coefficient = coefficientValues.get(row.coefficient.id);
-    return coefficient === undefined ? "—" : formatBeta(coefficient);
+    const beta = coefficient === undefined ? "—" : formatBeta(coefficient);
+    return row.leavesDistribution ? (
+      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5 }}>
+        <span>{beta}</span>
+        <ObservationChip label={LEAVES_AT_ZERO_LABEL} tone="neutral" />
+      </Box>
+    ) : (
+      beta
+    );
   };
   const fields = (row: CoefficientPeriodChangeResponse): RecordField[] => [
     { label: "Coeficiente", value: value(row) },
@@ -429,10 +441,7 @@ export const PreviewStep: FC<PreviewStepProps> = ({
             value={effects.neighbours.length}
             label={movedEndsLabel(effects.neighbours.length)}
           />
-          <SummaryFigure
-            value={effects.leavingClosures.length}
-            label={closedSuppliesLabel(effects.leavingClosures.length)}
-          />
+          <SummaryFigure value={leavingSupplyCount(effects)} label={leavingSuppliesLabel(leavingSupplyCount(effects))} />
         </Box>
 
         {communityStartChanges(effects) && (

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  closedSuppliesLabel,
   datedCoefficientsLabel,
   datesToChoose,
   fixRowsHint,
+  leavingSuppliesLabel,
   moreRows,
   movedEndsLabel,
   rowsWithErrors,
@@ -17,7 +17,7 @@ describe("the set application dates flow's counted sentences", () => {
     ["moreRows", moreRows, "Y 1 punto más", "Y 2 puntos más"],
     ["datedCoefficientsLabel", datedCoefficientsLabel, "coeficiente de este acuerdo recibe fecha", "coeficientes de este acuerdo reciben fecha"],
     ["movedEndsLabel", movedEndsLabel, "coeficiente anterior cambia su fin", "coeficientes anteriores cambian su fin"],
-    ["closedSuppliesLabel", closedSuppliesLabel, "punto sale del reparto y se cierra", "puntos salen del reparto y se cierran"],
+    ["leavingSuppliesLabel", leavingSuppliesLabel, "punto sale del reparto", "puntos salen del reparto"],
     ["rowsWithErrors", rowsWithErrors, "1 punto tiene un error", "2 puntos tienen un error"],
     ["fixRowsHint", fixRowsHint, "Corrígelo o desmárcalo para poder confirmar.", "Corrígelos o desmárcalos para poder confirmar."],
   ] as const)("%s agrees with its count", (_name, sentence, one, two) => {
@@ -36,7 +36,7 @@ describe("the set application dates flow's counted sentences", () => {
       moreRows(n),
       datedCoefficientsLabel(n),
       movedEndsLabel(n),
-      closedSuppliesLabel(n),
+      leavingSuppliesLabel(n),
       rowsWithErrors(n),
       fixRowsHint(n),
       selectedOfTotal(n, n),

@@ -276,8 +276,8 @@ describe("SharingAgreementObservationPage", () => {
     renderPage();
 
     expect(supplyRow("Casa Oeste")).toHaveTextContent(/^Casa Oeste.*3,0000 %—0 de 200Sin fecha—Sin datos de Datadis$/);
-    expect(within(leavingSection()).getByRole("row", { name: /Escuela/ })).toHaveTextContent("4,0000 %0,0000 %");
-    expect(within(leavingSection()).getByRole("row", { name: /Bar/ })).toHaveTextContent("1,0000 %0,0000 %");
+    expect(within(leavingSection()).getByRole("row", { name: /Escuela/ })).toHaveTextContent("4,0000 %—0,0000 %");
+    expect(within(leavingSection()).getByRole("row", { name: /Bar/ })).toHaveTextContent("1,0000 %—0,0000 %");
     expect(within(leavingSection()).getByRole("row", { name: /Kiosco/ })).toHaveTextContent("1,5000 %—");
   });
 
@@ -384,10 +384,10 @@ describe("SharingAgreementObservationPage", () => {
 
     expect(within(section).getByRole("heading", { name: "Salen del reparto (3)" })).toBeInTheDocument();
     expect(within(section).getByRole("row", { name: /Escuela/ })).toHaveTextContent(
-      "Reparto inicial 20234,0000 %0,0000 %90 de 15001/03/2025Observada01/03/2025Salida · misma fecha",
+      "No está en este acuerdoAcuerdo anterior: Reparto inicial 20234,0000 %—0,0000 %90 de 15001/03/2025Observada01/03/2025Salida · misma fecha",
     );
     expect(within(section).getByRole("row", { name: /Bar/ })).toHaveTextContent(
-      "Reparto inicial 20231,0000 %0,0000 %75 de 15001/04/2025ObservadaSin fecha de finSalida · otra fecha",
+      "No está en este acuerdoAcuerdo anterior: Reparto inicial 20231,0000 %—0,0000 %75 de 15001/04/2025ObservadaSin fecha de finSalida · otra fecha",
     );
   });
 
@@ -541,7 +541,7 @@ describe("SharingAgreementObservationPage", () => {
         .filter((text) => text?.startsWith("β"));
 
     expect(headers(suppliesSection())).toEqual(["β registrada", "β observada"]);
-    expect(headers(leavingSection())).toEqual(["β anterior", "β observada"]);
+    expect(headers(leavingSection())).toEqual(["β anterior", "β registrada", "β observada"]);
     expect(document.body.textContent).not.toMatch(/β (registrado|observado)|el β/);
   });
 

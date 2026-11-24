@@ -32,6 +32,8 @@ import { ObservedSharingHelp } from "./ObservedSharingHelp";
 import {
   ANOMALY_TYPE_LABEL,
   COEFFICIENT_STATUS_LABEL,
+  LEAVES_DISTRIBUTION_LABEL,
+  LEAVING_REASON,
   LEAVING_STATUS_LABEL,
   STATUS_TONE,
   UNATTRIBUTED_PRODUCTION_LABEL,
@@ -114,14 +116,19 @@ const RowDate: FC<{
   );
 };
 
-/** A row's status, and the anomalies of this agreement on its supply. */
-const RowStatus: FC<{ label: string; tone: ObservationTone; anomalyLabels: string[] }> = ({
+/**
+ * A row's status, the anomalies of this agreement on its supply, and, for a
+ * coefficient the backend flags as leaving the distribution, that mark.
+ */
+const RowStatus: FC<{ label: string; tone: ObservationTone; anomalyLabels: string[]; leaves?: boolean }> = ({
   label,
   tone,
   anomalyLabels,
+  leaves = false,
 }) => (
   <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.5 }}>
     <ObservationChip label={label} tone={tone} />
+    {leaves && <ObservationChip label={LEAVES_DISTRIBUTION_LABEL} tone="neutral" />}
     {anomalyLabels.map((anomalyLabel) => (
       <Typography key={anomalyLabel} variant="body2" sx={{ color: colors.warning.main, fontWeight: 600 }}>
         {anomalyLabel}
@@ -187,7 +194,12 @@ const CoefficientRows: FC<{
   const shown = showAll ? rows : rows.slice(0, INITIAL_ROWS);
   const anomalyLabels = (row: CoefficientObservationResponse) => anomalyLabelsBySupply.get(row.supply.id) ?? [];
   const status = (row: CoefficientObservationResponse) => (
-    <RowStatus label={COEFFICIENT_STATUS_LABEL[row.status]} tone={STATUS_TONE[row.status]} anomalyLabels={anomalyLabels(row)} />
+    <RowStatus
+      label={COEFFICIENT_STATUS_LABEL[row.status]}
+      tone={STATUS_TONE[row.status]}
+      anomalyLabels={anomalyLabels(row)}
+      leaves={row.leavesDistribution}
+    />
   );
   const fields = (row: CoefficientObservationResponse): RecordField[] => [
     { label: "β registrada", value: formatBeta(row.coefficient) },
@@ -271,56 +283,130 @@ const CoefficientRows: FC<{
   );
 };
 
-const LeavingRows: FC<{ rows: LeavingObservationResponse[] }> = ({ rows }) => {
-  const status = (row: LeavingObservationResponse) => (
-    <RowStatus label={LEAVING_STATUS_LABEL[row.status]} tone={STATUS_TONE[row.status]} anomalyLabels={[]} />
-  );
-  const leaving = (row: LeavingObservationResponse) => (
-    <RowDate status={row.status} observed={row.observedLeavingDate} proposed={row.proposedDate} />
-  );
+/**
+ * A supply that leaves the distribution with the agreement: absent from it
+ * (a leaving row), or holding a coefficient the backend flags as dropping to
+ * 0 % (`leavesDistribution`), which also stays among the coefficient rows.
+ */
+type LeavingSectionRow =
+  | { kind: "absent"; row: LeavingObservationResponse }
+  | { kind: "zero"; row: CoefficientObservationResponse };
+
+const leavingSectionRows = (
+  leavingRows: LeavingObservationResponse[],
+  coefficients: CoefficientObservationResponse[],
+): LeavingSectionRow[] => [
+  ...leavingRows.map((row) => ({ kind: "absent" as const, row })),
+  ...coefficients.filter((row) => row.leavesDistribution).map((row) => ({ kind: "zero" as const, row })),
+];
+
+const LeavingRows: FC<{ rows: LeavingSectionRow[] }> = ({ rows }) => {
+  const key = (item: LeavingSectionRow) => (item.kind === "absent" ? item.row.previousCoefficientId : item.row.coefficientId);
+  const status = (item: LeavingSectionRow) =>
+    item.kind === "absent" ? (
+      <RowStatus label={LEAVING_STATUS_LABEL[item.row.status]} tone={STATUS_TONE[item.row.status]} anomalyLabels={[]} />
+    ) : (
+      <RowStatus label={COEFFICIENT_STATUS_LABEL[item.row.status]} tone={STATUS_TONE[item.row.status]} anomalyLabels={[]} />
+    );
+  const leaving = (item: LeavingSectionRow) =>
+    item.kind === "absent" ? (
+      <RowDate status={item.row.status} observed={item.row.observedLeavingDate} proposed={item.row.proposedDate} />
+    ) : (
+      <RowDate status={item.row.status} observed={item.row.observedDate} proposed={item.row.proposedDate} />
+    );
   const registeredEnd = (row: LeavingObservationResponse) =>
     row.storedValidTo ? formatDay(row.storedValidTo) : "Sin fecha de fin";
+  // In the table, an absent supply's reason names the agreement it leaves, so
+  // the row needs no column of its own for it.
+  const reason = (item: LeavingSectionRow) =>
+    item.kind === "absent" ? (
+      <>
+        {LEAVING_REASON.absent}
+        <Typography component="span" variant="body2" sx={{ display: "block", color: colors.text.subtle }}>
+          Acuerdo anterior: {item.row.previousSharingAgreement.name}
+        </Typography>
+      </>
+    ) : (
+      LEAVING_REASON.zero
+    );
+  const fields = (item: LeavingSectionRow): RecordField[] =>
+    item.kind === "absent"
+      ? [
+          { label: "Motivo", value: LEAVING_REASON.absent },
+          { label: "Acuerdo anterior", value: item.row.previousSharingAgreement.name },
+          { label: "β anterior", value: formatBeta(item.row.previousCoefficient) },
+          { label: "β observada", value: formatBeta(item.row.observedBeta) },
+          ...measurableDaysField(item.row),
+          { label: "Salida observada", value: leaving(item) },
+          { label: "Fin registrado", value: registeredEnd(item.row) },
+        ]
+      : [
+          { label: "Motivo", value: LEAVING_REASON.zero },
+          { label: "β registrada", value: formatBeta(item.row.coefficient) },
+          { label: "β observada", value: <ObservedBeta observed={item.row.observedBeta} registered={item.row.coefficient} /> },
+          ...measurableDaysField(item.row),
+          { label: "Salida observada", value: leaving(item) },
+        ];
 
   return (
     <ResponsiveRecordList
       narrow={
         <RecordList
           label="Puntos que salen del reparto"
-          items={rows.map((row) => ({
-            id: row.previousCoefficientId,
-            title: supplyDisplayLabel(row.supply),
-            status: status(row),
-            lines: [row.supply.code],
-            fields: [
-              { label: "Acuerdo anterior", value: row.previousSharingAgreement.name },
-              { label: "β anterior", value: formatBeta(row.previousCoefficient) },
-              { label: "β observada", value: formatBeta(row.observedBeta) },
-              ...measurableDaysField(row),
-              { label: "Salida observada", value: leaving(row) },
-              { label: "Fin registrado", value: registeredEnd(row) },
-            ],
+          items={rows.map((item) => ({
+            id: key(item),
+            title: supplyDisplayLabel(item.row.supply),
+            status: status(item),
+            lines: [item.row.supply.code],
+            fields: fields(item),
           }))}
         />
       }
       wide={
-        <ListTable<LeavingObservationResponse>
+        <ListTable<LeavingSectionRow>
           rows={rows}
-          getRowKey={(row) => row.previousCoefficientId}
+          getRowKey={key}
           isLoading={false}
           title={{
             header: "Suministro",
-            text: (row) => supplyDisplayLabel(row.supply),
-            secondary: (row) => [row.supply.code],
-            width: "20%",
+            text: (item) => supplyDisplayLabel(item.row.supply),
+            secondary: (item) => [item.row.supply.code],
+            width: "15%",
           }}
           columns={[
-            { key: "previous", header: "Acuerdo anterior", render: (row) => row.previousSharingAgreement.name, width: "12%" },
-            { key: "previousBeta", header: "β anterior", render: (row) => formatBeta(row.previousCoefficient), width: "10%" },
-            { key: "observedBeta", header: "β observada", render: (row) => formatBeta(row.observedBeta), width: "10%" },
-            { key: "measurableDays", header: "Días medibles", render: measurableDays, width: "13%" },
+            { key: "reason", header: "Motivo", render: reason, width: "14%" },
+            {
+              key: "previousBeta",
+              header: "β anterior",
+              render: (item) => (item.kind === "absent" ? formatBeta(item.row.previousCoefficient) : NO_VALUE),
+              width: "8%",
+            },
+            {
+              key: "registeredBeta",
+              header: "β registrada",
+              render: (item) => (item.kind === "zero" ? formatBeta(item.row.coefficient) : NO_VALUE),
+              width: "8%",
+            },
+            {
+              key: "observedBeta",
+              header: "β observada",
+              render: (item) =>
+                item.kind === "absent" ? (
+                  formatBeta(item.row.observedBeta)
+                ) : (
+                  <ObservedBeta observed={item.row.observedBeta} registered={item.row.coefficient} />
+                ),
+              width: "8%",
+            },
+            { key: "measurableDays", header: "Días medibles", render: (item) => measurableDays(item.row), width: "13%" },
             { key: "leaving", header: "Salida observada", render: leaving },
-            { key: "end", header: "Fin registrado", render: registeredEnd, width: "11%" },
-            { key: "status", header: "Estado", render: status, width: "16%" },
+            {
+              key: "end",
+              header: "Fin registrado",
+              render: (item) => (item.kind === "absent" ? registeredEnd(item.row) : NO_VALUE),
+              width: "9%",
+            },
+            { key: "status", header: "Estado", render: status, width: "14%" },
           ]}
         />
       }
@@ -346,6 +432,7 @@ const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservat
   }, [summary]);
   const anomalyCount = summary.anomalies.length;
   const findings = recommendationFindings(plantId, summary);
+  const leavingRows = leavingSectionRows(shown.leavingRows, shown.coefficients);
 
   return (
     <>
@@ -373,14 +460,14 @@ const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservat
         />
       </Box>
 
-      {shown.leavingRows.length > 0 && (
+      {leavingRows.length > 0 && (
         <Box component="section" aria-labelledby="observation-leaving" sx={sxStyles.pageContainer}>
           <SectionHeading
             headingId="observation-leaving"
-            title={`Salen del reparto (${shown.leavingRows.length})`}
-            description="Tenían coeficiente en el acuerdo anterior y no están en este. La salida observada es lo que muestra Datadis."
+            title={`Salen del reparto (${leavingRows.length})`}
+            description="Tenían coeficiente en el acuerdo anterior y no están en este, o pasan a 0 %. La salida observada es lo que muestra Datadis."
           />
-          <LeavingRows rows={shown.leavingRows} />
+          <LeavingRows rows={leavingRows} />
         </Box>
       )}
 

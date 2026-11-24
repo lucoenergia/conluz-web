@@ -20,8 +20,7 @@ export const datedCoefficientsLabel = (n: number) =>
   pluralize(n, "coeficiente de este acuerdo recibe fecha", "coeficientes de este acuerdo reciben fecha");
 export const movedEndsLabel = (n: number) =>
   pluralize(n, "coeficiente anterior cambia su fin", "coeficientes anteriores cambian su fin");
-export const closedSuppliesLabel = (n: number) =>
-  pluralize(n, "punto sale del reparto y se cierra", "puntos salen del reparto y se cierran");
+export const leavingSuppliesLabel = (n: number) => pluralize(n, "punto sale del reparto", "puntos salen del reparto");
 
 /** A refused dry run's title: "1 punto tiene un error". */
 export const rowsWithErrors = (n: number) => `${n} ${pluralize(n, "punto tiene un error", "puntos tienen un error")}`;

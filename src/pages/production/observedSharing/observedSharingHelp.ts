@@ -49,6 +49,10 @@ export const HELP_TERMS: HelpTerm[] = [
       "un resto. Cerca de 0 es redondeo. Positivo: producción que no llegó a ningún punto registrado (puede haber un punto sin registrar o coeficientes que no suman 100 %). Negativo: los puntos con datos recibieron más de lo registrado, y si la cifra total es negativa, algún dato de Datadis es erróneo.",
     ],
   },
+  {
+    term: "Sale del reparto",
+    meaning: "un punto que no está en este acuerdo, o que pasa a 0 % después de tener más de 0 en el acuerdo anterior.",
+  },
 ];
 
 /** What each coefficient status means. A Record, so a status the client gains does not compile without one. */
