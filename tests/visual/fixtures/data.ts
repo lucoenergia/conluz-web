@@ -2228,6 +2228,7 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
   coefficients: [
     {
       coefficientId: "observed-norte",
+      leavesDistribution: false,
       supply: OBSERVED_SUPPLIES.norte,
       coefficient: 0.0315,
       storedValidFrom: "2025-03-01",
@@ -2243,6 +2244,7 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
     },
     {
       coefficientId: "observed-sur",
+      leavesDistribution: false,
       supply: OBSERVED_SUPPLIES.sur,
       coefficient: 0.0315,
       // Outside the observed range: a stored start within it is the same date.
@@ -2259,6 +2261,7 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
     },
     {
       coefficientId: "observed-este",
+      leavesDistribution: false,
       supply: OBSERVED_SUPPLIES.este,
       coefficient: 0.05,
       storedValidFrom: "2025-03-01",
@@ -2274,6 +2277,7 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
     },
     {
       coefficientId: "observed-oeste",
+      leavesDistribution: false,
       supply: OBSERVED_SUPPLIES.oeste,
       coefficient: 0.03,
       storedValidFrom: "2025-03-01",
@@ -2356,6 +2360,7 @@ const observedCoefficient = (
   coefficientId: coefficient.coefficientId,
   supply: coefficient.supply,
   coefficient: coefficient.coefficient,
+  leavesDistribution: false,
   storedValidFrom: null,
   storedValidTo: null,
   observedDate: null,
@@ -2413,6 +2418,7 @@ export const APPLICATION_DATES_PREVIEW: CoefficientDatesEffectsResponse = {
     {
       coefficient: { id: DATES_NORTE.coefficientId },
       supply: DATES_NORTE.supply,
+      leavesDistribution: false,
       validFromBefore: null,
       validFromAfter: "2025-02-28T23:00:00Z",
       validToBefore: null,
@@ -2421,6 +2427,7 @@ export const APPLICATION_DATES_PREVIEW: CoefficientDatesEffectsResponse = {
     {
       coefficient: { id: DATES_ESTE.coefficientId },
       supply: DATES_ESTE.supply,
+      leavesDistribution: false,
       validFromBefore: null,
       validFromAfter: "2025-01-31T23:00:00Z",
       validToBefore: null,

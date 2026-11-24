@@ -113,6 +113,7 @@ const WRITTEN_ON_THREE_SUPPLIES: CoefficientDatesEffectsResponse = {
     {
       coefficient: { id: "c1" },
       supply: supplyRef("s-norte"),
+      leavesDistribution: false,
       validFromBefore: null,
       validFromAfter: "2025-02-28T23:00:00Z",
       validToBefore: null,

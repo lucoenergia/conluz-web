@@ -174,6 +174,7 @@ function effects(overrides: Partial<CoefficientDatesEffectsResponse> = {}): Coef
       {
         coefficient: { id: "c-norte" },
         supply: NORTE,
+        leavesDistribution: false,
         validFromBefore: null,
         validFromAfter: madridMidnight("2025-03-01"),
         validToBefore: null,
@@ -182,6 +183,7 @@ function effects(overrides: Partial<CoefficientDatesEffectsResponse> = {}): Coef
       {
         coefficient: { id: "c-este" },
         supply: ESTE,
+        leavesDistribution: false,
         validFromBefore: null,
         // Before the file was sent on 10/02/2025: a note, never a block.
         validFromAfter: madridMidnight("2025-02-01"),
@@ -998,6 +1000,7 @@ describe("ApplicationDatesPage", () => {
             {
               coefficient: { id: "c-norte" },
               supply: NORTE,
+              leavesDistribution: false,
               validFromBefore: null,
               validFromAfter: madridMidnight("2025-03-02"),
               validToBefore: null,

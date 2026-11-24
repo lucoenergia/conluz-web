@@ -789,6 +789,7 @@ export function buildCoefficientObservation(
       supply: buildSupplyReference(),
       // Not zero, and not a round share, so an unintended default stands out.
       coefficient: 0.090001,
+      leavesDistribution: false,
       storedValidFrom: null,
       storedValidTo: null,
       observedDate: null,

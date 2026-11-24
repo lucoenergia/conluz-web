@@ -19,6 +19,7 @@ const midnight = (day: string) => `${new Date(`${day}T00:00:00+01:00`).toISOStri
 const period = (id: string, from: string) => ({
   coefficient: { id },
   supply: supply(id, `Punto ${id}`),
+  leavesDistribution: false,
   validFromBefore: null,
   validFromAfter: midnight(from),
   validToBefore: null,
