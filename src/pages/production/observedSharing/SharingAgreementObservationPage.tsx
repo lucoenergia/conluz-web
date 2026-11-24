@@ -316,8 +316,25 @@ const LeavingRows: FC<{ rows: LeavingSectionRow[] }> = ({ rows }) => {
     );
   const registeredEnd = (row: LeavingObservationResponse) =>
     row.storedValidTo ? formatDay(row.storedValidTo) : "Sin fecha de fin";
-  // In the table, an absent supply's reason names the agreement it leaves, so
-  // the row needs no column of its own for it.
+  // A β never breaks inside its figure ("4,0000 %") in the table's narrow columns.
+  const beta = (value: ReactNode) => (
+    <Box component="span" sx={{ whiteSpace: "nowrap" }}>
+      {value}
+    </Box>
+  );
+  // In the table, an absent supply's leaving carries its registered end under
+  // it, and its reason names the agreement it leaves, so neither needs a
+  // column of its own: two kinds of row share one table.
+  const leavingWithEnd = (item: LeavingSectionRow) => (
+    <>
+      {leaving(item)}
+      {item.kind === "absent" && (
+        <Typography variant="body2" sx={{ mt: 0.5, color: colors.text.subtle }}>
+          Fin registrado: {item.row.storedValidTo ? formatDay(item.row.storedValidTo) : "sin fecha de fin"}
+        </Typography>
+      )}
+    </>
+  );
   const reason = (item: LeavingSectionRow) =>
     item.kind === "absent" ? (
       <>
@@ -371,42 +388,38 @@ const LeavingRows: FC<{ rows: LeavingSectionRow[] }> = ({ rows }) => {
             header: "Suministro",
             text: (item) => supplyDisplayLabel(item.row.supply),
             secondary: (item) => [item.row.supply.code],
-            width: "15%",
+            width: "19%",
           }}
           columns={[
-            { key: "reason", header: "Motivo", render: reason, width: "14%" },
+            { key: "reason", header: "Motivo", render: reason, width: "12%" },
             {
               key: "previousBeta",
               header: "β anterior",
-              render: (item) => (item.kind === "absent" ? formatBeta(item.row.previousCoefficient) : NO_VALUE),
+              render: (item) => (item.kind === "absent" ? beta(formatBeta(item.row.previousCoefficient)) : NO_VALUE),
               width: "8%",
             },
             {
               key: "registeredBeta",
               header: "β registrada",
-              render: (item) => (item.kind === "zero" ? formatBeta(item.row.coefficient) : NO_VALUE),
+              render: (item) => (item.kind === "zero" ? beta(formatBeta(item.row.coefficient)) : NO_VALUE),
               width: "8%",
             },
             {
               key: "observedBeta",
               header: "β observada",
               render: (item) =>
-                item.kind === "absent" ? (
-                  formatBeta(item.row.observedBeta)
-                ) : (
-                  <ObservedBeta observed={item.row.observedBeta} registered={item.row.coefficient} />
+                beta(
+                  item.kind === "absent" ? (
+                    formatBeta(item.row.observedBeta)
+                  ) : (
+                    <ObservedBeta observed={item.row.observedBeta} registered={item.row.coefficient} />
+                  ),
                 ),
               width: "8%",
             },
             { key: "measurableDays", header: "Días medibles", render: (item) => measurableDays(item.row), width: "13%" },
-            { key: "leaving", header: "Salida observada", render: leaving },
-            {
-              key: "end",
-              header: "Fin registrado",
-              render: (item) => (item.kind === "absent" ? registeredEnd(item.row) : NO_VALUE),
-              width: "9%",
-            },
-            { key: "status", header: "Estado", render: status, width: "14%" },
+            { key: "leaving", header: "Salida observada", render: leavingWithEnd },
+            { key: "status", header: "Estado", render: status, width: "19%" },
           ]}
         />
       }

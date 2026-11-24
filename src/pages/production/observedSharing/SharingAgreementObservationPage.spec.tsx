@@ -384,10 +384,10 @@ describe("SharingAgreementObservationPage", () => {
 
     expect(within(section).getByRole("heading", { name: "Salen del reparto (3)" })).toBeInTheDocument();
     expect(within(section).getByRole("row", { name: /Escuela/ })).toHaveTextContent(
-      "No está en este acuerdoAcuerdo anterior: Reparto inicial 20234,0000 %—0,0000 %90 de 15001/03/2025Observada01/03/2025Salida · misma fecha",
+      "No está en este acuerdoAcuerdo anterior: Reparto inicial 20234,0000 %—0,0000 %90 de 15001/03/2025ObservadaFin registrado: 01/03/2025Salida · misma fecha",
     );
     expect(within(section).getByRole("row", { name: /Bar/ })).toHaveTextContent(
-      "No está en este acuerdoAcuerdo anterior: Reparto inicial 20231,0000 %—0,0000 %75 de 15001/04/2025ObservadaSin fecha de finSalida · otra fecha",
+      "No está en este acuerdoAcuerdo anterior: Reparto inicial 20231,0000 %—0,0000 %75 de 15001/04/2025ObservadaFin registrado: sin fecha de finSalida · otra fecha",
     );
   });
 
@@ -1015,7 +1015,7 @@ describe("SharingAgreementObservationPage", () => {
       renderWithSurLeaving();
 
       expect(within(leavingSection()).getByRole("row", { name: /Casa Sur/ })).toHaveTextContent(
-        "Pasa a 0 %—0,0000 %0,0200 %120 de 20004/03/2025Observada—Aplicado · otra fecha",
+        "Pasa a 0 %—0,0000 %0,0200 %120 de 20004/03/2025ObservadaAplicado · otra fecha",
       );
     });
 
