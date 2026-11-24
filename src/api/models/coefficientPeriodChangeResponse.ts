@@ -11,6 +11,8 @@ import type { SupplyReferenceResponse } from './supplyReferenceResponse';
 export interface CoefficientPeriodChangeResponse {
   /** The requested coefficient */
   coefficient: PartitionCoefficientReferenceResponse;
+  /** Whether the coefficient takes its supply out of the distribution: its value is 0 and, in the PUBLISHED or SUPERSEDED agreement immediately before its own in registered order, the supply holds a coefficient greater than 0. Reported for the coefficients this request places; a supply absent from the previous agreement had already left it there. */
+  leavesDistribution: boolean;
   /** The coefficient's supply */
   supply: SupplyReferenceResponse;
   /** validFrom after the request */

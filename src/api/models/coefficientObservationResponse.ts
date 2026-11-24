@@ -15,6 +15,8 @@ export interface CoefficientObservationResponse {
   coefficient: number;
   /** Identifier of the coefficient row */
   coefficientId: string;
+  /** Whether the coefficient takes its supply out of the distribution: its value is 0 and, in the PUBLISHED or SUPERSEDED agreement immediately before its own in registered order, the supply holds a coefficient greater than 0. The row stays here, with its own status and dates, and is never listed among the leaving rows, which are the supplies absent from the agreement. */
+  leavesDistribution: boolean;
   /**
      * Median of the supply's daily observed β (E / G) over its valid days from the row's observed application date (the latest day of a range or of an open date) to the end of the agreement's applied window, or over the whole applied window when the row has no observed date. The applied window runs from the agreement's most frequent observed application date to the day before the next agreement's, or to the end of the analysed range. On a 0-1 scale, rounded half-up to 6 decimals; for an even number of days, the mean of the two middle values. Null when the agreement has no applied window, the row's start falls after its end, or the supply has no valid day in between.
      * @nullable
