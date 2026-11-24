@@ -1045,6 +1045,27 @@ describe("SharingAgreementObservationPage", () => {
       expect(within(section).queryByText("No está en este acuerdo")).not.toBeInTheDocument();
     });
 
+    test("UI-AGR-030: in the table, a β never wraps inside its figure, and an absent supply's registered end sits under its leaving", () => {
+      renderWithSurLeaving();
+      const section = leavingSection();
+      const escuela = within(section).getByRole("row", { name: /Escuela/ });
+      const sur = within(section).getByRole("row", { name: /Casa Sur/ });
+
+      // The figure, or the span around it inside its cell, is kept on one line.
+      const keptWhole = (figure: HTMLElement) => {
+        for (let node: HTMLElement | null = figure; node && node.tagName !== "TD"; node = node.parentElement) {
+          if (declaredStyle(node)["white-space"] === "nowrap") return true;
+        }
+        return false;
+      };
+      for (const figure of [within(escuela).getByText("4,0000 %"), within(sur).getByText("0,0000 %"), within(sur).getByText("0,0200 %")]) {
+        expect(keptWhole(figure), figure.textContent ?? "").toBe(true);
+      }
+      expect(within(escuela).getByText("Fin registrado: 01/03/2025")).toBeInTheDocument();
+      expect(within(section).queryByRole("columnheader", { name: "Fin registrado" })).not.toBeInTheDocument();
+      expect(within(sur).queryByText(/^Fin registrado/)).not.toBeInTheDocument();
+    });
+
     test("UI-AGR-030: on a phone, the 0 % row's stacked fields give its reason, β and observed leaving", () => {
       const width = window.innerWidth;
       Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });

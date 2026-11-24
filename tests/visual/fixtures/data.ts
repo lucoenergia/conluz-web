@@ -2226,16 +2226,18 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
   consecutiveDays: 3,
   summary: IN_FORCE_OBSERVED,
   coefficients: [
+    // Drops to 0 % after holding a share in the original agreement: it leaves
+    // the distribution, and is listed among the leaving rows too (#621).
     {
       coefficientId: "observed-norte",
-      leavesDistribution: false,
+      leavesDistribution: true,
       supply: OBSERVED_SUPPLIES.norte,
-      coefficient: 0.0315,
+      coefficient: 0,
       storedValidFrom: "2025-03-01",
       storedValidTo: null,
       observedDate: { from: "2025-03-01", to: "2025-03-01" },
       proposedDate: null,
-      observedBeta: 0.0318,
+      observedBeta: 0.0001,
       observedValidDays: 540,
       windowDays: 590,
       windowFrom: "2025-03-01",
@@ -2341,7 +2343,8 @@ const pendingCoefficient = (
 });
 
 export const APPLICATION_DATES_COEFFICIENTS: SharingAgreementPartitionCoefficientResponse[] = [
-  pendingCoefficient("dates-norte", OBSERVED_SUPPLIES.norte, 0.0315),
+  // Drops to 0 %: the dry run flags it as leaving the distribution (#621).
+  pendingCoefficient("dates-norte", OBSERVED_SUPPLIES.norte, 0),
   pendingCoefficient("dates-sur", OBSERVED_SUPPLIES.sur, 0.0315),
   pendingCoefficient("dates-este", OBSERVED_SUPPLIES.este, 0.05),
   pendingCoefficient("dates-oeste", OBSERVED_SUPPLIES.oeste, 0.03),
@@ -2409,7 +2412,8 @@ export const APPLICATION_DATES_OBSERVATION: SharingAgreementObservationResponse 
 
 /**
  * The dry run of the observed dates: Norte and Este from 01/03/2025, Este
- * before the file was sent; Norte's previous coefficient shortened; Escuela
+ * before the file was sent; Norte's previous coefficient shortened, and Norte
+ * leaving the distribution at 0 %; Escuela
  * closed as listed and Almacén by default; the previous agreement superseded;
  * and the community start moved back.
  */
@@ -2418,7 +2422,7 @@ export const APPLICATION_DATES_PREVIEW: CoefficientDatesEffectsResponse = {
     {
       coefficient: { id: DATES_NORTE.coefficientId },
       supply: DATES_NORTE.supply,
-      leavesDistribution: false,
+      leavesDistribution: true,
       validFromBefore: null,
       validFromAfter: "2025-02-28T23:00:00Z",
       validToBefore: null,

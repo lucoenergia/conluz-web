@@ -118,6 +118,7 @@ test.describe("Visual baselines", () => {
 
     await expect(page.getByText("Cierre por defecto: fecha más temprana del acuerdo")).toBeVisible();
     await expect(page.getByText(/anterior al envío del fichero/)).toBeVisible();
+    await expect(page.getByText("Sale del reparto (0 %)")).toBeVisible();
     await settleForCapture(page);
 
     await expect(page).toHaveScreenshot("application-dates-preview.png", await mainRegion(page));
@@ -131,6 +132,7 @@ test.describe("Visual baselines", () => {
 
     await expect(page.getByRole("heading", { name: "Qué ha cambiado" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Volver al reparto observado" })).toBeVisible();
+    await expect(page.getByText(/sale del reparto: su coeficiente pasa a 0 %/)).toBeVisible();
     await settleForCapture(page);
 
     await expect(page).toHaveScreenshot("application-dates-success.png", await mainRegion(page));
