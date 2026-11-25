@@ -8,7 +8,7 @@
 | **Roles** | Whoever may open each form; this document adds no gate |
 | **Domain rules** | `lucoenergia/conluz`: API-003, API-004 |
 | **Design reference** | Design system: `AddressField`, `ReadOnlyField` (forms group); the theme's field outline (`src/theme/fieldOutline.ts`) |
-| **Last reviewed against code** | #432 |
+| **Last reviewed against code** | #444 |
 
 <!-- Domain rules are cited by ID; the prefix registry in lucoenergia/conluz → docs/specs/README.md maps each prefix to its file. -->
 
@@ -89,6 +89,32 @@ is shown is
   for every field, a date included, means no field reads as a different kind of control.
 - **Implements:** n/a
 - **Source:** #432
+
+### UI-FRM-005 — A new password shows the policy and is checked against it before sending
+
+- **Status:** Active
+- **Rule:** Every new-password field MUST show the policy as visible text and check it on the
+  client with the backend's limits (ACC-021), taken from a single module; the server stays the
+  authority.
+- **Rationale:** A member sees why a password is refused before sending it, rather than after a
+  round trip. One module holding the limits means a change of policy is one change, and the hint,
+  the check and the messages cannot drift apart.
+- **Implements:** ACC-021
+- **Source:** #196, #444, lucoenergia/conluz#613
+
+### UI-FRM-006 — A server refusal of a new password names its rule on the field
+
+- **Status:** Active
+- **Rule:** A server refusal of a new password MUST be shown on the new-password field with the
+  message of the rule the server names. The other fields MUST keep their values.
+  - A compromised password has its own message and is never evaluated on the client: no list of
+    passwords is shipped to it.
+  - A rule the client does not know MUST show the generic policy message.
+  - The invitation form applies it as UI-INV-008.
+- **Rationale:** The member must know what to change to get a password accepted. The list of
+  compromised passwords lives only on the server.
+- **Implements:** ACC-021, ACC-022
+- **Source:** #444, lucoenergia/conluz#614
 
 ## States
 
