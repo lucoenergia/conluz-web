@@ -28,6 +28,8 @@ export interface SharingAgreementObservationSummaryResponse {
   distributorFileSentOn: string | null;
   /** Earliest observed application date of its coefficients. Null when none was observed. */
   earliestObservedDate: SharingAgreementObservationSummaryResponseEarliestObservedDate;
+  /** Number of its coefficient rows that leave the distribution by dropping to 0 (leavesDistribution), in each status. They are also counted in coefficientStatusCounts, and never in leavingStatusCounts. */
+  leavesDistributionStatusCounts: ObservationStatusCountsResponse;
   /** Number of its leaving rows in each status */
   leavingStatusCounts: ObservationStatusCountsResponse;
   /** Most frequent observed application date of its coefficients. Null when none was observed. */
