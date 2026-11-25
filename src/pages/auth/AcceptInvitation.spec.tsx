@@ -620,6 +620,39 @@ describe("UI-INV-008 a refused password", () => {
   });
 });
 
+describe("UI-FRM-006 a compromised password (#444)", () => {
+  it("UI-FRM-006 shows a COMPROMISED refusal on the new password, keeping both fields", async () => {
+    const user = userEvent.setup();
+    const router = routeRequests([
+      { method: "POST", url: INSPECT, respond: () => inspection(false) },
+      {
+        method: "POST",
+        url: ACCEPT,
+        respond: () => {
+          throw apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule: "COMPROMISED" } });
+        },
+      },
+    ]);
+    mockCustomInstance.mockImplementation(router.handle);
+
+    renderAt(`/accept-invitation#${TOKEN}`);
+    await findCommunityHeading();
+    await choosePassword(user, NEW_PASSWORD);
+
+    const newPassword = screen.getByLabelText("Nueva contraseña");
+    await waitFor(() =>
+      expect(newPassword).toHaveAccessibleDescription(
+        expect.stringContaining(
+          "Esta contraseña es muy común o ha aparecido en filtraciones de datos. Elige otra: una frase que recuerdes suele funcionar bien.",
+        ),
+      ),
+    );
+    expect(newPassword).toHaveAttribute("aria-invalid", "true");
+    expect(newPassword).toHaveValue(NEW_PASSWORD);
+    expect(screen.getByLabelText("Repite la nueva contraseña")).toHaveValue(NEW_PASSWORD);
+  });
+});
+
 describe("UI-INV-009 the account turns out to have a password", () => {
   it("UI-INV-009 switches to the login path on 409 and accepts signed in with the same token", async () => {
     const user = userEvent.setup();

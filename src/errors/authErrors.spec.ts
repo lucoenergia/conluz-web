@@ -111,6 +111,38 @@ describe("classifyAuthError", () => {
   });
 });
 
+describe("UI-FRM-006 a server refusal names its rule (#444)", () => {
+  it("UI-FRM-006 classifies a COMPROMISED policy violation with its rule", () => {
+    const error = apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule: "COMPROMISED" } });
+    expect(classifyAuthError(error)).toEqual({ kind: "policyViolation", rule: "COMPROMISED" });
+  });
+
+  it("UI-FRM-006 classifies a policy violation with an unknown rule without a rule", () => {
+    const error = apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule: "NOT_A_RULE" } });
+    expect(classifyAuthError(error)).toEqual({ kind: "policyViolation", rule: null });
+  });
+
+  it("UI-FRM-006 the catalogue gives a COMPROMISED refusal its own message", () => {
+    expect(
+      getFirstApiErrorMessage(
+        apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule: "COMPROMISED" } }),
+        "x",
+      ),
+    ).toBe(
+      "Esta contraseña es muy común o ha aparecido en filtraciones de datos. Elige otra: una frase que recuerdes suele funcionar bien.",
+    );
+  });
+
+  it("UI-FRM-006 the catalogue gives a refusal with an unknown rule the generic message", () => {
+    expect(
+      getFirstApiErrorMessage(
+        apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule: "NOT_A_RULE" } }),
+        "x",
+      ),
+    ).toBe("La contraseña no cumple los requisitos.");
+  });
+});
+
 describe("the catalogue entries for #196", () => {
   it("translates each code to Spanish", () => {
     expect(getFirstApiErrorMessage(apiError(400, { code: "USER_CURRENT_PASSWORD_INCORRECT" }), "x")).toBe(

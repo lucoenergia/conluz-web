@@ -2,21 +2,21 @@ import { describe, expect, it } from "vitest";
 import { checkPasswordPolicy } from "./passwordPolicy";
 
 describe("checkPasswordPolicy", () => {
-  it("accepts 10 to 64 characters", () => {
+  it("UI-FRM-005 accepts 10 to 64 characters", () => {
     expect(checkPasswordPolicy("a".repeat(10))).toBeNull();
     expect(checkPasswordPolicy("a".repeat(64))).toBeNull();
   });
 
-  it("refuses fewer than 10 characters", () => {
+  it("UI-FRM-005 refuses fewer than 10 characters", () => {
     expect(checkPasswordPolicy("a".repeat(9))).toBe("TOO_SHORT");
     expect(checkPasswordPolicy("")).toBe("TOO_SHORT");
   });
 
-  it("refuses more than 64 characters", () => {
+  it("UI-FRM-005 refuses more than 64 characters", () => {
     expect(checkPasswordPolicy("a".repeat(65))).toBe("TOO_LONG");
   });
 
-  it("counts code points, not UTF-16 units", () => {
+  it("UI-FRM-005 counts code points, not UTF-16 units", () => {
     // 9 emoji are 18 UTF-16 units, which a naive `.length` would accept.
     expect("😀".repeat(9).length).toBe(18);
     expect(checkPasswordPolicy("😀".repeat(9))).toBe("TOO_SHORT");
@@ -24,7 +24,7 @@ describe("checkPasswordPolicy", () => {
     expect(checkPasswordPolicy("😀".repeat(10))).toBeNull();
   });
 
-  it("refuses more than 72 bytes of UTF-8 even within 64 characters", () => {
+  it("UI-FRM-005 refuses more than 72 bytes of UTF-8 even within 64 characters", () => {
     // 19 emoji: 19 code points, 76 bytes.
     expect(checkPasswordPolicy("😀".repeat(19))).toBe("TOO_MANY_BYTES");
     // 36 two-byte letters: 72 bytes exactly.
@@ -32,7 +32,7 @@ describe("checkPasswordPolicy", () => {
     expect(checkPasswordPolicy("ñ".repeat(37))).toBe("TOO_MANY_BYTES");
   });
 
-  it("counts spaces, including leading and trailing ones", () => {
+  it("UI-FRM-005 counts spaces, including leading and trailing ones", () => {
     expect(checkPasswordPolicy(" ".repeat(10))).toBeNull();
     expect(checkPasswordPolicy("  corta  ")).toBe("TOO_SHORT");
   });

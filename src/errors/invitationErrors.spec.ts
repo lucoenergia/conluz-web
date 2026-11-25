@@ -37,6 +37,15 @@ describe("classifyInvitationError (#274)", () => {
     });
   });
 
+  it("UI-FRM-006 reads a COMPROMISED refusal with its rule, and an unknown rule without one (#444)", () => {
+    expect(
+      classifyInvitationError(apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule: "COMPROMISED" } })),
+    ).toEqual({ kind: "policyViolation", rule: "COMPROMISED" });
+    expect(
+      classifyInvitationError(apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule: "NOT_A_RULE" } })),
+    ).toEqual({ kind: "policyViolation", rule: null });
+  });
+
   it("reads the wait of a throttled request from the header or the body", () => {
     expect(classifyInvitationError(apiError(429, { code: "AUTH_TOO_MANY_FAILED_ATTEMPTS" }, { "retry-after": "840" }))).toEqual({
       kind: "throttled",

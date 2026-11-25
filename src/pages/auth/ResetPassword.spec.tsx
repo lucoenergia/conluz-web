@@ -348,6 +348,35 @@ describe("a refused password (AC8)", () => {
   });
 });
 
+describe("UI-FRM-006 a compromised password (#444)", () => {
+  it("UI-FRM-006 shows a COMPROMISED refusal on the new password, keeping both fields", async () => {
+    const user = userEvent.setup();
+    const router = routeRequests(
+      resetRoutes(() => {
+        throw apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule: "COMPROMISED" } });
+      }),
+    );
+    mockCustomInstance.mockImplementation(router.handle);
+
+    renderAt(`/reset-password#${TOKEN}`);
+    await findForm();
+    await submit(user, PASSWORD);
+
+    const newPassword = screen.getByLabelText("Nueva contraseña");
+    await waitFor(() =>
+      expect(newPassword).toHaveAccessibleDescription(
+        expect.stringContaining(
+          "Esta contraseña es muy común o ha aparecido en filtraciones de datos. Elige otra: una frase que recuerdes suele funcionar bien.",
+        ),
+      ),
+    );
+    expect(newPassword).toBeInvalid();
+    expect(newPassword).toHaveValue(PASSWORD);
+    expect(screen.getByLabelText("Repite la nueva contraseña")).toHaveValue(PASSWORD);
+    expect(currentPath()).toBe("/reset-password");
+  });
+});
+
 describe("a throttled reset (AC2)", () => {
   it.each([
     ["params.retryAfterSeconds", apiError(429, { code: "AUTH_TOO_MANY_FAILED_ATTEMPTS", params: { retryAfterSeconds: "840" } })],

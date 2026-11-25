@@ -149,7 +149,7 @@ describe("ChangePasswordPage", () => {
       await expectPasswordFieldContract(user, confirmField(), "new-password");
     });
 
-    it("shows the policy with a passphrase example, tied to the new password", () => {
+    it("UI-FRM-005 shows the policy with a passphrase example, tied to the new password", () => {
       renderPage();
 
       const hint = screen.getByText(/Usa entre 10 y 64 caracteres/);
@@ -158,7 +158,7 @@ describe("ChangePasswordPage", () => {
     });
   });
 
-  describe("client-side checks, before anything is sent (AC2)", () => {
+  describe("UI-FRM-005 client-side checks, before anything is sent (AC2)", () => {
     it.each([
       ["9 characters", "a".repeat(9), "La contraseña debe tener al menos 10 caracteres."],
       ["65 characters", "a".repeat(65), "La contraseña no puede tener más de 64 caracteres."],
@@ -296,6 +296,26 @@ describe("ChangePasswordPage", () => {
       expect(token()).toHaveTextContent("a-token");
       expect(path()).toHaveTextContent("/change-password");
     });
+  });
+
+  it("UI-FRM-006 explains a COMPROMISED refusal on the new password, keeping every field", async () => {
+    mockChangePassword.mockRejectedValueOnce(
+      apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule: "COMPROMISED" } }),
+    );
+    const user = userEvent.setup();
+    renderPage();
+
+    await submit(user);
+
+    await waitFor(() =>
+      expect(helperTextOf(newField())).toBe(
+        "Esta contraseña es muy común o ha aparecido en filtraciones de datos. Elige otra: una frase que recuerdes suele funcionar bien.",
+      ),
+    );
+    expect(currentField()).toHaveValue("la actual de siempre");
+    expect(newField()).toHaveValue(VALID_NEW_PASSWORD);
+    expect(confirmField()).toHaveValue(VALID_NEW_PASSWORD);
+    expect(token()).toHaveTextContent("a-token");
   });
 
   describe("when the change is throttled (429)", () => {
