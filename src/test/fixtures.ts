@@ -771,6 +771,7 @@ export function buildObservationSummary(
       mostFrequentObservedDate: null,
       coefficientStatusCounts: buildObservationStatusCounts(),
       leavingStatusCounts: buildObservationStatusCounts(),
+      leavesDistributionStatusCounts: buildObservationStatusCounts(),
       anomalies: [],
       anomalyCounts: buildSharingAnomalyCounts(),
       unallocatedShare: null,
