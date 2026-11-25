@@ -12,8 +12,11 @@ export const PASSWORD_MIN_CHARS = 10;
 export const PASSWORD_MAX_CHARS = 64;
 export const PASSWORD_MAX_BYTES = 72;
 
+/** The rules the client can evaluate on its own, before sending anything. */
+export type ClientPasswordRule = "TOO_SHORT" | "TOO_LONG" | "TOO_MANY_BYTES";
+
 /** The rule names the backend reports in `params.rule` of USER_PASSWORD_POLICY_VIOLATION. */
-export type PasswordRule = "TOO_SHORT" | "TOO_LONG" | "TOO_MANY_BYTES";
+export type PasswordRule = ClientPasswordRule;
 
 export const PASSWORD_RULE_MESSAGES: Record<PasswordRule, string> = {
   TOO_SHORT: `La contraseña debe tener al menos ${PASSWORD_MIN_CHARS} caracteres.`,
@@ -21,6 +24,9 @@ export const PASSWORD_RULE_MESSAGES: Record<PasswordRule, string> = {
   TOO_MANY_BYTES:
     "La contraseña es demasiado larga: algunos caracteres especiales (tildes, eñes, emojis) ocupan más de uno. Acórtala un poco.",
 };
+
+/** For a refusal whose rule this client does not know. */
+export const PASSWORD_POLICY_GENERIC_MESSAGE = "La contraseña no cumple los requisitos.";
 
 export const PASSWORD_POLICY_TEXT = `Usa entre ${PASSWORD_MIN_CHARS} y ${PASSWORD_MAX_CHARS} caracteres. Puedes usar espacios: una frase que recuerdes es más fácil y más segura que una palabra corta.`;
 
@@ -31,7 +37,7 @@ export function isPasswordRule(value: unknown): value is PasswordRule {
 }
 
 /** The first rule the value breaks, or null when it satisfies the policy. */
-export function checkPasswordPolicy(value: string): PasswordRule | null {
+export function checkPasswordPolicy(value: string): ClientPasswordRule | null {
   const codePoints = [...value].length;
   if (codePoints < PASSWORD_MIN_CHARS) return "TOO_SHORT";
   if (codePoints > PASSWORD_MAX_CHARS) return "TOO_LONG";

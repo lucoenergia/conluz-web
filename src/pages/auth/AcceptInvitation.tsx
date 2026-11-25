@@ -14,7 +14,7 @@ import { useBoundedRevoke } from "../../hooks/useBoundedRevoke";
 import { useGetCurrentUser } from "../../api/users/users";
 import { useAuth, useAuthDispatch } from "../../context/auth.context";
 import { useLoggedUser } from "../../context/logged-user.context";
-import { checkPasswordPolicy, PASSWORD_RULE_MESSAGES } from "../../utils/passwordPolicy";
+import { checkPasswordPolicy, PASSWORD_POLICY_GENERIC_MESSAGE, PASSWORD_RULE_MESSAGES } from "../../utils/passwordPolicy";
 import { throttledMessage } from "../../errors/authErrors";
 import { markInvitationAccepted, markPlatformInvitationAccepted } from "../../utils/session";
 import { isWellFormedConfirmationCode } from "../../utils/confirmationCode";
@@ -635,7 +635,7 @@ const SetPasswordForm: FC<SetPasswordFormProps> = ({
         break;
       case "policyViolation":
         setFieldErrors({
-          newPassword: failure.rule ? PASSWORD_RULE_MESSAGES[failure.rule] : "La contraseña no cumple los requisitos.",
+          newPassword: failure.rule ? PASSWORD_RULE_MESSAGES[failure.rule] : PASSWORD_POLICY_GENERIC_MESSAGE,
         });
         break;
       case "throttled":
