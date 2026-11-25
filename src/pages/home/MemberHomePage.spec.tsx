@@ -383,8 +383,8 @@ describe("MemberHomePage (#199)", () => {
       });
       openHome();
 
-      expect(text(savingsCard())).toContain("Estimado con un precio de 0,15 €/kWh para la energía, sin impuestos.");
-      expect(text(paybackCard())).toContain("Estimado con un precio de 0,1234 €/kWh para la energía, sin impuestos.");
+      expect(text(savingsCard())).toContain("Estimado con un precio de 0,15 €/kWh para la energía, más IVA e impuesto eléctrico.");
+      expect(text(paybackCard())).toContain("Estimado con un precio de 0,1234 €/kWh para la energía, más IVA e impuesto eléctrico.");
     });
 
     it("UI-HOM-001 shows no estimate wording anywhere when neither response carries a price", () => {

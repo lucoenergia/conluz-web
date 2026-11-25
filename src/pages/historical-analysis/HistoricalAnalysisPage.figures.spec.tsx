@@ -359,7 +359,7 @@ describe("UI-HIS-014 incomplete coverage is stated in words (#249)", () => {
 describe("UI-HIS-010 the totals are fields of the same response (#249)", () => {
   const totals = () => screen.getByRole("list", { name: "Totales del periodo" });
   const tile = (label: string) => within(totals()).getAllByRole("listitem").find((item) => item.textContent?.startsWith(label))!;
-  const ESTIMATE_LABEL = "Estimado con un precio de 0,15 €/kWh para la energía, sin impuestos.";
+  const ESTIMATE_LABEL = "Estimado con un precio de 0,15 €/kWh para la energía, más IVA e impuesto eléctrico.";
 
   it("UI-HIS-010 four tiles: from the community, from the grid, to the grid and the estimated savings", () => {
     renderPage();
