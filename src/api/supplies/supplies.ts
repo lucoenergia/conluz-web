@@ -754,9 +754,9 @@ export const useUpdateSupply = <TError = ErrorType<RestError>,
  * partial edge bucket's savings cover exactly the hours its energy fields cover.
  *
  * **Savings:** `savingsEur` is an **estimate** of what the bucket's self-consumed
- * energy was worth. It prices the **energy term before taxes** only: the power
- * term, access tolls, charges and electricity tax are all excluded, and VAT is
- * applied only where the resolved tariff carries a rate. `tariffSource` says where
+ * energy was worth. It prices the **energy term with electricity tax and VAT**,
+ * each at the rate in force on the day the energy was consumed: the power term,
+ * access tolls and charges are excluded. `tariffSource` says where
  * the prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`
  * for the supply's contracted tariff -- and a single estimated stretch of the
  * bucket makes the whole amount an estimate. A day whose published
@@ -937,9 +937,10 @@ export function useGetSupplyDailyConsumption<TData = Awaited<ReturnType<typeof g
  * **Savings:** `savingsEur` is an **estimate** of what the hour's self-consumed energy
  * was worth, priced with the same tariff resolution as a day of the daily series, over
  * the hour itself; an `endDate` in the middle of an hour leaves a partial last hour,
- * priced over the part its energy covers. It prices the **energy term before taxes**
- * only: the power term, access tolls, charges and electricity tax are all excluded, and
- * VAT is applied only where the resolved tariff carries a rate. `tariffSource` says
+ * priced over the part its energy covers.
+ * It prices the **energy term with electricity tax and VAT**,
+ * each at the rate in force on the day the energy was consumed: the power term,
+ * access tolls and charges are excluded. `tariffSource` says
  * where the prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`
  * for the supply's contracted tariff. An hour whose published self-consumption is
  * zero, and an hour without data, reports `0.00`.
@@ -1112,9 +1113,9 @@ export function useGetSupplyHourlyConsumption<TData = Awaited<ReturnType<typeof 
  * 15th returns that month's first half.
  *
  * **Savings:** `savingsEur` is an **estimate** of what the bucket's self-consumed
- * energy was worth. It prices the **energy term before taxes** only: the power
- * term, access tolls, charges and electricity tax are all excluded, and VAT is
- * applied only where the resolved tariff carries a rate. `tariffSource` says where
+ * energy was worth. It prices the **energy term with electricity tax and VAT**,
+ * each at the rate in force on the day the energy was consumed: the power term,
+ * access tolls and charges are excluded. `tariffSource` says where
  * the prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`
  * for the supply's contracted tariff -- and a single estimated stretch of the
  * bucket makes the whole amount an estimate. A month whose published
@@ -1571,9 +1572,9 @@ export const useEnableSupply = <TError = ErrorType<RestError>,
  *
  * **Savings:**
  * `savings.amountEur` is an **estimate** of what the self-consumed energy of the period
- * was worth. It prices the **energy term before taxes** only: the power term, access
- * tolls, charges and electricity tax are all excluded, and VAT is applied only where the
- * resolved tariff carries a rate. `savings.tariffSource` says where the prices came from
+ * was worth. It prices the **energy term with electricity tax and VAT**,
+ * each at the rate in force on the day the energy was consumed: the power term,
+ * access tolls and charges are excluded. `savings.tariffSource` says where the prices came from
  * -- `ESTIMATE` for a computed approximation, `REAL_TARIFF` for the supply's contracted
  * tariff -- and a single estimated stretch of the period makes the whole amount an
  * estimate.

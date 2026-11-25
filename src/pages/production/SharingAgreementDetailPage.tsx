@@ -26,6 +26,7 @@ import { sharingAgreementSaveRefusalOf } from "../../errors/sharingAgreementErro
 import { useSharingAgreementDetailData } from "./useSharingAgreementDetailData";
 import { useSharingAgreementActions, useSharingAgreementCoefficientActions } from "../../hooks/actions";
 import { selectSharingAgreementNextStep } from "./selectSharingAgreementNextStep";
+import { applicationDatesPath } from "./applicationDates/applicationDatesRoutes";
 import { summarizeApplicationProgress } from "./sharingAgreementApplicationProgress";
 import { BATCH_BAR_HEIGHT_DESKTOP, BATCH_BAR_HEIGHT_MOBILE } from "./sharingAgreementBatchBar";
 import {
@@ -50,12 +51,15 @@ export const SharingAgreementDetailPage: FC = () => {
     useSharingAgreementActions(plantId).forAgreement(agreement).actions;
   // The banner's stage actions open surfaces that live in the coefficient set,
   // so they follow the same two writes that set gates on.
-  const { replace, activate } = useSharingAgreementCoefficientActions(plantId).forAgreement(agreement).actions;
+  const { replace, setDates } = useSharingAgreementCoefficientActions(plantId).forAgreement(agreement).actions;
   const isPublished = agreement?.status === SharingAgreementResponseStatus.PUBLISHED;
   const isSuperseded = agreement?.status === SharingAgreementResponseStatus.SUPERSEDED;
   // Scheduling only exists once the coefficient set is sealed. On a superseded
   // agreement it is history, shown without an action to start. Once every point
   // has a date there is no progress left to report, so the section goes.
+  // Dates can be set only on a sealed coefficient set: the write refuses a draft.
+  const setDatesPath =
+    setDates && (isPublished || isSuperseded) ? applicationDatesPath(plantId, sharingAgreementId) : undefined;
   const showApplicationPanel =
     (isPublished || isSuperseded) && coefficients.length > 0 && !summarizeApplicationProgress(coefficients).isComplete;
 
@@ -76,9 +80,6 @@ export const SharingAgreementDetailPage: FC = () => {
   // closed state of its own, and the editor's seeding logic has to stay inside
   // the coefficient set, which owns the rows.
   const [editCoefficientsRequestId, setEditCoefficientsRequestId] = useState(0);
-  // Same shape, same reason: the batch bar and the selection it drives live in
-  // the coefficient set, and the next-step banner's stage-5 action starts it.
-  const [registerDatesRequestId, setRegisterDatesRequestId] = useState(0);
   // The batch bar is fixed over the viewport, so the room it needs has to be
   // reserved here, after the last section — reserved inside the coefficient
   // panel it left the distributor-file panel below it still covered.
@@ -197,13 +198,17 @@ export const SharingAgreementDetailPage: FC = () => {
               onGenerateRequest={generateFile && (() => setIsGenerateDialogOpen(true))}
               onEditCoefficientsRequest={replace && (() => setEditCoefficientsRequestId((id) => id + 1))}
               onImportRequest={uploadFile && (() => setIsUploadDialogOpen(true))}
-              onRecordDatesRequest={activate && (() => setRegisterDatesRequestId((id) => id + 1))}
+              onRecordDatesRequest={setDatesPath ? () => navigate(setDatesPath) : undefined}
+              onSetDatesRequest={setDatesPath ? () => navigate(setDatesPath) : undefined}
             />
           </Box>
 
           {!isLoading && !error && showApplicationPanel && (
             <Box sx={sxStyles.pageContainer}>
-              <SharingAgreementApplicationPanel coefficients={coefficients} />
+              <SharingAgreementApplicationPanel
+                coefficients={coefficients}
+                onSetDatesRequest={setDatesPath ? () => navigate(setDatesPath) : undefined}
+              />
             </Box>
           )}
 
@@ -216,7 +221,6 @@ export const SharingAgreementDetailPage: FC = () => {
                 nominalPowerKW={agreement?.nominalPowerKW}
                 editRequestId={editCoefficientsRequestId}
                 onImportRequest={uploadFile && (() => setIsUploadDialogOpen(true))}
-                registerDatesRequestId={registerDatesRequestId}
                 // The banner promotes "Editar a mano" / "Importar TXT" exactly
                 // while authoring is the current step; the section offers them
                 // the rest of the time, so only one pair is ever on screen.

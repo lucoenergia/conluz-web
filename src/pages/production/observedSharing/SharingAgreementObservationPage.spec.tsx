@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { screen, waitFor, within } from "@testing-library/react";
+import { cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router";
 import { renderWithProviders } from "../../../test/renderWithProviders";
@@ -35,6 +35,9 @@ import {
   buildSharingAnomalyCounts,
 } from "../../../test/fixtures";
 import { SharingAgreementObservationPage } from "./SharingAgreementObservationPage";
+
+/** The agreement's applied window, which a share's figures are computed over. */
+const APPLIED_WINDOW = { from: "2025-03-01", to: "2026-04-26" };
 
 vi.mock(import("../../../api/plants/plants"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -104,7 +107,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         }),
       ],
       anomalyCounts: buildSharingAnomalyCounts({ reverted: 1 }),
-      unallocatedShare: { days: 200, unallocated: 0.067, registeredShareWithoutData: 0.03 },
+      unallocatedShare: { days: 200, unallocated: 0.067, registeredShareWithoutData: 0.03, ...APPLIED_WINDOW },
       recommendations: [Recommendation.SET_DATES, Recommendation.REVIEW_ANOMALIES],
     }),
     coefficients: [
@@ -118,6 +121,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         // 0.1 percentage points above the registered β: still equal.
         observedBeta: 0.0325,
         observedValidDays: 120,
+        windowDays: 200,
         status: Status.APPLIED_SAME_DATE,
       }),
       buildCoefficientObservation({
@@ -131,6 +135,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         // Just beyond 0.1 percentage points: it differs.
         observedBeta: 0.032501,
         observedValidDays: 120,
+        windowDays: 200,
         status: Status.APPLIED_DIFFERENT_DATE,
       }),
       buildCoefficientObservation({
@@ -142,6 +147,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         proposedDate: { from: "2025-03-01", to: "2025-03-01" },
         observedBeta: 0.05,
         observedValidDays: 120,
+        windowDays: 200,
         status: Status.NOT_DISTINGUISHABLE,
       }),
       buildCoefficientObservation({
@@ -151,6 +157,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         storedValidFrom: null,
         observedBeta: null,
         observedValidDays: 0,
+        windowDays: 200,
         status: Status.NO_DATA,
       }),
       buildCoefficientObservation({
@@ -161,6 +168,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         observedDate: { from: null, to: "2025-03-01" },
         observedBeta: 0.02,
         observedValidDays: 60,
+        windowDays: 200,
         status: Status.APPLIED_SAME_DATE,
       }),
     ],
@@ -174,6 +182,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         observedLeavingDate: { from: "2025-03-01", to: "2025-03-01" },
         observedBeta: 0,
         observedValidDays: 90,
+        windowDays: 150,
         status: LeavingStatus.APPLIED_SAME_DATE,
       }),
       buildLeavingObservation({
@@ -185,6 +194,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         observedLeavingDate: { from: "2025-04-01", to: "2025-04-01" },
         observedBeta: 0,
         observedValidDays: 75,
+        windowDays: 150,
         status: LeavingStatus.APPLIED_DIFFERENT_DATE,
       }),
       // Not observed leaving: the supply has valid days before this agreement,
@@ -199,6 +209,7 @@ function observationFixture(overrides: Partial<SharingAgreementObservationRespon
         observedLeavingDate: null,
         observedBeta: null,
         observedValidDays: 0,
+        windowDays: 200,
         status: LeavingStatus.PENDING_APPLICATION,
       }),
     ],
@@ -264,9 +275,9 @@ describe("SharingAgreementObservationPage", () => {
   test("UI-AGR-031: every row shows the observed β the backend returned, and '—' when it returned none", () => {
     renderPage();
 
-    expect(supplyRow("Casa Oeste")).toHaveTextContent(/^Casa Oeste.*3,0000 %—Sin fecha—Sin datos de Datadis$/);
-    expect(within(leavingSection()).getByRole("row", { name: /Escuela/ })).toHaveTextContent("4,0000 %0,0000 %");
-    expect(within(leavingSection()).getByRole("row", { name: /Bar/ })).toHaveTextContent("1,0000 %0,0000 %");
+    expect(supplyRow("Casa Oeste")).toHaveTextContent(/^Casa Oeste.*3,0000 %—0 de 200Sin fecha—Sin datos de Datadis$/);
+    expect(within(leavingSection()).getByRole("row", { name: /Escuela/ })).toHaveTextContent("4,0000 %—0,0000 %");
+    expect(within(leavingSection()).getByRole("row", { name: /Bar/ })).toHaveTextContent("1,0000 %—0,0000 %");
     expect(within(leavingSection()).getByRole("row", { name: /Kiosco/ })).toHaveTextContent("1,5000 %—");
   });
 
@@ -373,10 +384,10 @@ describe("SharingAgreementObservationPage", () => {
 
     expect(within(section).getByRole("heading", { name: "Salen del reparto (3)" })).toBeInTheDocument();
     expect(within(section).getByRole("row", { name: /Escuela/ })).toHaveTextContent(
-      "Reparto inicial 20234,0000 %0,0000 %01/03/2025Observada01/03/2025Salida · misma fecha",
+      "No está en este acuerdoAcuerdo anterior: Reparto inicial 20234,0000 %—0,0000 %90 de 15001/03/2025ObservadaFin registrado: 01/03/2025Salida · misma fecha",
     );
     expect(within(section).getByRole("row", { name: /Bar/ })).toHaveTextContent(
-      "Reparto inicial 20231,0000 %0,0000 %01/04/2025ObservadaSin fecha de finSalida · otra fecha",
+      "No está en este acuerdoAcuerdo anterior: Reparto inicial 20231,0000 %—0,0000 %75 de 15001/04/2025ObservadaFin registrado: sin fecha de finSalida · otra fecha",
     );
   });
 
@@ -393,20 +404,23 @@ describe("SharingAgreementObservationPage", () => {
     expect(within(leavingSection()).getByRole("heading", { name: "Salen del reparto (1)" })).toBeInTheDocument();
   });
 
-  test("UI-AGR-023: the findings show under 'Qué revisar' in the order returned, the dates with no link", () => {
+  test("UI-AGR-023: the findings show under 'Qué revisar' in the order returned, each with its link", () => {
     renderPage();
     const section = screen.getByRole("region", { name: "Qué revisar" });
 
     expect(within(section).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
-      "Fechas distintas de las registradas1 aplicado en otra fecha · 1 no distinguible · 1 salida en otra fecha",
+      "Fechas distintas de las registradas1 aplicado en otra fecha · 1 no distinguible · 1 salida en otra fechaFijar fechas",
       "1 anomalía1 vuelve a un coeficiente anteriorVer anomalías",
     ]);
-    expect(within(section).getAllByRole("link").map((link) => link.textContent)).toEqual(["Ver anomalías"]);
+    expect(within(section).getAllByRole("link").map((link) => link.textContent)).toEqual(["Fijar fechas", "Ver anomalías"]);
     expect(within(section).getByRole("link", { name: "Ver anomalías" })).toHaveAttribute(
       "href",
       `/plants/${PLANT_ID}/sharing-agreements/observed/${AGREEMENT_ID}#anomalias`,
     );
-    expect(within(section).queryByText("Fijar fechas")).not.toBeInTheDocument();
+    expect(within(section).getByRole("link", { name: "Fijar fechas" })).toHaveAttribute(
+      "href",
+      `/plants/${PLANT_ID}/sharing-agreements/${AGREEMENT_ID}/application-dates?desde=reparto-observado`,
+    );
   });
 
   test("UI-AGR-023: shows no 'Qué revisar' section when nothing is to review", () => {
@@ -441,7 +455,7 @@ describe("SharingAgreementObservationPage", () => {
     const region = within(section).getByRole("region", { name: /^Taller/ });
     expect(within(section).getByRole("button", { name: /Taller/ })).toHaveAttribute("aria-controls", region.id);
     expect(within(section).getByRole("row", { name: /Vuelve a un coeficiente anterior/ })).toHaveTextContent(
-      "Vuelve a un coeficiente anterior01/05/2025en cursoRecibe 4,1200 % en 21 días válidos.",
+      "Vuelve a un coeficiente anterior01/05/2025en cursoβ observada 4,1200 % · 21 días medibles",
     );
   });
 
@@ -516,5 +530,560 @@ describe("SharingAgreementObservationPage", () => {
 
     expect(screen.getByText("Calculando el reparto observado…")).toBeInTheDocument();
     expect(screen.queryByText("Fichero enviado")).not.toBeInTheDocument();
+  });
+
+  test("UI-AGR-026: β is feminine: the coefficient and leaving columns read 'β registrada', 'β observada' and 'β anterior'", () => {
+    renderPage();
+    const headers = (section: HTMLElement) =>
+      within(section)
+        .getAllByRole("columnheader")
+        .map((header) => header.textContent)
+        .filter((text) => text?.startsWith("β"));
+
+    expect(headers(suppliesSection())).toEqual(["β registrada", "β observada"]);
+    expect(headers(leavingSection())).toEqual(["β anterior", "β registrada", "β observada"]);
+    expect(document.body.textContent).not.toMatch(/β (registrado|observado)|el β/);
+  });
+
+  test("UI-AGR-024: an anomaly's evidence is its observed β and the measurable days it rests on", () => {
+    renderPage();
+    const anomalies = screen.getByRole("region", { name: /^Anomalías de este acuerdo/ });
+
+    expect(within(anomalies).getByText("β observada 4,1200 % · 21 días medibles")).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/válid|Recibe \d/i);
+  });
+
+  test("UI-AGR-038: the header offers 'Cómo leer el reparto observado', which opens the help", async () => {
+    renderPage();
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "Cómo leer el reparto observado" }));
+
+    expect(await screen.findByRole("dialog", { name: "Cómo leer el reparto observado" })).toBeInTheDocument();
+  });
+
+  test("UI-AGR-038: the header link is the page's one way into the help: no column header opens it", () => {
+    renderPage();
+
+    expect(screen.getAllByRole("button", { name: /reparto observado|significa|ayuda/i })).toHaveLength(1);
+    for (const header of screen.getAllByRole("columnheader")) {
+      expect(within(header).queryByRole("button"), header.textContent ?? "").not.toBeInTheDocument();
+    }
+    expect(screen.getAllByRole("columnheader", { name: "Días medibles" })).toHaveLength(2);
+  });
+
+  test("UI-AGR-038: on a phone, 'Cómo leer el reparto observado' stays in the header and opens the help", async () => {
+    const width = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
+    // jsdom has no layout: answer the header's (max-width) query, and any (min-width) one, as a 390-px phone would.
+    vi.stubGlobal("matchMedia", (query: string) => {
+      const min = /min-width:\s*([\d.]+)px/.exec(query)?.[1];
+      const max = /max-width:\s*([\d.]+)px/.exec(query)?.[1];
+      return {
+        matches: (min === undefined || Number(min) <= 390) && (max === undefined || 390 <= Number(max)),
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      } as MediaQueryList;
+    });
+    try {
+      renderPage();
+      const heading = screen.getByRole("heading", { level: 1 });
+      const link = screen.getByRole("button", { name: "Cómo leer el reparto observado" });
+
+      // In the compact header the link sits in the title block, after the heading.
+      expect(heading.parentElement?.parentElement).toContainElement(link);
+      await userEvent.setup().click(link);
+
+      expect(await screen.findByRole("dialog", { name: "Cómo leer el reparto observado" })).toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+    }
+  });
+
+  describe("UI-AGR-039: an impossible unattributed production share", () => {
+    const WARNING =
+      "Imposible: los puntos reciben más energía de la que produce la planta. Algún dato de Datadis es erróneo; revisa las anomalías con β observada muy alta.";
+
+    async function renderWithUnattributed(unallocated: number) {
+      const fixture = observationFixture();
+      renderPage({
+        observation: query.success<typeof getSharingAgreementObservation>({
+          ...fixture,
+          summary: { ...fixture.summary, unallocatedShare: { days: 200, unallocated, registeredShareWithoutData: 0.03, ...APPLIED_WINDOW } },
+        }),
+      });
+      await userEvent.setup().click(screen.getByRole("button", { name: /^Ver \d+ datos? más$/ }));
+    }
+
+    const findingTitles = () =>
+      within(screen.getByRole("region", { name: "Qué revisar" }))
+        .getAllByRole("listitem")
+        .map((item) => item.firstElementChild?.nextElementSibling?.firstElementChild?.textContent);
+
+    test("UI-AGR-039: −47,48 % keeps its value, in the warning tone, with the warning under it and the finding first", async () => {
+      await renderWithUnattributed(-0.4748);
+
+      expect(declaredStyle(screen.getByText("-47,5 %")).color).toBe(colors.warning.main);
+      expect(screen.getByText(WARNING)).toBeInTheDocument();
+      expect(findingTitles()[0]).toBe("Reparto mayor que la producción");
+      expect(screen.getByText("Los puntos reciben un 47,5 % más de lo que produce la planta.")).toBeInTheDocument();
+    });
+
+    test("UI-AGR-039: −0,05 % is rounding: shown as it is, with no warning and no finding", async () => {
+      await renderWithUnattributed(-0.0005);
+
+      expect(declaredStyle(screen.getByText("-0,1 %")).color).toBeUndefined();
+      expect(screen.queryByText(WARNING)).not.toBeInTheDocument();
+      expect(findingTitles()).not.toContain("Reparto mayor que la producción");
+    });
+
+    test("UI-AGR-039: 5,74 % shows with no warning and no finding", async () => {
+      await renderWithUnattributed(0.0574);
+
+      expect(declaredStyle(screen.getByText("5,7 %")).color).toBeUndefined();
+      expect(screen.queryByText(WARNING)).not.toBeInTheDocument();
+      expect(findingTitles()).not.toContain("Reparto mayor que la producción");
+    });
+  });
+
+  describe("the unattributed production in the header", () => {
+    async function renderWithShare(unallocatedShare: { days: number; unallocated: number; registeredShareWithoutData: number }) {
+      const fixture = observationFixture();
+      renderPage({
+        observation: query.success<typeof getSharingAgreementObservation>({
+          ...fixture,
+          summary: { ...fixture.summary, unallocatedShare: { ...unallocatedShare, ...APPLIED_WINDOW } },
+        }),
+      });
+      await userEvent.setup().click(screen.getByRole("button", { name: /^Ver \d+ datos? más$/ }));
+    }
+
+    test("UI-AGR-040: it is 'Producción no atribuida', with what it is and over how many measurable days", async () => {
+      await renderWithShare({ days: 422, unallocated: 0.0303, registeredShareWithoutData: 0.0437 });
+
+      expect(screen.getByText("Producción no atribuida")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Parte de la producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la aplicación de este acuerdo (422 días medibles del 01/03/2025 al 26/04/2026).",
+        ),
+      ).toBeInTheDocument();
+      expect(document.body.textContent).not.toMatch(/Σβ|sin explicar/i);
+    });
+
+    test("UI-AGR-041: 3,03 % with 4,37 % of supplies without data reads '4,4 %' and 'Resto: −1,3 pp' with its sentence", async () => {
+      await renderWithShare({ days: 422, unallocated: 0.0303, registeredShareWithoutData: 0.0437 });
+
+      expect(screen.getByText("4,4 % corresponde a puntos que no tenían datos esos días")).toBeInTheDocument();
+      expect(screen.getByText("Resto: -1,3 pp. Los puntos con datos recibieron más de lo registrado.")).toBeInTheDocument();
+    });
+
+    test("UI-AGR-041: with no registered share of supplies without data, there is no such line", async () => {
+      await renderWithShare({ days: 422, unallocated: 0.0574, registeredShareWithoutData: 0 });
+
+      expect(screen.queryByText(/corresponde a puntos que no tenían datos/)).not.toBeInTheDocument();
+      expect(screen.getByText("Resto: +5,7 pp. Producción que no llegó a ningún punto registrado.")).toBeInTheDocument();
+    });
+  });
+
+  describe("the measurable days of each row", () => {
+    // Each row's observedValidDays against its own windowDays.
+    const EXPECTED = [
+      ["Casa Norte", "120 de 200"],
+      ["Casa Sur", "120 de 200"],
+      ["Casa Este", "120 de 200"],
+      ["Casa Oeste", "0 de 200"],
+      ["Taller", "60 de 200"],
+    ];
+
+    test("UI-AGR-042: the table shows 'Días medibles', each row's N de M", () => {
+      renderPage();
+      const column = within(suppliesSection())
+        .getAllByRole("columnheader")
+        .findIndex((header) => header.textContent === "Días medibles");
+
+      expect(column).toBeGreaterThan(-1);
+      for (const [name, days] of EXPECTED) {
+        // Cells and header cells, in the order of the column headers.
+        const cells = supplyRow(name).querySelectorAll("td, th");
+        expect(cells[column], name).toHaveTextContent(new RegExp(`^${days}$`));
+      }
+    });
+
+    /** The fixture with Casa Norte observed before the agreement's window, and Casa Este the plant's own supply. */
+    function renderWithOwnWindows() {
+      const fixture = observationFixture();
+      renderPage({
+        observation: query.success<typeof getSharingAgreementObservation>({
+          ...fixture,
+          // The agreement's window: 335 measurable days.
+          summary: { ...fixture.summary, unallocatedShare: { days: 335, unallocated: 0.03, registeredShareWithoutData: 0, ...APPLIED_WINDOW } },
+          coefficients: fixture.coefficients.map((row) => {
+            if (row.supply.id === NORTE.id) {
+              return { ...row, observedDate: { from: null, to: "2025-01-09" }, observedValidDays: 426, windowDays: 426 };
+            }
+            if (row.supply.id === ESTE.id) {
+              return { ...row, status: Status.NOT_OBSERVABLE, observedBeta: null, observedValidDays: 0, windowDays: 0 };
+            }
+            return row;
+          }),
+          leavingRows: fixture.leavingRows.map((row) =>
+            row.supply.id === ESCUELA.id ? { ...row, observedValidDays: 410, windowDays: 426 } : row,
+          ),
+        }),
+      });
+    }
+
+    const cellIn = (row: HTMLElement, section: HTMLElement) => {
+      const column = within(section)
+        .getAllByRole("columnheader")
+        .findIndex((header) => header.textContent === "Días medibles");
+      return row.querySelectorAll("td, th")[column];
+    };
+
+    test("UI-AGR-042: a row reads against its own window, '426 de 426', not the agreement's 335 days", () => {
+      renderWithOwnWindows();
+
+      expect(cellIn(supplyRow("Casa Norte"), suppliesSection())).toHaveTextContent(/^426 de 426$/);
+      expect(cellIn(within(leavingSection()).getByRole("row", { name: /Escuela/ }), leavingSection())).toHaveTextContent(
+        /^410 de 426$/,
+      );
+      expect(document.body.textContent).not.toMatch(/de 335/);
+    });
+
+    test("UI-AGR-042: a NOT_OBSERVABLE row shows no measurable days, in the table and on a phone", () => {
+      renderWithOwnWindows();
+      expect(cellIn(supplyRow("Casa Este"), suppliesSection())).toHaveTextContent(/^$/);
+      cleanup();
+
+      const width = window.innerWidth;
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
+      try {
+        renderWithOwnWindows();
+        const list = screen.getByRole("list", { name: "Puntos de suministro del acuerdo" });
+        const items = within(list).getAllByRole("listitem");
+        const este = items.find((candidate) => candidate.textContent?.startsWith("Casa Este"))!;
+        const norte = items.find((candidate) => candidate.textContent?.startsWith("Casa Norte"))!;
+
+        expect(within(este).queryByText("Días medibles de su periodo")).not.toBeInTheDocument();
+        expect(within(norte).getByText("Días medibles de su periodo")).toBeInTheDocument();
+      } finally {
+        Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+      }
+    });
+
+    test("UI-AGR-042: on a phone, each stacked row shows its 'Días medibles de su periodo'", () => {
+      const width = window.innerWidth;
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
+      try {
+        renderPage();
+        const list = screen.getByRole("list", { name: "Puntos de suministro del acuerdo" });
+        for (const [name, days] of EXPECTED) {
+          const item = within(list)
+            .getAllByRole("listitem")
+            .find((candidate) => candidate.textContent?.startsWith(name));
+          expect(within(item!).getByText("Días medibles de su periodo").nextElementSibling, name).toHaveTextContent(new RegExp(`^${days}$`));
+        }
+      } finally {
+        Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+      }
+    });
+  });
+
+  test("UI-AGR-024: an attributed anomaly shows the backend's expected β before its observed one", () => {
+    const fixture = observationFixture();
+    renderPage({
+      observation: query.success<typeof getSharingAgreementObservation>({
+        ...fixture,
+        summary: {
+          ...fixture.summary,
+          anomalies: fixture.summary.anomalies.map((anomaly) => ({ ...anomaly, expectedBeta: 0.0315 })),
+        },
+      }),
+    });
+    const anomalies = screen.getByRole("region", { name: /^Anomalías de este acuerdo/ });
+
+    expect(within(anomalies).getByText("β esperada 3,1500 % · β observada 4,1200 % · 21 días medibles")).toBeInTheDocument();
+  });
+
+  test("UI-AGR-024: an expected β of 0, a supply with no coefficient in the agreement, is shown as 0", () => {
+    const fixture = observationFixture();
+    renderPage({
+      observation: query.success<typeof getSharingAgreementObservation>({
+        ...fixture,
+        summary: {
+          ...fixture.summary,
+          anomalies: fixture.summary.anomalies.map((anomaly) => ({ ...anomaly, expectedBeta: 0 })),
+        },
+      }),
+    });
+
+    expect(screen.getByText("β esperada 0,0000 % · β observada 4,1200 % · 21 días medibles")).toBeInTheDocument();
+  });
+
+  describe("the window behind each row's measurable days", () => {
+    /**
+     * Casa Norte with its own window, Casa Sur with none (windowDays 0), Casa
+     * Este the plant's own supply, dates and all, and Escuela leaving with its
+     * own window.
+     */
+    function renderWithWindows() {
+      const fixture = observationFixture();
+      renderPage({
+        observation: query.success<typeof getSharingAgreementObservation>({
+          ...fixture,
+          coefficients: fixture.coefficients.map((row) => {
+            if (row.supply.id === NORTE.id) {
+              return { ...row, observedValidDays: 410, windowDays: 426, windowFrom: "2025-01-09", windowTo: "2026-10-31" };
+            }
+            if (row.supply.id === SUR.id) return { ...row, observedValidDays: 0, windowDays: 0, windowFrom: null, windowTo: null };
+            if (row.supply.id === ESTE.id) {
+              return {
+                ...row,
+                status: Status.NOT_OBSERVABLE,
+                observedBeta: null,
+                observedValidDays: 0,
+                windowDays: 426,
+                windowFrom: "2025-01-09",
+                windowTo: "2026-10-31",
+              };
+            }
+            return row;
+          }),
+          leavingRows: fixture.leavingRows.map((row) =>
+            row.supply.id === ESCUELA.id
+              ? { ...row, observedValidDays: 380, windowDays: 400, windowFrom: "2025-04-01", windowTo: "2026-10-31" }
+              : row,
+          ),
+        }),
+      });
+    }
+
+    const daysCell = (row: HTMLElement, section: HTMLElement) => {
+      const column = within(section)
+        .getAllByRole("columnheader")
+        .findIndex((header) => header.textContent === "Días medibles");
+      return row.querySelectorAll("td, th")[column] as HTMLElement;
+    };
+
+    /** A stacked row's "Días medibles de su periodo" value, or undefined when it has none. */
+    const stackedDays = (listName: string, name: string) => {
+      const item = within(screen.getByRole("list", { name: listName }))
+        .getAllByRole("listitem")
+        .find((candidate) => candidate.textContent?.startsWith(name))!;
+      return within(item).queryByText("Días medibles de su periodo")?.nextElementSibling;
+    };
+
+    test("UI-AGR-042: a coefficient row keeps 'N de M' and adds its window under it", () => {
+      renderWithWindows();
+      const cell = daysCell(supplyRow("Casa Norte"), suppliesSection());
+
+      expect(cell).toHaveTextContent(/^410 de 426del 09\/01\/2025 al 31\/10\/2026$/);
+    });
+
+    test("UI-AGR-042: the interval wraps only before 'al', never inside a date", () => {
+      renderWithWindows();
+      const cell = daysCell(supplyRow("Casa Norte"), suppliesSection());
+
+      for (const part of ["del 09/01/2025", "al 31/10/2026"]) {
+        expect(declaredStyle(within(cell).getByText(part))["white-space"], part).toBe("nowrap");
+      }
+    });
+
+    test("UI-AGR-042: a leaving row adds its own window", () => {
+      renderWithWindows();
+      const escuela = within(leavingSection()).getByRole("row", { name: /Escuela/ });
+
+      expect(daysCell(escuela, leavingSection())).toHaveTextContent(/^380 de 400del 01\/04\/2025 al 31\/10\/2026$/);
+    });
+
+    test("UI-AGR-042: a row with no window (null dates, windowDays 0) shows no interval", () => {
+      renderWithWindows();
+
+      expect(daysCell(supplyRow("Casa Sur"), suppliesSection())).toHaveTextContent(/^0 de 0$/);
+    });
+
+    test("UI-AGR-042: a NOT_OBSERVABLE row shows neither its days nor its window, even when it has one", () => {
+      renderWithWindows();
+
+      expect(daysCell(supplyRow("Casa Este"), suppliesSection())).toHaveTextContent(/^$/);
+      expect(document.body.textContent?.match(/del 09\/01\/2025 al 31\/10\/2026/g)).toHaveLength(1);
+    });
+
+    test("UI-AGR-042: on a phone, each stacked row gives its window under 'N de M'; none without one, nothing for NOT_OBSERVABLE", () => {
+      const width = window.innerWidth;
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
+      try {
+        renderWithWindows();
+
+        expect(stackedDays("Puntos de suministro del acuerdo", "Casa Norte")).toHaveTextContent(
+          /^410 de 426del 09\/01\/2025 al 31\/10\/2026$/,
+        );
+        expect(stackedDays("Puntos de suministro del acuerdo", "Casa Sur")).toHaveTextContent(/^0 de 0$/);
+        expect(stackedDays("Puntos de suministro del acuerdo", "Casa Este")).toBeUndefined();
+        expect(stackedDays("Puntos que salen del reparto", "Escuela")).toHaveTextContent(
+          /^380 de 400del 01\/04\/2025 al 31\/10\/2026$/,
+        );
+      } finally {
+        Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+      }
+    });
+
+    test("UI-AGR-040: the explanatory line gives the agreement's applied window, from the backend's from and to", async () => {
+      const fixture = observationFixture();
+      renderPage({
+        observation: query.success<typeof getSharingAgreementObservation>({
+          ...fixture,
+          summary: {
+            ...fixture.summary,
+            unallocatedShare: { days: 422, unallocated: 0.03, registeredShareWithoutData: 0, from: "2025-03-04", to: "2026-10-31" },
+          },
+        }),
+      });
+
+      await userEvent.setup().click(screen.getByRole("button", { name: /^Ver \d+ datos? más$/ }));
+
+      expect(screen.getByText(/\(422 días medibles del 04\/03\/2025 al 31\/10\/2026\)\.$/)).toBeInTheDocument();
+    });
+  });
+
+  describe("the period the measurable days cover", () => {
+    test("UI-AGR-042: on a phone, a stacked row labels its figure 'Días medibles de su periodo', and no row says 'Días medibles' alone", () => {
+      const width = window.innerWidth;
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
+      try {
+        renderPage();
+
+        expect(within(suppliesSection()).getAllByText("Días medibles de su periodo").length).toBeGreaterThan(0);
+        expect(within(leavingSection()).getAllByText("Días medibles de su periodo").length).toBeGreaterThan(0);
+        expect(screen.queryByText("Días medibles")).not.toBeInTheDocument();
+      } finally {
+        Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+      }
+    });
+
+    test("UI-AGR-040: the explanatory line says the dates of the agreement's application period", async () => {
+      renderPage();
+
+      await userEvent.setup().click(screen.getByRole("button", { name: /^Ver \d+ datos? más$/ }));
+
+      expect(screen.getByText(/días medibles del 01\/03\/2025 al 26\/04\/2026\)\.$/)).toBeInTheDocument();
+    });
+  });
+  describe("supplies that drop to 0 %", () => {
+    /**
+     * Casa Sur flagged by the backend as leaving the distribution: 0 % here,
+     * a little observed, seen applied on 04/03/2025. `leavingRows` replaces
+     * the absent supplies when given.
+     */
+    function renderWithSurLeaving(leavingRows?: SharingAgreementObservationResponse["leavingRows"]) {
+      const fixture = observationFixture();
+      renderPage({
+        observation: query.success<typeof getSharingAgreementObservation>({
+          ...fixture,
+          coefficients: fixture.coefficients.map((row) =>
+            row.supply.id === SUR.id
+              ? {
+                  ...row,
+                  coefficient: 0,
+                  leavesDistribution: true,
+                  observedDate: { from: "2025-03-04", to: "2025-03-04" },
+                  observedBeta: 0.0002,
+                }
+              : row,
+          ),
+          leavingRows: leavingRows ?? fixture.leavingRows,
+        }),
+      });
+    }
+
+    test("UI-AGR-030: 'Salen del reparto' counts and lists both kinds, each with its reason", () => {
+      renderWithSurLeaving();
+      const section = leavingSection();
+
+      expect(within(section).getByRole("heading", { name: "Salen del reparto (4)" })).toBeInTheDocument();
+      expect(within(section).getAllByRole("columnheader").map((header) => header.textContent)).toContain("Motivo");
+      expect(supplyNames(section)).toEqual(["Escuela", "Bar", "Kiosco", "Casa Sur"]);
+      expect(within(section).getByRole("row", { name: /Escuela/ })).toHaveTextContent(/^Escuela\S+No está en este acuerdo/);
+    });
+
+    test("UI-AGR-030: a 'Pasa a 0 %' row shows its β registrada, β observada, observed date and status", () => {
+      renderWithSurLeaving();
+
+      expect(within(leavingSection()).getByRole("row", { name: /Casa Sur/ })).toHaveTextContent(
+        "Pasa a 0 %—0,0000 %0,0200 %120 de 20004/03/2025ObservadaAplicado · otra fecha",
+      );
+    });
+
+    test("UI-AGR-030: the 0 % row stays in 'Por punto de suministro', marked 'Sale del reparto'; the others are not", () => {
+      renderWithSurLeaving();
+
+      expect(supplyNames(suppliesSection())).toContain("Casa Sur");
+      expect(within(supplyRow("Casa Sur")).getByText("Sale del reparto")).toBeVisible();
+      expect(within(suppliesSection()).getAllByText("Sale del reparto")).toHaveLength(1);
+    });
+
+    test("UI-AGR-030: with absent supplies only, no row reads 'Pasa a 0 %' and none is marked", () => {
+      renderPage();
+
+      expect(within(leavingSection()).getByRole("heading", { name: "Salen del reparto (3)" })).toBeInTheDocument();
+      expect(screen.queryByText("Pasa a 0 %")).not.toBeInTheDocument();
+      expect(screen.queryByText("Sale del reparto")).not.toBeInTheDocument();
+      expect(within(leavingSection()).getAllByText("No está en este acuerdo")).toHaveLength(3);
+    });
+
+    test("UI-AGR-030: with only a supply dropping to 0 %, the section lists it alone", () => {
+      renderWithSurLeaving([]);
+      const section = leavingSection();
+
+      expect(within(section).getByRole("heading", { name: "Salen del reparto (1)" })).toBeInTheDocument();
+      expect(supplyNames(section)).toEqual(["Casa Sur"]);
+      expect(within(section).queryByText("No está en este acuerdo")).not.toBeInTheDocument();
+    });
+
+    test("UI-AGR-030: in the table, a β never wraps inside its figure, and an absent supply's registered end sits under its leaving", () => {
+      renderWithSurLeaving();
+      const section = leavingSection();
+      const escuela = within(section).getByRole("row", { name: /Escuela/ });
+      const sur = within(section).getByRole("row", { name: /Casa Sur/ });
+
+      // The figure, or the span around it inside its cell, is kept on one line.
+      const keptWhole = (figure: HTMLElement) => {
+        for (let node: HTMLElement | null = figure; node && node.tagName !== "TD"; node = node.parentElement) {
+          if (declaredStyle(node)["white-space"] === "nowrap") return true;
+        }
+        return false;
+      };
+      for (const figure of [within(escuela).getByText("4,0000 %"), within(sur).getByText("0,0000 %"), within(sur).getByText("0,0200 %")]) {
+        expect(keptWhole(figure), figure.textContent ?? "").toBe(true);
+      }
+      expect(within(escuela).getByText("Fin registrado: 01/03/2025")).toBeInTheDocument();
+      expect(within(section).queryByRole("columnheader", { name: "Fin registrado" })).not.toBeInTheDocument();
+      expect(within(sur).queryByText(/^Fin registrado/)).not.toBeInTheDocument();
+    });
+
+    test("UI-AGR-030: on a phone, the 0 % row's stacked fields give its reason, β and observed leaving", () => {
+      const width = window.innerWidth;
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
+      try {
+        renderWithSurLeaving();
+        const item = within(screen.getByRole("list", { name: "Puntos que salen del reparto" }))
+          .getAllByRole("listitem")
+          .find((candidate) => candidate.textContent?.startsWith("Casa Sur"))!;
+        const field = (label: string) => within(item).getByText(label).nextElementSibling;
+
+        expect(field("Motivo")).toHaveTextContent(/^Pasa a 0 %$/);
+        expect(field("β registrada")).toHaveTextContent(/^0,0000 %$/);
+        expect(field("β observada")).toHaveTextContent(/^0,0200 %$/);
+        expect(field("Salida observada")).toHaveTextContent(/^04\/03\/2025Observada$/);
+        expect(within(item).queryByText("Acuerdo anterior")).not.toBeInTheDocument();
+      } finally {
+        Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+      }
+    });
   });
 });

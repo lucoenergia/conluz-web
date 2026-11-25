@@ -7,7 +7,7 @@
  */
 
 /**
- * How its observed application compares with what is stored
+ * How its observed application compares with what is stored. NOT_OBSERVABLE for a coefficient of the plant's own supply, whose share cannot be observed from Datadis
  */
 export type CoefficientObservationResponseStatus = typeof CoefficientObservationResponseStatus[keyof typeof CoefficientObservationResponseStatus];
 
@@ -19,4 +19,5 @@ export const CoefficientObservationResponseStatus = {
   NOT_DISTINGUISHABLE: 'NOT_DISTINGUISHABLE',
   NOT_OBSERVED: 'NOT_OBSERVED',
   NO_DATA: 'NO_DATA',
+  NOT_OBSERVABLE: 'NOT_OBSERVABLE',
 } as const;

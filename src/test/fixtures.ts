@@ -709,6 +709,7 @@ export function buildObservationStatusCounts(
       notDistinguishable: 0,
       notObserved: 0,
       noData: 0,
+      notObservable: 0,
     } satisfies ObservationStatusCountsResponse),
     ...overrides,
   };
@@ -770,6 +771,7 @@ export function buildObservationSummary(
       mostFrequentObservedDate: null,
       coefficientStatusCounts: buildObservationStatusCounts(),
       leavingStatusCounts: buildObservationStatusCounts(),
+      leavesDistributionStatusCounts: buildObservationStatusCounts(),
       anomalies: [],
       anomalyCounts: buildSharingAnomalyCounts(),
       unallocatedShare: null,
@@ -788,12 +790,16 @@ export function buildCoefficientObservation(
       supply: buildSupplyReference(),
       // Not zero, and not a round share, so an unintended default stands out.
       coefficient: 0.090001,
+      leavesDistribution: false,
       storedValidFrom: null,
       storedValidTo: null,
       observedDate: null,
       proposedDate: null,
       observedBeta: null,
       observedValidDays: 0,
+      windowDays: 0,
+      windowFrom: null,
+      windowTo: null,
       status: CoefficientObservationResponseStatus.NOT_OBSERVED,
     } satisfies CoefficientObservationResponse),
     ...overrides,
@@ -816,6 +822,9 @@ export function buildLeavingObservation(overrides: Partial<LeavingObservationRes
       proposedDate: null,
       observedBeta: null,
       observedValidDays: 0,
+      windowDays: 0,
+      windowFrom: null,
+      windowTo: null,
       status: LeavingObservationResponseStatus.NOT_OBSERVED,
     } satisfies LeavingObservationResponse),
     ...overrides,
@@ -834,6 +843,8 @@ export function buildSharingAnomaly(overrides: Partial<SharingAnomalyResponse> =
       // Not zero, and not a round share, so an unintended default stands out.
       observedBeta: 0.060001,
       observedValidDays: 9007,
+      // Attributed to no agreement unless a spec says which.
+      expectedBeta: null,
     } satisfies SharingAnomalyResponse),
     ...overrides,
   };

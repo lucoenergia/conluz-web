@@ -30,8 +30,8 @@
             ]
           },
           "newPassword" : {
-            "description" : "The account's first password. Between 15 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed.",
-            "minLength" : 15,
+            "description" : "The account's first password. Between 10 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed. A password that is common or has appeared in data breaches, compared case-insensitively against a list bundled with the application, is refused.",
+            "minLength" : 10,
             "type" : "string"
           },
           "token" : {
@@ -92,6 +92,40 @@
         ],
         "type" : "object"
       },
+      "AgreementStatusChangeResponse" : {
+        "properties" : {
+          "sharingAgreement" : {
+            "$ref" : "#/components/schemas/SharingAgreementReferenceResponse",
+            "description" : "The agreement, with its status after the request"
+          },
+          "statusAfter" : {
+            "description" : "Status after the request",
+            "enum" : [
+              "DRAFT",
+              "PUBLISHED",
+              "SUPERSEDED"
+            ],
+            "example" : "SUPERSEDED",
+            "type" : "string"
+          },
+          "statusBefore" : {
+            "description" : "Status before the request",
+            "enum" : [
+              "DRAFT",
+              "PUBLISHED",
+              "SUPERSEDED"
+            ],
+            "example" : "PUBLISHED",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "sharingAgreement",
+          "statusAfter",
+          "statusBefore"
+        ],
+        "type" : "object"
+      },
       "ChangePasswordBody" : {
         "properties" : {
           "currentPassword" : {
@@ -99,8 +133,8 @@
             "type" : "string"
           },
           "newPassword" : {
-            "description" : "The new password. Between 15 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed. It must differ from the current password; the comparison is exact, so a value that differs only by case or by leading or trailing spaces is a different password.",
-            "minLength" : 15,
+            "description" : "The new password. Between 10 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed. A password that is common or has appeared in data breaches, compared case-insensitively against a list bundled with the application, is refused. It must differ from the current password; the comparison is exact, so a value that differs only by case or by leading or trailing spaces is a different password.",
+            "minLength" : 10,
             "type" : "string"
           }
         },
@@ -184,6 +218,71 @@
         ],
         "type" : "object"
       },
+      "CoefficientDateBody" : {
+        "properties" : {
+          "coefficientId" : {
+            "description" : "A coefficient of this agreement, pending (activated) or active (corrected).",
+            "example" : "6f1f3c2e-1234-5678-abcd-000000000001",
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "validFrom" : {
+            "description" : "First day the coefficient applies; stored as validFrom. Future dates are rejected.",
+            "example" : "2026-03-01",
+            "format" : "date",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "coefficientId",
+          "validFrom"
+        ],
+        "type" : "object"
+      },
+      "CoefficientDatesEffectsResponse" : {
+        "properties" : {
+          "agreementStatuses" : {
+            "description" : "Every agreement owning a changed coefficient, with its status before and after; both are equal when the status does not change.",
+            "items" : {
+              "$ref" : "#/components/schemas/AgreementStatusChangeResponse"
+            },
+            "type" : "array"
+          },
+          "coefficients" : {
+            "description" : "The requested coefficients whose period changes. A coefficient whose validFrom is already the requested one is not listed.",
+            "items" : {
+              "$ref" : "#/components/schemas/CoefficientPeriodChangeResponse"
+            },
+            "type" : "array"
+          },
+          "communityStart" : {
+            "$ref" : "#/components/schemas/CommunityStartChangeResponse",
+            "description" : "The earliest validFrom of the plant's community, before and after."
+          },
+          "leavingClosures" : {
+            "description" : "The coefficients of the supplies absent from the agreement whose end the request sets: listed in the request (REQUEST), or omitted on the agreement's first activation (DEFAULT).",
+            "items" : {
+              "$ref" : "#/components/schemas/LeavingClosureChangeResponse"
+            },
+            "type" : "array"
+          },
+          "neighbours" : {
+            "description" : "Every other coefficient, in any agreement, whose end the placements move: the previous coefficient of the same supply, shortened to the new start, or the former neighbour of a corrected coefficient, joined to its end.",
+            "items" : {
+              "$ref" : "#/components/schemas/NeighbourChangeResponse"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [
+          "agreementStatuses",
+          "coefficients",
+          "communityStart",
+          "leavingClosures",
+          "neighbours"
+        ],
+        "type" : "object"
+      },
       "CoefficientObservationResponse" : {
         "properties" : {
           "coefficient" : {
@@ -196,6 +295,11 @@
             "example" : "b3d1a2f0-1234-5678-abcd-000000000001",
             "format" : "uuid",
             "type" : "string"
+          },
+          "leavesDistribution" : {
+            "description" : "Whether the coefficient takes its supply out of the distribution: its value is 0 and, in the PUBLISHED or SUPERSEDED agreement immediately before its own in registered order, the supply holds a coefficient greater than 0. The row stays here, with its own status and dates, and is never listed among the leaving rows, which are the supplies absent from the agreement.",
+            "example" : false,
+            "type" : "boolean"
           },
           "observedBeta" : {
             "description" : "Median of the supply's daily observed β (E / G) over its valid days from the row's observed application date (the latest day of a range or of an open date) to the end of the agreement's applied window, or over the whole applied window when the row has no observed date. The applied window runs from the agreement's most frequent observed application date to the day before the next agreement's, or to the end of the analysed range. On a 0-1 scale, rounded half-up to 6 decimals; for an even number of days, the mean of the two middle values. Null when the agreement has no applied window, the row's start falls after its end, or the supply has no valid day in between.",
@@ -228,14 +332,15 @@
             ]
           },
           "status" : {
-            "description" : "How its observed application compares with what is stored",
+            "description" : "How its observed application compares with what is stored. NOT_OBSERVABLE for a coefficient of the plant's own supply, whose share cannot be observed from Datadis",
             "enum" : [
               "APPLIED_SAME_DATE",
               "APPLIED_DIFFERENT_DATE",
               "PENDING_APPLICATION",
               "NOT_DISTINGUISHABLE",
               "NOT_OBSERVED",
-              "NO_DATA"
+              "NO_DATA",
+              "NOT_OBSERVABLE"
             ],
             "example" : "APPLIED_SAME_DATE",
             "type" : "string"
@@ -261,11 +366,36 @@
           "supply" : {
             "$ref" : "#/components/schemas/SupplyReferenceResponse",
             "description" : "Supply the coefficient belongs to"
+          },
+          "windowDays" : {
+            "description" : "Number of plant-valid days in the row's window: from its observed application date (the latest day of a range or of an open date), or from the start of the agreement's applied window when it has none, to the end of the agreement's applied window. The days observedValidDays is counted over, so never less than it. 0 when the agreement has no applied window or the row's start falls after its end.",
+            "example" : 335,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "windowFrom" : {
+            "description" : "First local day of the row's window: its observed application date (the latest day of a range or of an open date), or the start of the agreement's applied window when it has none. Null when the row has no window (windowDays 0): the agreement has no applied window or the row's start falls after its end.",
+            "example" : "2024-02-01",
+            "format" : "date",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "windowTo" : {
+            "description" : "Last local day of the row's window: the end of the agreement's applied window. Null when the row has no window (windowDays 0).",
+            "example" : "2025-11-30",
+            "format" : "date",
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         },
         "required" : [
           "coefficient",
           "coefficientId",
+          "leavesDistribution",
           "observedBeta",
           "observedDate",
           "observedValidDays",
@@ -273,7 +403,70 @@
           "status",
           "storedValidFrom",
           "storedValidTo",
-          "supply"
+          "supply",
+          "windowDays",
+          "windowFrom",
+          "windowTo"
+        ],
+        "type" : "object"
+      },
+      "CoefficientPeriodChangeResponse" : {
+        "properties" : {
+          "coefficient" : {
+            "$ref" : "#/components/schemas/PartitionCoefficientReferenceResponse",
+            "description" : "The requested coefficient"
+          },
+          "leavesDistribution" : {
+            "description" : "Whether the coefficient takes its supply out of the distribution: its value is 0 and, in the PUBLISHED or SUPERSEDED agreement immediately before its own in registered order, the supply holds a coefficient greater than 0. Reported for the coefficients this request places; a supply absent from the previous agreement had already left it there.",
+            "example" : false,
+            "type" : "boolean"
+          },
+          "supply" : {
+            "$ref" : "#/components/schemas/SupplyReferenceResponse",
+            "description" : "The coefficient's supply"
+          },
+          "validFromAfter" : {
+            "description" : "validFrom after the request",
+            "example" : "2025-02-28T23:00:00Z",
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "validFromBefore" : {
+            "description" : "validFrom before the request. Null when the coefficient was pending.",
+            "example" : "2025-02-28T23:00:00Z",
+            "format" : "date-time",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "validToAfter" : {
+            "description" : "validTo after the request. Null when open.",
+            "example" : "2025-12-31T23:00:00Z",
+            "format" : "date-time",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "validToBefore" : {
+            "description" : "validTo before the request. Null when open or pending.",
+            "example" : "2025-12-31T23:00:00Z",
+            "format" : "date-time",
+            "type" : [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required" : [
+          "coefficient",
+          "leavesDistribution",
+          "supply",
+          "validFromAfter",
+          "validFromBefore",
+          "validToAfter",
+          "validToBefore"
         ],
         "type" : "object"
       },
@@ -925,6 +1118,33 @@
         ],
         "type" : "object"
       },
+      "CommunityStartChangeResponse" : {
+        "properties" : {
+          "after" : {
+            "description" : "The earliest validFrom of the community's coefficients after the request. Null when none has started.",
+            "example" : "2024-12-31T23:00:00Z",
+            "format" : "date-time",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "before" : {
+            "description" : "The earliest validFrom of the community's coefficients before the request. Null when none has started.",
+            "example" : "2024-12-31T23:00:00Z",
+            "format" : "date-time",
+            "type" : [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required" : [
+          "after",
+          "before"
+        ],
+        "type" : "object"
+      },
       "ConfigureDatadisBody" : {
         "properties" : {
           "baseUrl" : {
@@ -1115,8 +1335,8 @@
             "type" : "string"
           },
           "password" : {
-            "description" : "The default admin's password. Between 15 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed. The default admin chooses it, so they are not flagged as having to change it.",
-            "minLength" : 15,
+            "description" : "The default admin's password. Between 10 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed. A password that is common or has appeared in data breaches, compared case-insensitively against a list bundled with the application, is refused. The default admin chooses it, so they are not flagged as having to change it.",
+            "minLength" : 10,
             "type" : "string"
           },
           "personalId" : {
@@ -1441,7 +1661,7 @@
       "EstimatedPriceResponse" : {
         "properties" : {
           "eurPerKWh" : {
-            "description" : "Estimated price of the energy term, in euros per kWh, before taxes. The power term, access tolls, charges, electricity tax and VAT are not included. Returned exactly as configured, without rounding.",
+            "description" : "Estimated price of the energy term, in euros per kWh, before taxes. The savings priced with it add the electricity tax and VAT in force on the day the energy was consumed on top of it; the power term, access tolls and charges are not included. Returned exactly as configured, without rounding.",
             "example" : 0.15,
             "type" : "number"
           }
@@ -1712,6 +1932,8 @@
               "SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT",
               "SHARING_AGREEMENT_CLOSURE_DATE_NOT_AFTER_ACTIVATION",
               "SHARING_AGREEMENT_COEFFICIENT_PERIOD_OVERLAP",
+              "SHARING_AGREEMENT_LEAVING_SUPPLY_IN_AGREEMENT",
+              "SHARING_AGREEMENT_NO_COEFFICIENT_TO_CLOSE",
               "SHARING_AGREEMENT_NOT_OBSERVABLE",
               "DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID",
               "DISTRIBUTOR_FILE_PLANT_REGULATORY_CODE_MISSING",
@@ -1953,6 +2175,8 @@
               "SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT",
               "SHARING_AGREEMENT_CLOSURE_DATE_NOT_AFTER_ACTIVATION",
               "SHARING_AGREEMENT_COEFFICIENT_PERIOD_OVERLAP",
+              "SHARING_AGREEMENT_LEAVING_SUPPLY_IN_AGREEMENT",
+              "SHARING_AGREEMENT_NO_COEFFICIENT_TO_CLOSE",
               "SHARING_AGREEMENT_NOT_OBSERVABLE",
               "DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID",
               "DISTRIBUTOR_FILE_PLANT_REGULATORY_CODE_MISSING",
@@ -2188,6 +2412,76 @@
         ],
         "type" : "object"
       },
+      "LeavingClosureBody" : {
+        "properties" : {
+          "closedOn" : {
+            "description" : "First day the supply's coefficient before this agreement no longer applies; stored as its validTo. Future dates are rejected.",
+            "example" : "2026-03-01",
+            "format" : "date",
+            "type" : "string"
+          },
+          "supplyId" : {
+            "description" : "A supply of the plant that has no coefficient in this agreement.",
+            "example" : "ebbe60d1-f9db-455c-8c2d-c34ae7a1c23c",
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "closedOn",
+          "supplyId"
+        ],
+        "type" : "object"
+      },
+      "LeavingClosureChangeResponse" : {
+        "properties" : {
+          "coefficient" : {
+            "$ref" : "#/components/schemas/PartitionCoefficientReferenceResponse",
+            "description" : "The supply's coefficient before the agreement, whose end is set"
+          },
+          "sharingAgreement" : {
+            "$ref" : "#/components/schemas/SharingAgreementReferenceResponse",
+            "description" : "The agreement owning that coefficient, with its status after the request"
+          },
+          "source" : {
+            "description" : "REQUEST when the request listed the supply; DEFAULT when the request is the agreement's first activation and omitted it, so it is closed at the request's earliest date.",
+            "enum" : [
+              "REQUEST",
+              "DEFAULT"
+            ],
+            "example" : "REQUEST",
+            "type" : "string"
+          },
+          "supply" : {
+            "$ref" : "#/components/schemas/SupplyReferenceResponse",
+            "description" : "The supply absent from the agreement"
+          },
+          "validToAfter" : {
+            "description" : "validTo after the request",
+            "example" : "2025-02-28T23:00:00Z",
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "validToBefore" : {
+            "description" : "validTo before the request. Null when open.",
+            "example" : "2025-12-31T23:00:00Z",
+            "format" : "date-time",
+            "type" : [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required" : [
+          "coefficient",
+          "sharingAgreement",
+          "source",
+          "supply",
+          "validToAfter",
+          "validToBefore"
+        ],
+        "type" : "object"
+      },
       "LeavingObservationResponse" : {
         "properties" : {
           "observedBeta" : {
@@ -2243,7 +2537,8 @@
               "PENDING_APPLICATION",
               "NOT_DISTINGUISHABLE",
               "NOT_OBSERVED",
-              "NO_DATA"
+              "NO_DATA",
+              "NOT_OBSERVABLE"
             ],
             "example" : "APPLIED_DIFFERENT_DATE",
             "type" : "string"
@@ -2260,6 +2555,30 @@
           "supply" : {
             "$ref" : "#/components/schemas/SupplyReferenceResponse",
             "description" : "Supply leaving the distribution"
+          },
+          "windowDays" : {
+            "description" : "Number of plant-valid days in the row's window: from its observed leaving date (the latest day of a range or of an open date), or from the start of the agreement's applied window when it has none, to the end of the agreement's applied window. The days observedValidDays is counted over, so never less than it. 0 when the agreement has no applied window or the row's start falls after its end.",
+            "example" : 335,
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "windowFrom" : {
+            "description" : "First local day of the row's window: its observed leaving date (the latest day of a range or of an open date), or the start of the agreement's applied window when it has none. Null when the row has no window (windowDays 0): the agreement has no applied window or the row's start falls after its end.",
+            "example" : "2024-02-01",
+            "format" : "date",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "windowTo" : {
+            "description" : "Last local day of the row's window: the end of the agreement's applied window. Null when the row has no window (windowDays 0).",
+            "example" : "2025-11-30",
+            "format" : "date",
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         },
         "required" : [
@@ -2272,7 +2591,10 @@
           "proposedDate",
           "status",
           "storedValidTo",
-          "supply"
+          "supply",
+          "windowDays",
+          "windowFrom",
+          "windowTo"
         ],
         "type" : "object"
       },
@@ -3040,7 +3362,7 @@
             ]
           },
           "savedEur" : {
-            "description" : "Estimated value of the self-consumed energy of all the member's supplies in this community since startDate, in euros. It prices the energy term before taxes only; VAT is applied only where the resolved tariff carries a rate. Null when the community has never activated a partition coefficient, so there is no period to price; zero when the period exists but the member's supplies consumed nothing from it.",
+            "description" : "Estimated value of the self-consumed energy of all the member's supplies in this community since startDate, in euros. It prices the energy term with electricity tax and VAT, each at the rate in force on the day the energy was consumed; the power term, access tolls and charges are excluded. Null when the community has never activated a partition coefficient, so there is no period to price; zero when the period exists but the member's supplies consumed nothing from it.",
             "example" : 372.75,
             "type" : [
               "number",
@@ -3195,6 +3517,48 @@
         ],
         "type" : "object"
       },
+      "NeighbourChangeResponse" : {
+        "properties" : {
+          "coefficient" : {
+            "$ref" : "#/components/schemas/PartitionCoefficientReferenceResponse",
+            "description" : "The coefficient whose end moves"
+          },
+          "sharingAgreement" : {
+            "$ref" : "#/components/schemas/SharingAgreementReferenceResponse",
+            "description" : "The agreement owning the coefficient, with its status after the request"
+          },
+          "supply" : {
+            "$ref" : "#/components/schemas/SupplyReferenceResponse",
+            "description" : "The coefficient's supply"
+          },
+          "validToAfter" : {
+            "description" : "validTo after the request. Null when open.",
+            "example" : "2025-02-28T23:00:00Z",
+            "format" : "date-time",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "validToBefore" : {
+            "description" : "validTo before the request. Null when open.",
+            "example" : "2025-12-31T23:00:00Z",
+            "format" : "date-time",
+            "type" : [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required" : [
+          "coefficient",
+          "sharingAgreement",
+          "supply",
+          "validToAfter",
+          "validToBefore"
+        ],
+        "type" : "object"
+      },
       "ObservationStatusCountsResponse" : {
         "properties" : {
           "appliedDifferentDate" : {
@@ -3221,6 +3585,12 @@
             "format" : "int32",
             "type" : "integer"
           },
+          "notObservable" : {
+            "description" : "Rows of the plant's own supply, whose share cannot be observed from Datadis",
+            "example" : 1,
+            "format" : "int32",
+            "type" : "integer"
+          },
           "notObserved" : {
             "description" : "Rows not observed, of an agreement whose distributor file was not sent",
             "example" : 0,
@@ -3239,6 +3609,7 @@
           "appliedSameDate",
           "noData",
           "notDistinguishable",
+          "notObservable",
           "notObserved",
           "pendingApplication"
         ],
@@ -3408,6 +3779,20 @@
         ],
         "type" : "object"
       },
+      "PartitionCoefficientReferenceResponse" : {
+        "properties" : {
+          "id" : {
+            "description" : "Internal unique identifier of the coefficient period",
+            "example" : "6f1f3c2e-1234-5678-abcd-000000000001",
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "id"
+        ],
+        "type" : "object"
+      },
       "PartitionCoefficientResponse" : {
         "properties" : {
           "capabilities" : {
@@ -3483,8 +3868,8 @@
       "PasswordResetBody" : {
         "properties" : {
           "newPassword" : {
-            "description" : "The new password. Between 15 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed. It must differ from the current password.",
-            "minLength" : 15,
+            "description" : "The new password. Between 10 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no composition rules, and the value is never trimmed or transformed. A password that is common or has appeared in data breaches, compared case-insensitively against a list bundled with the application, is refused. It must differ from the current password.",
+            "minLength" : 10,
             "type" : "string"
           },
           "token" : {
@@ -4439,6 +4824,8 @@
               "SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT",
               "SHARING_AGREEMENT_CLOSURE_DATE_NOT_AFTER_ACTIVATION",
               "SHARING_AGREEMENT_COEFFICIENT_PERIOD_OVERLAP",
+              "SHARING_AGREEMENT_LEAVING_SUPPLY_IN_AGREEMENT",
+              "SHARING_AGREEMENT_NO_COEFFICIENT_TO_CLOSE",
               "SHARING_AGREEMENT_NOT_OBSERVABLE",
               "DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID",
               "DISTRIBUTOR_FILE_PLANT_REGULATORY_CODE_MISSING",
@@ -4626,6 +5013,8 @@
               "SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT",
               "SHARING_AGREEMENT_CLOSURE_DATE_NOT_AFTER_ACTIVATION",
               "SHARING_AGREEMENT_COEFFICIENT_PERIOD_OVERLAP",
+              "SHARING_AGREEMENT_LEAVING_SUPPLY_IN_AGREEMENT",
+              "SHARING_AGREEMENT_NO_COEFFICIENT_TO_CLOSE",
               "SHARING_AGREEMENT_NOT_OBSERVABLE",
               "DISTRIBUTOR_FILE_FILENAME_SHAPE_INVALID",
               "DISTRIBUTOR_FILE_PLANT_REGULATORY_CODE_MISSING",
@@ -4753,6 +5142,29 @@
           "remaining",
           "results",
           "sent"
+        ],
+        "type" : "object"
+      },
+      "SetCoefficientDatesBody" : {
+        "properties" : {
+          "coefficients" : {
+            "description" : "The coefficients of this agreement to activate or correct, each with its own date. May be empty when leavingClosures is not. Each coefficient at most once.",
+            "items" : {
+              "$ref" : "#/components/schemas/CoefficientDateBody"
+            },
+            "type" : "array"
+          },
+          "leavingClosures" : {
+            "description" : "The supplies of the plant absent from this agreement to close, each with its own date. May be empty when coefficients is not. Each supply at most once.",
+            "items" : {
+              "$ref" : "#/components/schemas/LeavingClosureBody"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [
+          "coefficients",
+          "leavingClosures"
         ],
         "type" : "object"
       },
@@ -4904,6 +5316,10 @@
               "null"
             ]
           },
+          "leavesDistributionStatusCounts" : {
+            "$ref" : "#/components/schemas/ObservationStatusCountsResponse",
+            "description" : "Number of its coefficient rows that leave the distribution by dropping to 0 (leavesDistribution), in each status. They are also counted in coefficientStatusCounts, and never in leavingStatusCounts."
+          },
           "leavingStatusCounts" : {
             "$ref" : "#/components/schemas/ObservationStatusCountsResponse",
             "description" : "Number of its leaving rows in each status"
@@ -4948,6 +5364,7 @@
           "coefficientStatusCounts",
           "distributorFileSentOn",
           "earliestObservedDate",
+          "leavesDistributionStatusCounts",
           "leavingStatusCounts",
           "mostFrequentObservedDate",
           "recommendations",
@@ -5234,6 +5651,14 @@
               "null"
             ]
           },
+          "expectedBeta" : {
+            "description" : "The supply's registered coefficient in the agreement the anomaly is attributed to, or 0 when the supply holds no row in it; for APPLIED_BEFORE_SENT, its value in the agreement sent late. The value the supply should have received, to read next to observedBeta. On a 0-1 scale, rounded half-up to 6 decimals. Null when the anomaly is attributed to no agreement.",
+            "example" : 0.0315,
+            "type" : [
+              "number",
+              "null"
+            ]
+          },
           "id" : {
             "description" : "Identifier derived from the supply, the type and the first anomalous day: the same anomaly keeps it from one read to the next",
             "example" : "5f0c2d4e-8a1b-3c9d-9e7f-1a2b3c4d5e6f",
@@ -5274,6 +5699,7 @@
         },
         "required" : [
           "end",
+          "expectedBeta",
           "id",
           "observedBeta",
           "observedValidDays",
@@ -6321,11 +6747,23 @@
             "format" : "int32",
             "type" : "integer"
           },
+          "from" : {
+            "description" : "First local day of the agreement's applied window, which the figures are computed over: its most frequent observed application date (the latest day of a range or of an open date)",
+            "example" : "2024-02-01",
+            "format" : "date",
+            "type" : "string"
+          },
           "registeredShareWithoutData" : {
-            "description" : "The share the agreement registers for the supplies without data on each day, on a 0-1 scale, weighted by the plant's daily production",
-            "example" : 0.0533,
+            "description" : "The share the agreement registers for the supplies without data and for the plant's own supply on each day, on a 0-1 scale, weighted by the plant's daily production",
+            "example" : 0.0565,
             "format" : "double",
             "type" : "number"
+          },
+          "to" : {
+            "description" : "Last local day of the agreement's applied window: the day before the next agreement's most frequent observed application date, or the end of the analysed range",
+            "example" : "2025-11-30",
+            "format" : "date",
+            "type" : "string"
           },
           "unallocated" : {
             "description" : "1 − Σβ: the production no supply with data received, on a 0-1 scale, weighted by the plant's daily production",
@@ -6336,7 +6774,9 @@
         },
         "required" : [
           "days",
+          "from",
           "registeredShareWithoutData",
+          "to",
           "unallocated"
         ],
         "type" : "object"
@@ -11618,7 +12058,7 @@
     },
     "/api/v1/communities/{communityId}/memberships/{userId}/consumption/daily" : {
       "get" : {
-        "description" : "For each day of the requested period, the energy and the estimated savings of\nthe supplies the member owns in this community that have data that day, added\nup. Each energy figure sums the unrounded per-supply daily totals and is\nrounded once, to 3 decimals, on the result; the savings are likewise summed\nunrounded and rounded once, to cents. A figure can therefore differ from adding\nup the rounded figures of the per-supply daily series. Supplies in the member's\nother communities are not counted.\n\n**Source and freshness:**\nEach supply's day is summed from its hourly records when it is read, exactly as\nthe per-supply daily series sums it, so a day reflects the hourly records stored\nat the time of the request.\n\n**Every day is emitted:**\nA bucket is returned for every local calendar day of the community's time zone\nthat overlaps the period, in chronological order, whether or not any supply\nhas data that day, so the series has a regular time axis. A day runs\nfrom its local midnight to the next one, so the days on which daylight saving\ntime starts and ends cover 23 and 25 hours. The first and the last day are cut\nto the period: a period starting at 12:00 counts only that day's hours from\n12:00, in energy and in savings, and a period clipped to the current hour ends\nwith today's hours up to then. `date` is the local day and `time` always\n`00:00`, also on a cut first day.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Supplies with data:**\nDatadis publishes a month's self-consumption around the 10th of the following\nmonth; until then the supply's records carry consumption but no\nself-consumption. A supply has data on a day only when its records carrying\nself-consumption cover at least 90 % of the day's hours inside the period. A\nsupply below that does not contribute to the day at all, so an unpublished day is\nnever summed as zero self-consumption.\n\n**Completeness:**\n`supplyCount` is the number of supplies the member **currently** owns in the\ncommunity, and `suppliesWithData` how many of them have data that day, as\ndefined above. A day with `suppliesWithData` below\n`supplyCount` is incomplete. The model records no date a supply joined its\ncommunity, so the count is the same for every day, and the days before a supply\nstarted reporting show as incomplete. The aggregated energy metrics measure\ntheir `suppliesWithData` over the whole period, so the two are not comparable.\n\n**Gaps and measured zeros:**\nThe energy figures add up only the supplies with data that day; a day on which\nno supply has data reports zero energy. `savingsEur` is an\n**estimate** of what the day's self-consumed energy was worth, pricing the\n**energy term before taxes** only, exactly as the per-supply series does. It is\n`null` when no supply has data that day (`suppliesWithData` is 0), and only\nthen: a day without data is a different statement from a day that saved\nnothing, which reports `0.00` -- as does a day whose published self-consumption\nis zero, a measured zero. This differs from the per-supply series,\nwhich reports `0.00` for every bucket it emits. `tariffSource` says where the\nprices came from -- `ESTIMATE` or `REAL_TARIFF` -- and a single estimated supply\nmakes the whole day an estimate; it is `null` exactly when `savingsEur` is.\n\nReadable by the member themself and by community admins of this community.\nPlatform admins are **not** granted access on that basis alone and are answered\n404, as is every other caller who may not read it, so the membership's existence\nis not disclosed. A membership without supplies is answered successfully, not\nwith 404: every day in range, with zero totals, null savings and a\n`supplyCount` of 0.\n",
+        "description" : "For each day of the requested period, the energy and the estimated savings of\nthe supplies the member owns in this community that have data that day, added\nup. Each energy figure sums the unrounded per-supply daily totals and is\nrounded once, to 3 decimals, on the result; the savings are likewise summed\nunrounded and rounded once, to cents. A figure can therefore differ from adding\nup the rounded figures of the per-supply daily series. Supplies in the member's\nother communities are not counted.\n\n**Source and freshness:**\nEach supply's day is summed from its hourly records when it is read, exactly as\nthe per-supply daily series sums it, so a day reflects the hourly records stored\nat the time of the request.\n\n**Every day is emitted:**\nA bucket is returned for every local calendar day of the community's time zone\nthat overlaps the period, in chronological order, whether or not any supply\nhas data that day, so the series has a regular time axis. A day runs\nfrom its local midnight to the next one, so the days on which daylight saving\ntime starts and ends cover 23 and 25 hours. The first and the last day are cut\nto the period: a period starting at 12:00 counts only that day's hours from\n12:00, in energy and in savings, and a period clipped to the current hour ends\nwith today's hours up to then. `date` is the local day and `time` always\n`00:00`, also on a cut first day.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Supplies with data:**\nDatadis publishes a month's self-consumption around the 10th of the following\nmonth; until then the supply's records carry consumption but no\nself-consumption. A supply has data on a day only when its records carrying\nself-consumption cover at least 90 % of the day's hours inside the period. A\nsupply below that does not contribute to the day at all, so an unpublished day is\nnever summed as zero self-consumption.\n\n**Completeness:**\n`supplyCount` is the number of supplies the member **currently** owns in the\ncommunity, and `suppliesWithData` how many of them have data that day, as\ndefined above. A day with `suppliesWithData` below\n`supplyCount` is incomplete. The model records no date a supply joined its\ncommunity, so the count is the same for every day, and the days before a supply\nstarted reporting show as incomplete. The aggregated energy metrics measure\ntheir `suppliesWithData` over the whole period, so the two are not comparable.\n\n**Gaps and measured zeros:**\nThe energy figures add up only the supplies with data that day; a day on which\nno supply has data reports zero energy. `savingsEur` is an\n**estimate** of what the day's self-consumed energy was worth, pricing the\n**energy term with electricity tax and VAT**, exactly as the per-supply series does. It is\n`null` when no supply has data that day (`suppliesWithData` is 0), and only\nthen: a day without data is a different statement from a day that saved\nnothing, which reports `0.00` -- as does a day whose published self-consumption\nis zero, a measured zero. This differs from the per-supply series,\nwhich reports `0.00` for every bucket it emits. `tariffSource` says where the\nprices came from -- `ESTIMATE` or `REAL_TARIFF` -- and a single estimated supply\nmakes the whole day an estimate; it is `null` exactly when `savingsEur` is.\n\nReadable by the member themself and by community admins of this community.\nPlatform admins are **not** granted access on that basis alone and are answered\n404, as is every other caller who may not read it, so the membership's existence\nis not disclosed. A membership without supplies is answered successfully, not\nwith 404: every day in range, with zero totals, null savings and a\n`supplyCount` of 0.\n",
         "operationId" : "getMembershipDailyConsumption",
         "parameters" : [
           {
@@ -11777,7 +12217,7 @@
     },
     "/api/v1/communities/{communityId}/memberships/{userId}/consumption/hourly" : {
       "get" : {
-        "description" : "For each hour of the requested period, the energy and the estimated savings of\nthe supplies the member owns in this community that have data that hour, added\nup. Each energy figure sums the unrounded per-supply hourly figures and is\nrounded once, to 3 decimals, on the result; the savings are likewise summed\nunrounded and rounded once, to cents. A figure can therefore differ from adding\nup the rounded figures of the per-supply hourly series. Supplies in the member's\nother communities are not counted.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Maximum length:** on this operation the limit of rule 5 is **31 calendar days**\ninstead of 24 calendar months: `endDate` must be no later than 31 calendar days after\n`startDate`, counted in the period's time zone on the bounds as requested\n(`ENERGY_METRICS_PERIOD_TOO_LONG`, with `params` `{\"amount\": \"31\", \"unit\": \"DAYS\"}`).\n\n**Every hour is emitted:**\nA bucket is returned for every whole hour that starts inside the period, in\nchronological order, whether or not any supply has data that hour, so the\nseries has a regular time axis: 24 for a whole local day of the community's time\nzone, 23 on the day the clocks go forward and 25 on the day they go back. A period\nstarting in the middle of an hour starts with the next whole hour; an `endDate` in\nthe middle of an hour leaves a partial last hour, counted only up to the end.\n\n**`startsAt`:** the instant the hour starts at, with the offset in force in the\ncommunity's time zone at that instant -- for example `2026-10-25T02:00:00+02:00`\nand then `2026-10-25T02:00:00+01:00` for the two hours the clocks repeat in\nEurope/Madrid. It is unique within the series and is the key to identify an hour by.\n`date` and `time` are the local date and time the hour starts at; on the day the\nclocks go back, two consecutive hours carry the same ones.\n\n**Supplies with data:**\nDatadis publishes a month's self-consumption around the 10th of the following\nmonth; until then the supply's records carry consumption but no\nself-consumption. A supply has data in an hour only when its record of that hour\ncarries self-consumption. A supply without it does not contribute to the hour at\nall, so an unpublished hour is never summed as zero self-consumption.\n\n**Completeness:**\n`supplyCount` is the number of supplies the member **currently** owns in the\ncommunity, and `suppliesWithData` how many of them have data that hour. An\nhour with `suppliesWithData` below `supplyCount` is incomplete. The model records\nno date a supply joined its community, so the count is the same for every hour,\nand the hours before a supply started reporting show as incomplete. The aggregated\nenergy metrics measure their `suppliesWithData` over the whole period, so the two\nare not comparable.\n\n**Gaps and measured zeros:**\nThe energy figures add up only the supplies with data that hour; an hour in which\nno supply has data reports zero energy. `savingsEur` is an\n**estimate** of what the hour's self-consumed energy was worth, pricing the\n**energy term before taxes** only, exactly as the per-supply series does. It is\n`null` when no supply has data that hour (`suppliesWithData` is 0), and only\nthen: an hour without data is a different statement from an hour that saved\nnothing, which reports `0.00` -- as does an hour whose published self-consumption\nis zero, a measured zero. This differs from the per-supply series,\nwhich reports `0.00` for every bucket it emits. `tariffSource` says where the\nprices came from -- `ESTIMATE` or `REAL_TARIFF` -- and a single estimated supply\nmakes the whole hour an estimate; it is `null` exactly when `savingsEur` is.\n\nReadable by the member themself and by community admins of this community.\nPlatform admins are **not** granted access on that basis alone and are answered\n404, as is every other caller who may not read it, so the membership's existence\nis not disclosed. A membership without supplies is answered successfully, not\nwith 404: every hour in range, with zero totals, null savings and a\n`supplyCount` of 0.\n",
+        "description" : "For each hour of the requested period, the energy and the estimated savings of\nthe supplies the member owns in this community that have data that hour, added\nup. Each energy figure sums the unrounded per-supply hourly figures and is\nrounded once, to 3 decimals, on the result; the savings are likewise summed\nunrounded and rounded once, to cents. A figure can therefore differ from adding\nup the rounded figures of the per-supply hourly series. Supplies in the member's\nother communities are not counted.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Maximum length:** on this operation the limit of rule 5 is **31 calendar days**\ninstead of 24 calendar months: `endDate` must be no later than 31 calendar days after\n`startDate`, counted in the period's time zone on the bounds as requested\n(`ENERGY_METRICS_PERIOD_TOO_LONG`, with `params` `{\"amount\": \"31\", \"unit\": \"DAYS\"}`).\n\n**Every hour is emitted:**\nA bucket is returned for every whole hour that starts inside the period, in\nchronological order, whether or not any supply has data that hour, so the\nseries has a regular time axis: 24 for a whole local day of the community's time\nzone, 23 on the day the clocks go forward and 25 on the day they go back. A period\nstarting in the middle of an hour starts with the next whole hour; an `endDate` in\nthe middle of an hour leaves a partial last hour, counted only up to the end.\n\n**`startsAt`:** the instant the hour starts at, with the offset in force in the\ncommunity's time zone at that instant -- for example `2026-10-25T02:00:00+02:00`\nand then `2026-10-25T02:00:00+01:00` for the two hours the clocks repeat in\nEurope/Madrid. It is unique within the series and is the key to identify an hour by.\n`date` and `time` are the local date and time the hour starts at; on the day the\nclocks go back, two consecutive hours carry the same ones.\n\n**Supplies with data:**\nDatadis publishes a month's self-consumption around the 10th of the following\nmonth; until then the supply's records carry consumption but no\nself-consumption. A supply has data in an hour only when its record of that hour\ncarries self-consumption. A supply without it does not contribute to the hour at\nall, so an unpublished hour is never summed as zero self-consumption.\n\n**Completeness:**\n`supplyCount` is the number of supplies the member **currently** owns in the\ncommunity, and `suppliesWithData` how many of them have data that hour. An\nhour with `suppliesWithData` below `supplyCount` is incomplete. The model records\nno date a supply joined its community, so the count is the same for every hour,\nand the hours before a supply started reporting show as incomplete. The aggregated\nenergy metrics measure their `suppliesWithData` over the whole period, so the two\nare not comparable.\n\n**Gaps and measured zeros:**\nThe energy figures add up only the supplies with data that hour; an hour in which\nno supply has data reports zero energy. `savingsEur` is an\n**estimate** of what the hour's self-consumed energy was worth, pricing the\n**energy term with electricity tax and VAT**, exactly as the per-supply series does. It is\n`null` when no supply has data that hour (`suppliesWithData` is 0), and only\nthen: an hour without data is a different statement from an hour that saved\nnothing, which reports `0.00` -- as does an hour whose published self-consumption\nis zero, a measured zero. This differs from the per-supply series,\nwhich reports `0.00` for every bucket it emits. `tariffSource` says where the\nprices came from -- `ESTIMATE` or `REAL_TARIFF` -- and a single estimated supply\nmakes the whole hour an estimate; it is `null` exactly when `savingsEur` is.\n\nReadable by the member themself and by community admins of this community.\nPlatform admins are **not** granted access on that basis alone and are answered\n404, as is every other caller who may not read it, so the membership's existence\nis not disclosed. A membership without supplies is answered successfully, not\nwith 404: every hour in range, with zero totals, null savings and a\n`supplyCount` of 0.\n",
         "operationId" : "getMembershipHourlyConsumption",
         "parameters" : [
           {
@@ -11936,7 +12376,7 @@
     },
     "/api/v1/communities/{communityId}/memberships/{userId}/consumption/monthly" : {
       "get" : {
-        "description" : "For each month of the requested period, the energy and the estimated savings of\nthe supplies the member owns in this community that have data that month, added\nup. Each energy figure sums the unrounded per-supply monthly totals and is\nrounded once, to 3 decimals,\non the result; the savings are likewise summed unrounded and rounded once, to\ncents. A figure can therefore differ from adding up the rounded figures of the\nper-supply monthly series. Supplies in the member's other communities are not\ncounted.\n\n**Source:**\nEach supply's month is summed from its hourly records when the series is read,\nso it is as fresh as the energy metrics.\n\n**Supplies with data:**\nDatadis publishes a month's self-consumption around the 10th of the following\nmonth; until then the supply's records carry consumption but no\nself-consumption. A supply has data in a month only when its records carrying\nself-consumption cover at least 90 % of the month's hours inside the period. A\nsupply below that does not contribute to the month at all, so an unpublished\nmonth is never summed as zero self-consumption.\n\n**Every month is emitted:**\nA bucket is returned for every month in range, in chronological order, whether or\nnot any supply has data in it, so the series has a regular time axis. This\ndiffers from the per-supply monthly series, which omits months without data.\n\n**Time zone and month selection:**\nMonths are local calendar months of the community's time zone, not UTC ones.\n`startDate` and `endDate` are both required, and a month is in range if and only\nif its local midnight on day 1 falls inside them, the rule the per-supply\nmonthly series selects its months by. A month the end bound falls inside counts\nonly its hours before that bound, energy and savings alike. Pass the bounds with\nthe zone's offset: a bound expressed in UTC can select one month too few or too\nmany.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Completeness:**\n`supplyCount` is the number of supplies the member **currently** owns in the\ncommunity, and `suppliesWithData` how many of them have data that month, as\ndefined above. A month with `suppliesWithData` below `supplyCount` is\nincomplete. The model records no date a supply joined its community, so the\ncount is the same for every month, and the months before a supply started\nreporting show as incomplete. `suppliesWithData` is measured month by month; the\naggregated energy metrics measure theirs over the whole period, so the two are\nnot comparable.\n\n**Savings:**\n`savingsEur` is an **estimate** of what the month's self-consumed energy was\nworth, pricing the **energy term before taxes** only, exactly as the per-supply\nseries does. It is `null` when no supply has data that month, and only then: a\nmonth without data is a different statement from a month that saved nothing,\nwhich reports `0.00` -- as does a month whose published self-consumption is zero,\na measured zero. This differs from the per-supply series,\nwhich reports `0.00` for every bucket it emits. `tariffSource` says where the\nprices came from -- `ESTIMATE` or `REAL_TARIFF` -- and a single estimated supply\nmakes the whole month an estimate; it is `null` exactly when `savingsEur` is.\n\nReadable by the member themself and by community admins of this community.\nPlatform admins are **not** granted access on that basis alone and are answered\n404, as is every other caller who may not read it, so the membership's existence\nis not disclosed. A membership without supplies is answered successfully, not\nwith 404: every month in range, with zero totals, null savings and a\n`supplyCount` of 0.\n",
+        "description" : "For each month of the requested period, the energy and the estimated savings of\nthe supplies the member owns in this community that have data that month, added\nup. Each energy figure sums the unrounded per-supply monthly totals and is\nrounded once, to 3 decimals,\non the result; the savings are likewise summed unrounded and rounded once, to\ncents. A figure can therefore differ from adding up the rounded figures of the\nper-supply monthly series. Supplies in the member's other communities are not\ncounted.\n\n**Source:**\nEach supply's month is summed from its hourly records when the series is read,\nso it is as fresh as the energy metrics.\n\n**Supplies with data:**\nDatadis publishes a month's self-consumption around the 10th of the following\nmonth; until then the supply's records carry consumption but no\nself-consumption. A supply has data in a month only when its records carrying\nself-consumption cover at least 90 % of the month's hours inside the period. A\nsupply below that does not contribute to the month at all, so an unpublished\nmonth is never summed as zero self-consumption.\n\n**Every month is emitted:**\nA bucket is returned for every month in range, in chronological order, whether or\nnot any supply has data in it, so the series has a regular time axis. This\ndiffers from the per-supply monthly series, which omits months without data.\n\n**Time zone and month selection:**\nMonths are local calendar months of the community's time zone, not UTC ones.\n`startDate` and `endDate` are both required, and a month is in range if and only\nif its local midnight on day 1 falls inside them, the rule the per-supply\nmonthly series selects its months by. A month the end bound falls inside counts\nonly its hours before that bound, energy and savings alike. Pass the bounds with\nthe zone's offset: a bound expressed in UTC can select one month too few or too\nmany.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Completeness:**\n`supplyCount` is the number of supplies the member **currently** owns in the\ncommunity, and `suppliesWithData` how many of them have data that month, as\ndefined above. A month with `suppliesWithData` below `supplyCount` is\nincomplete. The model records no date a supply joined its community, so the\ncount is the same for every month, and the months before a supply started\nreporting show as incomplete. `suppliesWithData` is measured month by month; the\naggregated energy metrics measure theirs over the whole period, so the two are\nnot comparable.\n\n**Savings:**\n`savingsEur` is an **estimate** of what the month's self-consumed energy was\nworth, pricing the **energy term with electricity tax and VAT**, exactly as the per-supply\nseries does. It is `null` when no supply has data that month, and only then: a\nmonth without data is a different statement from a month that saved nothing,\nwhich reports `0.00` -- as does a month whose published self-consumption is zero,\na measured zero. This differs from the per-supply series,\nwhich reports `0.00` for every bucket it emits. `tariffSource` says where the\nprices came from -- `ESTIMATE` or `REAL_TARIFF` -- and a single estimated supply\nmakes the whole month an estimate; it is `null` exactly when `savingsEur` is.\n\nReadable by the member themself and by community admins of this community.\nPlatform admins are **not** granted access on that basis alone and are answered\n404, as is every other caller who may not read it, so the membership's existence\nis not disclosed. A membership without supplies is answered successfully, not\nwith 404: every month in range, with zero totals, null savings and a\n`supplyCount` of 0.\n",
         "operationId" : "getMembershipMonthlyConsumption",
         "parameters" : [
           {
@@ -12353,7 +12793,7 @@
     },
     "/api/v1/communities/{communityId}/memberships/{userId}/energy-metrics" : {
       "get" : {
-        "description" : "Aggregates the consumption data stored for **every** supply the member owns in\nthis community into energy totals and two ratios, on a 0-1 scale. Supplies in the\nmember's other communities are not counted.\n\n- `selfSufficiencyRatio`: self-consumed energy divided by total consumed energy.\n- `selfConsumptionRatio`: self-consumed energy divided by the assigned energy, over\n  the supplies that are **not** a plant's own supply. A plant's own supply has its\n  surplus stored as 0, so it is left out of both figures; it still counts\n  in every total, in `selfSufficiencyRatio`, in coverage and in savings.\n  `selfConsumptionRatioBasis` reports the two figures the ratio was computed from\n  and how many plant supplies it left out, and `selfConsumptionRatioStatus` says\n  whether it is `AVAILABLE`, `NOTHING_ASSIGNED` (nothing was assigned to the\n  supplies it covers) or `NOT_APPLICABLE` (every supply is a plant's own supply,\n  which takes precedence).\n\nEvery supply is computed over the same period, exactly as the per-supply\nenergy-metrics endpoint computes it, and the results are added up: the energy\ntotals are summed across supplies and each ratio is derived **once** from those\nsums, never by averaging the per-supply ratios. A ratio whose summed denominator\nis zero is returned as `null`, never as `0`.\n\n**Period:**\nThe period is resolved in exactly one of three ways, and the resolved bounds are\nalways reported in `period`, also when the caller supplied them, with an end after\nthe current hour clipped as described under **Period checks**.\n\n- `startDate` and `endDate`: an explicit period, with the same semantics as the\n  per-supply endpoint. They must be supplied together, and a `startDate` that\n  is not before the `endDate` is a bad request.\n- `period=LATEST_PUBLISHED_MONTH`: the most recent complete calendar month, in\n  the community's time zone, that the distributor has published for any of the\n  member's supplies. The distributor publishes a month's self-consumed energy\n  only some days after it ends; until then the month's hourly records already\n  carry consumption and the surplus the meter measured, but no self-consumed\n  energy. An hourly record is therefore published when it carries self-consumed\n  energy, zero included, and surplus alone does not count. A month is published\n  for a supply when at least 90% of the hours it could have published carry it:\n  the hours of the month from the later of its first hour and the supply's first\n  published record, so a supply whose assigned production started mid-month is\n  judged from that point. A month published for one supply is resolved even if\n  another of the member's supplies is still unpublished. This is not necessarily\n  the previous month: an unpublished or partly published month is skipped and\n  the search continues backwards through the 24 complete months before the\n  current one. The current month is never a candidate. When no month in the\n  search window is published, no period is resolved. The period runs from\n  `00:00` of the first day of the month to `00:00` of the first day of the next\n  month. Combining it with `startDate` or `endDate` is a bad request.\n- Neither: from the earliest record stored for any of the member's supplies to\n  the end of the hour of the latest.\n\nWhen no period can be resolved -- no published month in the search window, no\nstored record at all, or no supplies to search -- the response is still\nsuccessful, with null period bounds, zero totals and null ratios.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Coverage:**\n`coverage.hoursWithData` counts the hourly records found across every supply.\n`coverage.expectedHours` is the number of hours the period spans **times the\nnumber of supplies of the membership**, so a single supply without any record\nlowers coverage even when every other supply is complete. `supplyCount` and\n`suppliesWithData` tell one silent supply apart from gaps spread across all of\nthem. Hours without a record are left out of the sums; they are never counted as\nzero.\n\n**Savings:**\n`savings.amountEur` is an **estimate** of what the self-consumed energy of all\nthe member's supplies was worth, pricing the **energy term before taxes** only,\nexactly as the per-supply endpoint does, and summed before being rounded.\nIt is `null` only when no period could be resolved; whenever a period exists it\nis a figure, `0.00` when nothing was priced. An explicit period always resolves,\nso it never yields `null`. `savings.tariffSource` is `ESTIMATE` when any part of\nany supply was priced with the estimate, and `savings.estimatedPrice` then carries\nthe estimated price; it is `null` when every supply was priced with its contracted\ntariff, and when nothing was priced with the estimate.\n\nReadable by the member themself and by community admins of this community.\nPlatform admins are **not** granted access on that basis alone and are answered\n404, as is every other caller who may not read it, so the membership's existence\nis not disclosed. A membership without supplies is answered successfully, not\nwith 404.\n",
+        "description" : "Aggregates the consumption data stored for **every** supply the member owns in\nthis community into energy totals and two ratios, on a 0-1 scale. Supplies in the\nmember's other communities are not counted.\n\n- `selfSufficiencyRatio`: self-consumed energy divided by total consumed energy.\n- `selfConsumptionRatio`: self-consumed energy divided by the assigned energy, over\n  the supplies that are **not** a plant's own supply. A plant's own supply has its\n  surplus stored as 0, so it is left out of both figures; it still counts\n  in every total, in `selfSufficiencyRatio`, in coverage and in savings.\n  `selfConsumptionRatioBasis` reports the two figures the ratio was computed from\n  and how many plant supplies it left out, and `selfConsumptionRatioStatus` says\n  whether it is `AVAILABLE`, `NOTHING_ASSIGNED` (nothing was assigned to the\n  supplies it covers) or `NOT_APPLICABLE` (every supply is a plant's own supply,\n  which takes precedence).\n\nEvery supply is computed over the same period, exactly as the per-supply\nenergy-metrics endpoint computes it, and the results are added up: the energy\ntotals are summed across supplies and each ratio is derived **once** from those\nsums, never by averaging the per-supply ratios. A ratio whose summed denominator\nis zero is returned as `null`, never as `0`.\n\n**Period:**\nThe period is resolved in exactly one of three ways, and the resolved bounds are\nalways reported in `period`, also when the caller supplied them, with an end after\nthe current hour clipped as described under **Period checks**.\n\n- `startDate` and `endDate`: an explicit period, with the same semantics as the\n  per-supply endpoint. They must be supplied together, and a `startDate` that\n  is not before the `endDate` is a bad request.\n- `period=LATEST_PUBLISHED_MONTH`: the most recent complete calendar month, in\n  the community's time zone, that the distributor has published for any of the\n  member's supplies. The distributor publishes a month's self-consumed energy\n  only some days after it ends; until then the month's hourly records already\n  carry consumption and the surplus the meter measured, but no self-consumed\n  energy. An hourly record is therefore published when it carries self-consumed\n  energy, zero included, and surplus alone does not count. A month is published\n  for a supply when at least 90% of the hours it could have published carry it:\n  the hours of the month from the later of its first hour and the supply's first\n  published record, so a supply whose assigned production started mid-month is\n  judged from that point. A month published for one supply is resolved even if\n  another of the member's supplies is still unpublished. This is not necessarily\n  the previous month: an unpublished or partly published month is skipped and\n  the search continues backwards through the 24 complete months before the\n  current one. The current month is never a candidate. When no month in the\n  search window is published, no period is resolved. The period runs from\n  `00:00` of the first day of the month to `00:00` of the first day of the next\n  month. Combining it with `startDate` or `endDate` is a bad request.\n- Neither: from the earliest record stored for any of the member's supplies to\n  the end of the hour of the latest.\n\nWhen no period can be resolved -- no published month in the search window, no\nstored record at all, or no supplies to search -- the response is still\nsuccessful, with null period bounds, zero totals and null ratios.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Coverage:**\n`coverage.hoursWithData` counts the hourly records found across every supply.\n`coverage.expectedHours` is the number of hours the period spans **times the\nnumber of supplies of the membership**, so a single supply without any record\nlowers coverage even when every other supply is complete. `supplyCount` and\n`suppliesWithData` tell one silent supply apart from gaps spread across all of\nthem. Hours without a record are left out of the sums; they are never counted as\nzero.\n\n**Savings:**\n`savings.amountEur` is an **estimate** of what the self-consumed energy of all\nthe member's supplies was worth, pricing the **energy term with electricity tax and VAT**,\nexactly as the per-supply endpoint does, and summed before being rounded.\nIt is `null` only when no period could be resolved; whenever a period exists it\nis a figure, `0.00` when nothing was priced. An explicit period always resolves,\nso it never yields `null`. `savings.tariffSource` is `ESTIMATE` when any part of\nany supply was priced with the estimate, and `savings.estimatedPrice` then carries\nthe estimated price; it is `null` when every supply was priced with its contracted\ntariff, and when nothing was priced with the estimate.\n\nReadable by the member themself and by community admins of this community.\nPlatform admins are **not** granted access on that basis alone and are answered\n404, as is every other caller who may not read it, so the membership's existence\nis not disclosed. A membership without supplies is answered successfully, not\nwith 404.\n",
         "operationId" : "getMembershipEnergyMetrics",
         "parameters" : [
           {
@@ -13493,7 +13933,7 @@
     },
     "/api/v1/communities/{communityId}/memberships/{userId}/payback" : {
       "get" : {
-        "description" : "How much of the member's recorded investment their share of the community's\nenergy has recovered, and roughly how long the rest would take.\n\n`savedEur` is the estimated value of the self-consumed energy of **all** the\nmember's supplies in this community, from `startDate` until now, priced per\ntariff segment. It prices the **energy term before taxes** only: the power term,\naccess tolls, charges and electricity tax are all excluded, and VAT is applied\nonly where the resolved tariff carries a rate. It is computed on each request and\nnever stored, so it reflects both new consumption and any later correction.\nSupplies in the member's other communities are not counted.\n\n`startDate` is the civil date the community first activated a partition\ncoefficient, and is therefore **community-wide rather than per member**. A\nmember who joined later has their savings divided by the community's elapsed\ndays rather than their own, so their apparent daily rate is lower than their\nreal one and `estimatedRemainingMonths` is correspondingly pessimistic. This is\na known limitation.\n\nNull and zero mean different things throughout. A null `investmentEur` means\nnone has been recorded, not a contribution of zero; a null `savedEur` means the\ncommunity has never shared energy, whereas zero means it has and this member\nconsumed nothing from it. `estimatedRemainingMonths` is null whenever no rate\ncan be established, and 0 once the investment is recovered.\n\n`progressRatio` is not capped and exceeds 1 for a member who has recovered more\nthan they contributed. `tariffSource` is never null and is `ESTIMATE` whenever\nany part of the amount came from an estimated tariff, or when no tariff was\nconsulted at all.\n\nReadable by the member themself and by community admins of this community.\nPlatform admins are **not** granted access on that basis alone and are answered\n404, as is every other caller who may not read it, so the membership's existence\nis not disclosed.\n",
+        "description" : "How much of the member's recorded investment their share of the community's\nenergy has recovered, and roughly how long the rest would take.\n\n`savedEur` is the estimated value of the self-consumed energy of **all** the\nmember's supplies in this community, from `startDate` until now, priced per\ntariff segment. It prices the **energy term with electricity tax and VAT**,\neach at the rate in force on the day the energy was consumed: the power term,\naccess tolls and charges are excluded. It is computed on each request and\nnever stored, so it reflects both new consumption and any later correction.\nSupplies in the member's other communities are not counted.\n\n`startDate` is the civil date the community first activated a partition\ncoefficient, and is therefore **community-wide rather than per member**. A\nmember who joined later has their savings divided by the community's elapsed\ndays rather than their own, so their apparent daily rate is lower than their\nreal one and `estimatedRemainingMonths` is correspondingly pessimistic. This is\na known limitation.\n\nNull and zero mean different things throughout. A null `investmentEur` means\nnone has been recorded, not a contribution of zero; a null `savedEur` means the\ncommunity has never shared energy, whereas zero means it has and this member\nconsumed nothing from it. `estimatedRemainingMonths` is null whenever no rate\ncan be established, and 0 once the investment is recovered.\n\n`progressRatio` is not capped and exceeds 1 for a member who has recovered more\nthan they contributed. `tariffSource` is never null and is `ESTIMATE` whenever\nany part of the amount came from an estimated tariff, or when no tariff was\nconsulted at all.\n\nReadable by the member themself and by community admins of this community.\nPlatform admins are **not** granted access on that basis alone and are answered\n404, as is every other caller who may not read it, so the membership's existence\nis not disclosed.\n",
         "operationId" : "getMembershipPayback",
         "parameters" : [
           {
@@ -16355,7 +16795,7 @@
     },
     "/api/v1/init" : {
       "post" : {
-        "description" : "This endpoint serves as a crucial initiation step for the application, allowing the configuration of foundational settings. This endpoint facilitates the establishment of the default admin user credentials, pivotal for initiating subsequent configurations. By executing this endpoint, users can set the groundwork for the app, enabling the seamless configuration of users, supplies, and other application settings. No authorization is required to execute this endpoint, and the response provides confirmation of successful initialization or relevant error messages.\n\nThe body is validated: `defaultAdminUser` and its `personalId`, `fullName`, `email` and `password` are required, and a missing or invalid field is answered 400. The `password` must satisfy the password policy: between 15 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded; any character is accepted, including spaces and non-ASCII letters, and there are no composition rules. A password that breaks the policy is answered 400 with the `USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter naming the rule that failed: `TOO_SHORT`, `TOO_LONG` or `TOO_MANY_BYTES`.\n\nAn `address` longer than 250 characters is answered 400 with the `FIELD_TOO_LONG` code, whose params give the `field` (`defaultAdminUser.address`), its `maxLength` and the length `n` sent.\n\nThe application can only be initialised once: any later call is answered 403.",
+        "description" : "This endpoint serves as a crucial initiation step for the application, allowing the configuration of foundational settings. This endpoint facilitates the establishment of the default admin user credentials, pivotal for initiating subsequent configurations. By executing this endpoint, users can set the groundwork for the app, enabling the seamless configuration of users, supplies, and other application settings. No authorization is required to execute this endpoint, and the response provides confirmation of successful initialization or relevant error messages.\n\nThe body is validated: `defaultAdminUser` and its `personalId`, `fullName`, `email` and `password` are required, and a missing or invalid field is answered 400. The `password` must satisfy the password policy: between 10 and 64 characters, counting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded; any character is accepted, including spaces and non-ASCII letters, and there are no composition rules; a password that is common or has appeared in data breaches, compared case-insensitively against a list bundled with the application, is refused. A password that breaks the policy is answered 400 with the `USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter naming the rule that failed: `TOO_SHORT`, `TOO_LONG`, `TOO_MANY_BYTES` or `COMPROMISED`, checked in that order.\n\nAn `address` longer than 250 characters is answered 400 with the `FIELD_TOO_LONG` code, whose params give the `field` (`defaultAdminUser.address`), its `maxLength` and the length `n` sent.\n\nThe application can only be initialised once: any later call is answered 403.",
         "operationId" : "init",
         "requestBody" : {
           "content" : {
@@ -16422,7 +16862,7 @@
     },
     "/api/v1/invitations/accept" : {
       "post" : {
-        "description" : "This endpoint accepts the invitation of an account that has no password yet, with the token from\nthe emailed link `<web client>/accept-invitation#<token>` and the account's first password. It\nrequires no authentication, and any token presented with it is ignored.\n\nThe password must meet the same policy as a password change: between 15 and 64 characters,\ncounting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded.\n\nOn success the server answers 204 with no body: the token is used up, the password is set, the\nmembership is accepted, and, when the account had no email, the member record's contact email\nbecomes its email. The person is not logged in; the client must log in with the new password. A\nmembership that is disabled is accepted too, but grants no access until the community enables it.\n\nAn account that already has a password is answered 409 with the\n`MEMBERSHIP_INVITATION_LOGIN_REQUIRED` code: the person must log in and accept with\n`acceptInvitationAsCurrentUser`. A new password that breaks the policy is answered 400 with the\n`USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter. In both cases nothing changes and\nthe token can be used again.\n\nA token that is unknown, malformed, expired, already used, revoked or replaced by a newer one, whose membership\nhas already been accepted, or whose account has been disabled, is answered 400 with the\n`MEMBERSHIP_INVITATION_TOKEN_INVALID` code, the same in every case.\n\nA platform-admin invitation, `PLATFORM` in `inspectInvitation`, also requires `confirmationCode`:\nthe code whoever invited gives the person by another channel. A community invitation ignores it.\nOn success the platform-admin role is granted as well, and, when the account had no email, the\ninvitation's destination email becomes its email. A missing or wrong code is answered 400 with the\n`PLATFORM_ADMIN_INVITATION_CODE_INVALID` code: nothing is granted, the attempt counts against the\nclient address and against the invitation, and the link can be used again. The fifth missing or\nwrong code on one invitation revokes its link and is answered 400 with the\n`PLATFORM_ADMIN_INVITATION_CODE_ATTEMPTS_EXHAUSTED` code: the invitation must be sent again. The\ncode is checked after the checks above, which neither count nor use it; for a platform-admin\ninvitation, an account that already has a password is answered 409 with the\n`PLATFORM_ADMIN_INVITATION_LOGIN_REQUIRED` code instead. A platform-admin\ninvitation whose account is disabled is accepted too: the role is granted, and the account still\ncannot log in.\n\nEvery unusable token counts against the client address, together with failed logins, password\nchanges and password resets: after 20 within 15 minutes, further requests are answered 429 with a\nRetry-After header until the 15 minutes that started with the first failure have passed.",
+        "description" : "This endpoint accepts the invitation of an account that has no password yet, with the token from\nthe emailed link `<web client>/accept-invitation#<token>` and the account's first password. It\nrequires no authentication, and any token presented with it is ignored.\n\nThe password must meet the same policy as a password change: between 10 and 64 characters,\ncounting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded; a\npassword that is common or has appeared in data breaches, compared case-insensitively against a\nlist bundled with the application, is refused.\n\nOn success the server answers 204 with no body: the token is used up, the password is set, the\nmembership is accepted, and, when the account had no email, the member record's contact email\nbecomes its email. The person is not logged in; the client must log in with the new password. A\nmembership that is disabled is accepted too, but grants no access until the community enables it.\n\nAn account that already has a password is answered 409 with the\n`MEMBERSHIP_INVITATION_LOGIN_REQUIRED` code: the person must log in and accept with\n`acceptInvitationAsCurrentUser`. A new password that breaks the policy is answered 400 with the\n`USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter. In both cases nothing changes and\nthe token can be used again.\n\nA token that is unknown, malformed, expired, already used, revoked or replaced by a newer one, whose membership\nhas already been accepted, or whose account has been disabled, is answered 400 with the\n`MEMBERSHIP_INVITATION_TOKEN_INVALID` code, the same in every case.\n\nA platform-admin invitation, `PLATFORM` in `inspectInvitation`, also requires `confirmationCode`:\nthe code whoever invited gives the person by another channel. A community invitation ignores it.\nOn success the platform-admin role is granted as well, and, when the account had no email, the\ninvitation's destination email becomes its email. A missing or wrong code is answered 400 with the\n`PLATFORM_ADMIN_INVITATION_CODE_INVALID` code: nothing is granted, the attempt counts against the\nclient address and against the invitation, and the link can be used again. The fifth missing or\nwrong code on one invitation revokes its link and is answered 400 with the\n`PLATFORM_ADMIN_INVITATION_CODE_ATTEMPTS_EXHAUSTED` code: the invitation must be sent again. The\ncode is checked after the checks above, which neither count nor use it; for a platform-admin\ninvitation, an account that already has a password is answered 409 with the\n`PLATFORM_ADMIN_INVITATION_LOGIN_REQUIRED` code instead. A platform-admin\ninvitation whose account is disabled is accepted too: the role is granted, and the account still\ncannot log in.\n\nEvery unusable token counts against the client address, together with failed logins, password\nchanges and password resets: after 20 within 15 minutes, further requests are answered 429 with a\nRetry-After header until the 15 minutes that started with the first failure have passed.",
         "operationId" : "acceptInvitation",
         "requestBody" : {
           "content" : {
@@ -16464,13 +16904,13 @@
                       "errors" : [
                         {
                           "code" : "USER_PASSWORD_POLICY_VIOLATION",
-                          "message" : "The password must be at least 15 characters long.",
+                          "message" : "The password must be at least 10 characters long.",
                           "params" : {
                             "rule" : "TOO_SHORT"
                           }
                         }
                       ],
-                      "message" : "The password must be at least 15 characters long.",
+                      "message" : "The password must be at least 10 characters long.",
                       "status" : 400,
                       "timestamp" : "2026-10-15T10:10:25.534035352+02:00",
                       "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
@@ -21119,6 +21559,162 @@
         ]
       }
     },
+    "/api/v1/plants/{plantId}/sharing-agreements/{sharingAgreementId}/partition-coefficients/preview-dates" : {
+      "post" : {
+        "description" : "Computes what `set-dates` would do with the same body, and writes nothing. The effects are those\n`set-dates` performs on the coefficients as they stand now; `set-dates` validates the request\nagain when it runs, since the coefficients may have changed in between.\n\nEach coefficient is placed chronologically within the timeline of its (plant, supply), as\n`activate` does, in ascending `validFrom` order and then by coefficient id, each on the timeline\nas the previous ones left it. A pending coefficient is activated and an active one corrected.\n\nEach listed leaving supply must have no coefficient, pending or not, in this agreement. Its\nclosed coefficient is its activated coefficient with the latest `validFrom` before the\nagreement's earliest `validFrom` once the coefficients of the request are placed. Its `validTo`\nbecomes `closedOn`: that may shorten it or extend it, up to the next start of the supply. It is\nan ordinary close, which `reopen` undoes.\n\nOn the agreement's first activation (none of its coefficients had a `validFrom` before the\nrequest), every supply that leaves the distribution and is not listed is closed at the earliest\n`validFrom` of the request, as `activate` does, and reported with source `DEFAULT`. A later\nrequest closes only the listed supplies.\n\nThe response lists every effect: each requested coefficient's period before and after, each\nneighbour whose end moves, each leaving closure, the status of every agreement owning a changed\ncoefficient before and after, and the earliest `validFrom` of the plant's community before and\nafter. Rows that do not change are not listed. A row error in `details` carries `coefficientId`,\n`supplyId` or both, and `conflictingCoefficientId` for an overlap.\n\n**Required: Community Admin**\n\nPUBLISHED or SUPERSEDED agreements only.\n\nReturns 400 if both lists are empty or a coefficient or a supply is listed twice.\nReturns 404 if the plant or the agreement does not exist, does not belong to this plant, or the\ncaller is not a member of its community, to avoid leaking existence. Returns 409 if the agreement\nis DRAFT, or with every invalid row: a coefficient not in this agreement, a date in the future,\na start equal to another start of the supply or a period overlapping another, a correction not\nbefore the coefficient's own close, a listed supply holding a coefficient in this agreement, a\nlisted supply with no coefficient to close, or a closing date not after the closed coefficient's\nstart.\n\nAuthentication is required using a Bearer token.\n",
+        "operationId" : "previewPartitionCoefficientDates",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "plantId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "path",
+            "name" : "sharingAgreementId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SetCoefficientDatesBody"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CoefficientDatesEffectsResponse"
+                }
+              }
+            },
+            "description" : "The request is valid; the effects it would have. Nothing is written."
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The request contains invalid data.",
+                  "status" : 400,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The request contains invalid data."
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "You are not authorized to make this request.",
+                  "status" : 401,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request."
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Not authorized" : {
+                    "description" : "Not authorized",
+                    "value" : {
+                      "message" : "You are not authorized to make this request.",
+                      "status" : 403,
+                      "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Password change required" : {
+                    "description" : "Password change required",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "USER_PASSWORD_CHANGE_REQUIRED",
+                          "message" : "You must change your password before you can continue.",
+                          "params" : null
+                        }
+                      ],
+                      "message" : "You must change your password before you can continue.",
+                      "status" : 403,
+                      "timestamp" : "2026-10-06T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request, or your password must be changed first (`USER_PASSWORD_CHANGE_REQUIRED`): while `mustChangePassword` is true on `GET /api/v1/users/current`, every request other than reading the current user, changing the password and logging out is refused."
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The requested data can not be found. Please check you are authorised or this content exists.",
+                  "status" : 404,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "409" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "The agreement is DRAFT, or one or more rows failed validation."
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "There was a problem processing your request.",
+                  "status" : 500,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "There was a problem processing your request."
+          }
+        },
+        "security" : [
+          {
+            "bearerToken" : [ ]
+          }
+        ],
+        "summary" : "Previews every effect of setting the dates of an agreement's coefficients and leaving closures",
+        "tags" : [
+          "Sharing agreements"
+        ]
+      }
+    },
     "/api/v1/plants/{plantId}/sharing-agreements/{sharingAgreementId}/partition-coefficients/reopen" : {
       "post" : {
         "description" : "Clears `validTo` on each given coefficient. Rejected when a successor coefficient\nstarts at or before the current `validTo` -- that boundary was written by the\nactivation cascade, not authored: you may only undo a closure you authored.\n\n**Required: Community Admin**\n\nPUBLISHED or SUPERSEDED agreements only. The coefficient must already be active\nand closed; reopening a pending coefficient is rejected.\n\nIdempotent in effect: re-sending a batch that would produce no change is a no-op.\n\nReturns 404 if the plant or the agreement does not exist, does not belong to this\nplant, or the caller is not a member of its community, to avoid leaking existence.\nReturns 409 if the agreement is DRAFT, or if any coefficient fails validation.\n\nAuthentication is required using a Bearer token.\n",
@@ -21270,6 +21866,162 @@
           }
         ],
         "summary" : "Retracts an authored close on a batch of coefficients",
+        "tags" : [
+          "Sharing agreements"
+        ]
+      }
+    },
+    "/api/v1/plants/{plantId}/sharing-agreements/{sharingAgreementId}/partition-coefficients/set-dates" : {
+      "post" : {
+        "description" : "Sets, in one request, the date each coefficient of the agreement started to apply and the date\neach supply that leaves the distribution stopped receiving production. Validates the whole\nrequest, then writes everything in one transaction and recomputes the status of every agreement\nowning a changed coefficient; a failure on any row rejects the whole request and nothing is\nwritten. Date writes on the same plant run one after another. The response reports the effects\nas written; `preview-dates` with the same body reports them without writing.\n\nEach coefficient is placed chronologically within the timeline of its (plant, supply), as\n`activate` does, in ascending `validFrom` order and then by coefficient id, each on the timeline\nas the previous ones left it. A pending coefficient is activated and an active one corrected.\n\nEach listed leaving supply must have no coefficient, pending or not, in this agreement. Its\nclosed coefficient is its activated coefficient with the latest `validFrom` before the\nagreement's earliest `validFrom` once the coefficients of the request are placed. Its `validTo`\nbecomes `closedOn`: that may shorten it or extend it, up to the next start of the supply. It is\nan ordinary close, which `reopen` undoes.\n\nOn the agreement's first activation (none of its coefficients had a `validFrom` before the\nrequest), every supply that leaves the distribution and is not listed is closed at the earliest\n`validFrom` of the request, as `activate` does, and reported with source `DEFAULT`. A later\nrequest closes only the listed supplies.\n\nThe response lists every effect: each requested coefficient's period before and after, each\nneighbour whose end moves, each leaving closure, the status of every agreement owning a changed\ncoefficient before and after, and the earliest `validFrom` of the plant's community before and\nafter. Rows that do not change are not listed. A row error in `details` carries `coefficientId`,\n`supplyId` or both, and `conflictingCoefficientId` for an overlap.\n\n**Required: Community Admin**\n\nPUBLISHED or SUPERSEDED agreements only.\n\nReturns 400 if both lists are empty or a coefficient or a supply is listed twice.\nReturns 404 if the plant or the agreement does not exist, does not belong to this plant, or the\ncaller is not a member of its community, to avoid leaking existence. Returns 409 if the agreement\nis DRAFT, or with every invalid row: a coefficient not in this agreement, a date in the future,\na start equal to another start of the supply or a period overlapping another, a correction not\nbefore the coefficient's own close, a listed supply holding a coefficient in this agreement, a\nlisted supply with no coefficient to close, or a closing date not after the closed coefficient's\nstart.\n\nAuthentication is required using a Bearer token.\n",
+        "operationId" : "setPartitionCoefficientDates",
+        "parameters" : [
+          {
+            "in" : "path",
+            "name" : "plantId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          },
+          {
+            "in" : "path",
+            "name" : "sharingAgreementId",
+            "required" : true,
+            "schema" : {
+              "format" : "uuid",
+              "type" : "string"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SetCoefficientDatesBody"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CoefficientDatesEffectsResponse"
+                }
+              }
+            },
+            "description" : "The request has been applied; the effects as written."
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The request contains invalid data.",
+                  "status" : 400,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The request contains invalid data."
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "You are not authorized to make this request.",
+                  "status" : 401,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request."
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "examples" : {
+                  "Not authorized" : {
+                    "description" : "Not authorized",
+                    "value" : {
+                      "message" : "You are not authorized to make this request.",
+                      "status" : 403,
+                      "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  },
+                  "Password change required" : {
+                    "description" : "Password change required",
+                    "value" : {
+                      "errors" : [
+                        {
+                          "code" : "USER_PASSWORD_CHANGE_REQUIRED",
+                          "message" : "You must change your password before you can continue.",
+                          "params" : null
+                        }
+                      ],
+                      "message" : "You must change your password before you can continue.",
+                      "status" : 403,
+                      "timestamp" : "2026-10-06T10:10:25.534035352+02:00",
+                      "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                    }
+                  }
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "You are not authorized to make this request, or your password must be changed first (`USER_PASSWORD_CHANGE_REQUIRED`): while `mustChangePassword` is true on `GET /api/v1/users/current`, every request other than reading the current user, changing the password and logging out is refused."
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "The requested data can not be found. Please check you are authorised or this content exists.",
+                  "status" : 404,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "The requested data can not be found. Please check you are authorised or this content exists."
+          },
+          "409" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RestError"
+                }
+              }
+            },
+            "description" : "The agreement is DRAFT, or one or more rows failed validation."
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "There was a problem processing your request.",
+                  "status" : 500,
+                  "timestamp" : "2024-01-03T10:10:25.534035352+01:00",
+                  "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
+                }
+              }
+            },
+            "description" : "There was a problem processing your request."
+          }
+        },
+        "security" : [
+          {
+            "bearerToken" : [ ]
+          }
+        ],
+        "summary" : "Sets the application date of each coefficient of an agreement and the closing date of each supply leaving it",
         "tags" : [
           "Sharing agreements"
         ]
@@ -22980,7 +23732,7 @@
     },
     "/api/v1/supplies/{supplyId}/consumption/daily" : {
       "get" : {
-        "description" : "This endpoint retrieves daily consumption data from Datadis for a specific supply within a given date range.\n\n**Authorization Rules:**\n- Community Admins can retrieve consumption data for any supply they administer\n- Supply owners can only retrieve consumption data for their own supplies\n\nThe consumption data includes:\n- Energy taken from the grid\n- Surplus energy (energy fed back to the grid)\n- Self-consumption energy\n- Obtain method (Real/Estimated)\n\nData is aggregated by day, from the hourly records, within the specified date\nrange. Every energy figure is in kWh, rounded to 3 decimals.\n\n**Time zone:** days follow the local calendar of the time zone the application is\nconfigured with, not UTC. A day therefore lasts 23 hours on the spring daylight\nsaving transition and 25 hours on the autumn one.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\nThe bounds are taken as given, without being rounded to a day boundary. Bounds\nthat fall in the middle of a local day produce a partial first and last bucket,\nso a caller wanting whole local days passes both at local midnight, offset\nincluded -- for example `2023-04-01T00:00:00+02:00` to\n`2023-05-01T00:00:00+02:00` for April 2023 in Europe/Madrid.\n\n**Days without data:** Datadis publishes a month's self-consumption around the\n10th of the following month; until then the supply's records carry consumption\nbut no self-consumption. A day has data only\nwhen its records carrying self-consumption cover at least 90 % of the day's hours\ninside the range. A day without data -- below that, or without any record -- is\nreturned with zero energy, a null `obtainMethod` and savings of `0.00`, even when\nits consumption is already known, so that no false self-consumption or savings is\nshown; its consumption appears once its self-consumption is published.\n\nEach day is priced over its own local day, clipped to the requested bounds, so a\npartial edge bucket's savings cover exactly the hours its energy fields cover.\n\n**Savings:** `savingsEur` is an **estimate** of what the bucket's self-consumed\nenergy was worth. It prices the **energy term before taxes** only: the power\nterm, access tolls, charges and electricity tax are all excluded, and VAT is\napplied only where the resolved tariff carries a rate. `tariffSource` says where\nthe prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`\nfor the supply's contracted tariff -- and a single estimated stretch of the\nbucket makes the whole amount an estimate. A day whose published\nself-consumption is zero, and a day without data, reports `0.00`.\n",
+        "description" : "This endpoint retrieves daily consumption data from Datadis for a specific supply within a given date range.\n\n**Authorization Rules:**\n- Community Admins can retrieve consumption data for any supply they administer\n- Supply owners can only retrieve consumption data for their own supplies\n\nThe consumption data includes:\n- Energy taken from the grid\n- Surplus energy (energy fed back to the grid)\n- Self-consumption energy\n- Obtain method (Real/Estimated)\n\nData is aggregated by day, from the hourly records, within the specified date\nrange. Every energy figure is in kWh, rounded to 3 decimals.\n\n**Time zone:** days follow the local calendar of the time zone the application is\nconfigured with, not UTC. A day therefore lasts 23 hours on the spring daylight\nsaving transition and 25 hours on the autumn one.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\nThe bounds are taken as given, without being rounded to a day boundary. Bounds\nthat fall in the middle of a local day produce a partial first and last bucket,\nso a caller wanting whole local days passes both at local midnight, offset\nincluded -- for example `2023-04-01T00:00:00+02:00` to\n`2023-05-01T00:00:00+02:00` for April 2023 in Europe/Madrid.\n\n**Days without data:** Datadis publishes a month's self-consumption around the\n10th of the following month; until then the supply's records carry consumption\nbut no self-consumption. A day has data only\nwhen its records carrying self-consumption cover at least 90 % of the day's hours\ninside the range. A day without data -- below that, or without any record -- is\nreturned with zero energy, a null `obtainMethod` and savings of `0.00`, even when\nits consumption is already known, so that no false self-consumption or savings is\nshown; its consumption appears once its self-consumption is published.\n\nEach day is priced over its own local day, clipped to the requested bounds, so a\npartial edge bucket's savings cover exactly the hours its energy fields cover.\n\n**Savings:** `savingsEur` is an **estimate** of what the bucket's self-consumed\nenergy was worth. It prices the **energy term with electricity tax and VAT**,\neach at the rate in force on the day the energy was consumed: the power term,\naccess tolls and charges are excluded. `tariffSource` says where\nthe prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`\nfor the supply's contracted tariff -- and a single estimated stretch of the\nbucket makes the whole amount an estimate. A day whose published\nself-consumption is zero, and a day without data, reports `0.00`.\n",
         "operationId" : "getSupplyDailyConsumption",
         "parameters" : [
           {
@@ -23130,7 +23882,7 @@
     },
     "/api/v1/supplies/{supplyId}/consumption/hourly" : {
       "get" : {
-        "description" : "This endpoint retrieves hourly consumption data from Datadis for a specific supply within a given date range.\n\n**Authorization Rules:**\n- Community Admins can retrieve consumption data for any supply they administer\n- Supply owners can only retrieve consumption data for their own supplies\n\nThe consumption data includes:\n- Energy taken from the grid\n- Surplus energy (energy sent to grid)\n- Self-consumption energy\n- Obtain method (Real/Estimated)\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Maximum length:** on this operation the limit of rule 5 is **31 calendar days**\ninstead of 24 calendar months: `endDate` must be no later than 31 calendar days after\n`startDate`, counted in the period's time zone on the bounds as requested\n(`ENERGY_METRICS_PERIOD_TOO_LONG`, with `params` `{\"amount\": \"31\", \"unit\": \"DAYS\"}`).\n\n**Every hour:** one bucket is returned for every hour that starts inside the period,\nin chronological order: 24 for a whole local day, 23 on the day the clocks go forward\nand 25 on the day they go back.\n\n**Hours without data:** Datadis publishes a month's self-consumption around the\n10th of the following month; until then the supply's records carry consumption\nbut no self-consumption. An hour has data only when its record carries\nself-consumption. An hour without data -- without self-consumption, or without\nany record -- is returned with zero energy, a null `obtainMethod` and savings of\n`0.00` rather than omitted, even when its consumption is already known, so that\nno false self-consumption or savings is shown; its consumption appears once its\nself-consumption is published. An hour whose published record carries no energy\nhas its `obtainMethod` set.\n\nEvery energy figure is in kWh, rounded to 3 decimals.\n\n**`startsAt`:** the instant the hour starts at, with the offset in force in the\nsupply's time zone at that instant -- for example `2026-10-25T02:00:00+02:00` and\nthen `2026-10-25T02:00:00+01:00` for the two hours the clocks repeat in\nEurope/Madrid. It is unique within the series and is the key to identify an hour by.\n\n**`date` and `time`:** the local calendar date and local time, in the time zone the\napplication is configured with, at which each hour starts (`time` from `00:00` to\n`23:00`). On the day the clocks go back, two consecutive hours carry the same `date`\nand `time`; on the day they go forward, the local hour the clocks skip has no entry.\n\n**Savings:** `savingsEur` is an **estimate** of what the hour's self-consumed energy\nwas worth, priced with the same tariff resolution as a day of the daily series, over\nthe hour itself; an `endDate` in the middle of an hour leaves a partial last hour,\npriced over the part its energy covers. It prices the **energy term before taxes**\nonly: the power term, access tolls, charges and electricity tax are all excluded, and\nVAT is applied only where the resolved tariff carries a rate. `tariffSource` says\nwhere the prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`\nfor the supply's contracted tariff. An hour whose published self-consumption is\nzero, and an hour without data, reports `0.00`.\n",
+        "description" : "This endpoint retrieves hourly consumption data from Datadis for a specific supply within a given date range.\n\n**Authorization Rules:**\n- Community Admins can retrieve consumption data for any supply they administer\n- Supply owners can only retrieve consumption data for their own supplies\n\nThe consumption data includes:\n- Energy taken from the grid\n- Surplus energy (energy sent to grid)\n- Self-consumption energy\n- Obtain method (Real/Estimated)\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\n**Maximum length:** on this operation the limit of rule 5 is **31 calendar days**\ninstead of 24 calendar months: `endDate` must be no later than 31 calendar days after\n`startDate`, counted in the period's time zone on the bounds as requested\n(`ENERGY_METRICS_PERIOD_TOO_LONG`, with `params` `{\"amount\": \"31\", \"unit\": \"DAYS\"}`).\n\n**Every hour:** one bucket is returned for every hour that starts inside the period,\nin chronological order: 24 for a whole local day, 23 on the day the clocks go forward\nand 25 on the day they go back.\n\n**Hours without data:** Datadis publishes a month's self-consumption around the\n10th of the following month; until then the supply's records carry consumption\nbut no self-consumption. An hour has data only when its record carries\nself-consumption. An hour without data -- without self-consumption, or without\nany record -- is returned with zero energy, a null `obtainMethod` and savings of\n`0.00` rather than omitted, even when its consumption is already known, so that\nno false self-consumption or savings is shown; its consumption appears once its\nself-consumption is published. An hour whose published record carries no energy\nhas its `obtainMethod` set.\n\nEvery energy figure is in kWh, rounded to 3 decimals.\n\n**`startsAt`:** the instant the hour starts at, with the offset in force in the\nsupply's time zone at that instant -- for example `2026-10-25T02:00:00+02:00` and\nthen `2026-10-25T02:00:00+01:00` for the two hours the clocks repeat in\nEurope/Madrid. It is unique within the series and is the key to identify an hour by.\n\n**`date` and `time`:** the local calendar date and local time, in the time zone the\napplication is configured with, at which each hour starts (`time` from `00:00` to\n`23:00`). On the day the clocks go back, two consecutive hours carry the same `date`\nand `time`; on the day they go forward, the local hour the clocks skip has no entry.\n\n**Savings:** `savingsEur` is an **estimate** of what the hour's self-consumed energy\nwas worth, priced with the same tariff resolution as a day of the daily series, over\nthe hour itself; an `endDate` in the middle of an hour leaves a partial last hour,\npriced over the part its energy covers.\nIt prices the **energy term with electricity tax and VAT**,\neach at the rate in force on the day the energy was consumed: the power term,\naccess tolls and charges are excluded. `tariffSource` says\nwhere the prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`\nfor the supply's contracted tariff. An hour whose published self-consumption is\nzero, and an hour without data, reports `0.00`.\n",
         "operationId" : "getSupplyHourlyConsumption",
         "parameters" : [
           {
@@ -23280,7 +24032,7 @@
     },
     "/api/v1/supplies/{supplyId}/consumption/monthly" : {
       "get" : {
-        "description" : "This endpoint retrieves monthly consumption data from Datadis for a specific supply within a given date range.\n\n**Authorization Rules:**\n- Community Admins can retrieve consumption data for any supply they administer\n- Supply owners can only retrieve consumption data for their own supplies\n\nThe consumption data includes:\n- Energy taken from the grid\n- Surplus energy (energy fed back to the grid)\n- Self-consumption energy\n- Obtain method (Real/Estimated)\n\nData is aggregated by month within the specified date range. Every energy figure\nis in kWh, rounded to 3 decimals.\n\n**Source:** each month is summed from the supply's hourly records when the series\nis read, so it is as fresh as the energy metrics.\n\n**Months with data only:** Datadis publishes a month's self-consumption around the\n10th of the following month; until then the supply's records carry consumption\nbut no self-consumption. A month is returned only when the records carrying\nself-consumption cover at least 90 % of the month's hours inside the period. A\nmonth below that is omitted, as is a month without any record, so an unpublished\nmonth never reads as zero self-consumption.\n\n**Time zone:** each month covers the local calendar month of the time zone the\napplication is configured with, not the UTC one, so its total includes the first\nand last local hours of the month and nothing from its neighbours.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\nA month is selected if and only if its local midnight on the first day falls\ninside the half-open bounds. Pass them with the zone's offset to select the months\nintended: local `2023-01-01T00:00:00+01:00` is `2022-12-31T23:00:00Z`, so a bound\nexpressed in UTC can select one month too few or too many.\n\n**Months cut by the end bound.** A month the end bound falls inside covers only\nits hours before that bound, energy and savings alike: a request ending on the\n15th returns that month's first half.\n\n**Savings:** `savingsEur` is an **estimate** of what the bucket's self-consumed\nenergy was worth. It prices the **energy term before taxes** only: the power\nterm, access tolls, charges and electricity tax are all excluded, and VAT is\napplied only where the resolved tariff carries a rate. `tariffSource` says where\nthe prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`\nfor the supply's contracted tariff -- and a single estimated stretch of the\nbucket makes the whole amount an estimate. A month whose published\nself-consumption is zero reports `0.00`.\n",
+        "description" : "This endpoint retrieves monthly consumption data from Datadis for a specific supply within a given date range.\n\n**Authorization Rules:**\n- Community Admins can retrieve consumption data for any supply they administer\n- Supply owners can only retrieve consumption data for their own supplies\n\nThe consumption data includes:\n- Energy taken from the grid\n- Surplus energy (energy fed back to the grid)\n- Self-consumption energy\n- Obtain method (Real/Estimated)\n\nData is aggregated by month within the specified date range. Every energy figure\nis in kWh, rounded to 3 decimals.\n\n**Source:** each month is summed from the supply's hourly records when the series\nis read, so it is as fresh as the energy metrics.\n\n**Months with data only:** Datadis publishes a month's self-consumption around the\n10th of the following month; until then the supply's records carry consumption\nbut no self-consumption. A month is returned only when the records carrying\nself-consumption cover at least 90 % of the month's hours inside the period. A\nmonth below that is omitted, as is a month without any record, so an unpublished\nmonth never reads as zero self-consumption.\n\n**Time zone:** each month covers the local calendar month of the time zone the\napplication is configured with, not the UTC one, so its total includes the first\nand last local hours of the month and nothing from its neighbours.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\nA month is selected if and only if its local midnight on the first day falls\ninside the half-open bounds. Pass them with the zone's offset to select the months\nintended: local `2023-01-01T00:00:00+01:00` is `2022-12-31T23:00:00Z`, so a bound\nexpressed in UTC can select one month too few or too many.\n\n**Months cut by the end bound.** A month the end bound falls inside covers only\nits hours before that bound, energy and savings alike: a request ending on the\n15th returns that month's first half.\n\n**Savings:** `savingsEur` is an **estimate** of what the bucket's self-consumed\nenergy was worth. It prices the **energy term with electricity tax and VAT**,\neach at the rate in force on the day the energy was consumed: the power term,\naccess tolls and charges are excluded. `tariffSource` says where\nthe prices came from -- `ESTIMATE` for a computed approximation, `REAL_TARIFF`\nfor the supply's contracted tariff -- and a single estimated stretch of the\nbucket makes the whole amount an estimate. A month whose published\nself-consumption is zero reports `0.00`.\n",
         "operationId" : "getSupplyMonthlyConsumption",
         "parameters" : [
           {
@@ -23832,7 +24584,7 @@
     },
     "/api/v1/supplies/{supplyId}/energy-metrics" : {
       "get" : {
-        "description" : "This endpoint aggregates the consumption data stored for a specific supply into energy\ntotals and two ratios, on a 0-1 scale:\n\n- `selfSufficiencyRatio`: self-consumed energy divided by total consumed energy.\n- `selfConsumptionRatio`: self-consumed energy divided by the energy assigned to the supply.\n  It does not apply to a plant's own supply, whose surplus is stored as 0:\n  it is then `null` with `selfConsumptionRatioStatus` `NOT_APPLICABLE`, while every\n  other figure is reported as usual. `NOTHING_ASSIGNED` means nothing was assigned to\n  the supply in the period, and `AVAILABLE` that the ratio is computed.\n  `selfConsumptionRatioBasis` reports the two figures it was computed from.\n\nBoth ratios are computed by summing every record first and dividing once, so hours of\ndifferent magnitude weigh differently. A ratio whose denominator is zero is returned as\n`null`, never as `0`.\n\n**Authorization Rules:**\n- Community Admins can retrieve energy metrics for any supply they administer\n- Supply owners can only retrieve energy metrics for their own supplies\n\n**Period:**\nThe period is resolved in exactly one of three ways, and the resolved bounds are\nalways reported in `period`, also when the caller supplied them, with an end after\nthe current hour clipped as described under **Period checks**.\n\n- `startDate` and `endDate`: an explicit period. They must be supplied together;\n  supplying exactly one of them is a bad request, as is a `startDate` that is not\n  before the `endDate`.\n- `period=LATEST_PUBLISHED_MONTH`: the most recent complete calendar month, in the\n  supply's time zone, that the distributor has published for **this supply**. It is\n  resolved from this supply's records alone: a month published only for another supply\n  of the same owner is never chosen. An hourly record is published when it carries\n  self-consumed energy, zero included, and surplus alone does not count. A month is\n  published when at least 90% of the hours it could have published carry it: the hours\n  of the month from the later of its first hour and the supply's first published\n  record. An unpublished or partly published month is skipped and the search continues\n  backwards through the 24 complete months before the current one. The current month is\n  never a candidate. The period runs from `00:00` of the first day of the month to\n  `00:00` of the first day of the next month. Combining it with `startDate` or\n  `endDate` is a bad request.\n- Neither: from the supply's earliest stored record to the end of the hour of its\n  latest.\n\nWhen no period can be resolved -- no published month in the search window, or no\nstored record at all -- the response is still successful, with null period bounds,\nzero totals and null ratios.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\nThe `coverage` object reports how many hourly records were found against how many hours\nthe period spans, so a partially synchronised period can be told apart from a genuinely\nlow ratio. Hours without a record are left out of the sums; they are never counted as\nzero.\n\n**Savings:**\n`savings.amountEur` is an **estimate** of what the self-consumed energy of the period\nwas worth. It prices the **energy term before taxes** only: the power term, access\ntolls, charges and electricity tax are all excluded, and VAT is applied only where the\nresolved tariff carries a rate. `savings.tariffSource` says where the prices came from\n-- `ESTIMATE` for a computed approximation, `REAL_TARIFF` for the supply's contracted\ntariff -- and a single estimated stretch of the period makes the whole amount an\nestimate.\n\nThe amount **does not distinguish missing data from genuine zeros**: an hour with no\nstored record contributes nothing, exactly as it contributes nothing to the energy\ntotals, so a partially synchronised period yields a proportionally low figure rather\nthan a flagged one. `coverage` is the field that tells the two apart. Consistently\nwith that, an explicitly requested period containing no record at all is worth `0.00`,\nwhile `null` is reserved for the case where no period could be resolved: a supply\nwith no stored record and no requested period, or no published month for\n`period=LATEST_PUBLISHED_MONTH`.\n",
+        "description" : "This endpoint aggregates the consumption data stored for a specific supply into energy\ntotals and two ratios, on a 0-1 scale:\n\n- `selfSufficiencyRatio`: self-consumed energy divided by total consumed energy.\n- `selfConsumptionRatio`: self-consumed energy divided by the energy assigned to the supply.\n  It does not apply to a plant's own supply, whose surplus is stored as 0:\n  it is then `null` with `selfConsumptionRatioStatus` `NOT_APPLICABLE`, while every\n  other figure is reported as usual. `NOTHING_ASSIGNED` means nothing was assigned to\n  the supply in the period, and `AVAILABLE` that the ratio is computed.\n  `selfConsumptionRatioBasis` reports the two figures it was computed from.\n\nBoth ratios are computed by summing every record first and dividing once, so hours of\ndifferent magnitude weigh differently. A ratio whose denominator is zero is returned as\n`null`, never as `0`.\n\n**Authorization Rules:**\n- Community Admins can retrieve energy metrics for any supply they administer\n- Supply owners can only retrieve energy metrics for their own supplies\n\n**Period:**\nThe period is resolved in exactly one of three ways, and the resolved bounds are\nalways reported in `period`, also when the caller supplied them, with an end after\nthe current hour clipped as described under **Period checks**.\n\n- `startDate` and `endDate`: an explicit period. They must be supplied together;\n  supplying exactly one of them is a bad request, as is a `startDate` that is not\n  before the `endDate`.\n- `period=LATEST_PUBLISHED_MONTH`: the most recent complete calendar month, in the\n  supply's time zone, that the distributor has published for **this supply**. It is\n  resolved from this supply's records alone: a month published only for another supply\n  of the same owner is never chosen. An hourly record is published when it carries\n  self-consumed energy, zero included, and surplus alone does not count. A month is\n  published when at least 90% of the hours it could have published carry it: the hours\n  of the month from the later of its first hour and the supply's first published\n  record. An unpublished or partly published month is skipped and the search continues\n  backwards through the 24 complete months before the current one. The current month is\n  never a candidate. The period runs from `00:00` of the first day of the month to\n  `00:00` of the first day of the next month. Combining it with `startDate` or\n  `endDate` is a bad request.\n- Neither: from the supply's earliest stored record to the end of the hour of its\n  latest.\n\nWhen no period can be resolved -- no published month in the search window, or no\nstored record at all -- the response is still successful, with null period bounds,\nzero totals and null ratios.\n\n**Range bounds:** the period is half-open, `[startDate, endDate)`: `startDate` is\nincluded and `endDate` is not, so a record stamped exactly at `endDate` belongs to the\nnext period. A calendar day runs from `00:00` of that day to `00:00` of the following\nday, and a calendar month from `00:00` of its first day to `00:00` of the first day of\nthe next month, each bound with the offset in force at that instant -- for example\n`2026-08-01T00:00:00+02:00` to `2026-09-01T00:00:00+02:00` for August 2026 in\nEurope/Madrid.\n\n**Period checks:** a requested period is checked in this order, and the first rule it\nbreaks is answered 400 with that rule's code:\n\n1. `period` is not combined with `startDate` or `endDate`, on the operations that accept\n   `period` (`ENERGY_METRICS_PERIOD_CONFLICTING`).\n2. `startDate` and `endDate` are supplied together (`ENERGY_METRICS_PERIOD_INCOMPLETE`).\n   On the operations where both are required, a missing one is a bad request before any\n   of these checks.\n3. `startDate` is strictly before `endDate`: equal bounds make an empty period\n   (`ENERGY_METRICS_PERIOD_START_AFTER_END`).\n4. `startDate` is before the start of the current hour, read in the period's time zone\n   (`ENERGY_METRICS_PERIOD_START_IN_FUTURE`).\n5. `endDate` is no later than 24 calendar months after `startDate`, counted in the\n   period's time zone on the bounds as requested (`ENERGY_METRICS_PERIOD_TOO_LONG`).\n   The refusal states the limit in `params`: `amount`, a whole number written as a\n   string, and `unit`, `MONTHS` or `DAYS` -- here `{\"amount\": \"24\", \"unit\": \"MONTHS\"}`.\n\nA period that passes them and ends after the start of the current hour is then clipped\nto end there, before any data is read: no hour that has not fully happened is read or\ncounted as expected. Energy metrics report the clipped end in `period`, and a series\nemits no bucket starting at or after it.\n\nThe `coverage` object reports how many hourly records were found against how many hours\nthe period spans, so a partially synchronised period can be told apart from a genuinely\nlow ratio. Hours without a record are left out of the sums; they are never counted as\nzero.\n\n**Savings:**\n`savings.amountEur` is an **estimate** of what the self-consumed energy of the period\nwas worth. It prices the **energy term with electricity tax and VAT**,\neach at the rate in force on the day the energy was consumed: the power term,\naccess tolls and charges are excluded. `savings.tariffSource` says where the prices came from\n-- `ESTIMATE` for a computed approximation, `REAL_TARIFF` for the supply's contracted\ntariff -- and a single estimated stretch of the period makes the whole amount an\nestimate.\n\nThe amount **does not distinguish missing data from genuine zeros**: an hour with no\nstored record contributes nothing, exactly as it contributes nothing to the energy\ntotals, so a partially synchronised period yields a proportionally low figure rather\nthan a flagged one. `coverage` is the field that tells the two apart. Consistently\nwith that, an explicitly requested period containing no record at all is worth `0.00`,\nwhile `null` is reserved for the case where no period could be resolved: a supply\nwith no stored record and no requested period, or no published month for\n`period=LATEST_PUBLISHED_MONTH`.\n",
         "operationId" : "getSupplyEnergyMetrics",
         "parameters" : [
           {
@@ -25497,7 +26249,7 @@
     },
     "/api/v1/users/current/password" : {
       "put" : {
-        "description" : "This endpoint lets the authenticated user replace their own password. It always acts on the\ncaller, so it cannot be used to change anybody else's password.\n\nThe current password must be supplied and must match. The new password must be between 15 and\n64 characters long, counting each Unicode code point as one, and no more than 72 bytes once\nUTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no\ncomposition rules, and the value is never trimmed or transformed. The new password must differ\nfrom the current one; the comparison is exact, so a value that differs only by case or by leading\nor trailing spaces is a different password.\n\nOn success the server answers 204, clears the \"must change password\" flag and ends every\nsession opened with the previous password: every token issued before the change, including the\none used for this request, is rejected with 401 from then on, and the access cookie is removed.\nThe client must log in again with the new password.\n\nA wrong current password is answered 400 with the `USER_CURRENT_PASSWORD_INCORRECT` code, never\n401, and changes nothing. A new password that breaks the policy is answered 400 with the\n`USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter naming the rule that failed:\n`TOO_SHORT`, `TOO_LONG` or `TOO_MANY_BYTES`. A correct current password with a new password\nexactly equal to it is answered 400 with the `USER_PASSWORD_UNCHANGED` code: nothing is changed,\nthe caller's token stays valid and the \"must change password\" flag stays as it was. A wrong\ncurrent password is reported as such, whatever the new password.\n\nNeither an unchanged password nor a policy violation counts as a failed attempt. Wrong current\npasswords count together with failed logins on the same account. After 5 failures\non the account, or 20 from the same client address, within 15 minutes, further changes are\nanswered 429 with a Retry-After header, without checking the current password and without\naffecting the caller's token, until the 15 minutes that started with the first failure have\npassed.\n\n**Required: any authenticated user (changes their own password).**",
+        "description" : "This endpoint lets the authenticated user replace their own password. It always acts on the\ncaller, so it cannot be used to change anybody else's password.\n\nThe current password must be supplied and must match. The new password must be between 10 and\n64 characters long, counting each Unicode code point as one, and no more than 72 bytes once\nUTF-8 encoded. Any character is accepted, including spaces and non-ASCII letters; there are no\ncomposition rules, and the value is never trimmed or transformed. A password that is common or\nhas appeared in data breaches, compared case-insensitively against a list bundled with the\napplication, is refused. The new password must differ\nfrom the current one; the comparison is exact, so a value that differs only by case or by leading\nor trailing spaces is a different password.\n\nOn success the server answers 204, clears the \"must change password\" flag and ends every\nsession opened with the previous password: every token issued before the change, including the\none used for this request, is rejected with 401 from then on, and the access cookie is removed.\nThe client must log in again with the new password.\n\nA wrong current password is answered 400 with the `USER_CURRENT_PASSWORD_INCORRECT` code, never\n401, and changes nothing. A new password that breaks the policy is answered 400 with the\n`USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter naming the rule that failed:\n`TOO_SHORT`, `TOO_LONG`, `TOO_MANY_BYTES` or `COMPROMISED`, checked in that order. A correct\ncurrent password with a new password\nexactly equal to it is answered 400 with the `USER_PASSWORD_UNCHANGED` code: nothing is changed,\nthe caller's token stays valid and the \"must change password\" flag stays as it was. A wrong\ncurrent password is reported as such, whatever the new password.\n\nNeither an unchanged password nor a policy violation counts as a failed attempt. Wrong current\npasswords count together with failed logins on the same account. After 5 failures\non the account, or 20 from the same client address, within 15 minutes, further changes are\nanswered 429 with a Retry-After header, without checking the current password and without\naffecting the caller's token, until the 15 minutes that started with the first failure have\npassed.\n\n**Required: any authenticated user (changes their own password).**",
         "operationId" : "changePassword",
         "requestBody" : {
           "content" : {
@@ -25539,13 +26291,13 @@
                       "errors" : [
                         {
                           "code" : "USER_PASSWORD_POLICY_VIOLATION",
-                          "message" : "The password must be at least 15 characters long.",
+                          "message" : "The password must be at least 10 characters long.",
                           "params" : {
                             "rule" : "TOO_SHORT"
                           }
                         }
                       ],
-                      "message" : "The password must be at least 15 characters long.",
+                      "message" : "The password must be at least 10 characters long.",
                       "status" : 400,
                       "timestamp" : "2026-10-04T10:10:25.534035352+02:00",
                       "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"
@@ -25738,7 +26490,7 @@
     },
     "/api/v1/users/password/reset" : {
       "post" : {
-        "description" : "This endpoint completes the recovery of a forgotten password with the token from the emailed link\n`<web client>/reset-password#<token>`. It requires no authentication, and any token presented with\nit is ignored.\n\nThe new password must meet the same policy as a password change: between 15 and 64 characters,\ncounting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded. It must\ndiffer from the current password.\n\nOn success the server answers 204 with no body: the token is used up, the password is replaced,\nthe \"must change password\" flag is cleared, and every session opened before is ended. The user is\nnot logged in; the client must log in with the new password. The account's failed login attempts\nare forgotten, so a user throttled for them can log in at once.\n\nA token that is unknown, malformed, expired, already used or replaced by a newer one, or whose user\nhas been disabled, is answered 400 with the `USER_PASSWORD_RESET_TOKEN_INVALID` code, the same in\nevery case. A new password that breaks the policy is answered 400 with the\n`USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter, and one equal to the current password\nwith the `USER_PASSWORD_UNCHANGED` code; in both cases nothing changes and the token can be used\nagain.\n\nEvery invalid token counts against the client address, together with failed logins and password\nchanges: after 20 within 15 minutes, further resets are answered 429 with a Retry-After header\nuntil the 15 minutes that started with the first failure have passed.",
+        "description" : "This endpoint completes the recovery of a forgotten password with the token from the emailed link\n`<web client>/reset-password#<token>`. It requires no authentication, and any token presented with\nit is ignored.\n\nThe new password must meet the same policy as a password change: between 10 and 64 characters,\ncounting each Unicode code point as one, and no more than 72 bytes once UTF-8 encoded; a\npassword that is common or has appeared in data breaches, compared case-insensitively against a\nlist bundled with the application, is refused. It must differ from the current password.\n\nOn success the server answers 204 with no body: the token is used up, the password is replaced,\nthe \"must change password\" flag is cleared, and every session opened before is ended. The user is\nnot logged in; the client must log in with the new password. The account's failed login attempts\nare forgotten, so a user throttled for them can log in at once.\n\nA token that is unknown, malformed, expired, already used or replaced by a newer one, or whose user\nhas been disabled, is answered 400 with the `USER_PASSWORD_RESET_TOKEN_INVALID` code, the same in\nevery case. A new password that breaks the policy is answered 400 with the\n`USER_PASSWORD_POLICY_VIOLATION` code and a `rule` parameter, and one equal to the current password\nwith the `USER_PASSWORD_UNCHANGED` code; in both cases nothing changes and the token can be used\nagain.\n\nEvery invalid token counts against the client address, together with failed logins and password\nchanges: after 20 within 15 minutes, further resets are answered 429 with a Retry-After header\nuntil the 15 minutes that started with the first failure have passed.",
         "operationId" : "resetPassword",
         "requestBody" : {
           "content" : {
@@ -25780,13 +26532,13 @@
                       "errors" : [
                         {
                           "code" : "USER_PASSWORD_POLICY_VIOLATION",
-                          "message" : "The password must be at least 15 characters long.",
+                          "message" : "The password must be at least 10 characters long.",
                           "params" : {
                             "rule" : "TOO_SHORT"
                           }
                         }
                       ],
-                      "message" : "The password must be at least 15 characters long.",
+                      "message" : "The password must be at least 10 characters long.",
                       "status" : 400,
                       "timestamp" : "2026-10-04T10:10:25.534035352+02:00",
                       "traceId" : "6e602860-80f7-4802-b20f-8b53fb011013"

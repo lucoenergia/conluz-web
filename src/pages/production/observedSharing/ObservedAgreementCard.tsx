@@ -4,42 +4,73 @@ import { Link as RouterLink } from "react-router";
 import { SharingAgreementStatusChip } from "../../../components/SharingAgreementStatusChip";
 import { sxStyles } from "../../../theme/sx";
 import { colors, radii } from "../../../theme/tokens";
-import { ANOMALY_COUNT_ORDER, ANOMALY_TYPE_LABEL, COEFFICIENT_STATUS_LABEL, STATUS_COUNT_ORDER } from "./observedSharingLabels";
-import { formatAgreementApplication, formatDay, formatPercentageOrNone } from "./observedSharingFormat";
+import {
+  ANOMALY_COUNT_ORDER,
+  ANOMALY_TYPE_LABEL,
+  COEFFICIENT_STATUS_LABEL,
+  STATUS_COUNT_ORDER,
+  UNATTRIBUTED_PRODUCTION_LABEL,
+} from "./observedSharingLabels";
+import { formatAgreementApplication, formatDay } from "./observedSharingFormat";
 import { agreementObservationPath } from "./observedSharingRoutes";
 import type { SharingAgreementObservationSummaryResponse } from "../../../api/models";
 import { RecommendationFindings } from "./RecommendationFindings";
+import { UnattributedProduction } from "./UnattributedProduction";
 import { recommendationFindings } from "./recommendationFindings";
 
 const sectionLabelSx = { color: colors.text.subtle, fontWeight: 600 } as const;
 
+/**
+ * A count before its label, in a column of tabular figures so the counts
+ * align. A zero reads in the secondary text colour, so the rows that hold
+ * something stand out (UI-AGR-023).
+ */
 const CountRow: FC<{ label: string; count: number }> = ({ label, count }) => (
-  <Box component="li" sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
-    <Typography variant="body2" sx={{ color: colors.text.body }}>
-      {label}
-    </Typography>
-    <Typography variant="body2" sx={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+  <Box
+    component="li"
+    sx={{ display: "flex", alignItems: "baseline", gap: 1, color: count === 0 ? "text.secondary" : colors.text.body }}
+  >
+    <Typography
+      component="span"
+      variant="body2"
+      sx={{
+        minWidth: "3ch",
+        flexShrink: 0,
+        textAlign: "right",
+        fontWeight: count === 0 ? 400 : 600,
+        fontVariantNumeric: "tabular-nums",
+        color: "inherit",
+      }}
+    >
       {count}
+    </Typography>{" "}
+    <Typography component="span" variant="body2" sx={{ color: "inherit" }}>
+      {label}
     </Typography>
   </Box>
 );
 
 const countListSx = { listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 0.25 } as const;
 
-/** "Salen del reparto: 2 · 1 con fecha distinta", only when some supply leaves with the agreement. */
+const countTotal = (counts: SharingAgreementObservationSummaryResponse["leavingStatusCounts"]) =>
+  Object.values(counts).reduce((sum, count) => sum + count, 0);
+
+/**
+ * "Salen del reparto: 2 · 1 con fecha distinta", only when some supply leaves
+ * with the agreement (UI-AGR-023): those absent from it and those whose
+ * coefficient drops to 0 %, each as the summary counts them, never inferred.
+ */
 function leavingText(summary: SharingAgreementObservationSummaryResponse): string | undefined {
-  const counts = summary.leavingStatusCounts;
-  const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+  const { leavingStatusCounts: absent, leavesDistributionStatusCounts: atZero } = summary;
+  const total = countTotal(absent) + countTotal(atZero);
   if (total === 0) return undefined;
-  const different = counts.appliedDifferentDate;
+  const different = absent.appliedDifferentDate + atZero.appliedDifferentDate;
   return different > 0 ? `Salen del reparto: ${total} · ${different} con fecha distinta` : `Salen del reparto: ${total}`;
 }
 
 interface ObservedAgreementCardProps {
   plantId: string;
   summary: SharingAgreementObservationSummaryResponse;
-  /** Supplies of the plant without any valid day, whose registered share the unexplained part includes. */
-  suppliesWithoutDataCount: number;
 }
 
 /**
@@ -47,12 +78,11 @@ interface ObservedAgreementCardProps {
  * it was applied, its status counts, its anomalies by type, the part no supply
  * with data received, and its recommendations.
  */
-export const ObservedAgreementCard: FC<ObservedAgreementCardProps> = ({ plantId, summary, suppliesWithoutDataCount }) => {
+export const ObservedAgreementCard: FC<ObservedAgreementCardProps> = ({ plantId, summary }) => {
   const agreement = summary.sharingAgreement;
   const findings = recommendationFindings(plantId, summary);
   const anomalyCount = summary.anomalies.length;
   const leaving = leavingText(summary);
-  const unallocated = summary.unallocatedShare;
 
   return (
     <Box
@@ -79,7 +109,9 @@ export const ObservedAgreementCard: FC<ObservedAgreementCardProps> = ({ plantId,
         </Link>
         <SharingAgreementStatusChip status={agreement.status} />
         <Typography variant="body2" sx={{ color: colors.text.body }}>
-          {summary.distributorFileSentOn ? `Fichero enviado el ${formatDay(summary.distributorFileSentOn)}` : "Sin registrar"}
+          {summary.distributorFileSentOn
+            ? `Fichero enviado el ${formatDay(summary.distributorFileSentOn)}`
+            : "Fichero enviado: sin registrar"}
         </Typography>
         <Typography sx={{ fontWeight: 600 }}>{formatAgreementApplication(summary)}</Typography>
       </Box>
@@ -122,17 +154,9 @@ export const ObservedAgreementCard: FC<ObservedAgreementCardProps> = ({ plantId,
 
       <Box>
         <Typography variant="body2" sx={sectionLabelSx}>
-          Sin explicar (1 − Σβ)
+          {UNATTRIBUTED_PRODUCTION_LABEL}
         </Typography>
-        <Typography sx={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
-          {formatPercentageOrNone(unallocated?.unallocated, 1)}
-        </Typography>
-        {unallocated && unallocated.registeredShareWithoutData > 0 && suppliesWithoutDataCount > 0 && (
-          <Typography variant="body2" sx={{ color: colors.text.subtle }}>
-            {formatPercentageOrNone(unallocated.registeredShareWithoutData, 1)} es{" "}
-            {suppliesWithoutDataCount === 1 ? "del punto sin datos" : `de los ${suppliesWithoutDataCount} puntos sin datos`}
-          </Typography>
-        )}
+        <UnattributedProduction share={summary.unallocatedShare} variant="body1" />
       </Box>
 
       {findings.length > 0 && (

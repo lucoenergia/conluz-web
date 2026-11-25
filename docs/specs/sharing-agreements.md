@@ -4,18 +4,21 @@
 | --- | --- |
 | **Prefix** | `UI-AGR` |
 | **Status** | Active |
-| **Routes** | `/plants/:plantId/sharing-agreements`, `/plants/:plantId/sharing-agreements/:sharingAgreementId`, `/plants/:plantId/sharing-agreements/observed`, `/plants/:plantId/sharing-agreements/observed/:sharingAgreementId` |
+| **Routes** | `/plants/:plantId/sharing-agreements`, `/plants/:plantId/sharing-agreements/:sharingAgreementId`, `/plants/:plantId/sharing-agreements/observed`, `/plants/:plantId/sharing-agreements/observed/:sharingAgreementId`, `/plants/:plantId/sharing-agreements/:sharingAgreementId/application-dates` |
 | **Roles** | A caller with the plant's `canListSharingAgreements`. Authoring and lifecycle actions: the capabilities each agreement and coefficient carries |
 | **Domain rules** | n/a |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `ListPagination` (the list; its shared rules are `record-lists.md`) |
-| **Last reviewed against code** | #418 |
+| **Last reviewed against code** | #419 |
 
 Scope: the rules introduced in #277 for sharing-agreement states migrated from visual tests to
 Vitest, the rules #350 introduced for the list's rows and for how a status is shown, and the
 coefficient history's layout (#369), the create dialog's starting power (#407), and how a
 coefficient's end date is shown and worded (#420), the distributor file sent date (#417), and the
 observed sharing view: a plant's agreements and one agreement compared with what Datadis shows
-(#418). Not exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
+(#418), and setting an agreement's application dates after a dry run of every effect, with the
+activation confirmation that lists the supplies a first activation closes (#419), and the terms,
+counts and help that make the observed sharing readable, the unattributed production and its
+breakdown, and each row's measurable days (#419). Not exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
 list shares, the agreement list among them, are in [`record-lists.md`](record-lists.md).
 
 ## Purpose
@@ -303,21 +306,35 @@ is in force today.
 
 - **Status:** Active
 - **Rule:** The plant's observed sharing MUST show one card per agreement, in the order the analysis
-  returns them. Each card MUST show the distributor file sent date or "Sin registrar", the
-  application the analysis observed, its supplies' status counts, its leaving counts when there is
-  any, its anomaly counts by type, and the part no supply with data received (1 − Σβ). Each card
+  returns them. Each card MUST show "Fichero enviado el <fecha>", or "Fichero enviado: sin registrar", the
+  application the analysis observed, its supplies' status counts, "Salen del reparto: N · M con
+  fecha distinta" when some supply leaves, its anomaly counts by type, and its unattributed
+  production (UI-AGR-040). Each status and anomaly count MUST come before its label, in tabular figures so the counts align, and a zero
+  count MUST read in the secondary text colour. Each card
   and the agreement's page MUST show every recommendation returned, in order, as a finding under
   "Qué revisar": a title stating what was found, a detail from the backend's counts, and a link
-  worded apart from the title. "Fechas distintas de las registradas" MUST offer no link until
-  #419, and still counts as an agreement to review. A "none" recommendation MUST show nothing. On
+  worded apart from the title. "Fechas distintas de las registradas" MUST link to "Fijar fechas",
+  which opens the set application dates flow from this agreement's observation (UI-AGR-032), and
+  still counts as an agreement to review. A "none" recommendation MUST show nothing. An impossible
+  unexplained share adds a finding of its own, before the recommendations (UI-AGR-039). On
   the agreement's page, "Con avisos" MUST keep the coefficient rows applied on another
   date, not distinguishable, or of a supply with an anomaly of the agreement, and the leaving rows
-  that left on another date; its count MUST equal the rows it shows.
+  that left on another date; its count MUST equal the rows it shows. In "Salen del reparto", N MUST
+  be the total of `leavingStatusCounts` and `leavesDistributionStatusCounts`, and M the sum of
+  their `appliedDifferentDate`; the line MUST leave out "· M con fecha distinta" when M is 0, and
+  MUST NOT show when N is 0. Both counts MUST be read from the summary, never inferred from a
+  coefficient's value.
 - **Rationale:** This is what an admin comes to see. The backend owns the order and the
   recommendations; restating either here would let the two disagree. A finding says what the
-  analysis saw, which the admin can check, rather than an instruction.
+  analysis saw, which the admin can check, rather than an instruction. A count read down a column
+  is compared faster than one at the end of a label of its own length, and the statuses that hold
+  rows stand out from those that hold none. A supply leaves whether it is absent from the agreement
+  or its coefficient drops to 0 %; the card counts both, as the agreement's page lists both
+  (UI-AGR-030).
 - **Implements:** n/a
-- **Source:** #418; findings layout: maintainer decision in the #418 review
+- **Source:** #418; findings layout: maintainer decision in the #418 review; the "Fijar fechas"
+  link, the count before its label, the impossible share's finding and the sent date's wording:
+  #419; the supplies that drop to 0 % in "Salen del reparto": lucoenergia/conluz#623
 
 ### UI-AGR-024 — Anomalies are grouped by agreement and supply, with their evidence
 
@@ -326,11 +343,23 @@ is in force today.
   agreements, with those attributed to none last under "Sin acuerdo atribuido". Within an
   agreement they MUST be grouped by supply, in the order each supply first appears, keeping the
   analysis order within a supply; an anomaly about the whole agreement sits under the supply it
-  names. Each anomaly MUST show its type, its start (or range), its end (or "en curso") and the β
-  the backend observed with the valid days it rests on.
+  names. Each anomaly MUST show its type, its start (or range), its end (or "en curso") and its
+  evidence as "β esperada X % · β observada Y % · N días medibles" ("1 día medible" for one): X
+  the backend's `expectedBeta`, 0 included, Y the β it observed, both in % with 4 decimals, and N
+  the days it rests on. An anomaly attributed to no agreement has no expected β, and its evidence
+  MUST leave out "β esperada X % · ". The view MUST NOT derive an expected β. Wherever the view
+  counts those days, it MUST call them "días medibles", never "días válidos". UNKNOWN_COEFFICIENT
+  MUST read "Coeficiente no registrado".
 - **Rationale:** An admin reviews them without a flood, and can check each against the evidence.
+  "Recibe X %" read as the share the supply should get, and a "valid" day suggested the other days
+  were wrong, when they only lack complete data. "Desconocido" said what the application does not
+  know; "no registrado" says what was seen. An observed β alone does not say how far off it is;
+  the expected one beside it does. It depends on the agreement the backend attributes the anomaly
+  to, which only the backend knows, so it comes from the API and is absent when nothing is
+  attributed.
 - **Implements:** n/a
-- **Source:** #418, lucoenergia/conluz#597
+- **Source:** #418, lucoenergia/conluz#597; the evidence's wording, "días medibles" and
+  "Coeficiente no registrado": #419; the expected β: lucoenergia/conluz#611
 
 ### UI-AGR-025 — Each kind of date reads one way
 
@@ -349,10 +378,11 @@ is in force today.
 - **Status:** Active
 - **Rule:** Every β MUST be shown as a percentage with 4 decimals. An observed β within ±0.1
   percentage points of the registered one MUST read as equal; beyond that, it MUST take the warning
-  style.
-- **Rationale:** It is the analysis's own tolerance; a difference inside it is not a finding.
+  style. β is feminine wherever it is labelled: "β registrada", "β observada".
+- **Rationale:** It is the analysis's own tolerance; a difference inside it is not a finding. β
+  reads "la beta".
 - **Implements:** n/a
-- **Source:** #418
+- **Source:** #418; the feminine labels: #419
 
 ### UI-AGR-027 — A proposed date never reads as an observed one
 
@@ -363,14 +393,18 @@ is in force today.
 - **Implements:** n/a
 - **Source:** #418
 
-### UI-AGR-028 — No reason is given for missing data or a supply that cannot be computed
+### UI-AGR-028 — No reason is given for missing data; "No calculables" says once why its supplies are left out
 
 - **Status:** Active
-- **Rule:** A supply without Datadis data MUST show "Sin datos de Datadis", and a supply that cannot
-  be computed "No calculable", with no reason for either.
-- **Rationale:** The application cannot know the reason.
+- **Rule:** A supply without Datadis data MUST show "Sin datos de Datadis", with no reason. A supply
+  that cannot be computed MUST show "No calculable", with no reason of its own; the "No
+  calculables" section MUST say, in one line under its title, that its supplies hold a coefficient
+  in this plant and in another, that their energy cannot be split between the plants, and that they
+  are left out of the analysis. It MUST NOT name Σβ (UI-AGR-040).
+- **Rationale:** The application cannot know why data is missing. It does know what makes a supply
+  not computable: the analysis defines it, the same for every supply listed.
 - **Implements:** n/a
-- **Source:** #418
+- **Source:** #418; the "No calculables" explanation: #419
 
 ### UI-AGR-029 — The view sets no order of work, proposes no coefficient and claims no real time
 
@@ -385,13 +419,20 @@ is in force today.
 ### UI-AGR-030 — Supplies leaving the distribution are shown with the agreement they leave
 
 - **Status:** Active
-- **Rule:** The agreement's page MUST list under "Salen del reparto" each supply that leaves the
-  distribution with it, with the agreement it leaves, its β there, its observed leaving date and
-  its status. A leaving row applied on its date MUST read "Salida · misma fecha", and on another
-  date "Salida · otra fecha"; any other status reads as a coefficient row's.
+- **Rule:** The agreement's page MUST list under "Salen del reparto" every supply that leaves the
+  distribution with it, with a "Motivo": each leaving row as "No está en este acuerdo", with the
+  agreement it leaves, its β there, its observed leaving date and its status; and each coefficient
+  row the backend flags with `leavesDistribution` as "Pasa a 0 %", with its β registrada, β
+  observada, observed date and status. The heading's count MUST include both. A flagged row MUST
+  also stay under "Por punto de suministro", marked "Sale del reparto". The view MUST NOT infer
+  from a coefficient's value that its supply leaves. A leaving row applied on its date MUST read
+  "Salida · misma fecha", and on another date "Salida · otra fecha"; any other status reads as a
+  coefficient row's.
 - **Rationale:** A leaving supply keeps receiving attributed production until its coefficient ends.
+  A supply whose coefficient drops to 0 % leaves as surely as one left out of the agreement, but
+  only the backend knows the previous agreement's value, so only its flag says so.
 - **Implements:** n/a
-- **Source:** #418
+- **Source:** #418; the rows that drop to 0 %: #419, lucoenergia/conluz#621
 
 ### UI-AGR-031 — An observed β comes only from the backend, wherever a conclusion is stated
 
@@ -401,6 +442,221 @@ is in force today.
 - **Rationale:** Admins must be able to verify the analysis, against the figure it rests on.
 - **Implements:** n/a
 - **Source:** #418, lucoenergia/conluz#597
+
+### UI-AGR-032 — Prefilled dates are marked; uncertain dates are left for the admin; every unselected row says why
+
+- **Status:** Active
+- **Rule:** Opened from the agreement, every date of the set application dates flow MUST start
+  empty, and the undated coefficients MUST start selected. Opened from observed sharing, an exact
+  observed date MUST be prefilled and marked "Observada". An exact proposed date, for a coefficient
+  whose change cannot be observed, MUST be prefilled and marked "Propuesta", with the explanation
+  the observed sharing page gives (UI-AGR-027). An observed range or open date MUST be left empty,
+  with the observed value as its hint and "Elige una fecha". Any other row MUST show its stored
+  date, or none, unmarked. A row with a prefilled date MUST start selected; a row with a range or
+  open date MUST start unselected, and so MUST a row already dated, whatever the observation says.
+  An already dated row MUST NOT hold its exact observed or proposed date while unselected; marking
+  it MUST prefill that date, and unmarking it MUST empty the field. Below its field, an unselected
+  row MUST say why it is unselected: an open date, "Observada el D o antes: Datadis no tiene datos
+  anteriores. Elige la fecha real y márcalo."; a range, "Observada entre el D1 y el D2. Elige una
+  fecha y márcalo." ("Propuesta" in place of "Observada" for a proposed open date or range); a dated
+  row observed on its stored local day, "Fecha registrada correcta."; a dated row observed on
+  another day, "Registrada D · Observada D'. Márcalo para corregirla."; a dated row with a proposed
+  date, on any day, "Registrada D · Propuesta D'. Márcalo para usarla."; the plant's own supply
+  (NOT_OBSERVABLE), "Punto de la planta: Datadis no permite observar su fecha. Normalmente es la
+  misma que la del resto del acuerdo; márcalo y ponla a mano."; a NOT_OBSERVED row, in the warning
+  tone and still while marked, "Datadis nunca muestra este coeficiente aplicado (recibe un X %).
+  Compruébalo en el reparto observado antes de fijar una fecha.", X its `observedBeta` in % with 4
+  decimals and the parenthesis left out when the analysis gave none, with "Ver en el reparto
+  observado" linking to the agreement's observation; a NO_DATA row, "Sin datos de Datadis: no se
+  puede comprobar. Pon la fecha a mano si la conoces."; any other row, "Sin cambios".
+  A date edited away from the one it was prefilled with MUST show that one beside it. A leaving
+  supply observed leaving on an exact day MUST start with that day as its closing date, marked
+  "Observada"; one observed on a range or open date MUST start without one, with its hint.
+- **Rationale:** The admin decides the dates. An observed date is evidence and a proposed one is
+  not, so neither may pass for the other, and the client infers no day the backend did not give.
+  Changing a stored date rewrites a period production was attributed by, so it is never preselected.
+  "Sin cambios" on every unselected row left the admin unable to tell a row waiting for a date from
+  a correct one. A proposed date is no evidence, so it never confirms a stored date. A greyed
+  observed date in a disabled field read as a value already set. A NOT_OBSERVED coefficient may
+  never have been applied by the distributor, and a date set over it would hide that.
+- **Implements:** n/a
+- **Source:** #419; the unselected rows' reasons: #419 review
+
+### UI-AGR-033 — The preview is not reachable with a missing or future date
+
+- **Status:** Active
+- **Rule:** "Ver vista previa" MUST stay disabled while a selected row has no date, or a date that
+  is invalid or after today, whether typed or picked, and while nothing is selected and no closing
+  date is listed. The reason MUST be visible body text; with three missing dates or fewer and no
+  invalid one, it MUST name their rows.
+- **Rationale:** A dry run of an incomplete or future request can only be refused; the admin
+  should see what to fix where they are fixing it.
+- **Implements:** n/a
+- **Source:** #419
+
+### UI-AGR-034 — Confirming follows an error-free dry run that shows every effect
+
+- **Status:** Active
+- **Rule:** The preview MUST render what the dry run (`previewPartitionCoefficientDates`) returns:
+  how many coefficients get a date, how many previous coefficients change their end and how many
+  supplies leave the distribution, the leaving closures and the coefficients flagged
+  `leavesDistribution`; each coefficient's new period, a flagged one marked "Sale del reparto (0
+  %)", and each move of the end of a previous coefficient of its supply; each leaving closure;
+  each agreement whose status changes; and the community's start date when it moves, explained as
+  moving the payback. A closure the backend applies by default on a first activation MUST be
+  marked "Cierre por defecto: fecha más temprana del acuerdo". A date before the day the
+  agreement's file was sent MUST carry a note that does not block confirming. Each leaving supply
+  MUST have an editable closing date, and editing one MUST run the dry run again with it listed. A
+  refused dry run MUST show each row's error in the catalogue's words. "Confirmar y aplicar" MUST
+  be enabled only while the dry run on screen answered, without error, for exactly what is
+  entered.
+- **Rationale:** Nothing may be written that the admin has not seen in full. A default closure is
+  written without having been asked for, so it is the one most in need of saying so.
+- **Implements:** n/a
+- **Source:** #419, lucoenergia/conluz#583, lucoenergia/conluz#593; the coefficients that drop to
+  0 %: lucoenergia/conluz#621
+
+### UI-AGR-035 — The result shows the effects as written, and every affected read is refreshed
+
+- **Status:** Active
+- **Rule:** After a write applies, the result MUST list the effects from the write's own response,
+  never the preview's, each coefficient flagged `leavesDistribution` among the supplies that
+  leave, with the day it drops to 0 %. Every write that dates coefficients, setting the dates or
+  activating, MUST invalidate every agreement and coefficient set of the plant, the plant's active
+  coefficients, its observed sharing and each agreement's, every member's payback and the
+  community's energy metrics.
+- **Rationale:** There is no version token: the write validates again and may differ from the
+  preview. A moved community start date moves every member's payback.
+- **Implements:** n/a
+- **Source:** #419; the coefficients that drop to 0 %: lucoenergia/conluz#621
+
+### UI-AGR-036 — A refused write applies nothing and keeps the dates
+
+- **Status:** Active
+- **Rule:** A write answered with a refusal (409, or 400) MUST say that no data was changed, show
+  each row's error in the catalogue's words and keep every date entered; "Volver a la vista previa"
+  MUST run the dry run again on the data as it stands. A write whose answer never arrived MUST NOT
+  be reported as applied or as refused.
+- **Rationale:** A concurrent edit can make a previewed request invalid; the admin should not have
+  to type the dates again to see why.
+- **Implements:** n/a
+- **Source:** #419
+
+### UI-AGR-037 — The activation confirmation lists the supplies its first activation closes
+
+- **Status:** Active
+- **Rule:** Once a valid date is chosen, "Registrar fecha" MUST list the supplies a dry run of the
+  activation at that date reports as closed by default, each with the agreement it leaves and its
+  closing day, and nothing when it reports none. "Registrar fecha" MUST wait for that answer, saying
+  so. A refused dry run MUST keep it disabled and show the catalogue's errors; a network or server
+  failure MUST offer "Reintentar". The activation itself is unchanged.
+- **Rationale:** A first activation also closes the coefficients of the supplies absent from the
+  agreement, in the same write; the admin should see them before confirming.
+- **Implements:** n/a
+- **Source:** #419, lucoenergia/conluz#593
+
+### UI-AGR-038 — Both observed sharing pages explain every term, status and anomaly they show
+
+- **Status:** Active
+- **Rule:** The plant's observed sharing page and the agreement's MUST offer one way into the
+  help: a link in their header, labelled "Cómo leer el reparto observado" as the dialog it opens,
+  shown on a phone too. Nothing else on either page, such as a column header, MUST open it. The
+  dialog MUST define β registrada, β esperada, β observada, día medible (with why a period has
+  fewer measurable days than calendar days), the agreement's application period, each supply's
+  period, producción no atribuida (1 − Σβ) and sale del reparto, and MUST list every coefficient
+  status, leaving status and anomaly type of the client, each under the label the view shows it
+  with.
+- **Rationale:** The view is read by admins who are not analysts; a status or a figure is only
+  useful when its meaning is one tap away from where it is shown. Listing from the client's values
+  means a status the backend adds cannot reach the view unexplained. One entry point, named as the
+  dialog: the help explains every term of the page, so a second way in to one of its entries adds a
+  control without adding an answer. The measurable days of a figure only make sense with the period
+  they come from; both periods say their dates are shown beside the measurable days.
+- **Implements:** n/a
+- **Source:** #419
+
+### UI-AGR-039 — An impossible unattributed production is shown, flagged and listed under "Qué revisar"
+
+- **Status:** Active
+- **Rule:** Where "Producción no atribuida" is shown, on each agreement card of the plant's observed
+  sharing and on the agreement's page, a value below −0.1 percentage points MUST still be shown, in
+  the warning tone, with "Imposible: los puntos reciben más energía de la que produce la planta.
+  Algún dato de Datadis es erróneo; revisa las anomalías con β observada muy alta." under it. That
+  agreement's "Qué revisar" MUST then list "Reparto mayor que la producción", with the warning icon,
+  before its recommendations, with the detail "Los puntos reciben un X % más de lo que produce la
+  planta.", X being the share without its sign. The finding MUST link to "Ver anomalías" when the
+  agreement has an anomaly, and MUST have no link when it has none. A value between −0.1 points and
+  0 MUST read as any other value, with neither the warning nor the finding. The finding MUST NOT
+  count as an agreement to review, and MUST NOT change the "Todo aplicado" notice. The help MUST
+  say, under "Producción no atribuida (1 − Σβ)", that a negative total means wrong Datadis data.
+- **Rationale:** Supplies cannot receive more than the plant produces, so a share below the
+  tolerance always means wrong Datadis data: one supply whose records were a copy of the plant's
+  for five months gave −47.5 %. Shown as an ordinary figure, it reads as a plausible result. The
+  value stays, so the admin can judge its size. Down to −0.1 points it is rounding, within the
+  tolerance the view already uses for β (UI-AGR-026). The finding presents a value the API returns;
+  counting the agreement as one to review would be a conclusion the backend does not draw. It comes
+  first because it puts every other figure of the agreement in doubt.
+- **Implements:** n/a
+- **Source:** #419
+
+### UI-AGR-040 — The unattributed production is named in words and says what it is
+
+- **Status:** Active
+- **Rule:** The production no supply with data received, on each agreement card of the plant's
+  observed sharing and in the agreement page's header details, MUST be labelled "Producción no
+  atribuida". When the analysis gives it, an always-visible line MUST follow the value: "Parte de la
+  producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la
+  aplicación de este acuerdo (N días medibles del D1 al D2).", N being the share's `days` and D1
+  and D2 its `from` and `to` as DD/MM/AAAA ("1 día medible del D1 al D2" for one); the view MUST
+  NOT compute either date. When the analysis gives none, the value MUST read "—" with nothing under
+  it. The formula, 1 − Σβ or Σβ alone, MUST appear only in the help dialog.
+- **Rationale:** Admins understood neither the figure nor where it came from: the label was a
+  formula. A name in words and a sentence beside the value say what it is where it is read; the
+  formula stays in the help, for those who want it. The days are only checkable against the period
+  they were counted over.
+- **Implements:** n/a
+- **Source:** #419; the dates: lucoenergia/conluz#618
+
+### UI-AGR-041 — The unattributed production is broken down into its two parts
+
+- **Status:** Active
+- **Rule:** When the analysis gives the unattributed production, it MUST show "X % corresponde a
+  puntos que no tenían datos esos días", X being `registeredShareWithoutData`, whenever that is above
+  0, whether or not some supply has no measurable day at all. It MUST always show "Resto: Y pp", Y
+  being `unallocated − registeredShareWithoutData` in percentage points, with its sign and one
+  decimal, followed by "Los puntos con datos recibieron más de lo registrado." when Y is below −0.1
+  points, "Producción que no llegó a ningún punto registrado." when it is above 0.1 points, and
+  "Dentro del margen de redondeo." from −0.1 to 0.1 points, both included. An impossible share keeps
+  its warning (UI-AGR-039).
+- **Rationale:** The registered share of the supplies without data those days is expected and is
+  not an error; showing it apart leaves the rest, whose sign says what to look at. It is a
+  subtraction of two values the API returns, compared with the tolerance the view already uses for
+  β (UI-AGR-026). It was shown only when some supply had no measurable day at all, which hid it for
+  supplies missing only some days. "Resto" shows when the share of supplies without data is 0 too,
+  so its sentence still says which way the figure points.
+- **Implements:** n/a
+- **Source:** #419
+
+### UI-AGR-042 — Each row of an agreement shows its measurable days against its own window
+
+- **Status:** Active
+- **Rule:** The agreement's coefficient rows and leaving rows MUST show "Días medibles", a column
+  in each table and a field in each stacked row on a phone, not sortable. It MUST read "N de M", N
+  being the row's `observedValidDays` and M its `windowDays`, followed, on a line of its own, by
+  "del D1 al D2", the row's `windowFrom` and `windowTo`, in the table and in the stacked row. A row
+  whose window dates are null (windowDays 0) MUST show "N de M" with no interval. The view MUST NOT
+  use the agreement's measurable days (the unattributed production's) as M. A NOT_OBSERVABLE row
+  MUST show no measurable days, interval included: an empty cell, and no field in its stacked row.
+  On a phone the field MUST be labelled "Días medibles de su periodo". The view MUST NOT compute a
+  window's dates.
+- **Rationale:** A row's measurable days run from its own observed date to the end of the
+  agreement's applied window, so a row observed before that window counts more days than the
+  window has: rows observed "on or before 01/09/2025" had 426 against 335. Only the row's own
+  window, which the backend returns, is a denominator for it. A row of the plant's own supply
+  cannot be observed, so it has no days to show.
+- **Implements:** n/a
+- **Source:** #419; `windowDays`: lucoenergia/conluz#611; the stacked label: #419;
+  `windowFrom`/`windowTo`: lucoenergia/conluz#618
 
 ## States
 
@@ -419,7 +675,14 @@ is in force today.
 | Observed sharing loading | "Calculando el reparto observado…" and its progress, with no figure | None |
 | Observed sharing not computable, the plant supply without data | "No se puede calcular el reparto observado"; no agreement and no recommendation (UI-AGR-028) | "Ver el punto de la planta", with the plant's `canReadSupply` |
 | Observed sharing read failed | "No se pudo cargar el reparto observado." | "Reintentar" |
+| Observed sharing help open | "Cómo leer el reparto observado": the terms, every status and anomaly type (UI-AGR-038) | "Cerrar" |
 | Agreement observation of a draft | The catalogue's text for `SHARING_AGREEMENT_NOT_OBSERVABLE`, as a note | None |
+| Set application dates, dates step | The rows, prefilled when opened from observed sharing (UI-AGR-032); the reason "Ver vista previa" is disabled (UI-AGR-033) | "Misma fecha para todos", "Ver vista previa", "Cancelar" |
+| Set application dates, preview | The dry run's effects, default closures marked (UI-AGR-034) | Editing a closing date, "Volver a las fechas", "Confirmar y aplicar" once error-free |
+| Set application dates, preview refused or failed | Each row's error, or "No se pudo calcular la vista previa." | "Volver a las fechas"; "Reintentar" on a failure |
+| Set application dates, applied | "Fechas aplicadas en …" and the effects as written (UI-AGR-035) | "Ver el acuerdo"; "Volver al reparto observado" when opened from it |
+| Set application dates, write refused | "No se han aplicado las fechas", each row's error, the dates kept (UI-AGR-036) | "Volver a la vista previa", "Cancelar" |
+| Set application dates of a draft | "Este acuerdo es un borrador. Publícalo antes de fijar sus fechas de aplicación." | None |
 
 ## Accepted exceptions
 

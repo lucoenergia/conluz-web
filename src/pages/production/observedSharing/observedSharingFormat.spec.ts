@@ -8,9 +8,15 @@ import {
   formatBeta,
   formatDataRange,
   formatDataRangeInSentence,
+  formatMeasurableDays,
+  formatWindow,
   formatObservedDate,
   formatRegisteredPeriod,
+  unattributedRemainder,
 } from "./observedSharingFormat";
+
+/** The agreement's applied window, which a share's figures are computed over. */
+const APPLIED_WINDOW = { from: "2025-03-01", to: "2026-04-26" };
 
 // Intl writes a no-break space between the figure and the percent sign.
 const percent = (text: string) => text.replace(" %", "\u00a0%");
@@ -52,9 +58,13 @@ describe("observed sharing formatting", () => {
     expect(betaMatches(0.030499, 0.0315)).toBe(false);
   });
 
-  test("UI-AGR-024: an anomaly's detail is the β it received and the valid days it rests on", () => {
-    expect(formatAnomalyDetail(0.0412, 21)).toBe(percent("Recibe 4,1200 % en 21 días válidos."));
-    expect(formatAnomalyDetail(0.0412, 1)).toBe(percent("Recibe 4,1200 % en 1 día válido."));
+  test("UI-AGR-024: an anomaly's detail is its expected and observed β and the measurable days it rests on", () => {
+    expect(formatAnomalyDetail({ expectedBeta: 0.0315, observedBeta: 0.0412, observedValidDays: 21 })).toBe(
+      percent("β esperada 3,1500 % · β observada 4,1200 % · 21 días medibles").replace(" %", "\u00a0%"),
+    );
+    expect(formatAnomalyDetail({ expectedBeta: null, observedBeta: 0.0412, observedValidDays: 1 })).toBe(
+      percent("β observada 4,1200 % · 1 día medible"),
+    );
   });
 
   test("UI-AGR-023: an agreement's application reads its most frequent observed date, or why there is none", () => {
@@ -72,5 +82,47 @@ describe("observed sharing formatting", () => {
     );
     expect(application({ distributorFileSentOn: "2026-10-15" })).toBe("Pendiente de aplicar · enviado el 15/10/2026");
     expect(application({})).toBe("Sin observar");
+  });
+});
+
+describe("the unattributed production's rest", () => {
+  const rest = (unallocated: number, registeredShareWithoutData: number) =>
+    unattributedRemainder({ days: 422, unallocated, registeredShareWithoutData, ...APPLIED_WINDOW });
+
+  test("UI-AGR-041: 3,03 % with 4,37 % of supplies without data leaves −1,3 points: the supplies with data received more", () => {
+    expect(rest(0.0303, 0.0437)).toEqual({ text: "-1,3 pp", kind: "receivedMore" });
+  });
+
+  test("UI-AGR-041: a positive rest beyond 0,1 points is production that reached no registered supply, with its sign", () => {
+    expect(rest(0.0574, 0)).toEqual({ text: "+5,7 pp", kind: "notDelivered" });
+  });
+
+  test("UI-AGR-041: ±0,1 points is rounding, its edges included, and one millionth beyond is not", () => {
+    expect(rest(0.031, 0.03)).toEqual({ text: "+0,1 pp", kind: "rounding" });
+    expect(rest(0.029, 0.03)).toEqual({ text: "-0,1 pp", kind: "rounding" });
+    expect(rest(0.03, 0.03)).toEqual({ text: "0,0 pp", kind: "rounding" });
+    expect(rest(0.031001, 0.03).kind).toBe("notDelivered");
+    expect(rest(0.028999, 0.03).kind).toBe("receivedMore");
+  });
+});
+
+describe("a row's measurable days", () => {
+  test("UI-AGR-042: N de M, both from the row, for a coefficient and a leaving row", () => {
+    expect(formatMeasurableDays({ status: "APPLIED_SAME_DATE", observedValidDays: 426, windowDays: 426 })).toBe("426 de 426");
+    expect(formatMeasurableDays({ status: "NO_DATA", observedValidDays: 0, windowDays: 335 })).toBe("0 de 335");
+  });
+
+  test("UI-AGR-042: none for a NOT_OBSERVABLE row", () => {
+    expect(formatMeasurableDays({ status: "NOT_OBSERVABLE", observedValidDays: 0, windowDays: 0 })).toBeNull();
+  });
+});
+
+describe("a figure's window", () => {
+  test("UI-AGR-042: 'del DD/MM/AAAA al DD/MM/AAAA', both days the backend's", () => {
+    expect(formatWindow("2025-01-09", "2026-10-31")).toBe("del 09/01/2025 al 31/10/2026");
+  });
+
+  test("UI-AGR-042: none without dates", () => {
+    expect(formatWindow(null, null)).toBeNull();
   });
 });

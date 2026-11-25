@@ -32,7 +32,7 @@ export interface MembershipPaybackResponse {
      */
   remainingEur: number | null;
   /**
-     * Estimated value of the self-consumed energy of all the member's supplies in this community since startDate, in euros. It prices the energy term before taxes only; VAT is applied only where the resolved tariff carries a rate. Null when the community has never activated a partition coefficient, so there is no period to price; zero when the period exists but the member's supplies consumed nothing from it.
+     * Estimated value of the self-consumed energy of all the member's supplies in this community since startDate, in euros. It prices the energy term with electricity tax and VAT, each at the rate in force on the day the energy was consumed; the power term, access tolls and charges are excluded. Null when the community has never activated a partition coefficient, so there is no period to price; zero when the period exists but the member's supplies consumed nothing from it.
      * @nullable
      */
   savedEur: number | null;

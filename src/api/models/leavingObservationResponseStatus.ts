@@ -19,4 +19,5 @@ export const LeavingObservationResponseStatus = {
   NOT_DISTINGUISHABLE: 'NOT_DISTINGUISHABLE',
   NOT_OBSERVED: 'NOT_OBSERVED',
   NO_DATA: 'NO_DATA',
+  NOT_OBSERVABLE: 'NOT_OBSERVABLE',
 } as const;

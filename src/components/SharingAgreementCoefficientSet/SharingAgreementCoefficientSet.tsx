@@ -47,7 +47,13 @@ import { SharingAgreementCoefficientCard, SharingAgreementCoefficientTableRow } 
 import { SharingAgreementOutgoingSupplies } from "../SharingAgreementOutgoingSupplies";
 import { CoefficientHistoryDrawer } from "../CoefficientHistoryDrawer";
 import { CoefficientActionsMenuItems } from "../CoefficientActionsMenu";
-import { ApplyCoefficientDateConfirmationModal } from "../Modals/ApplyCoefficientDateConfirmationModal";
+import {
+  ApplyCoefficientDateConfirmationModal,
+  type LeavingSuppliesPreview,
+} from "../Modals/ApplyCoefficientDateConfirmationModal";
+import { formatEffectDay } from "../../pages/production/applicationDates/applicationDatesEffects";
+import { DRY_RUN_DELAY_MS } from "../../pages/production/applicationDates/dryRunDelay";
+import { supplyDisplayLabel } from "../../utils/supplyDisplayLabel";
 import { CorrectCoefficientDateConfirmationModal } from "../Modals/CorrectCoefficientDateConfirmationModal";
 import { DeactivateOrReopenCoefficientConfirmationModal } from "../Modals/DeactivateOrReopenCoefficientConfirmationModal";
 import { CloseCoefficientConfirmationModal } from "../Modals/CloseCoefficientConfirmationModal";
@@ -58,6 +64,7 @@ import { useActiveCommunity } from "../../context/community.context";
 import { useSuccessDispatch } from "../../context/success.context";
 import { useUnsavedChangesGuard } from "../../hooks/useUnsavedChangesGuard";
 import {
+  LeavingClosureChangeResponseSource,
   SharingAgreementPartitionCoefficientResponseApplicationState,
   SharingAgreementPartitionCoefficientResponseEndState,
   SharingAgreementResponseStatus,
@@ -144,12 +151,6 @@ export interface SharingAgreementCoefficientSetProps {
    * the distributor-file panel where it used to live.
    */
   onImportRequest?: () => void;
-  /**
-   * Bumped by the application panel, or by the next-step banner at stage 5, to
-   * start recording application dates. Selecting the pending rows has to happen
-   * here, where the selection lives.
-   */
-  registerDatesRequestId?: number;
   /**
    * False when the next-step banner is already promoting these same two actions
    * — which it does exactly while authoring *is* the current step. Rendering
@@ -339,7 +340,6 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   nominalPowerKW,
   editRequestId = 0,
   onImportRequest,
-  registerDatesRequestId = 0,
   showAuthoringActions = true,
   onBatchBarMountedChange,
 }) => {
@@ -347,7 +347,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const successDispatch = useSuccessDispatch();
   const sharingAgreementId = agreement?.id ?? "";
   const agreementStatus: StatusValue | undefined = agreement?.status;
-  const { replace, activate, deactivate, close, reopen } =
+  const { replace, activate, deactivate, close, reopen, previewDates } =
     useSharingAgreementCoefficientActions(plantId).forAgreement(agreement).actions;
   // The four lifecycle writes share the agreement's one write flag, so a row
   // menu and the batch bar are offered exactly when all four were handed over.
@@ -374,7 +374,7 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   const [applicationStateFilter, setApplicationStateFilter] = useState<SharingAgreementCoefficientApplicationStateFilter>("all");
   const debouncedSearchText = useDebounce(searchText, 500);
   // Debounce applies to narrowing the list, not to widening it. Clearing the
-  // field — whether the user did it or "Registrar fechas" did — takes effect at
+  // field takes effect at
   // once, so a selection made straight afterwards is never reported as partly
   // hidden behind a filter that is already gone.
   const effectiveSearchText = searchText.trim() === "" ? "" : debouncedSearchText;
@@ -429,6 +429,18 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // trusting a captured snapshot.
   const [activeDialog, setActiveDialog] = useState<ActiveCoefficientDialog | null>(null);
   const [dialogErrors, setDialogErrors] = useState<string[] | null>(null);
+  // The supplies an activation at the chosen date closes, from a dry run of
+  // it (UI-AGR-037). Only the latest date's answer is kept.
+  const [leavingSupplies, setLeavingSupplies] = useState<LeavingSuppliesPreview>({ status: "waiting" });
+  const leavingSuppliesRequest = useRef(0);
+  const leavingSuppliesTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(leavingSuppliesTimer.current), []);
+
+  useEffect(() => {
+    leavingSuppliesRequest.current += 1;
+    clearTimeout(leavingSuppliesTimer.current);
+    setLeavingSupplies({ status: "waiting" });
+  }, [activeDialog]);
 
   useUnsavedChangesGuard(isEditing);
 
@@ -541,34 +553,6 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
   // hidden alike. That asymmetry is the whole reason both controls exist.
   const handleClearSelection = clearSelection;
 
-  /**
-   * Show the coefficients still waiting for a date, and bring them into view.
-   *
-   * It deliberately does NOT select anything. Choosing which points share an
-   * application date is the admin's judgement — the distributor rarely applies
-   * them all on the same day — and a screen that arrives with 29 rows already
-   * ticked invites a bulk action nobody actually decided on. Narrow the list,
-   * then let them pick.
-   *
-   * The search is cleared alongside the filter so a leftover query cannot hide
-   * part of what the filter just surfaced.
-   */
-  const lastHandledRegisterDatesRequestId = useRef(registerDatesRequestId);
-  useEffect(() => {
-    if (registerDatesRequestId === lastHandledRegisterDatesRequestId.current) return;
-    lastHandledRegisterDatesRequestId.current = registerDatesRequestId;
-
-    setApplicationStateFilter(SharingAgreementPartitionCoefficientResponseApplicationState.PENDING);
-    setSearchText("");
-    clearSelection();
-    // The request came from a panel above the table, which on a long agreement
-    // is well off screen.
-    panelRef.current?.scrollIntoView({
-      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-      block: "start",
-    });
-  }, [registerDatesRequestId, clearSelection]);
-
   const handleOpenActionsMenu = (event: MouseEvent<HTMLElement>, coefficient: SharingAgreementPartitionCoefficientResponse) => {
     setActionsAnchorEl(event.currentTarget);
     setActionsMenuCoefficientId(coefficient.coefficientId);
@@ -644,6 +628,52 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
     if (!activate) return;
     const result = await activate.run([...dialog.targetIds], date);
     handleDialogOutcome(result, dialog);
+  };
+
+  /**
+   * Asks the backend which supplies an activation of the targets at `date`
+   * closes: on an agreement's first activation, every supply of the plant
+   * absent from it (lucoenergia/conluz#593). A dry run of set-dates with the
+   * same coefficients at the same date and no listed closure reports exactly
+   * those closures as DEFAULT; on a later activation it reports none.
+   */
+  const previewLeavingSupplies = (date: Dayjs | null, isValid: boolean, delay = DRY_RUN_DELAY_MS) => {
+    // Asked once the date has rested for DRY_RUN_DELAY_MS: typing a year
+    // passes through valid years ("0202") on its way. An answer that arrives
+    // after a newer date is dropped.
+    const request = ++leavingSuppliesRequest.current;
+    clearTimeout(leavingSuppliesTimer.current);
+    if (!isValid || !date || !previewDates || !activeDialog) {
+      setLeavingSupplies({ status: "waiting" });
+      return;
+    }
+    const targetIds = [...activeDialog.targetIds];
+    setLeavingSupplies({ status: "loading" });
+    leavingSuppliesTimer.current = setTimeout(async () => {
+      const result = await previewDates.run({
+        coefficients: targetIds.map((coefficientId) => ({ coefficientId, validFrom: date })),
+        leavingClosures: [],
+      });
+      if (request !== leavingSuppliesRequest.current) return;
+      if (result.kind === "applied") {
+        setLeavingSupplies({
+          status: "ready",
+          closures: result.effects.leavingClosures
+            .filter((closure) => closure.source === LeavingClosureChangeResponseSource.DEFAULT)
+            .map((closure) => ({
+              supplyId: closure.supply.id,
+              label: supplyDisplayLabel(closure.supply),
+              code: closure.supply.code,
+              previousAgreementName: closure.sharingAgreement.name,
+              closedOn: formatEffectDay(closure.validToAfter),
+            })),
+        });
+      } else if (result.kind === "refused") {
+        setLeavingSupplies({ status: "refused", messages: [...result.rows.map((row) => row.message), ...result.general] });
+      } else {
+        setLeavingSupplies({ status: "failed", onRetry: () => previewLeavingSupplies(date, true, 0) });
+      }
+    }, delay);
   };
 
   const handleConfirmDeactivateOrReopen = async () => {
@@ -1447,6 +1477,8 @@ export const SharingAgreementCoefficientSet: FC<SharingAgreementCoefficientSetPr
         errorMessages={activeDialog?.source === "row" ? dialogErrors : null}
         onCancel={handleCancelDialog}
         onConfirm={handleConfirmActivate}
+        leavingSupplies={leavingSupplies}
+        onDateChange={previewLeavingSupplies}
       />
 
       <CorrectCoefficientDateConfirmationModal

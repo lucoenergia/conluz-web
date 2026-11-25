@@ -133,7 +133,7 @@ describe("SharingAgreementNextStepBanner", () => {
         PUBLISHED,
       );
 
-      await userEvent.click(screen.getByRole("button", { name: "Registrar fechas (4 pendientes)" }));
+      await userEvent.click(screen.getByRole("button", { name: "Fijar fechas de aplicación (4 pendientes)" }));
       expect(handlers.RECORD_DATES).toHaveBeenCalledTimes(1);
     });
 

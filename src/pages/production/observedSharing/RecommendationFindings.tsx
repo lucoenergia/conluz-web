@@ -31,10 +31,10 @@ export const RecommendationFindings: FC<{ findings: RecommendationFinding[]; com
     component="ul"
     sx={{ listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: compact ? 1 : 2 }}
   >
-    {findings.map(({ recommendation, tone, title, detail, link }) => {
+    {findings.map(({ kind, tone, title, detail, link }) => {
       const Icon = ICON[tone];
       return (
-        <Box component="li" key={recommendation} sx={{ display: "flex", alignItems: "flex-start", gap: compact ? 1 : 1.5 }}>
+        <Box component="li" key={kind} sx={{ display: "flex", alignItems: "flex-start", gap: compact ? 1 : 1.5 }}>
           <Icon aria-hidden sx={{ color: ICON_COLOR[tone], fontSize: compact ? 18 : 22, mt: compact ? 0.125 : 0, flexShrink: 0 }} />
           <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, minWidth: 0 }}>
             <Typography variant={compact ? "body2" : "body1"} sx={{ fontWeight: 600, color: colors.text.primary }}>

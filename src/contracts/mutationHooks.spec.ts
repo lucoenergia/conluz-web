@@ -248,6 +248,18 @@ const ACTION_COVERAGE: Record<string, Decision> = {
     hook: "useSharingAgreementCoefficientActions",
     approximates: AGREEMENT_LIFECYCLE,
   },
+  usePreviewPartitionCoefficientDates: {
+    scope: "sharingAgreement",
+    capability: "canManage",
+    hook: "useSharingAgreementCoefficientActions",
+    approximates: AGREEMENT_LIFECYCLE,
+  },
+  useSetPartitionCoefficientDates: {
+    scope: "sharingAgreement",
+    capability: "canManage",
+    hook: "useSharingAgreementCoefficientActions",
+    approximates: AGREEMENT_LIFECYCLE,
+  },
   useGenerateSharingAgreementDistributorFile: {
     scope: "sharingAgreement",
     capability: "canManage",
@@ -520,6 +532,7 @@ const TEST_HELPER_MUTATION_IMPORTS: Record<string, { hooks: string[]; reason: st
       "useActivatePartitionCoefficients",
       "useClosePartitionCoefficients",
       "useDeactivatePartitionCoefficients",
+      "usePreviewPartitionCoefficientDates",
       "useReopenPartitionCoefficients",
       "useReplacePartitionCoefficients",
     ],

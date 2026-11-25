@@ -129,7 +129,7 @@ export const WrappedFacts = () => (
         { label: "Aplicación", value: "Entre el 26/02/2025 y el 04/03/2025" },
         { label: "Anomalías", value: "2" },
       ]}
-      details={[{ label: "Sin explicar (1 − Σβ)", value: "6,7 %" }]}
+      details={[{ label: "Producción no atribuida", value: "6,7 %" }]}
       wrapFactValues
     />
   </Mui.Box>

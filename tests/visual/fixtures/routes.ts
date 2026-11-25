@@ -1262,3 +1262,26 @@ export async function mockDatadisConfigRoutes(
     },
   );
 }
+
+// ---------------------------------------------------------------------------
+// Helper: the dry run and the write of an agreement's application dates
+// (#419). `write` answers the set-dates POST: the effects as written, or a
+// refusal with its status and RestError body.
+// ---------------------------------------------------------------------------
+
+export async function mockApplicationDatesRoutes(
+  page: Page,
+  agreementId: string,
+  preview: unknown,
+  write: { status: 200 | 409; body: unknown } = { status: 200, body: preview },
+) {
+  const base = `/api/v1/plants/${FIXED_PLANT_ID}/sharing-agreements/${agreementId}/partition-coefficients`;
+  await page.route(
+    (url) => url.pathname === `${base}/preview-dates`,
+    (route: Route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(preview) }),
+  );
+  await page.route(
+    (url) => url.pathname === `${base}/set-dates`,
+    (route: Route) => route.fulfill({ status: write.status, contentType: "application/json", body: JSON.stringify(write.body) }),
+  );
+}

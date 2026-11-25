@@ -6,6 +6,8 @@ import { Route, Routes } from "react-router";
 import { renderWithProviders } from "../../../test/renderWithProviders";
 import { query } from "../../../test/queryState";
 import { apiError } from "../../../test/apiError";
+import { declaredStyle } from "../../../test/declaredStyle";
+import { colors } from "../../../theme/tokens";
 import { useGetPlantById, type getPlantById } from "../../../api/plants/plants";
 import {
   useGetPlantSharingObservation,
@@ -29,6 +31,9 @@ import {
   buildSharingAnomalyCounts,
 } from "../../../test/fixtures";
 import { PlantObservedSharingPage } from "./PlantObservedSharingPage";
+
+/** The agreement's applied window, which a share's figures are computed over. */
+const APPLIED_WINDOW = { from: "2025-03-01", to: "2026-04-26" };
 
 vi.mock(import("../../../api/plants/plants"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -71,7 +76,7 @@ const INITIAL = buildObservationSummary({
   distributorFileSentOn: "2023-03-15",
   mostFrequentObservedDate: { from: null, to: "2023-04-01" },
   coefficientStatusCounts: buildObservationStatusCounts({ appliedSameDate: 3 }),
-  unallocatedShare: { days: 400, unallocated: 0.012, registeredShareWithoutData: 0 },
+  unallocatedShare: { days: 400, unallocated: 0.012, registeredShareWithoutData: 0, ...APPLIED_WINDOW },
   recommendations: [Recommendation.NONE],
 });
 
@@ -106,7 +111,7 @@ const REVISED = buildObservationSummary({
     }),
   ],
   anomalyCounts: buildSharingAnomalyCounts({ unknownCoefficient: 1, reverted: 1 }),
-  unallocatedShare: { days: 200, unallocated: 0.067, registeredShareWithoutData: 0.03 },
+  unallocatedShare: { days: 200, unallocated: 0.067, registeredShareWithoutData: 0.03, ...APPLIED_WINDOW },
   recommendations: [Recommendation.SET_DATES, Recommendation.REVIEW_ANOMALIES],
 });
 
@@ -185,7 +190,7 @@ describe("PlantObservedSharingPage", () => {
     ]);
   });
 
-  test("UI-AGR-023: a card shows the sent date, the application, the status, leaving and anomaly counts, and the unexplained part", () => {
+  test("UI-AGR-023: a card shows the sent date, the application, the status, leaving and anomaly counts, and the unattributed production", () => {
     renderPage();
     const revised = card("Reparto 2025");
 
@@ -194,27 +199,27 @@ describe("PlantObservedSharingPage", () => {
     const counts = within(revised).getAllByRole("listitem").map((item) => item.textContent);
     expect(counts).toEqual(
       expect.arrayContaining([
-        "Aplicado · misma fecha1",
-        "Aplicado · otra fecha2",
-        "Pendiente0",
-        "No distinguible0",
-        "Sin observar0",
-        "Sin datos de Datadis1",
-        "Coeficiente desconocido1",
-        "Vuelve a un coeficiente anterior1",
+        "1 Aplicado · misma fecha",
+        "2 Aplicado · otra fecha",
+        "0 Pendiente",
+        "0 No distinguible",
+        "0 Sin observar",
+        "1 Sin datos de Datadis",
+        "1 Coeficiente no registrado",
+        "1 Vuelve a un coeficiente anterior",
       ]),
     );
     expect(within(revised).getByText("Salen del reparto: 2 · 1 con fecha distinta")).toBeInTheDocument();
     expect(within(revised).getByText("Anomalías · 2")).toBeInTheDocument();
     expect(within(revised).getByText("6,7 %")).toBeInTheDocument();
-    expect(within(revised).getByText("3,0 % es del punto sin datos")).toBeInTheDocument();
+    expect(within(revised).getByText("3,0 % corresponde a puntos que no tenían datos esos días")).toBeInTheDocument();
   });
 
   test("UI-AGR-023: a card with nothing observed says so, and leaves out the leaving and anomaly figures it has none of", () => {
     renderPage();
     const current = card("Reparto 2026");
 
-    expect(within(current).getByText("Sin registrar")).toBeInTheDocument();
+    expect(within(current).getByText("Fichero enviado: sin registrar")).toBeInTheDocument();
     // The counts list "Sin observar" too; this is the application line.
     expect(within(current).getByText("Sin observar", { ignore: "li *" })).toBeInTheDocument();
     expect(within(current).getByText("Sin anomalías")).toBeInTheDocument();
@@ -249,8 +254,8 @@ describe("PlantObservedSharingPage", () => {
 
     const revised = findings("Reparto 2025");
     expect(revised.map((item) => item.textContent)).toEqual([
-      "Fechas distintas de las registradas2 aplicados en otra fecha · 1 salida en otra fecha",
-      "2 anomalías1 coeficiente desconocido · 1 vuelve a un coeficiente anteriorVer anomalías",
+      "Fechas distintas de las registradas2 aplicados en otra fecha · 1 salida en otra fechaFijar fechas",
+      "2 anomalías1 coeficiente no registrado · 1 vuelve a un coeficiente anteriorVer anomalías",
     ]);
     expect(within(revised[1]).getByRole("link", { name: "Ver anomalías" })).toHaveAttribute(
       "href",
@@ -274,16 +279,20 @@ describe("PlantObservedSharingPage", () => {
     expect(within(initial).queryByText("Qué revisar")).not.toBeInTheDocument();
     expect(within(initial).queryByText(/Ninguna/)).not.toBeInTheDocument();
     for (const label of ["Fijar fechas", "Desactivar", "Revisar anomalías"]) {
-      expect(screen.queryByText(label)).not.toBeInTheDocument();
+      expect(within(initial).queryByText(label)).not.toBeInTheDocument();
     }
   });
 
-  // The set-dates flow ships with #419; until then the finding is shown, with nothing to press.
-  test("UI-AGR-023: dates different from the registered ones offer no action", () => {
+  // The finding leads to the set-dates flow, prefilled from this observation (#419).
+  test("UI-AGR-023: dates different from the registered ones link to 'Fijar fechas'", () => {
     renderPage();
     const revised = card("Reparto 2025");
 
-    expect(within(revised).getAllByRole("link").map((link) => link.textContent)).toEqual(["Reparto 2025", "Ver anomalías"]);
+    expect(within(revised).getAllByRole("link").map((link) => link.textContent)).toEqual([
+      "Reparto 2025",
+      "Fijar fechas",
+      "Ver anomalías",
+    ]);
     expect(within(revised).queryByRole("button")).not.toBeInTheDocument();
   });
 
@@ -330,11 +339,11 @@ describe("PlantObservedSharingPage", () => {
 
     expect(within(section).getByRole("button", { name: /Casa Norte.*1 anomalía/ })).toHaveAttribute("aria-expanded", "false");
     // Collapsed on this page, so the rows are reached with hidden: true.
-    expect(within(section).getByRole("row", { name: /Coeficiente desconocido/, hidden: true })).toHaveTextContent(
-      "Coeficiente desconocido01/05/202530/06/2025Recibe 3,0500 % en 21 días válidos.",
+    expect(within(section).getByRole("row", { name: /Coeficiente no registrado/, hidden: true })).toHaveTextContent(
+      "Coeficiente no registrado01/05/202530/06/2025β observada 3,0500 % · 21 días medibles",
     );
     expect(within(section).getByRole("row", { name: /Vuelve a un coeficiente anterior/, hidden: true })).toHaveTextContent(
-      "Vuelve a un coeficiente anterior01/03/2025 o antesen cursoRecibe 4,1200 % en 1 día válido.",
+      "Vuelve a un coeficiente anterior01/03/2025 o antesen cursoβ observada 4,1200 % · 1 día medible",
     );
   });
 
@@ -354,7 +363,7 @@ describe("PlantObservedSharingPage", () => {
 
     // Collapsed on this page, so the regions are reached with hidden: true.
     const norte = within(section).getByRole("region", { name: /^Casa Norte/, hidden: true });
-    expect(within(norte).getByRole("row", { name: /Coeficiente desconocido/, hidden: true })).toBeInTheDocument();
+    expect(within(norte).getByRole("row", { name: /Coeficiente no registrado/, hidden: true })).toBeInTheDocument();
     expect(within(section).getByRole("button", { name: /^Casa Norte/ })).toHaveAttribute("aria-controls", norte.id);
 
     const sur = within(section).getAllByRole("region", { name: /^Casa Sur/, hidden: true });
@@ -363,11 +372,11 @@ describe("PlantObservedSharingPage", () => {
     expect(within(sur[1]).getByRole("row", { name: /No recibe energía en el acuerdo/, hidden: true })).toBeInTheDocument();
   });
 
-  test("UI-AGR-028: supplies without data are named in the notice, and not computable ones say only 'No calculable'", () => {
+  test("UI-AGR-028: supplies without data are named in the notice, and each not computable row says only 'No calculable'", () => {
     renderPage();
 
     expect(screen.getByRole("note")).toHaveTextContent(
-      "Datos de Datadis del 1 abr 2023 al 31 oct 2026. 1 punto sin datos de Datadis: Casa Oeste. Su parte aparece como «sin explicar».",
+      "Datos de Datadis del 1 abr 2023 al 31 oct 2026. 1 punto sin datos de Datadis: Casa Oeste. Su parte aparece como «producción no atribuida».",
     );
     const notComputable = screen.getByRole("region", { name: "No calculables" });
     expect(within(notComputable).getByRole("row", { name: /Taller/ })).toHaveTextContent(`Taller${TALLER.code}No calculable`);
@@ -461,5 +470,333 @@ describe("PlantObservedSharingPage", () => {
       PLANT_ID,
       expect.objectContaining({ query: expect.objectContaining({ enabled: false }) }),
     );
+  });
+
+  test("UI-AGR-023: each count comes before its label, in tabular figures, and a zero one reads in the secondary text colour", () => {
+    renderPage();
+    const items = within(card("Reparto 2025")).getAllByRole("listitem");
+    const item = (label: string) => items.find((element) => element.textContent?.endsWith(` ${label}`))!;
+
+    for (const label of ["Aplicado · otra fecha", "Pendiente", "Vuelve a un coeficiente anterior"]) {
+      const count = item(label).firstElementChild!;
+      expect(count.textContent).toMatch(/^\d+$/);
+      expect(declaredStyle(count)["font-variant-numeric"]).toBe("tabular-nums");
+    }
+    expect(declaredStyle(item("Pendiente")).color).toBe(colors.text.secondary);
+    expect(declaredStyle(item("Aplicado · otra fecha")).color).toBe(colors.text.body);
+    expect(declaredStyle(item("Vuelve a un coeficiente anterior")).color).toBe(colors.text.body);
+  });
+
+  test("UI-AGR-024: no text speaks of valid days: the days a figure rests on are measurable", () => {
+    renderPage();
+
+    expect(document.body.textContent).not.toMatch(/válid/i);
+    expect(screen.getAllByText(/días? medibles?$/).length).toBeGreaterThan(0);
+  });
+
+  test("UI-AGR-028: 'No calculables' says once, under its title, why its supplies are left out", () => {
+    renderPage();
+    const notComputable = screen.getByRole("region", { name: "No calculables" });
+
+    expect(
+      within(notComputable).getByText(
+        "Tienen coeficiente en esta planta y en otra. Datadis da su energía total y no se puede separar la parte de cada planta, así que quedan fuera del análisis.",
+      ),
+    ).toBeInTheDocument();
+    expect(within(notComputable).getByRole("row", { name: /Taller/ })).toHaveTextContent(`Taller${TALLER.code}No calculable`);
+  });
+
+  test("UI-AGR-038: the header offers 'Cómo leer el reparto observado', which opens the help", async () => {
+    renderPage();
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "Cómo leer el reparto observado" }));
+
+    expect(await screen.findByRole("dialog", { name: "Cómo leer el reparto observado" })).toBeInTheDocument();
+  });
+
+  test("UI-AGR-038: the header link is the page's one way into the help", () => {
+    renderPage();
+
+    expect(screen.getAllByRole("button", { name: /reparto observado|significa|ayuda/i })).toHaveLength(1);
+  });
+
+  test("UI-AGR-038: on a phone, 'Cómo leer el reparto observado' stays in the header and opens the help", async () => {
+    const width = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
+    // jsdom has no layout: answer the header's (max-width) query, and any (min-width) one, as a 390-px phone would.
+    vi.stubGlobal("matchMedia", (query: string) => {
+      const min = /min-width:\s*([\d.]+)px/.exec(query)?.[1];
+      const max = /max-width:\s*([\d.]+)px/.exec(query)?.[1];
+      return {
+        matches: (min === undefined || Number(min) <= 390) && (max === undefined || 390 <= Number(max)),
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      } as MediaQueryList;
+    });
+    try {
+      renderPage();
+      const heading = screen.getByRole("heading", { level: 1 });
+      const link = screen.getByRole("button", { name: "Cómo leer el reparto observado" });
+
+      // In the compact header the link sits in the title block, after the heading.
+      expect(heading.parentElement?.parentElement).toContainElement(link);
+      await userEvent.setup().click(link);
+
+      expect(await screen.findByRole("dialog", { name: "Cómo leer el reparto observado" })).toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+    }
+  });
+
+  describe("UI-AGR-039: an impossible unattributed production share", () => {
+    const WARNING =
+      "Imposible: los puntos reciben más energía de la que produce la planta. Algún dato de Datadis es erróneo; revisa las anomalías con β observada muy alta.";
+
+    function renderWithUnattributed(unallocated: number) {
+      renderPage({
+        observation: query.success<typeof getPlantSharingObservation>(
+          observationFixture({
+            sharingAgreements: [
+              { ...REVISED, unallocatedShare: { days: 200, unallocated, registeredShareWithoutData: 0.03, ...APPLIED_WINDOW } },
+              INITIAL,
+              CURRENT,
+            ],
+          }),
+        ),
+      });
+      return card("Reparto 2025");
+    }
+
+    test("UI-AGR-039: −47,48 % keeps its value, in the warning tone, with the warning under it and the finding first", () => {
+      const revised = renderWithUnattributed(-0.4748);
+
+      expect(declaredStyle(within(revised).getByText("-47,5 %")).color).toBe(colors.warning.main);
+      expect(within(revised).getByText("-47,5 %").closest("p")?.nextElementSibling).toHaveTextContent(WARNING);
+      const findings = within(revised).getByText("Qué revisar").nextElementSibling as HTMLElement;
+      const [first] = within(findings).getAllByRole("listitem");
+      expect(first).toHaveTextContent(
+        /^Reparto mayor que la producciónLos puntos reciben un 47,5 % más de lo que produce la planta\.Ver anomalías$/,
+      );
+      expect(within(first).getByRole("link", { name: "Ver anomalías" })).toHaveAttribute(
+        "href",
+        `/plants/${PLANT_ID}/sharing-agreements/observed/revised#anomalias`,
+      );
+    });
+
+    test("UI-AGR-039: −0,05 % is rounding: shown as it is, with no warning and no finding", () => {
+      const revised = renderWithUnattributed(-0.0005);
+
+      expect(declaredStyle(within(revised).getByText("-0,1 %")).color).toBeUndefined();
+      expect(within(revised).queryByText(WARNING)).not.toBeInTheDocument();
+      expect(within(revised).queryByText("Reparto mayor que la producción")).not.toBeInTheDocument();
+    });
+
+    test("UI-AGR-039: the finding counts no agreement as to review and leaves the all-clear notice as it is", async () => {
+      // Nothing recommended and no anomaly, but an impossible share.
+      renderPage({
+        observation: query.success<typeof getPlantSharingObservation>(
+          observationFixture({
+            sharingAgreements: [
+              { ...INITIAL, unallocatedShare: { days: 400, unallocated: -0.4748, registeredShareWithoutData: 0, ...APPLIED_WINDOW } },
+            ],
+            unattributedAnomalies: [],
+          }),
+        ),
+      });
+
+      expect(within(card("Reparto inicial 2023")).getByText("Reparto mayor que la producción")).toBeInTheDocument();
+      expect(screen.getByRole("note")).toHaveTextContent("Todo aplicado, sin anomalías.");
+      await userEvent.setup().click(screen.getByRole("button", { name: /más/i }));
+      expect(screen.getByText("0 de 1")).toBeInTheDocument();
+    });
+
+    test("UI-AGR-039: 5,74 % shows with no warning and no finding", () => {
+      const revised = renderWithUnattributed(0.0574);
+
+      expect(declaredStyle(within(revised).getByText("5,7 %")).color).toBeUndefined();
+      expect(within(revised).queryByText(WARNING)).not.toBeInTheDocument();
+      expect(within(revised).queryByText("Reparto mayor que la producción")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("the unattributed production on a card", () => {
+    const EXPLANATION =
+      "Parte de la producción de la planta que, según Datadis, no llegó a ningún punto con datos durante la aplicación de este acuerdo (422 días medibles del 01/03/2025 al 26/04/2026).";
+
+    function renderWithShare(
+      unallocatedShare: { days: number; unallocated: number; registeredShareWithoutData: number; from?: string; to?: string },
+      suppliesWithoutValidDays = [OESTE],
+    ) {
+      renderPage({
+        observation: query.success<typeof getPlantSharingObservation>(
+          observationFixture({
+            analysis: buildObservationAnalysis({
+              analysedFrom: "2023-04-01",
+              analysedTo: "2026-10-31",
+              suppliesWithValidDays: [NORTE, SUR, ESTE],
+              suppliesWithoutValidDays,
+              notComputableSupplies: [TALLER],
+            }),
+            sharingAgreements: [{ ...REVISED, unallocatedShare: { ...APPLIED_WINDOW, ...unallocatedShare } }, INITIAL, CURRENT],
+          }),
+        ),
+      });
+      return card("Reparto 2025");
+    }
+
+    test("UI-AGR-040: it is 'Producción no atribuida', with what it is and over how many measurable days, always shown", () => {
+      const revised = renderWithShare({ days: 422, unallocated: 0.0303, registeredShareWithoutData: 0.0437 });
+
+      expect(within(revised).getByText("Producción no atribuida")).toBeInTheDocument();
+      expect(within(revised).getByText("3,0 %")).toBeInTheDocument();
+      expect(within(revised).getByText(EXPLANATION)).toBeVisible();
+    });
+
+    test("UI-AGR-040: the card's line gives its agreement's applied window, from the backend's from and to", () => {
+      const revised = renderWithShare({
+        days: 422,
+        unallocated: 0.0303,
+        registeredShareWithoutData: 0,
+        from: "2025-03-04",
+        to: "2026-10-31",
+      });
+
+      expect(within(revised).getByText(/\(422 días medibles del 04\/03\/2025 al 31\/10\/2026\)\.$/)).toBeVisible();
+    });
+
+    test("UI-AGR-040: one measurable day is said in the singular", () => {
+      const revised = renderWithShare({ days: 1, unallocated: 0.0303, registeredShareWithoutData: 0 });
+
+      expect(within(revised).getByText(/\(1 día medible del 01\/03\/2025 al 26\/04\/2026\)\.$/)).toBeInTheDocument();
+    });
+
+    test("UI-AGR-040: the formula and the old name are nowhere on the page", () => {
+      renderWithShare({ days: 422, unallocated: 0.0303, registeredShareWithoutData: 0.0437 });
+
+      expect(document.body.textContent).not.toMatch(/Σβ|sin explicar/i);
+    });
+
+    test("UI-AGR-041: 3,03 % with 4,37 % of supplies without data reads '4,4 %' and 'Resto: −1,3 pp' with its sentence", () => {
+      const revised = renderWithShare({ days: 422, unallocated: 0.0303, registeredShareWithoutData: 0.0437 });
+
+      expect(within(revised).getByText("4,4 % corresponde a puntos que no tenían datos esos días")).toBeInTheDocument();
+      expect(
+        within(revised).getByText("Resto: -1,3 pp. Los puntos con datos recibieron más de lo registrado."),
+      ).toBeInTheDocument();
+    });
+
+    test("UI-AGR-041: the share of supplies without data shows even when every supply has some measurable day", () => {
+      const revised = renderWithShare({ days: 422, unallocated: 0.0303, registeredShareWithoutData: 0.0437 }, []);
+
+      expect(within(revised).getByText("4,4 % corresponde a puntos que no tenían datos esos días")).toBeInTheDocument();
+    });
+
+    test("UI-AGR-041: with no registered share of supplies without data, there is no such line, and the rest is the whole share", () => {
+      const revised = renderWithShare({ days: 422, unallocated: 0.0574, registeredShareWithoutData: 0 });
+
+      expect(within(revised).queryByText(/corresponde a puntos que no tenían datos/)).not.toBeInTheDocument();
+      expect(within(revised).getByText("Resto: +5,7 pp. Producción que no llegó a ningún punto registrado.")).toBeInTheDocument();
+    });
+
+    test("UI-AGR-041: a rest within ±0,1 points is rounding", () => {
+      const revised = renderWithShare({ days: 422, unallocated: 0.0445, registeredShareWithoutData: 0.0437 });
+
+      expect(within(revised).getByText("Resto: +0,1 pp. Dentro del margen de redondeo.")).toBeInTheDocument();
+    });
+
+    test("UI-AGR-041: an impossible share keeps its warning, and its breakdown", () => {
+      const revised = renderWithShare({ days: 422, unallocated: -0.4748, registeredShareWithoutData: 0.0437 });
+
+      expect(within(revised).getByText(/^Imposible: /)).toBeInTheDocument();
+      expect(
+        within(revised).getByText("Resto: -51,9 pp. Los puntos con datos recibieron más de lo registrado."),
+      ).toBeInTheDocument();
+    });
+
+    test("UI-AGR-040: with no share, the card shows '—' and nothing under it", () => {
+      renderPage();
+      const current = card("Reparto 2026");
+
+      expect(within(current).getByText("—")).toBeInTheDocument();
+      expect(within(current).queryByText(/^Parte de la producción|^Resto:/)).not.toBeInTheDocument();
+    });
+  });
+
+  test("UI-AGR-023: a card with a sent date says 'Fichero enviado el …', and one without says 'Fichero enviado: sin registrar'", () => {
+    renderPage();
+
+    expect(within(card("Reparto 2025")).getByText("Fichero enviado el 10/02/2025")).toBeInTheDocument();
+    expect(within(card("Reparto 2026")).getByText("Fichero enviado: sin registrar")).toBeInTheDocument();
+    expect(within(card("Reparto 2026")).queryByText("Sin registrar")).not.toBeInTheDocument();
+  });
+
+  test("UI-AGR-024: an anomaly attributed to no agreement has no expected β, and its detail leaves it out", () => {
+    renderPage();
+    const section = screen.getByRole("region", { name: "Anomalías (3)" });
+
+    expect(within(section).getByRole("row", { name: /Recibe energía fuera del acuerdo/, hidden: true })).toHaveTextContent(
+      /β observada 2,0000 % · 30 días medibles$/,
+    );
+    expect(document.body.textContent).not.toMatch(/β esperada/);
+  });
+  describe("the 'Salen del reparto' line on a card", () => {
+    /** Reparto 2025 with the given leaving rows' and 0 % rows' counts, as the summary returns them. */
+    function renderWithLeaving(
+      absent: Parameters<typeof buildObservationStatusCounts>[0],
+      atZero: Parameters<typeof buildObservationStatusCounts>[0],
+    ) {
+      renderPage({
+        observation: query.success<typeof getPlantSharingObservation>(
+          observationFixture({
+            sharingAgreements: [
+              {
+                ...REVISED,
+                leavingStatusCounts: buildObservationStatusCounts(absent),
+                leavesDistributionStatusCounts: buildObservationStatusCounts(atZero),
+              },
+              INITIAL,
+              CURRENT,
+            ],
+          }),
+        ),
+      });
+      return card("Reparto 2025");
+    }
+
+    test("UI-AGR-023: with absent supplies only, it counts them and those leaving on another date", () => {
+      const revised = renderWithLeaving({ appliedSameDate: 1, appliedDifferentDate: 1 }, {});
+
+      expect(within(revised).getByText(/^Salen del reparto/)).toHaveTextContent(/^Salen del reparto: 2 · 1 con fecha distinta$/);
+    });
+
+    test("UI-AGR-023: with supplies dropping to 0 % only, it counts them and those leaving on another date", () => {
+      const revised = renderWithLeaving({}, { appliedDifferentDate: 4 });
+
+      expect(within(revised).getByText(/^Salen del reparto/)).toHaveTextContent(/^Salen del reparto: 4 · 4 con fecha distinta$/);
+    });
+
+    test("UI-AGR-023: with both kinds, it adds their totals and their counts on another date", () => {
+      const revised = renderWithLeaving({ appliedSameDate: 1, appliedDifferentDate: 1 }, { appliedSameDate: 2, notObserved: 1, appliedDifferentDate: 1 });
+
+      expect(within(revised).getByText(/^Salen del reparto/)).toHaveTextContent(/^Salen del reparto: 6 · 2 con fecha distinta$/);
+    });
+
+    test("UI-AGR-023: with none leaving on another date, the line gives the total alone", () => {
+      const revised = renderWithLeaving({ appliedSameDate: 1 }, { pendingApplication: 2 });
+
+      expect(within(revised).getByText(/^Salen del reparto/)).toHaveTextContent(/^Salen del reparto: 3$/);
+    });
+
+    test("UI-AGR-023: with no supply leaving, the card has no 'Salen del reparto' line", () => {
+      const revised = renderWithLeaving({}, {});
+
+      expect(within(revised).queryByText(/Salen del reparto/)).not.toBeInTheDocument();
+    });
   });
 });

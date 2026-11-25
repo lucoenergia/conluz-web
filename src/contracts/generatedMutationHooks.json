@@ -108,10 +108,12 @@
         "useDeactivatePartitionCoefficients",
         "useDeleteSharingAgreement",
         "useGenerateSharingAgreementDistributorFile",
+        "usePreviewPartitionCoefficientDates",
         "usePublishSharingAgreement",
         "useReopenPartitionCoefficients",
         "useReplacePartitionCoefficients",
         "useRevertSharingAgreementToDraft",
+        "useSetPartitionCoefficientDates",
         "useUpdateSharingAgreement",
         "useUploadSharingAgreementFile"
       ]

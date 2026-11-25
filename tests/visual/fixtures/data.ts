@@ -27,8 +27,10 @@ import type {
   PlatformAdminResponse,
   PlatformCapabilitiesResponse,
   SendInvitationsResponse,
+  CoefficientDatesEffectsResponse,
   SharingAgreementObservationResponse,
   SharingAgreementObservationSummaryResponse,
+  SharingAgreementPartitionCoefficientResponse,
   SharingAgreementResponse,
   SupplyAssignedPowerPointResponse,
   SupplyProductionTodayResponse,
@@ -2124,6 +2126,7 @@ const NO_COUNTS = {
   notDistinguishable: 0,
   notObserved: 0,
   noData: 0,
+  notObservable: 0,
 };
 
 const ORIGINAL_OBSERVED: SharingAgreementObservationSummaryResponse = {
@@ -2133,9 +2136,10 @@ const ORIGINAL_OBSERVED: SharingAgreementObservationSummaryResponse = {
   mostFrequentObservedDate: { from: null, to: "2023-04-01" },
   coefficientStatusCounts: { ...NO_COUNTS, appliedSameDate: 4, noData: 1 },
   leavingStatusCounts: NO_COUNTS,
+  leavesDistributionStatusCounts: NO_COUNTS,
   anomalies: [],
   anomalyCounts: { unknownCoefficient: 0, reverted: 0, energyOutsideAgreement: 0, noEnergyInAgreement: 0, appliedBeforeSent: 0 },
-  unallocatedShare: { days: 700, unallocated: 0.042, registeredShareWithoutData: 0.03 },
+  unallocatedShare: { days: 700, unallocated: 0.042, registeredShareWithoutData: 0.03, from: "2023-04-01", to: "2025-03-03" },
   recommendations: ["NONE"],
 };
 
@@ -2149,6 +2153,7 @@ const IN_FORCE_ANOMALIES: SharingAgreementObservationSummaryResponse["anomalies"
     // Clearly off its registered 3.15 %: within ±0.1 points it would match.
     observedBeta: 0.025,
     observedValidDays: 61,
+    expectedBeta: 0.0315,
   },
   {
     id: "anomaly-sur",
@@ -2158,6 +2163,7 @@ const IN_FORCE_ANOMALIES: SharingAgreementObservationSummaryResponse["anomalies"
     end: null,
     observedBeta: 0.0412,
     observedValidDays: 420,
+    expectedBeta: 0.0315,
   },
 ];
 
@@ -2168,9 +2174,11 @@ const IN_FORCE_OBSERVED: SharingAgreementObservationSummaryResponse = {
   mostFrequentObservedDate: { from: "2025-02-26", to: "2025-03-04" },
   coefficientStatusCounts: { ...NO_COUNTS, appliedSameDate: 1, appliedDifferentDate: 1, notDistinguishable: 1, noData: 1 },
   leavingStatusCounts: { ...NO_COUNTS, appliedDifferentDate: 1 },
+  // Casa Norte, which drops to 0 % on its date (FIXED_AGREEMENT_OBSERVATION, #623).
+  leavesDistributionStatusCounts: { ...NO_COUNTS, appliedSameDate: 1 },
   anomalies: IN_FORCE_ANOMALIES,
   anomalyCounts: { unknownCoefficient: 1, reverted: 1, energyOutsideAgreement: 0, noEnergyInAgreement: 0, appliedBeforeSent: 0 },
-  unallocatedShare: { days: 600, unallocated: 0.067, registeredShareWithoutData: 0.03 },
+  unallocatedShare: { days: 600, unallocated: 0.067, registeredShareWithoutData: 0.03, from: "2025-03-04", to: "2026-10-31" },
   recommendations: ["SET_DATES", "REVIEW_ANOMALIES"],
 };
 
@@ -2189,6 +2197,8 @@ export const FIXED_PLANT_OBSERVATION: PlantSharingObservationResponse = {
       end: "2024-01-31",
       observedBeta: 0.02,
       observedValidDays: 31,
+      // Attributed to no agreement: nothing was expected.
+      expectedBeta: null,
     },
   ],
 };
@@ -2219,20 +2229,27 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
   consecutiveDays: 3,
   summary: IN_FORCE_OBSERVED,
   coefficients: [
+    // Drops to 0 % after holding a share in the original agreement: it leaves
+    // the distribution, and is listed among the leaving rows too (#621).
     {
       coefficientId: "observed-norte",
+      leavesDistribution: true,
       supply: OBSERVED_SUPPLIES.norte,
-      coefficient: 0.0315,
+      coefficient: 0,
       storedValidFrom: "2025-03-01",
       storedValidTo: null,
       observedDate: { from: "2025-03-01", to: "2025-03-01" },
       proposedDate: null,
-      observedBeta: 0.0318,
+      observedBeta: 0.0001,
       observedValidDays: 540,
+      windowDays: 590,
+      windowFrom: "2025-03-01",
+      windowTo: "2026-10-31",
       status: "APPLIED_SAME_DATE",
     },
     {
       coefficientId: "observed-sur",
+      leavesDistribution: false,
       supply: OBSERVED_SUPPLIES.sur,
       coefficient: 0.0315,
       // Outside the observed range: a stored start within it is the same date.
@@ -2242,10 +2259,14 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
       proposedDate: null,
       observedBeta: 0.0412,
       observedValidDays: 540,
+      windowDays: 600,
+      windowFrom: "2025-03-04",
+      windowTo: "2026-10-31",
       status: "APPLIED_DIFFERENT_DATE",
     },
     {
       coefficientId: "observed-este",
+      leavesDistribution: false,
       supply: OBSERVED_SUPPLIES.este,
       coefficient: 0.05,
       storedValidFrom: "2025-03-01",
@@ -2254,10 +2275,14 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
       proposedDate: { from: "2025-02-26", to: "2025-03-04" },
       observedBeta: 0.05,
       observedValidDays: 540,
+      windowDays: 600,
+      windowFrom: "2025-03-04",
+      windowTo: "2026-10-31",
       status: "NOT_DISTINGUISHABLE",
     },
     {
       coefficientId: "observed-oeste",
+      leavesDistribution: false,
       supply: OBSERVED_SUPPLIES.oeste,
       coefficient: 0.03,
       storedValidFrom: "2025-03-01",
@@ -2266,6 +2291,9 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
       proposedDate: null,
       observedBeta: null,
       observedValidDays: 0,
+      windowDays: 600,
+      windowFrom: "2025-03-04",
+      windowTo: "2026-10-31",
       status: "NO_DATA",
     },
   ],
@@ -2280,7 +2308,172 @@ export const FIXED_AGREEMENT_OBSERVATION: SharingAgreementObservationResponse = 
       proposedDate: null,
       observedBeta: 0,
       observedValidDays: 540,
+      windowDays: 560,
+      windowFrom: "2025-04-01",
+      windowTo: "2026-10-31",
       status: "APPLIED_DIFFERENT_DATE",
     },
   ],
+};
+
+// ---------------------------------------------------------------------------
+// Setting an agreement's application dates (#419). The agreement in force,
+// sent to the distributor on 10/02/2025, with one coefficient of each kind the
+// prefill treats apart, and the supplies observed sharing saw leave with it.
+// ---------------------------------------------------------------------------
+
+export const APPLICATION_DATES_AGREEMENT: SharingAgreementResponse = {
+  ...(PUBLISHED_AGREEMENT as SharingAgreementResponse),
+  distributorFileSentOn: "2025-02-10",
+};
+
+const APPLICATION_DATES_PREVIOUS = { id: "00000000-1111-2222-3333-444444444444", name: "Reparto original 2022", status: "PUBLISHED" } as const;
+
+const pendingCoefficient = (
+  coefficientId: string,
+  supply: SupplyReferenceResponse,
+  coefficient: number,
+): SharingAgreementPartitionCoefficientResponse => ({
+  coefficientId,
+  supply,
+  coefficient,
+  applicationState: "PENDING",
+  validFrom: null,
+  validTo: null,
+  endState: "OPEN",
+  endDate: null,
+  currentCoefficient: null,
+});
+
+export const APPLICATION_DATES_COEFFICIENTS: SharingAgreementPartitionCoefficientResponse[] = [
+  // Drops to 0 %: the dry run flags it as leaving the distribution (#621).
+  pendingCoefficient("dates-norte", OBSERVED_SUPPLIES.norte, 0),
+  pendingCoefficient("dates-sur", OBSERVED_SUPPLIES.sur, 0.0315),
+  pendingCoefficient("dates-este", OBSERVED_SUPPLIES.este, 0.05),
+  pendingCoefficient("dates-oeste", OBSERVED_SUPPLIES.oeste, 0.03),
+  {
+    ...pendingCoefficient("dates-taller", OBSERVED_SUPPLIES.taller, 0.02),
+    applicationState: "APPLIED",
+    // Madrid midnight of 15/03/2025.
+    validFrom: "2025-03-14T23:00:00Z",
+  },
+];
+
+const observedCoefficient = (
+  coefficient: SharingAgreementPartitionCoefficientResponse,
+  fields: Partial<SharingAgreementObservationResponse["coefficients"][number]>,
+): SharingAgreementObservationResponse["coefficients"][number] => ({
+  coefficientId: coefficient.coefficientId,
+  supply: coefficient.supply,
+  coefficient: coefficient.coefficient,
+  leavesDistribution: false,
+  storedValidFrom: null,
+  storedValidTo: null,
+  observedDate: null,
+  proposedDate: null,
+  observedBeta: coefficient.coefficient,
+  observedValidDays: 540,
+  windowDays: 600,
+  windowFrom: "2025-03-04",
+  windowTo: "2026-10-31",
+  status: "PENDING_APPLICATION",
+  ...fields,
+});
+
+const [DATES_NORTE, DATES_SUR, DATES_ESTE, DATES_OESTE, DATES_TALLER] = APPLICATION_DATES_COEFFICIENTS;
+
+/**
+ * Observed exactly (Norte), in a range (Sur), not distinguishable with an
+ * exact proposed date (Este), without data (Oeste), and already dated but
+ * observed on another day (Taller); one supply leaving on an exact day and one
+ * on an open date.
+ */
+export const APPLICATION_DATES_OBSERVATION: SharingAgreementObservationResponse = {
+  ...FIXED_AGREEMENT_OBSERVATION,
+  coefficients: [
+    observedCoefficient(DATES_NORTE, { observedDate: { from: "2025-03-01", to: "2025-03-01" } }),
+    observedCoefficient(DATES_SUR, { observedDate: { from: "2025-02-26", to: "2025-03-04" } }),
+    observedCoefficient(DATES_ESTE, { proposedDate: { from: "2025-03-01", to: "2025-03-01" }, status: "NOT_DISTINGUISHABLE" }),
+    observedCoefficient(DATES_OESTE, { observedBeta: null, observedValidDays: 0, status: "NO_DATA" }),
+    observedCoefficient(DATES_TALLER, {
+      storedValidFrom: "2025-03-15",
+      observedDate: { from: "2025-03-01", to: "2025-03-01" },
+      status: "APPLIED_DIFFERENT_DATE",
+    }),
+  ],
+  leavingRows: [
+    { ...FIXED_AGREEMENT_OBSERVATION.leavingRows[0], previousSharingAgreement: APPLICATION_DATES_PREVIOUS },
+    {
+      ...FIXED_AGREEMENT_OBSERVATION.leavingRows[0],
+      supply: OBSERVED_SUPPLIES.almacen,
+      previousCoefficientId: "observed-almacen-previous",
+      previousSharingAgreement: APPLICATION_DATES_PREVIOUS,
+      observedLeavingDate: { from: null, to: "2025-03-01" },
+    },
+  ],
+};
+
+/**
+ * The dry run of the observed dates: Norte and Este from 01/03/2025, Este
+ * before the file was sent; Norte's previous coefficient shortened, and Norte
+ * leaving the distribution at 0 %; Escuela
+ * closed as listed and Almacén by default; the previous agreement superseded;
+ * and the community start moved back.
+ */
+export const APPLICATION_DATES_PREVIEW: CoefficientDatesEffectsResponse = {
+  coefficients: [
+    {
+      coefficient: { id: DATES_NORTE.coefficientId },
+      supply: DATES_NORTE.supply,
+      leavesDistribution: true,
+      validFromBefore: null,
+      validFromAfter: "2025-02-28T23:00:00Z",
+      validToBefore: null,
+      validToAfter: null,
+    },
+    {
+      coefficient: { id: DATES_ESTE.coefficientId },
+      supply: DATES_ESTE.supply,
+      leavesDistribution: false,
+      validFromBefore: null,
+      validFromAfter: "2025-01-31T23:00:00Z",
+      validToBefore: null,
+      validToAfter: null,
+    },
+  ],
+  neighbours: [
+    {
+      coefficient: { id: "previous-norte" },
+      sharingAgreement: { ...APPLICATION_DATES_PREVIOUS, status: "SUPERSEDED" },
+      supply: DATES_NORTE.supply,
+      validToBefore: null,
+      validToAfter: "2025-02-28T23:00:00Z",
+    },
+  ],
+  leavingClosures: [
+    {
+      coefficient: { id: "observed-escuela-previous" },
+      sharingAgreement: { ...APPLICATION_DATES_PREVIOUS, status: "SUPERSEDED" },
+      supply: OBSERVED_SUPPLIES.escuela,
+      source: "REQUEST",
+      validToBefore: null,
+      validToAfter: "2025-03-31T22:00:00Z",
+    },
+    {
+      coefficient: { id: "observed-almacen-previous" },
+      sharingAgreement: { ...APPLICATION_DATES_PREVIOUS, status: "SUPERSEDED" },
+      supply: OBSERVED_SUPPLIES.almacen,
+      source: "DEFAULT",
+      validToBefore: null,
+      validToAfter: "2025-01-31T23:00:00Z",
+    },
+  ],
+  agreementStatuses: [
+    {
+      sharingAgreement: { ...APPLICATION_DATES_PREVIOUS, status: "SUPERSEDED" },
+      statusBefore: "PUBLISHED",
+      statusAfter: "SUPERSEDED",
+    },
+  ],
+  communityStart: { before: "2025-03-14T23:00:00Z", after: "2025-01-31T23:00:00Z" },
 };

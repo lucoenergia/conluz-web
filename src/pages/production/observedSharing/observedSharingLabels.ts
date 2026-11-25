@@ -36,6 +36,7 @@ export const COEFFICIENT_STATUS_LABEL: Record<ObservationStatus, string> = {
   NOT_DISTINGUISHABLE: "No distinguible",
   NOT_OBSERVED: "Sin observar",
   NO_DATA: "Sin datos de Datadis",
+  NOT_OBSERVABLE: "No observable · punto de la planta",
 };
 
 /** A leaving row says "Salida" where it was applied; its other statuses read as a coefficient's. */
@@ -52,6 +53,7 @@ export const STATUS_TONE: Record<ObservationStatus, ObservationTone> = {
   NOT_DISTINGUISHABLE: "neutral",
   NOT_OBSERVED: "warning",
   NO_DATA: "neutral",
+  NOT_OBSERVABLE: "neutral",
 };
 
 /** The status counts in the order the card lists them, with the field each reads. */
@@ -62,10 +64,11 @@ export const STATUS_COUNT_ORDER: { status: ObservationStatus; count: keyof Obser
   { status: CoefficientObservationResponseStatus.NOT_DISTINGUISHABLE, count: "notDistinguishable" },
   { status: CoefficientObservationResponseStatus.NOT_OBSERVED, count: "notObserved" },
   { status: CoefficientObservationResponseStatus.NO_DATA, count: "noData" },
+  { status: CoefficientObservationResponseStatus.NOT_OBSERVABLE, count: "notObservable" },
 ];
 
 export const ANOMALY_TYPE_LABEL: Record<SharingAnomalyResponseType, string> = {
-  UNKNOWN_COEFFICIENT: "Coeficiente desconocido",
+  UNKNOWN_COEFFICIENT: "Coeficiente no registrado",
   REVERTED: "Vuelve a un coeficiente anterior",
   ENERGY_OUTSIDE_AGREEMENT: "Recibe energía fuera del acuerdo",
   NO_ENERGY_IN_AGREEMENT: "No recibe energía en el acuerdo",
@@ -87,3 +90,12 @@ export type ActionableRecommendation = Exclude<Recommendation, "NONE">;
 /** The recommendations that ask for something, in the order the analysis returned them. */
 export const actionableRecommendations = (recommendations: Recommendation[]): ActionableRecommendation[] =>
   recommendations.filter((item): item is ActionableRecommendation => item !== Recommendation.NONE);
+
+/** The name the unattributed production share is shown under; its formula is only in the help (UI-AGR-040). */
+export const UNATTRIBUTED_PRODUCTION_LABEL = "Producción no atribuida";
+
+/** The mark of a coefficient row whose supply leaves the distribution by dropping to 0 % (UI-AGR-030). */
+export const LEAVES_DISTRIBUTION_LABEL = "Sale del reparto";
+
+/** Why a row of "Salen del reparto" leaves (UI-AGR-030). */
+export const LEAVING_REASON = { absent: "No está en este acuerdo", zero: "Pasa a 0 %" } as const;

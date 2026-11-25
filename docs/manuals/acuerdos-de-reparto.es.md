@@ -275,24 +275,31 @@ registra las fechas de aplicación.»*
 
 En un acuerdo Vigente, la primera sección de la pantalla es **Aplicación del reparto**. Te dice cuántos puntos
 tienen ya fecha («3 de 12 puntos con fecha de aplicación»), recuerda la consecuencia de no tenerla, y ofrece el
-botón **Registrar fechas (N pendientes)**.
+botón **Fijar fechas de aplicación**. El bloque **Siguiente paso** ofrece el mismo paso como
+**Fijar fechas de aplicación (N pendientes)**, y el menú **⋮** del acuerdo lo tiene siempre.
 
-Al pulsar **Registrar fechas** —en la sección **Aplicación del reparto** o en el bloque **Siguiente paso**—
-Conluz te lleva a la tabla de coeficientes y la filtra por **Sin aplicar**, para que veas solo los puntos que
-te faltan. **No marca ninguno**: normalmente la distribuidora no aplica todos el mismo día, así que eres tú
-quien decide qué puntos comparten fecha.
+**Fijar fechas de aplicación** abre una página en tres pasos:
 
-Para registrar varias fechas a la vez:
+1. **Fechas.** Escribe desde qué día recibe cada punto su coeficiente (no puede ser una fecha futura). Los
+   puntos sin fecha llegan marcados; desmarca los que quieras dejar como están. **Misma fecha para todos**
+   pone un mismo día en todos los marcados.
+2. **Vista previa.** Conluz calcula, sin guardar nada, todo lo que cambiaría: el periodo de cada coeficiente,
+   el fin de los coeficientes anteriores, los puntos que salen del reparto y la fecha en que se cierran (puedes
+   cambiarla), los acuerdos que cambian de estado y, si cambia, la fecha de inicio de la comunidad. Si alguna
+   fecha da error, se dice en su punto y no se puede confirmar.
+3. **Resultado.** Al pulsar **Confirmar y aplicar** se guardan las fechas y ves lo que se ha escrito. Si
+   alguien ha cambiado las fechas mientras tanto, no se guarda nada y tus fechas se conservan.
 
-1. Pulsa **Registrar fechas**.
-2. Marca con la casilla de su fila los puntos que comparten la misma fecha de aplicación (en móvil tienes
-   **Seleccionar todas** para marcar de golpe los que estés viendo).
-3. En la barra que aparece al pie, pulsa **Acciones → Registrar fecha**.
-4. Indica la **Fecha de aplicación** (no puede ser una fecha futura) y confirma.
+Si llegas desde el **reparto observado** («Fechas distintas de las registradas» → **Fijar fechas**), las fechas
+que Datadis observa llegan ya escritas y marcadas como **Observada**, o como **Propuesta** cuando el cambio no
+se puede observar. Revísalas: tú decides.
 
-Para un solo suministro, abre el menú de acciones (**⋯**) de su fila y selecciona **Registrar fecha**.
+También puedes registrar una sola fecha para varios puntos desde la tabla de coeficientes: márcalos, pulsa
+**Acciones → Registrar fecha**, indica la **Fecha de aplicación** y confirma. Para un solo suministro, abre el
+menú de acciones (**⋯**) de su fila y selecciona **Registrar fecha**. En la primera activación del acuerdo, el
+diálogo te dice qué puntos salen del reparto y en qué fecha se cierran antes de confirmar.
 
-<!-- SCREENSHOT: sección "Aplicación del reparto" con el progreso y el botón "Registrar fechas", y la barra de selección múltiple al pie -->
+<!-- SCREENSHOT: sección "Aplicación del reparto" con el progreso y el botón "Fijar fechas de aplicación", y la vista previa de "Fijar fechas de aplicación" -->
 ![Registro de fechas de aplicación](placeholder-registrar-fecha.png)
 
 ---

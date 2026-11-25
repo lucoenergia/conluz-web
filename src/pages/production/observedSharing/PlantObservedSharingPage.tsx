@@ -19,6 +19,7 @@ import { groupAnomalies } from "./anomalyGroups";
 import { ObservationChip } from "./ObservationChip";
 import { ObservedAgreementCard } from "./ObservedAgreementCard";
 import { ObservedAnomalies } from "./ObservedAnomalies";
+import { ObservedSharingHelp } from "./ObservedSharingHelp";
 import { ObservationNotComputable } from "./ObservationNotComputable";
 import { ObservationProgress } from "./ObservationProgress";
 import { actionableRecommendations } from "./observedSharingLabels";
@@ -71,7 +72,7 @@ const AnalysisNotice: FC<{ observation: PlantSharingObservationResponse }> = ({ 
     <Notice severity={isAllClear(observation) ? "success" : "info"}>
       {`Datos de Datadis ${formatDataRangeInSentence(analysis.analysedFrom!, analysis.analysedTo!)}.`}
       {withoutData.length > 0 &&
-        ` ${withoutData.length} ${withoutData.length === 1 ? "punto sin datos" : "puntos sin datos"} de Datadis: ${joinNames(withoutData)}. Su parte aparece como «sin explicar».`}
+        ` ${withoutData.length} ${withoutData.length === 1 ? "punto sin datos" : "puntos sin datos"} de Datadis: ${joinNames(withoutData)}. Su parte aparece como «producción no atribuida».`}
       {isAllClear(observation) &&
         " Todo aplicado, sin anomalías. Datadis muestra cada acuerdo aplicado desde su fecha registrada y todos los puntos reciben su coeficiente."}
     </Notice>
@@ -97,16 +98,21 @@ const LoadingState: FC = () => (
   </>
 );
 
-/** Supplies holding coefficients in this plant and in another: not analysed, and no reason is given (UI-AGR-028). */
+/**
+ * Why the supplies holding coefficients in this plant and in another are left
+ * out, said once for the section; no supply gets a reason of its own (UI-AGR-028).
+ */
+const NOT_COMPUTABLE_EXPLANATION =
+  "Tienen coeficiente en esta planta y en otra. Datadis da su energía total y no se puede separar la parte de cada planta, así que quedan fuera del análisis.";
+
+/** Supplies holding coefficients in this plant and in another: not analysed. */
 const NotComputableSupplies: FC<{ observation: PlantSharingObservationResponse }> = ({ observation }) => {
   const supplies = observation.analysis.notComputableSupplies;
   if (supplies.length === 0) return null;
   const status = <ObservationChip label="No calculable" tone="neutral" />;
   return (
     <Box component="section" aria-labelledby="observed-not-computable" sx={sxStyles.pageContainer}>
-      <Typography id="observed-not-computable" variant="h6" component="h2" sx={{ fontWeight: 700, mb: 1.5 }}>
-        No calculables
-      </Typography>
+      <SectionHeading headingId="observed-not-computable" title="No calculables" description={NOT_COMPUTABLE_EXPLANATION} />
       <ResponsiveRecordList
         narrow={
           <RecordList
@@ -143,7 +149,6 @@ const AnalysedState: FC<{ plantId: string; observation: PlantSharingObservationR
   );
   const anomalyCount = groups.reduce((sum, group) => sum + group.count, 0);
   const allClear = isAllClear(observation);
-  const suppliesWithoutDataCount = observation.analysis.suppliesWithoutValidDays.length;
 
   return (
     <>
@@ -169,7 +174,6 @@ const AnalysedState: FC<{ plantId: string; observation: PlantSharingObservationR
                 key={summary.sharingAgreement.id}
                 plantId={plantId}
                 summary={summary}
-                suppliesWithoutDataCount={suppliesWithoutDataCount}
               />
             ))}
           </Box>
@@ -266,6 +270,7 @@ export const PlantObservedSharingPage: FC = () => {
                   {READ_ONLY_NOTE}
                 </>
               }
+              actions={<ObservedSharingHelp />}
               isLoading={isLoading}
               wrapFactValues
               keyFacts={facts?.keyFacts}

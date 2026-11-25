@@ -250,6 +250,15 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
     (cups) => `CUPS ${cups}: con esa fecha, su periodo se solaparía con otro coeficiente del mismo suministro.`,
     "Con esa fecha, el periodo de un coeficiente se solaparía con otro del mismo suministro.",
   ),
+  // A leaving supply refused by set-dates (lucoenergia/conluz#583, #419).
+  SHARING_AGREEMENT_LEAVING_SUPPLY_IN_AGREEMENT: withOptionalCups(
+    (cups) => `Este punto tiene un coeficiente en este acuerdo, así que no sale del reparto (afecta a ${cups}).`,
+    "Este punto tiene un coeficiente en este acuerdo, así que no sale del reparto.",
+  ),
+  SHARING_AGREEMENT_NO_COEFFICIENT_TO_CLOSE: withOptionalCups(
+    (cups) => `Este punto no tiene ningún coeficiente anterior que cerrar (afecta a ${cups}).`,
+    "Este punto no tiene ningún coeficiente anterior que cerrar.",
+  ),
   SHARING_AGREEMENT_COEFFICIENT_OVERLAP_CONFLICT:
     "No se ha podido guardar: el cambio haría que se solapen dos periodos de un mismo suministro. Recarga la página y revisa las fechas.",
 
@@ -571,4 +580,51 @@ export function getIndexedApiErrorDetails(
   }
 
   return { formLevel, indexed };
+}
+
+/** A refused row of a coefficient dates request, keyed by the ids the request sent. */
+export interface CoefficientDatesRowErrorDetail {
+  /** Set when the row is a coefficient of the agreement. */
+  coefficientId: string | undefined;
+  /** Set when the row is a leaving supply, the only id the request gave for it. */
+  supplyId: string | undefined;
+  message: string;
+}
+
+export interface CoefficientDatesErrorDetails {
+  rows: CoefficientDatesRowErrorDetail[];
+  /** Details that name no row: kept for the whole request, never dropped. */
+  general: string[];
+}
+
+/**
+ * Translates every error detail of a refused set-dates or preview-dates request
+ * and places it on the row it names. The backend keys a row by
+ * `params.coefficientId` or `params.supplyId` (lucoenergia/conluz#583); the
+ * operation descriptions call the carrier `details`, but the contract and the
+ * response put it in `errors[].params`. A detail the catalogue does not word
+ * reads as `fallback`.
+ */
+export function getCoefficientDatesErrorDetails(error: unknown, fallback: string): CoefficientDatesErrorDetails {
+  const details = extractRestError(error)?.errors ?? [];
+  const rows: CoefficientDatesRowErrorDetail[] = [];
+  const general: string[] = [];
+
+  for (const detail of details) {
+    // The catalogue's wording or the fallback: the server's own message is
+    // English and written for developers (#358).
+    const message = translateErrorDetail({ ...detail, message: "" }, fallback);
+    const coefficientId = detail.params?.coefficientId || undefined;
+    const supplyId = detail.params?.supplyId || undefined;
+    if (coefficientId || supplyId) {
+      rows.push({ coefficientId, supplyId, message });
+    } else if (!general.includes(message)) {
+      general.push(message);
+    }
+  }
+
+  // A refusal is never silent, even one with no detail at all (a bare 400).
+  if (rows.length === 0 && general.length === 0) general.push(fallback);
+
+  return { rows, general };
 }

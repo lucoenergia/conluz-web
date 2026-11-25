@@ -77,3 +77,14 @@ export function todayInAppTimeZone(): string {
   const { year, month, day } = wallTimeAt(Date.now());
   return `${year}-${pad(month)}-${pad(day)}`;
 }
+
+/**
+ * The calendar day an instant falls on in the app's time zone, as a local
+ * date ("2024-02-01"). The backend writes a coefficient's validFrom as Madrid
+ * midnight in UTC ("2024-01-31T23:00:00Z"), so its raw prefix names the day
+ * before.
+ */
+export function localDateAt(isoInstant: string): string {
+  const { year, month, day } = wallTimeAt(new Date(isoInstant).getTime());
+  return `${year}-${pad(month)}-${pad(day)}`;
+}

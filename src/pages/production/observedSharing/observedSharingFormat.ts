@@ -1,4 +1,11 @@
-import type { ObservedDateResponse, SharingAgreementObservationSummaryResponse } from "../../../api/models";
+import {
+  CoefficientObservationResponseStatus,
+  type LeavingObservationResponseStatus,
+  type ObservedDateResponse,
+  type SharingAgreementObservationSummaryResponse,
+  type SharingAnomalyResponse,
+  type UnallocatedShareResponse,
+} from "../../../api/models";
 import { formatLocalDate, SHORT_CALENDAR_DATE } from "../../../utils/formatCalendarDate";
 import { formatPercentage } from "../../../utils/formatPercentage";
 import { COEFFICIENT_SCALE } from "../sharingAgreementCoefficientSums";
@@ -50,9 +57,91 @@ export function betaMatches(observed: number, registered: number): boolean {
   return Math.abs(Math.round(observed * COEFFICIENT_SCALE) - Math.round(registered * COEFFICIENT_SCALE)) <= EQUAL_TOLERANCE;
 }
 
-/** The evidence behind an anomaly: "Recibe 4,1200 % en 21 días válidos." */
-export function formatAnomalyDetail(observedBeta: number, validDays: number): string {
-  return `Recibe ${formatBeta(observedBeta)} en ${validDays} ${validDays === 1 ? "día válido" : "días válidos"}.`;
+/**
+ * Whether an unattributed production share (1 − Σβ) is impossible: below −0.1
+ * percentage points, the tolerance of the analysis, the supplies received more
+ * energy than the plant produced, which only wrong Datadis data explains.
+ * Between that and 0 it is rounding (UI-AGR-039). Compared in millionths, as
+ * `betaMatches` is. A share the analysis did not give is not impossible.
+ */
+export function isImpossibleUnattributedShare(unallocated: number | null | undefined): unallocated is number {
+  return (
+    unallocated !== null && unallocated !== undefined && Math.round(unallocated * COEFFICIENT_SCALE) < -EQUAL_TOLERANCE
+  );
+}
+
+/** What the rest of an unattributed share says: beyond ±0.1 points, which way it goes; within, rounding. */
+export type UnattributedRemainderKind = "receivedMore" | "notDelivered" | "rounding";
+
+const SIGNED_POINTS = new Intl.NumberFormat("es-ES", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+  signDisplay: "exceptZero",
+});
+
+/**
+ * The unattributed share left once the registered share of the supplies
+ * without data those days is taken out (UI-AGR-041): the subtraction of two
+ * values the analysis returned, in percentage points with its sign. Computed
+ * in millionths, so no float error moves it across the ±0.1 points edge.
+ */
+export function unattributedRemainder(share: UnallocatedShareResponse): {
+  text: string;
+  kind: UnattributedRemainderKind;
+} {
+  const unallocated = Math.round(share.unallocated * COEFFICIENT_SCALE);
+  const millionths = unallocated - Math.round(share.registeredShareWithoutData * COEFFICIENT_SCALE);
+  const kind: UnattributedRemainderKind =
+    millionths < -EQUAL_TOLERANCE ? "receivedMore" : millionths > EQUAL_TOLERANCE ? "notDelivered" : "rounding";
+  // A percentage point is 10 000 millionths of the 0-1 scale.
+  return { text: `${SIGNED_POINTS.format(millionths / 10_000)} pp`, kind };
+}
+
+/**
+ * A row's measurable days, "N de M": N its observedValidDays, M the
+ * plant-valid days of its own window, both the backend's (UI-AGR-042). Each
+ * row's window starts on its own observed date, so no other count is its M.
+ * Null for a row of the plant's own supply, which cannot be observed.
+ */
+export function formatMeasurableDays(row: {
+  status: CoefficientObservationResponseStatus | LeavingObservationResponseStatus;
+  observedValidDays: number;
+  windowDays: number;
+}): string | null {
+  return row.status === CoefficientObservationResponseStatus.NOT_OBSERVABLE
+    ? null
+    : `${row.observedValidDays} de ${row.windowDays}`;
+}
+
+/**
+ * The days a figure is counted over, "del DD/MM/AAAA al DD/MM/AAAA", both
+ * the backend's (UI-AGR-040). Null when it gives none: a row with no window
+ * (windowDays 0) has neither date. A row's window (UI-AGR-042) reads the
+ * same, drawn with each date kept on one line.
+ */
+export function formatWindow(from: string, to: string): string;
+export function formatWindow(from: string | null, to: string | null): string | null;
+export function formatWindow(from: string | null, to: string | null): string | null {
+  return from === null || to === null ? null : `del ${formatDay(from)} al ${formatDay(to)}`;
+}
+
+/**
+ * The evidence behind an anomaly (UI-AGR-024): "β esperada 3,1500 % ·
+ * β observada 4,1200 % · 21 días medibles". The expected β is the backend's,
+ * never derived here (UI-AGR-031); an anomaly attributed to no agreement has
+ * none, and leaves it out.
+ */
+export function formatAnomalyDetail(
+  anomaly: Pick<SharingAnomalyResponse, "expectedBeta" | "observedBeta" | "observedValidDays">,
+): string {
+  const days = anomaly.observedValidDays;
+  return [
+    anomaly.expectedBeta !== null && `β esperada ${formatBeta(anomaly.expectedBeta)}`,
+    `β observada ${formatBeta(anomaly.observedBeta)}`,
+    `${days} ${days === 1 ? "día medible" : "días medibles"}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 /** An anomaly's end: its last day, or "en curso" while it lasts until the end of the data. */
@@ -80,8 +169,8 @@ export function joinNames(names: string[]): string {
 }
 
 /**
- * A share of the production that is not a coefficient (1 − Σβ, the part of
- * the supplies without data), with as many decimals as the design gives it;
+ * A share of the production, such as the unattributed one or the registered
+ * share of the supplies without data, with as many decimals as the design gives it;
  * "—" when the analysis gave none.
  */
 export const formatPercentageOrNone = (value: number | null | undefined, decimals: number) =>

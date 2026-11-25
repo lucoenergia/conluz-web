@@ -16,6 +16,7 @@ export const mockActivateMutateAsync = vi.fn();
 export const mockDeactivateMutateAsync = vi.fn();
 export const mockCloseMutateAsync = vi.fn();
 export const mockReopenMutateAsync = vi.fn();
+export const mockPreviewDatesMutateAsync = vi.fn();
 export const mockSuccessDispatch = vi.fn();
 
 /**
@@ -36,6 +37,7 @@ const sharingAgreementMutationHooks = {
   useDeactivatePartitionCoefficients: vi.fn(),
   useClosePartitionCoefficients: vi.fn(),
   useReopenPartitionCoefficients: vi.fn(),
+  usePreviewPartitionCoefficientDates: vi.fn(),
 };
 
 /**

@@ -28,7 +28,7 @@ const AnomalyRows: FC<{ group: SupplyAnomalies }> = ({ group }) => {
           title: ANOMALY_TYPE_LABEL[anomaly.type],
           lines: [
             `Inicio: ${formatObservedDate(anomaly.start)} · Fin: ${formatAnomalyEnd(anomaly.end)}`,
-            formatAnomalyDetail(anomaly.observedBeta, anomaly.observedValidDays),
+            formatAnomalyDetail(anomaly),
           ],
         }))}
       />
@@ -47,7 +47,7 @@ const AnomalyRows: FC<{ group: SupplyAnomalies }> = ({ group }) => {
         {
           key: "detail",
           header: "Detalle",
-          render: (anomaly) => formatAnomalyDetail(anomaly.observedBeta, anomaly.observedValidDays),
+          render: (anomaly) => formatAnomalyDetail(anomaly),
         },
       ]}
     />

@@ -180,7 +180,7 @@
     },
     "ApplyCoefficientDateConfirmationModal": {
       "cardMode": "single",
-      "viewport": "720x540"
+      "viewport": "720x640"
     },
     "CloseCoefficientConfirmationModal": {
       "cardMode": "single",

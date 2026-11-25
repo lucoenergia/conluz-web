@@ -29,6 +29,7 @@ import type {
   ActivateCoefficientsResponse,
   CloseCoefficientsBody,
   CoefficientActivationResponse,
+  CoefficientDatesEffectsResponse,
   CreateSharingAgreementBody,
   DeactivateCoefficientsBody,
   GenerateDistributorFileBody,
@@ -39,6 +40,7 @@ import type {
   ReplacePartitionCoefficientsBody,
   ReplacePartitionCoefficientsResponse,
   RestError,
+  SetCoefficientDatesBody,
   SharingAgreementObservationResponse,
   SharingAgreementPartitionCoefficientResponse,
   SharingAgreementResponse,
@@ -1635,6 +1637,114 @@ export const useDeactivatePartitionCoefficients = <TError = ErrorType<RestError>
       return useMutation(getDeactivatePartitionCoefficientsMutationOptions(options), queryClient);
     }
     /**
+ * Computes what `set-dates` would do with the same body, and writes nothing. The effects are those
+ * `set-dates` performs on the coefficients as they stand now; `set-dates` validates the request
+ * again when it runs, since the coefficients may have changed in between.
+ *
+ * Each coefficient is placed chronologically within the timeline of its (plant, supply), as
+ * `activate` does, in ascending `validFrom` order and then by coefficient id, each on the timeline
+ * as the previous ones left it. A pending coefficient is activated and an active one corrected.
+ *
+ * Each listed leaving supply must have no coefficient, pending or not, in this agreement. Its
+ * closed coefficient is its activated coefficient with the latest `validFrom` before the
+ * agreement's earliest `validFrom` once the coefficients of the request are placed. Its `validTo`
+ * becomes `closedOn`: that may shorten it or extend it, up to the next start of the supply. It is
+ * an ordinary close, which `reopen` undoes.
+ *
+ * On the agreement's first activation (none of its coefficients had a `validFrom` before the
+ * request), every supply that leaves the distribution and is not listed is closed at the earliest
+ * `validFrom` of the request, as `activate` does, and reported with source `DEFAULT`. A later
+ * request closes only the listed supplies.
+ *
+ * The response lists every effect: each requested coefficient's period before and after, each
+ * neighbour whose end moves, each leaving closure, the status of every agreement owning a changed
+ * coefficient before and after, and the earliest `validFrom` of the plant's community before and
+ * after. Rows that do not change are not listed. A row error in `details` carries `coefficientId`,
+ * `supplyId` or both, and `conflictingCoefficientId` for an overlap.
+ *
+ * **Required: Community Admin**
+ *
+ * PUBLISHED or SUPERSEDED agreements only.
+ *
+ * Returns 400 if both lists are empty or a coefficient or a supply is listed twice.
+ * Returns 404 if the plant or the agreement does not exist, does not belong to this plant, or the
+ * caller is not a member of its community, to avoid leaking existence. Returns 409 if the agreement
+ * is DRAFT, or with every invalid row: a coefficient not in this agreement, a date in the future,
+ * a start equal to another start of the supply or a period overlapping another, a correction not
+ * before the coefficient's own close, a listed supply holding a coefficient in this agreement, a
+ * listed supply with no coefficient to close, or a closing date not after the closed coefficient's
+ * start.
+ *
+ * Authentication is required using a Bearer token.
+ * @summary Previews every effect of setting the dates of an agreement's coefficients and leaving closures
+ */
+export const previewPartitionCoefficientDates = (
+    plantId: string,
+    sharingAgreementId: string,
+    setCoefficientDatesBody: SetCoefficientDatesBody,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<CoefficientDatesEffectsResponse>(
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/partition-coefficients/preview-dates`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: setCoefficientDatesBody, signal
+    },
+      );
+    }
+
+
+
+
+export const getPreviewPartitionCoefficientDatesMutationKey = () => ['previewPartitionCoefficientDates'] as const;
+
+export const getPreviewPartitionCoefficientDatesMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof previewPartitionCoefficientDates>>, TError,PreviewPartitionCoefficientDatesMutationVariables, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof previewPartitionCoefficientDates>>, TError,PreviewPartitionCoefficientDatesMutationVariables, TContext> => {
+
+const mutationKey = getPreviewPartitionCoefficientDatesMutationKey();
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof previewPartitionCoefficientDates>>, PreviewPartitionCoefficientDatesMutationVariables> = (props) => {
+          const {plantId,sharingAgreementId,data} = props ?? {};
+
+          return  previewPartitionCoefficientDates(plantId,sharingAgreementId,data,)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PreviewPartitionCoefficientDatesMutationResult = NonNullable<Awaited<ReturnType<typeof previewPartitionCoefficientDates>>>
+    export type PreviewPartitionCoefficientDatesMutationBody = SetCoefficientDatesBody
+    export type PreviewPartitionCoefficientDatesMutationError = ErrorType<RestError>
+    export type PreviewPartitionCoefficientDatesMutationVariables = {plantId: string;sharingAgreementId: string;data: SetCoefficientDatesBody}
+
+    /**
+ * @summary Previews every effect of setting the dates of an agreement's coefficients and leaving closures
+ */
+export const usePreviewPartitionCoefficientDates = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof previewPartitionCoefficientDates>>, TError,PreviewPartitionCoefficientDatesMutationVariables, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof previewPartitionCoefficientDates>>,
+        TError,
+        PreviewPartitionCoefficientDatesMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPreviewPartitionCoefficientDatesMutationOptions(options), queryClient);
+    }
+    /**
  * Clears `validTo` on each given coefficient. Rejected when a successor coefficient
  * starts at or before the current `validTo` -- that boundary was written by the
  * activation cascade, not authored: you may only undo a closure you authored.
@@ -1718,6 +1828,117 @@ export const useReopenPartitionCoefficients = <TError = ErrorType<RestError>,
         TContext
       > => {
       return useMutation(getReopenPartitionCoefficientsMutationOptions(options), queryClient);
+    }
+    /**
+ * Sets, in one request, the date each coefficient of the agreement started to apply and the date
+ * each supply that leaves the distribution stopped receiving production. Validates the whole
+ * request, then writes everything in one transaction and recomputes the status of every agreement
+ * owning a changed coefficient; a failure on any row rejects the whole request and nothing is
+ * written. Date writes on the same plant run one after another. The response reports the effects
+ * as written; `preview-dates` with the same body reports them without writing.
+ *
+ * Each coefficient is placed chronologically within the timeline of its (plant, supply), as
+ * `activate` does, in ascending `validFrom` order and then by coefficient id, each on the timeline
+ * as the previous ones left it. A pending coefficient is activated and an active one corrected.
+ *
+ * Each listed leaving supply must have no coefficient, pending or not, in this agreement. Its
+ * closed coefficient is its activated coefficient with the latest `validFrom` before the
+ * agreement's earliest `validFrom` once the coefficients of the request are placed. Its `validTo`
+ * becomes `closedOn`: that may shorten it or extend it, up to the next start of the supply. It is
+ * an ordinary close, which `reopen` undoes.
+ *
+ * On the agreement's first activation (none of its coefficients had a `validFrom` before the
+ * request), every supply that leaves the distribution and is not listed is closed at the earliest
+ * `validFrom` of the request, as `activate` does, and reported with source `DEFAULT`. A later
+ * request closes only the listed supplies.
+ *
+ * The response lists every effect: each requested coefficient's period before and after, each
+ * neighbour whose end moves, each leaving closure, the status of every agreement owning a changed
+ * coefficient before and after, and the earliest `validFrom` of the plant's community before and
+ * after. Rows that do not change are not listed. A row error in `details` carries `coefficientId`,
+ * `supplyId` or both, and `conflictingCoefficientId` for an overlap.
+ *
+ * **Required: Community Admin**
+ *
+ * PUBLISHED or SUPERSEDED agreements only.
+ *
+ * Returns 400 if both lists are empty or a coefficient or a supply is listed twice.
+ * Returns 404 if the plant or the agreement does not exist, does not belong to this plant, or the
+ * caller is not a member of its community, to avoid leaking existence. Returns 409 if the agreement
+ * is DRAFT, or with every invalid row: a coefficient not in this agreement, a date in the future,
+ * a start equal to another start of the supply or a period overlapping another, a correction not
+ * before the coefficient's own close, a listed supply holding a coefficient in this agreement, a
+ * listed supply with no coefficient to close, or a closing date not after the closed coefficient's
+ * start.
+ *
+ * Authentication is required using a Bearer token.
+ * @summary Sets the application date of each coefficient of an agreement and the closing date of each supply leaving it
+ */
+export const setPartitionCoefficientDates = (
+    plantId: string,
+    sharingAgreementId: string,
+    setCoefficientDatesBody: SetCoefficientDatesBody,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<CoefficientDatesEffectsResponse>(
+      {url: `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/partition-coefficients/set-dates`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: setCoefficientDatesBody, signal
+    },
+      );
+    }
+
+
+
+
+export const getSetPartitionCoefficientDatesMutationKey = () => ['setPartitionCoefficientDates'] as const;
+
+export const getSetPartitionCoefficientDatesMutationOptions = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setPartitionCoefficientDates>>, TError,SetPartitionCoefficientDatesMutationVariables, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof setPartitionCoefficientDates>>, TError,SetPartitionCoefficientDatesMutationVariables, TContext> => {
+
+const mutationKey = getSetPartitionCoefficientDatesMutationKey();
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setPartitionCoefficientDates>>, SetPartitionCoefficientDatesMutationVariables> = (props) => {
+          const {plantId,sharingAgreementId,data} = props ?? {};
+
+          return  setPartitionCoefficientDates(plantId,sharingAgreementId,data,)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetPartitionCoefficientDatesMutationResult = NonNullable<Awaited<ReturnType<typeof setPartitionCoefficientDates>>>
+    export type SetPartitionCoefficientDatesMutationBody = SetCoefficientDatesBody
+    export type SetPartitionCoefficientDatesMutationError = ErrorType<RestError>
+    export type SetPartitionCoefficientDatesMutationVariables = {plantId: string;sharingAgreementId: string;data: SetCoefficientDatesBody}
+
+    /**
+ * @summary Sets the application date of each coefficient of an agreement and the closing date of each supply leaving it
+ */
+export const useSetPartitionCoefficientDates = <TError = ErrorType<RestError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setPartitionCoefficientDates>>, TError,SetPartitionCoefficientDatesMutationVariables, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setPartitionCoefficientDates>>,
+        TError,
+        SetPartitionCoefficientDatesMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSetPartitionCoefficientDatesMutationOptions(options), queryClient);
     }
     /**
  * This endpoint transitions a sharing agreement from DRAFT to PUBLISHED. The

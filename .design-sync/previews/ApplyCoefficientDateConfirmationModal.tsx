@@ -39,3 +39,26 @@ export const Batch = () => (
     onConfirm={() => {}}
   />
 );
+
+export const FirstActivationClosesLeavingSupplies = () => (
+  <ApplyCoefficientDateConfirmationModal
+    isOpen
+    coefficients={[coefficient("1", "ES0031406912345678JN0F", "Vivienda Calle Murta 12, 3ª")]}
+    isPending={false}
+    errorMessages={null}
+    onCancel={() => {}}
+    onConfirm={() => {}}
+    leavingSupplies={{
+      status: "ready",
+      closures: [
+        {
+          supplyId: "bar",
+          label: "Bar La Plaza",
+          code: "ES0031406912340005FN1F",
+          previousAgreementName: "Reparto inicial 2023",
+          closedOn: "01/02/2024",
+        },
+      ],
+    }}
+  />
+);

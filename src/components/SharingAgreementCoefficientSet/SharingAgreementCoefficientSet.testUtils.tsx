@@ -6,8 +6,8 @@
  * substitutes in SharingAgreementCoefficientSet.mocks.ts; this module sets
  * their results before every test and renders through the shared harness.
  */
-import { beforeEach, vi } from "vitest";
-import { screen } from "@testing-library/react";
+import { beforeEach, expect, vi } from "vitest";
+import { screen, waitFor } from "@testing-library/react";
 import type { ReactElement } from "react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
@@ -21,7 +21,7 @@ import {
 } from "../../api/supplies/supplies";
 import {
   getSharingAgreementById,
-  /* eslint-disable no-restricted-imports -- test helper: these five are imported
+  /* eslint-disable no-restricted-imports -- test helper: these six are imported
      only to type and set the mocked hooks' results, never called. Not numbered:
      this file is test infrastructure and is not migrating to the actions layer. */
   useActivatePartitionCoefficients,
@@ -29,6 +29,7 @@ import {
   type getPlantActivePartitionCoefficients,
   useClosePartitionCoefficients,
   useDeactivatePartitionCoefficients,
+  usePreviewPartitionCoefficientDates,
   useReopenPartitionCoefficients,
   useReplacePartitionCoefficients,
   /* eslint-enable no-restricted-imports */
@@ -51,6 +52,7 @@ import {
   mockCloseMutateAsync,
   mockDeactivateMutateAsync,
   mockMutateAsync,
+  mockPreviewDatesMutateAsync,
   mockReopenMutateAsync,
   mutationPending,
 } from "./SharingAgreementCoefficientSet.mocks";
@@ -60,6 +62,7 @@ export {
   mockCloseMutateAsync,
   mockDeactivateMutateAsync,
   mockMutateAsync,
+  mockPreviewDatesMutateAsync,
   mockReopenMutateAsync,
   mockSuccessDispatch,
   mutationPending,
@@ -109,6 +112,18 @@ beforeEach(() => {
         )
       : mutation.idle({ mutateAsync: mockActivateMutateAsync }),
   );
+  // The activation dialog's dry run: by default the activation closes no
+  // leaving supply, as on any activation after an agreement's first.
+  mockPreviewDatesMutateAsync.mockResolvedValue({
+    coefficients: [],
+    neighbours: [],
+    leavingClosures: [],
+    agreementStatuses: [],
+    communityStart: { before: null, after: null },
+  });
+  vi.mocked(usePreviewPartitionCoefficientDates).mockImplementation(() =>
+    mutation.idle({ mutateAsync: mockPreviewDatesMutateAsync }),
+  );
   vi.mocked(useDeactivatePartitionCoefficients).mockImplementation(() =>
     mutationPending.deactivating
       ? mutation.pending({ ...target, data: { coefficientIds: [] } }, { mutateAsync: mockDeactivateMutateAsync })
@@ -146,6 +161,18 @@ export async function typeDate(user: ReturnType<typeof userEvent.setup>, day: st
   await user.keyboard(day);
   await user.keyboard(month);
   await user.keyboard(year);
+  await waitForLeavingSupplies();
+}
+
+/**
+ * Waits for "Registrar fecha"'s dry run of the leaving supplies, which runs
+ * once the date has rested (UI-AGR-037). A no-op in any other date dialog,
+ * where the text never shows.
+ */
+export async function waitForLeavingSupplies() {
+  await waitFor(() => expect(screen.queryByText("Calculando qué puntos salen del reparto…")).not.toBeInTheDocument(), {
+    timeout: 2000,
+  });
 }
 
 /** Opens the batch bar's "Acciones" menu and selects the item by its (visible) label — the entry point for every batch-dialog test since Part A's inline field was replaced. */

@@ -20,119 +20,15 @@ import {
   OPEN_UNCLOSED,
   renderWithTheme,
   rerenderWithTheme,
-  renderCoefficientSet,
-  setTree,
   mockMutateAsync,
   mockSuccessDispatch,
 } from "./SharingAgreementCoefficientSet.testUtils";
 
-const { PENDING, APPLIED } = SharingAgreementPartitionCoefficientResponseApplicationState;
+const { PENDING } = SharingAgreementPartitionCoefficientResponseApplicationState;
 
 vi.mock(import("../../context/success.context"), (orig) => import("./SharingAgreementCoefficientSet.mocks").then((m) => m.successContextModule(orig)));
 vi.mock(import("../../api/supplies/supplies"), () => import("./SharingAgreementCoefficientSet.mocks").then((m) => m.suppliesModule()));
 vi.mock(import("../../api/sharing-agreements/sharing-agreements"), (orig) => import("./SharingAgreementCoefficientSet.mocks").then((m) => m.sharingAgreementsModule(orig)));
-
-describe("SharingAgreementCoefficientSet (registering dates)", () => {
-  // A new request id scrolls the table into view, and jsdom has no
-  // scrollIntoView. This used to pass only because earlier describes in the
-  // same file left their stub installed.
-  beforeEach(() => {
-    Element.prototype.scrollIntoView = vi.fn();
-  });
-
-  const mixed: SharingAgreementPartitionCoefficientResponse[] = [
-    { coefficientId: "1", supply: { id: "s1", name: "Vivienda A", code: "ES0031300000000001AB" }, coefficient: 0.2, applicationState: APPLIED, ...OPEN_UNCLOSED },
-    { coefficientId: "2", supply: { id: "s2", name: "Vivienda B", code: "ES0031300000000002CD" }, coefficient: 0.2, applicationState: APPLIED, ...OPEN_UNCLOSED },
-    { coefficientId: "3", supply: { id: "s3", name: "Local C", code: "ES0031300000000003EF" }, coefficient: 0.2, applicationState: PENDING, ...OPEN_UNCLOSED },
-    { coefficientId: "4", supply: { id: "s4", name: "Nave D", code: "ES0031300000000004GH" }, coefficient: 0.2, applicationState: PENDING, ...OPEN_UNCLOSED },
-    { coefficientId: "5", supply: { id: "s5", name: "Taller E", code: "ES0031300000000005IJ" }, coefficient: 0.2, applicationState: PENDING, ...OPEN_UNCLOSED },
-  ];
-
-  function renderWithRequestId(registerDatesRequestId: number) {
-    return setTree({ coefficients: mixed, registerDatesRequestId });
-  }
-
-  it("narrows the table to the rows still waiting for a date", async () => {
-    const { rerender } = renderCoefficientSet(renderWithRequestId(0));
-
-    expect(screen.getAllByText("Vivienda A").length).toBeGreaterThan(0);
-
-    rerender(renderWithRequestId(1));
-
-    await waitFor(() => expect(screen.queryByText("Vivienda A")).not.toBeInTheDocument());
-    expect(screen.queryByText("Vivienda B")).not.toBeInTheDocument();
-    for (const name of ["Local C", "Nave D", "Taller E"]) {
-      expect(screen.getAllByText(name).length).toBeGreaterThan(0);
-    }
-    expect(screen.getByRole("button", { name: "Sin aplicar" })).toHaveClass(/MuiChip-colorWarning/);
-  });
-
-  it("selects nothing — which rows share a date is the admin's judgement, not a default", async () => {
-    // The distributor rarely applies every point on the same day. Arriving with
-    // every row ticked invites a bulk action nobody decided on.
-    const { rerender } = renderCoefficientSet(renderWithRequestId(0));
-    rerender(renderWithRequestId(1));
-
-    await waitFor(() => expect(screen.queryByText("Vivienda A")).not.toBeInTheDocument());
-
-    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
-    for (const checkbox of screen.queryAllByRole("checkbox")) {
-      expect(checkbox).not.toBeChecked();
-    }
-  });
-
-  it("still lets the admin select the rows it surfaced, and only then offers the batch bar", async () => {
-    const user = userEvent.setup({ delay: null });
-    const { rerender } = renderCoefficientSet(renderWithRequestId(0));
-    rerender(renderWithRequestId(1));
-
-    await waitFor(() => expect(screen.queryByText("Vivienda A")).not.toBeInTheDocument());
-
-    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar Local C" })[0]);
-    await user.click(screen.getAllByRole("checkbox", { name: "Seleccionar Nave D" })[0]);
-
-    expect(await screen.findByRole("button", { name: "Acciones" })).toBeInTheDocument();
-    expect(screen.getByText("2 seleccionados")).toBeInTheDocument();
-    expect(screen.queryByText(/oculto/)).not.toBeInTheDocument();
-  });
-
-  it("clears a leftover search, so nothing the filter surfaced stays hidden behind it", async () => {
-    const user = userEvent.setup({ delay: null });
-    const { rerender } = renderCoefficientSet(renderWithRequestId(0));
-
-    await user.type(screen.getByPlaceholderText("Buscar por punto o CUPS"), "Taller");
-    await waitFor(() => expect(screen.queryByText("Local C")).not.toBeInTheDocument());
-
-    rerender(renderWithRequestId(1));
-
-    await waitFor(() => expect(screen.getAllByText("Local C").length).toBeGreaterThan(0));
-    expect(screen.getByPlaceholderText("Buscar por punto o CUPS")).toHaveValue("");
-  });
-
-  it("brings the table into view, since the panel that asked is above it", async () => {
-    const scrollIntoView = vi.fn();
-    const original = Element.prototype.scrollIntoView;
-    Element.prototype.scrollIntoView = scrollIntoView;
-
-    try {
-      const { rerender } = renderCoefficientSet(renderWithRequestId(0));
-      expect(scrollIntoView).not.toHaveBeenCalled();
-
-      rerender(renderWithRequestId(1));
-
-      await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ block: "start" })));
-    } finally {
-      Element.prototype.scrollIntoView = original;
-    }
-  });
-
-  it("does nothing on mount just because a request id is present", () => {
-    renderCoefficientSet(renderWithRequestId(4));
-
-    expect(screen.getAllByText("Vivienda A").length).toBeGreaterThan(0);
-    expect(screen.queryByRole("button", { name: "Acciones" })).not.toBeInTheDocument();
-  });
-});
 
 describe("SharingAgreementCoefficientSet (in-force comparison gating)", () => {
   // In force means authored by a PUBLISHED agreement: a SUPERSEDED one never

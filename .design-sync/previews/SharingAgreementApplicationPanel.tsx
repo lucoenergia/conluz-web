@@ -74,3 +74,16 @@ export const NoneApplied = () => (
     />
   </Mui.Box>
 );
+
+export const WithSetDatesAction = () => (
+  <Mui.Box sx={{ maxWidth: 720 }}>
+    <SharingAgreementApplicationPanel
+      coefficients={[
+        row("c1", supplies[0], 0.4, null, 0.35),
+        row("c2", supplies[1], 0.35, null, 0.35),
+        row("c3", supplies[2], 0.25, null, 0.3),
+      ] as any}
+      onSetDatesRequest={() => {}}
+    />
+  </Mui.Box>
+);
