@@ -307,9 +307,9 @@ is in force today.
 - **Status:** Active
 - **Rule:** The plant's observed sharing MUST show one card per agreement, in the order the analysis
   returns them. Each card MUST show "Fichero enviado el <fecha>", or "Fichero enviado: sin registrar", the
-  application the analysis observed, its supplies' status counts, its leaving counts when there is
-  any, its anomaly counts by type, and its unattributed production (UI-AGR-040). Each status
-  and anomaly count MUST come before its label, in tabular figures so the counts align, and a zero
+  application the analysis observed, its supplies' status counts, "Salen del reparto: N · M con
+  fecha distinta" when some supply leaves, its anomaly counts by type, and its unattributed
+  production (UI-AGR-040). Each status and anomaly count MUST come before its label, in tabular figures so the counts align, and a zero
   count MUST read in the secondary text colour. Each card
   and the agreement's page MUST show every recommendation returned, in order, as a finding under
   "Qué revisar": a title stating what was found, a detail from the backend's counts, and a link
@@ -319,16 +319,22 @@ is in force today.
   unexplained share adds a finding of its own, before the recommendations (UI-AGR-039). On
   the agreement's page, "Con avisos" MUST keep the coefficient rows applied on another
   date, not distinguishable, or of a supply with an anomaly of the agreement, and the leaving rows
-  that left on another date; its count MUST equal the rows it shows.
+  that left on another date; its count MUST equal the rows it shows. In "Salen del reparto", N MUST
+  be the total of `leavingStatusCounts` and `leavesDistributionStatusCounts`, and M the sum of
+  their `appliedDifferentDate`; the line MUST leave out "· M con fecha distinta" when M is 0, and
+  MUST NOT show when N is 0. Both counts MUST be read from the summary, never inferred from a
+  coefficient's value.
 - **Rationale:** This is what an admin comes to see. The backend owns the order and the
   recommendations; restating either here would let the two disagree. A finding says what the
   analysis saw, which the admin can check, rather than an instruction. A count read down a column
   is compared faster than one at the end of a label of its own length, and the statuses that hold
-  rows stand out from those that hold none.
+  rows stand out from those that hold none. A supply leaves whether it is absent from the agreement
+  or its coefficient drops to 0 %; the card counts both, as the agreement's page lists both
+  (UI-AGR-030).
 - **Implements:** n/a
 - **Source:** #418; findings layout: maintainer decision in the #418 review; the "Fijar fechas"
   link, the count before its label, the impossible share's finding and the sent date's wording:
-  #419
+  #419; the supplies that drop to 0 % in "Salen del reparto": lucoenergia/conluz#623
 
 ### UI-AGR-024 — Anomalies are grouped by agreement and supply, with their evidence
 
@@ -424,9 +430,7 @@ is in force today.
   coefficient row's.
 - **Rationale:** A leaving supply keeps receiving attributed production until its coefficient ends.
   A supply whose coefficient drops to 0 % leaves as surely as one left out of the agreement, but
-  only the backend knows the previous agreement's value, so only its flag says so. The plant's
-  agreement card still counts absent supplies only: its summary carries no count of the flagged
-  rows.
+  only the backend knows the previous agreement's value, so only its flag says so.
 - **Implements:** n/a
 - **Source:** #418; the rows that drop to 0 %: #419, lucoenergia/conluz#621
 
