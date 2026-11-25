@@ -2174,7 +2174,8 @@ const IN_FORCE_OBSERVED: SharingAgreementObservationSummaryResponse = {
   mostFrequentObservedDate: { from: "2025-02-26", to: "2025-03-04" },
   coefficientStatusCounts: { ...NO_COUNTS, appliedSameDate: 1, appliedDifferentDate: 1, notDistinguishable: 1, noData: 1 },
   leavingStatusCounts: { ...NO_COUNTS, appliedDifferentDate: 1 },
-  leavesDistributionStatusCounts: NO_COUNTS,
+  // Casa Norte, which drops to 0 % on its date (FIXED_AGREEMENT_OBSERVATION, #623).
+  leavesDistributionStatusCounts: { ...NO_COUNTS, appliedSameDate: 1 },
   anomalies: IN_FORCE_ANOMALIES,
   anomalyCounts: { unknownCoefficient: 1, reverted: 1, energyOutsideAgreement: 0, noEnergyInAgreement: 0, appliedBeforeSent: 0 },
   unallocatedShare: { days: 600, unallocated: 0.067, registeredShareWithoutData: 0.03, from: "2025-03-04", to: "2026-10-31" },

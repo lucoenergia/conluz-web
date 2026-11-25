@@ -73,6 +73,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByRole("heading", { name: "Anomalías (3)" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "No calculables" })).toBeVisible();
     await expect(page.getByText(/^Tienen coeficiente en esta planta y en otra\./)).toBeVisible();
+    await expect(page.getByText("Salen del reparto: 2 · 1 con fecha distinta")).toBeVisible();
     await expect(page.getByRole("button", { name: "Cómo leer el reparto observado" })).toBeVisible();
     await settleForCapture(page);
 
