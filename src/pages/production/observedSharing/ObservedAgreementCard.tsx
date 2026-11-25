@@ -52,12 +52,19 @@ const CountRow: FC<{ label: string; count: number }> = ({ label, count }) => (
 
 const countListSx = { listStyle: "none", m: 0, p: 0, display: "flex", flexDirection: "column", gap: 0.25 } as const;
 
-/** "Salen del reparto: 2 · 1 con fecha distinta", only when some supply leaves with the agreement. */
+const countTotal = (counts: SharingAgreementObservationSummaryResponse["leavingStatusCounts"]) =>
+  Object.values(counts).reduce((sum, count) => sum + count, 0);
+
+/**
+ * "Salen del reparto: 2 · 1 con fecha distinta", only when some supply leaves
+ * with the agreement (UI-AGR-023): those absent from it and those whose
+ * coefficient drops to 0 %, each as the summary counts them, never inferred.
+ */
 function leavingText(summary: SharingAgreementObservationSummaryResponse): string | undefined {
-  const counts = summary.leavingStatusCounts;
-  const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+  const { leavingStatusCounts: absent, leavesDistributionStatusCounts: atZero } = summary;
+  const total = countTotal(absent) + countTotal(atZero);
   if (total === 0) return undefined;
-  const different = counts.appliedDifferentDate;
+  const different = absent.appliedDifferentDate + atZero.appliedDifferentDate;
   return different > 0 ? `Salen del reparto: ${total} · ${different} con fecha distinta` : `Salen del reparto: ${total}`;
 }
 
