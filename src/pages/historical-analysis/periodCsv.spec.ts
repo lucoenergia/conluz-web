@@ -132,6 +132,16 @@ describe("periodCsv (#251)", () => {
     ]);
   });
 
+  it("UI-HOM-016 the note on every line states the price with VAT and electricity tax on top", () => {
+    const slots = supplyDays([supplyBucket("2026/07/01"), supplyGapDay("2026/07/02"), supplyBucket("2026/07/03")]);
+
+    const notes = linesOf(periodCsv(slots, "daily", { eurPerKWh: 0.15 }))
+      .slice(1)
+      .map((line) => cellsOf(line)[6]);
+
+    expect(notes).toEqual(Array(3).fill("Estimado con un precio de 0,15 €/kWh para la energía, más IVA e impuesto eléctrico."));
+  });
+
   it("UI-HIS-023 without estimatedPrice, both price columns are empty on every line", () => {
     const slots = supplyDays([supplyBucket("2026/07/01"), supplyBucket("2026/07/02"), supplyBucket("2026/07/03")]);
 
