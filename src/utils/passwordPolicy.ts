@@ -8,7 +8,7 @@
  * typing it. The backend also caps the UTF-8 encoding at 72 bytes, so a long
  * non-ASCII passphrase can be within 64 characters and still too long.
  */
-export const PASSWORD_MIN_CHARS = 15;
+export const PASSWORD_MIN_CHARS = 10;
 export const PASSWORD_MAX_CHARS = 64;
 export const PASSWORD_MAX_BYTES = 72;
 

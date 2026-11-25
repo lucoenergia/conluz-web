@@ -581,7 +581,7 @@ describe("UI-INV-007 an account without a password (AC1)", () => {
     await findCommunityHeading();
     await choosePassword(user, "corta");
 
-    expect(await screen.findByText(/al menos 15 caracteres/)).toBeInTheDocument();
+    expect(await screen.findByText(/al menos 10 caracteres/)).toBeInTheDocument();
     await choosePassword(user, NEW_PASSWORD, `${NEW_PASSWORD}!`);
     expect(await screen.findByText("Las contraseñas no coinciden")).toBeInTheDocument();
     expect(bodiesTo(router, ACCEPT)).toEqual([]);

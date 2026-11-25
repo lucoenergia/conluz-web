@@ -121,7 +121,7 @@ describe("the catalogue entries for #196", () => {
         apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule: "TOO_SHORT" } }),
         "x",
       ),
-    ).toBe("La contraseña debe tener al menos 15 caracteres.");
+    ).toBe("La contraseña debe tener al menos 10 caracteres.");
     expect(
       getFirstApiErrorMessage(
         apiError(429, { code: "AUTH_TOO_MANY_FAILED_ATTEMPTS", params: { retryAfterSeconds: "840" } }),
