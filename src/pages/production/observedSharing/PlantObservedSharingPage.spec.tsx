@@ -745,4 +745,58 @@ describe("PlantObservedSharingPage", () => {
     );
     expect(document.body.textContent).not.toMatch(/β esperada/);
   });
+  describe("the 'Salen del reparto' line on a card", () => {
+    /** Reparto 2025 with the given leaving rows' and 0 % rows' counts, as the summary returns them. */
+    function renderWithLeaving(
+      absent: Parameters<typeof buildObservationStatusCounts>[0],
+      atZero: Parameters<typeof buildObservationStatusCounts>[0],
+    ) {
+      renderPage({
+        observation: query.success<typeof getPlantSharingObservation>(
+          observationFixture({
+            sharingAgreements: [
+              {
+                ...REVISED,
+                leavingStatusCounts: buildObservationStatusCounts(absent),
+                leavesDistributionStatusCounts: buildObservationStatusCounts(atZero),
+              },
+              INITIAL,
+              CURRENT,
+            ],
+          }),
+        ),
+      });
+      return card("Reparto 2025");
+    }
+
+    test("UI-AGR-023: with absent supplies only, it counts them and those leaving on another date", () => {
+      const revised = renderWithLeaving({ appliedSameDate: 1, appliedDifferentDate: 1 }, {});
+
+      expect(within(revised).getByText(/^Salen del reparto/)).toHaveTextContent(/^Salen del reparto: 2 · 1 con fecha distinta$/);
+    });
+
+    test("UI-AGR-023: with supplies dropping to 0 % only, it counts them and those leaving on another date", () => {
+      const revised = renderWithLeaving({}, { appliedDifferentDate: 4 });
+
+      expect(within(revised).getByText(/^Salen del reparto/)).toHaveTextContent(/^Salen del reparto: 4 · 4 con fecha distinta$/);
+    });
+
+    test("UI-AGR-023: with both kinds, it adds their totals and their counts on another date", () => {
+      const revised = renderWithLeaving({ appliedSameDate: 1, appliedDifferentDate: 1 }, { appliedSameDate: 2, notObserved: 1, appliedDifferentDate: 1 });
+
+      expect(within(revised).getByText(/^Salen del reparto/)).toHaveTextContent(/^Salen del reparto: 6 · 2 con fecha distinta$/);
+    });
+
+    test("UI-AGR-023: with none leaving on another date, the line gives the total alone", () => {
+      const revised = renderWithLeaving({ appliedSameDate: 1 }, { pendingApplication: 2 });
+
+      expect(within(revised).getByText(/^Salen del reparto/)).toHaveTextContent(/^Salen del reparto: 3$/);
+    });
+
+    test("UI-AGR-023: with no supply leaving, the card has no 'Salen del reparto' line", () => {
+      const revised = renderWithLeaving({}, {});
+
+      expect(within(revised).queryByText(/Salen del reparto/)).not.toBeInTheDocument();
+    });
+  });
 });
