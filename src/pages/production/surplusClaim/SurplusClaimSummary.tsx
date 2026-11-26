@@ -9,12 +9,12 @@ import { ENERGY_COLORS } from "../../../components/EnergyFigures/energyColors";
 import { formatEuros, formatKilowattHours } from "../../../utils/formatEnergyFigures";
 import { colors, radii } from "../../../theme/tokens";
 import { sxStyles } from "../../../theme/sx";
+import { SURPLUS_CLAIM_CLOSED_MONTHS_MESSAGE } from "../../../errors/surplusClaim";
 import { monthLabel, monthPhrase, warningCountText } from "./surplusClaimFormat";
 
 /** What a figure reads when the month has none: never 0, which would be a measured amount. */
 export const NO_FIGURE = "—";
 
-const MONTH_HELPER = "Solo meses cerrados. La distribuidora publica cada mes hacia el día 10 del siguiente.";
 
 const INCOME_NOTE =
   "Estimación a precio de mercado (OMIE) del excedente de este fichero. Lo que pague la comercializadora puede ser distinto.";
@@ -78,7 +78,7 @@ export const SurplusClaimSummary: FC<SurplusClaimSummaryProps> = ({
           label="Mes"
           value={selectedMonth}
           onChange={(event) => onMonthChange(event.target.value)}
-          helperText={MONTH_HELPER}
+          helperText={SURPLUS_CLAIM_CLOSED_MONTHS_MESSAGE}
           sx={{ ...sxStyles.filterField, width: { xs: "100%", sm: 320 } }}
         >
           {monthOptions.map((month) => (
