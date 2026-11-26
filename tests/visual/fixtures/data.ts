@@ -2138,7 +2138,7 @@ const ORIGINAL_OBSERVED: SharingAgreementObservationSummaryResponse = {
   leavingStatusCounts: NO_COUNTS,
   leavesDistributionStatusCounts: NO_COUNTS,
   anomalies: [],
-  anomalyCounts: { unknownCoefficient: 0, reverted: 0, energyOutsideAgreement: 0, noEnergyInAgreement: 0, appliedBeforeSent: 0 },
+  anomalyCounts: { unknownCoefficient: 0, reverted: 0, energyOutsideAgreement: 0, noEnergyInAgreement: 0, appliedBeforeSent: 0, notApplied: 0 },
   unallocatedShare: { days: 700, unallocated: 0.042, registeredShareWithoutData: 0.03, from: "2023-04-01", to: "2025-03-03" },
   recommendations: ["NONE"],
 };
@@ -2154,6 +2154,7 @@ const IN_FORCE_ANOMALIES: SharingAgreementObservationSummaryResponse["anomalies"
     observedBeta: 0.025,
     observedValidDays: 61,
     expectedBeta: 0.0315,
+    swappedWith: null,
   },
   {
     id: "anomaly-sur",
@@ -2164,6 +2165,7 @@ const IN_FORCE_ANOMALIES: SharingAgreementObservationSummaryResponse["anomalies"
     observedBeta: 0.0412,
     observedValidDays: 420,
     expectedBeta: 0.0315,
+    swappedWith: null,
   },
 ];
 
@@ -2177,7 +2179,7 @@ const IN_FORCE_OBSERVED: SharingAgreementObservationSummaryResponse = {
   // Casa Norte, which drops to 0 % on its date (FIXED_AGREEMENT_OBSERVATION, #623).
   leavesDistributionStatusCounts: { ...NO_COUNTS, appliedSameDate: 1 },
   anomalies: IN_FORCE_ANOMALIES,
-  anomalyCounts: { unknownCoefficient: 1, reverted: 1, energyOutsideAgreement: 0, noEnergyInAgreement: 0, appliedBeforeSent: 0 },
+  anomalyCounts: { unknownCoefficient: 1, reverted: 1, energyOutsideAgreement: 0, noEnergyInAgreement: 0, appliedBeforeSent: 0, notApplied: 0 },
   unallocatedShare: { days: 600, unallocated: 0.067, registeredShareWithoutData: 0.03, from: "2025-03-04", to: "2026-10-31" },
   recommendations: ["SET_DATES", "REVIEW_ANOMALIES"],
 };
@@ -2199,6 +2201,7 @@ export const FIXED_PLANT_OBSERVATION: PlantSharingObservationResponse = {
       observedValidDays: 31,
       // Attributed to no agreement: nothing was expected.
       expectedBeta: null,
+      swappedWith: null,
     },
   ],
 };
