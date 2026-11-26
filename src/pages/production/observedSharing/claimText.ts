@@ -34,9 +34,17 @@ export interface ClaimableAnomaly {
 }
 
 /**
- * The plant's claimable anomalies, attributed and not, in the order the page
- * lists them (UI-AGR-024): grouped as the page groups them, then filtered, so a
- * supply keeps its place even when its first anomaly is not claimable.
+ * When an anomaly started, as far as the data tells: the latest day its start
+ * may fall on, the end of a range, or the day the data starts on.
+ */
+const startDay = (anomaly: SharingAnomalyResponse) => anomaly.start.to;
+
+/**
+ * The plant's claimable anomalies, attributed and not (UI-AGR-047): supplies in
+ * the order the page lists them (UI-AGR-024), grouped as the page groups them
+ * and then filtered, so a supply keeps its place even when its first anomaly
+ * is not claimable; each supply's parts by start date, which the page does not
+ * do. A stable sort keeps the analysis's order between parts starting the same day.
  */
 export function claimableAnomalies(observation: PlantSharingObservationResponse): ClaimableAnomaly[] {
   const sentOn = new Map(
@@ -48,8 +56,11 @@ export function claimableAnomalies(observation: PlantSharingObservationResponse)
       distributorFileSentOn: sentOn.get(group.agreement.id) ?? null,
     };
     return group.supplies
-      .flatMap(({ anomalies }) => anomalies)
-      .filter((anomaly) => CLAIMABLE_TYPES.has(anomaly.type))
+      .flatMap(({ anomalies }) =>
+        anomalies
+          .filter((anomaly) => CLAIMABLE_TYPES.has(anomaly.type))
+          .sort((a, b) => startDay(a).localeCompare(startDay(b))),
+      )
       .map((anomaly) => ({ anomaly, agreement }));
   });
 }
@@ -121,7 +132,7 @@ function period(start: ObservedDateResponse, end: string | null, analysedTo: str
  * template of #436, with what the observed sharing response says filled in and
  * the rest left as bracketed placeholders. Supplies are named by their CUPS
  * only; nothing internal to Conluz, such as a supply's or the plant's name,
- * appears. One numbered item per claimable anomaly, in page order (UI-AGR-047).
+ * appears. One numbered item per claimable anomaly part (UI-AGR-047).
  * Built from the response already on the page; nothing is requested.
  */
 export function buildClaimText(

@@ -169,12 +169,12 @@ No se le ha aplicado el coeficiente comunicado de 3,1500 %; recibe aproximadamen
 Periodo: del 01/03/2025 al 30/06/2025.
 
 2. CUPS ES0031000000000001JN0F.
-No se le ha aplicado el coeficiente comunicado de 3,1500 %; recibe aproximadamente un 4,12 % (reparto «Reparto vecinos bloque A», fichero enviado el 20/02/2025). Este porcentaje coincide con el coeficiente comunicado para el punto CUPS ES0031000000000002JN0F, y a ese punto se le aplica el de este: los coeficientes de ambos puntos parecen intercambiados.
-Periodo: desde una fecha entre el 25/08/2025 y el 01/09/2025 hasta la fecha de los últimos datos publicados (31/10/2025).
-
-3. CUPS ES0031000000000001JN0F.
 No se le ha aplicado el coeficiente comunicado de 3,1500 %; recibe aproximadamente un 1,23 % (reparto «Reparto vecinos bloque A», fichero enviado el 20/02/2025).
 Periodo: del 01/07/2025 al 24/08/2025.
+
+3. CUPS ES0031000000000001JN0F.
+No se le ha aplicado el coeficiente comunicado de 3,1500 %; recibe aproximadamente un 4,12 % (reparto «Reparto vecinos bloque A», fichero enviado el 20/02/2025). Este porcentaje coincide con el coeficiente comunicado para el punto CUPS ES0031000000000002JN0F, y a ese punto se le aplica el de este: los coeficientes de ambos puntos parecen intercambiados.
+Periodo: desde una fecha entre el 25/08/2025 y el 01/09/2025 hasta la fecha de los últimos datos publicados (31/10/2025).
 
 4. CUPS ES0031000000000003JN0F.
 Se le ha aplicado aproximadamente un 6,12 %, cuando el coeficiente comunicado es 5,0000 % (reparto «Reparto vecinos bloque A», fichero enviado el 20/02/2025).
@@ -265,10 +265,10 @@ describe("buildClaimText", () => {
     expect(claimed[0][1]).toContain(swapSentence(SUR.code));
     expect(claimed[4][1]).toContain(swapSentence(NORTE.code));
     // The open swap: Casa Norte's open part and Casa Sur's, which overlap.
-    expect(claimed[1][1]).toContain(swapSentence(SUR.code));
+    expect(claimed[2][1]).toContain(swapSentence(SUR.code));
     expect(claimed[5][1]).toContain(swapSentence(NORTE.code));
     // Casa Norte's part that is not swapped names no other supply.
-    expect(claimed[2][1]).not.toContain("intercambiados");
+    expect(claimed[1][1]).not.toContain("intercambiados");
   });
 
   test("UI-AGR-048: the text holds no markup, no supply name and no plant name, and names every claimed CUPS", () => {
