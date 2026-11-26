@@ -5,6 +5,7 @@ export const PLANT_SECTION_IDS = {
   agreements: "plant-agreements",
   observedSharing: "plant-observed-sharing",
   integrations: "plant-integrations",
+  surplusClaim: "plant-surplus-claim",
 } as const;
 
 export type PlantSectionId = (typeof PLANT_SECTION_IDS)[keyof typeof PLANT_SECTION_IDS];

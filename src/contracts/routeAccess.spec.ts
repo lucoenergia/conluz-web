@@ -62,6 +62,8 @@ const ROUTE_ACCESS: Record<string, Access> = {
   // canListSharingAgreements guard, inside the plant's canManage.
   "/plants": { require: { scope: "community", capability: "canManage" } },
   "/plants/:plantId": { require: { scope: "plant", capability: "canManage" } },
+  // The surplus claim is the plant's own, under the plant's guard (#455).
+  "/plants/:plantId/surplus-claim": { require: { scope: "plant", capability: "canManage" } },
   "/plants/:plantId/sharing-agreements": {
     require: { scope: "plant", capability: "canListSharingAgreements" },
   },

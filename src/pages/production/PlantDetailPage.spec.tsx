@@ -110,7 +110,7 @@ describe("PlantDetailPage", () => {
     expect(screen.queryByRole("menuitem")).not.toBeInTheDocument();
   });
 
-  it("shows its sections in the design's order: summary, observed sharing, today, the period, agreements and integrations (#406, #418)", () => {
+  it("shows its sections in the design's order: summary, observed sharing, surplus claim, today, the period, agreements and integrations (#406, #418, #455)", () => {
     setup({ canManage: true, canListSharingAgreements: true, inverter: available() });
 
     // The page's own sections, not the regions inside them (the Huawei card).
@@ -121,6 +121,7 @@ describe("PlantDetailPage", () => {
     expect(names).toEqual([
       "En esta planta",
       "Reparto observado",
+      "Reclamación de excedentes",
       "Hoy, según el inversor",
       "Producción por periodo",
       "Acuerdos de reparto",

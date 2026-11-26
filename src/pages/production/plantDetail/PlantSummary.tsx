@@ -7,7 +7,7 @@ import { sxStyles } from "../../../theme/sx";
 import { usePlantSharingAgreements } from "../../home/management/usePlantSharingAgreements";
 import { computeSharingAgreementCounts } from "../useSharingAgreementsData";
 import { agreementsSummaryText } from "./agreementsSummary";
-import { AGREEMENTS_ICON, INTEGRATIONS_ICON, OBSERVED_SHARING_ICON } from "./sectionIcons";
+import { AGREEMENTS_ICON, INTEGRATIONS_ICON, OBSERVED_SHARING_ICON, SURPLUS_CLAIM_ICON } from "./sectionIcons";
 import { PLANT_SECTION_IDS, scrollToSection, type PlantSectionId } from "./plantSections";
 import type { PlantIntegrationStatus } from "./usePlantIntegrationStatus";
 
@@ -164,6 +164,15 @@ export const PlantSummary: FC<PlantSummaryProps> = ({ plant, integrationStatus }
             icon={INTEGRATIONS_ICON}
             status={INTEGRATION_STATUS[integrationStatus]}
             target={PLANT_SECTION_IDS.integrations}
+          />
+        )}
+        {/* No status: the claim is asked only from its own page (#455). */}
+        {showIntegration && (
+          <SummaryRow
+            label="Reclamación de excedentes"
+            description="Revisa el mes y descarga el fichero para la comercializadora"
+            icon={SURPLUS_CLAIM_ICON}
+            target={PLANT_SECTION_IDS.surplusClaim}
           />
         )}
       </Box>

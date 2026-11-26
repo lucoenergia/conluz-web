@@ -181,7 +181,7 @@ describe("PlantDetailPage rules (#260)", () => {
       }
     });
 
-    it("UI-PLT-002 an admin sees the summary with both rows, the agreements and the integrations", () => {
+    it("UI-PLT-002 an admin sees the summary with every row, the agreements and the integrations", () => {
       setup({ capabilities: ADMIN });
 
       const rows = within(summary()!).getAllByRole("button");
@@ -189,6 +189,7 @@ describe("PlantDetailPage rules (#260)", () => {
         "Acuerdos de reparto: Ninguno en vigor",
         "Reparto observado",
         "Integración Huawei: Activa",
+        "Reclamación de excedentes",
       ]);
       expect(screen.getByRole("heading", { name: "Acuerdos de reparto" })).toBeVisible();
       expect(screen.getByRole("heading", { name: "Integraciones" })).toBeVisible();
