@@ -76,6 +76,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText(/^Tienen coeficiente en esta planta y en otra\./)).toBeVisible();
     await expect(page.getByText("Salen del reparto: 2 · 1 con fecha distinta")).toBeVisible();
     await expect(page.getByRole("button", { name: "Cómo leer el reparto observado" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Preparar texto de reclamación" })).toBeVisible();
     await settleForCapture(page);
 
     // Layout subject: the main region, with the app bar masked (see mainRegion).
@@ -119,6 +120,29 @@ test.describe("Visual baselines", () => {
     await stabilizePage(page);
 
     await expect(dialog).toHaveScreenshot("observed-sharing-help-mobile.png", await hideAppBar(page));
+  });
+
+  // Admitted: the claim text is a phone sheet holding a long multi-line
+  // read-only field between a notice and a "Copiar texto" footer (#436): how
+  // the field and the button fit a 390 px sheet that covers the screen is a
+  // layout risk jsdom cannot see. The text, the notice, the copy and the sheet
+  // variant are asserted in Vitest (claimText.spec.ts,
+  // PlantObservedSharingPage.spec.tsx).
+  test("claim text on a phone", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "From md up the claim is the shared centred dialog; the sheet is the phone's.");
+
+    await openObservedSharing(page, `/plants/${FIXED_PLANT_ID}/sharing-agreements/observed`);
+    await expect(page.getByRole("article", { name: "Reparto vecinos bloque A" })).toBeVisible();
+    await page.getByRole("button", { name: "Preparar texto de reclamación" }).click();
+
+    const dialog = page.getByRole("dialog", { name: "Texto de reclamación" });
+    await expect(dialog.getByRole("textbox", { name: "Texto de reclamación" })).toHaveValue(
+      /^Asunto: Revisión del reparto de autoconsumo colectivo – CAU /,
+    );
+    await expect(dialog.getByRole("button", { name: "Copiar texto" })).toBeVisible();
+    await stabilizePage(page);
+
+    await expect(dialog).toHaveScreenshot("observed-sharing-claim-mobile.png", await hideAppBar(page));
   });
 
   test("observed sharing of a plant whose supply has no data", async ({ page }) => {

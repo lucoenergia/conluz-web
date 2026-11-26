@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { screen, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { act, cleanup, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router";
 import { renderWithProviders } from "../../../test/renderWithProviders";
@@ -30,6 +30,9 @@ import {
   buildSharingAnomaly,
   buildSharingAnomalyCounts,
 } from "../../../test/fixtures";
+import { stubViewport } from "../../../test/overlay";
+import { overlayHistorySettled } from "../../../components/ResponsiveOverlay/overlayHistory";
+import { customInstance } from "../../../http/custom-instance";
 import { PlantObservedSharingPage } from "./PlantObservedSharingPage";
 
 /** The agreement's applied window, which a share's figures are computed over. */
@@ -38,6 +41,12 @@ const APPLIED_WINDOW = { from: "2025-03-01", to: "2026-04-26" };
 vi.mock(import("../../../api/plants/plants"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetPlantById: vi.fn(),
+}));
+
+// Every generated request goes through it: the claim text must make none (UI-AGR-046).
+vi.mock(import("../../../http/custom-instance"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  customInstance: vi.fn(),
 }));
 
 vi.mock(import("../../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
@@ -887,6 +896,157 @@ describe("PlantObservedSharingPage", () => {
       expect(solRow).toBeVisible();
       expect(solRow).toHaveTextContent("β esperada 4,1200 % · β observada 3,1500 % · 35 días medibles");
       expect(solRow).toHaveTextContent(`Intercambiado con Casa Luna (${LUNA.code})`);
+    });
+  });
+
+  describe("the claim text (#436)", () => {
+    const CLAIM_BUTTON = "Preparar texto de reclamación";
+    const writeText = vi.fn();
+
+    /**
+     * jsdom exposes `navigator.clipboard` as a getter, and `userEvent.setup()`
+     * installs a stub of its own: the override is defined, after setup.
+     */
+    const stubClipboard = (clipboard: unknown) =>
+      Object.defineProperty(navigator, "clipboard", { value: clipboard, configurable: true, writable: true });
+
+    async function openClaim() {
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("button", { name: CLAIM_BUTTON }));
+      await act(() => overlayHistorySettled());
+      return { user, dialog: screen.getByRole("dialog", { name: "Texto de reclamación" }) };
+    }
+
+    const onlyAnomalies = (anomalies: ReturnType<typeof buildSharingAnomaly>[]) =>
+      query.success<typeof getPlantSharingObservation>(
+        observationFixture({ sharingAgreements: [{ ...CURRENT, anomalies }], unattributedAnomalies: [] }),
+      );
+
+    beforeEach(() => {
+      writeText.mockReset().mockResolvedValue(undefined);
+    });
+
+    afterEach(async () => {
+      // An overlay left open gives its history entry back on unmount.
+      cleanup();
+      await act(() => overlayHistorySettled());
+      vi.unstubAllGlobals();
+    });
+
+    test("UI-AGR-046: 'Preparar texto de reclamación' is offered in 'Anomalías' when there is a claimable anomaly", () => {
+      renderPage();
+
+      const section = screen.getByRole("region", { name: /^Anomalías/ });
+      expect(within(section).getByRole("button", { name: CLAIM_BUTTON })).toBeInTheDocument();
+    });
+
+    test("UI-AGR-046: the button is not rendered without anomalies", () => {
+      renderPage({ observation: onlyAnomalies([]) });
+
+      expect(screen.getByRole("heading", { name: /^Anomalías$/ })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: CLAIM_BUTTON })).not.toBeInTheDocument();
+    });
+
+    test("UI-AGR-046: the button is not rendered when the only anomaly is APPLIED_BEFORE_SENT", () => {
+      renderPage({
+        observation: onlyAnomalies([
+          buildSharingAnomaly({ supply: NORTE, type: SharingAnomalyResponseType.APPLIED_BEFORE_SENT, expectedBeta: 0.03 }),
+        ]),
+      });
+
+      expect(screen.getByRole("heading", { name: "Anomalías (1)" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: CLAIM_BUTTON })).not.toBeInTheDocument();
+    });
+
+    test("UI-AGR-046: the button is not rendered when the analysis is not computable, whatever the anomalies", () => {
+      renderPage({
+        observation: query.success<typeof getPlantSharingObservation>(
+          observationFixture({
+            analysis: buildObservationAnalysis({
+              computable: false,
+              analysedFrom: null,
+              analysedTo: null,
+              notComputableReason: "PLANT_SUPPLY_WITHOUT_DATA",
+            }),
+          }),
+        ),
+      });
+
+      expect(screen.getByRole("heading", { name: "No se puede calcular el reparto observado" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: CLAIM_BUTTON })).not.toBeInTheDocument();
+    });
+
+    test("UI-AGR-049: the dialog says Conluz sends nothing, and shows the claim in a read-only field", async () => {
+      renderPage();
+      const { dialog } = await openClaim();
+
+      expect(within(dialog).getByRole("note")).toHaveTextContent(
+        "Revisa el texto, completa los datos entre corchetes y quita lo que no quieras reclamar. Conluz no envía nada.",
+      );
+      const field = within(dialog).getByRole("textbox", { name: "Texto de reclamación" });
+      expect(field).toHaveAttribute("readonly");
+      expect((field as HTMLTextAreaElement).value).toMatch(/^Asunto: Revisión del reparto de autoconsumo colectivo/);
+      expect((field as HTMLTextAreaElement).value).toContain(`1. CUPS ${NORTE.code}.`);
+      expect(within(dialog).queryByRole("button", { name: /enviar/i })).not.toBeInTheDocument();
+    });
+
+    test("UI-AGR-049: 'Copiar texto' puts exactly the shown text on the clipboard and confirms it", async () => {
+      renderPage();
+      const { user, dialog } = await openClaim();
+      stubClipboard({ writeText });
+
+      await user.click(within(dialog).getByRole("button", { name: "Copiar texto" }));
+
+      const shown = (within(dialog).getByRole("textbox", { name: "Texto de reclamación" }) as HTMLTextAreaElement).value;
+      expect(writeText).toHaveBeenCalledExactlyOnceWith(shown);
+      expect(within(dialog).getByRole("status")).toHaveTextContent("Texto copiado.");
+      expect(within(dialog).getAllByRole("note").map((note) => note.textContent)).toContain("Texto copiado.");
+    });
+
+    test.each([
+      ["no clipboard", () => undefined],
+      ["a clipboard that refuses the write", () => ({ writeText: writeText.mockRejectedValue(new Error("denied")) })],
+    ])("UI-AGR-049: with %s, a message says to copy the text by hand, and the text stays selectable", async (_, clipboard) => {
+      renderPage();
+      const { user, dialog } = await openClaim();
+      stubClipboard(clipboard());
+
+      await user.click(within(dialog).getByRole("button", { name: "Copiar texto" }));
+
+      const message = "No se ha podido copiar. Selecciona el texto y cópialo a mano.";
+      expect(within(dialog).getByRole("status")).toHaveTextContent(message);
+      expect(within(dialog).getAllByRole("note").map((note) => note.textContent)).toContain(message);
+      expect(within(dialog).queryByText("Texto copiado.")).not.toBeInTheDocument();
+      expect(within(dialog).getByRole("textbox", { name: "Texto de reclamación" })).not.toBeDisabled();
+    });
+
+    test("UI-AGR-046, UI-AGR-049: opening the dialog and copying make no request", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      const xhrSpy = vi.spyOn(XMLHttpRequest.prototype, "open");
+      try {
+        renderPage();
+        const { user, dialog } = await openClaim();
+        stubClipboard({ writeText });
+        await user.click(within(dialog).getByRole("button", { name: "Copiar texto" }));
+
+        expect(customInstance).not.toHaveBeenCalled();
+        expect(fetchSpy).not.toHaveBeenCalled();
+        expect(xhrSpy).not.toHaveBeenCalled();
+      } finally {
+        fetchSpy.mockRestore();
+        xhrSpy.mockRestore();
+      }
+    });
+
+    test("UI-AGR-049: on a phone, the claim opens in the sheet, with the field and 'Copiar texto' in it", async () => {
+      stubViewport(390);
+      renderPage();
+      const { dialog } = await openClaim();
+
+      // The sheet is the overlay's phone variant; its class is the only trace of it in jsdom.
+      expect(dialog).toHaveClass("MuiDrawer-paperAnchorBottom");
+      expect(within(dialog).getByRole("textbox", { name: "Texto de reclamación" })).toBeInTheDocument();
+      expect(within(dialog).getByRole("button", { name: "Copiar texto" })).toBeEnabled();
     });
   });
 });
