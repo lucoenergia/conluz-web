@@ -248,6 +248,47 @@ describe("buildClaimText", () => {
     expect(buildClaimText(OBSERVATION, PLANT)).not.toContain("Periodo: del 10/02/2025 al 19/02/2025.");
   });
 
+  test("UI-AGR-047: a supply's parts are listed by start date, whatever order the analysis returns them in", () => {
+    const part = (id: string, from: string | null, to: string, end: string | null) =>
+      buildSharingAnomaly({
+        id,
+        supply: NORTE,
+        type: Type.NOT_APPLIED,
+        start: { from, to },
+        end,
+        expectedBeta: 0.0315,
+        observedBeta: 0.0412,
+      });
+    const observation = buildPlantSharingObservation({
+      analysis: OBSERVATION.analysis,
+      sharingAgreements: [
+        {
+          ...BLOQUE_A,
+          // Out of date order, with another supply's anomaly between Casa Norte's parts.
+          anomalies: [
+            part("norte-latest", "2025-06-01", "2025-06-01", null),
+            buildSharingAnomaly({ id: "sur-earlier", supply: SUR, type: Type.REVERTED, start: day("2023-05-01"), end: "2023-05-31", expectedBeta: 0.04, observedBeta: 0.03 }),
+            part("norte-range", "2025-01-10", "2025-01-15", "2025-05-31"),
+            part("norte-data-start", null, "2024-11-01", "2025-01-09"),
+          ],
+        },
+      ],
+    });
+
+    const claimed = items(buildClaimText(observation, PLANT));
+
+    // Casa Norte keeps its place before Casa Sur, its parts ordered by the latest day each may start on.
+    expect(claimed.map((lines) => [lines[0], lines[2]])).toEqual([
+      [`1. CUPS ${NORTE.code}.`, "Periodo: desde el 01/11/2024 o antes hasta el 09/01/2025."],
+      [`2. CUPS ${NORTE.code}.`, "Periodo: desde una fecha entre el 10/01/2025 y el 15/01/2025 hasta el 31/05/2025."],
+      [
+        `3. CUPS ${NORTE.code}.`,
+        "Periodo: desde el 01/06/2025 hasta la fecha de los últimos datos publicados (31/10/2025).",
+      ],
+      [`4. CUPS ${SUR.code}.`, "Periodo: del 01/05/2023 al 31/05/2023."],
+    ]);
+  });
+
   test("UI-AGR-047: an observation whose only anomaly is APPLIED_BEFORE_SENT claims nothing", () => {
     const onlySentLate = buildPlantSharingObservation({
       analysis: OBSERVATION.analysis,
