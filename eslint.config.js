@@ -187,9 +187,9 @@ const PAGE_WIDTH_CAP_EXEMPTIONS = [
 const COMMUNITY_IMPLICIT_HOOKS = [
   {
     group: ["**/api/plants/plants"],
-    importNames: ["useGetPlantById"],
+    importNames: ["useGetPlantById", "useGetPlantSurplusClaim", "useGetPlantSurplusClaimFile"],
     message:
-      "Use usePlantInActiveCommunity (src/pages/production/usePlantInActiveCommunity.ts) instead: useGetPlantById is keyed by a plant id from the URL and answers for any community the user belongs to.",
+      "Use usePlantInActiveCommunity (src/pages/production/usePlantInActiveCommunity.ts), and read the surplus claim through usePlantSurplusClaimData, instead: these hooks are keyed by a plant id from the URL and answer for any community the user belongs to.",
   },
   {
     group: ["**/api/sharing-agreements/sharing-agreements"],
@@ -235,6 +235,7 @@ const COMMUNITY_SCOPE_WRAPPERS = [
   "src/pages/production/useSharingAgreementDetailData.ts",
   "src/pages/production/observedSharing/usePlantSharingObservationData.ts",
   "src/pages/production/observedSharing/useSharingAgreementObservationData.ts",
+  "src/pages/production/surplusClaim/usePlantSurplusClaimData.ts",
   "src/pages/supply-points/useSupplyInActiveCommunity.ts",
   // Filters its own response through selectPeriodsInCommunity -- the original
   // and still correct way to scope an entity-keyed response.
