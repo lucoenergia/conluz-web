@@ -63,6 +63,7 @@
     "PasswordPolicyHint": "../groups/forms.md",
     "SearchBar": "../groups/forms.md",
     "FilterChipsBar": "../groups/forms.md",
+    "ListFilters": "../groups/forms.md",
     "ContactChannelEditor": "../groups/dialogs.md",
     "ContactChannelReorderList": "../groups/forms.md",
     "AppModal": "../groups/dialogs.md",

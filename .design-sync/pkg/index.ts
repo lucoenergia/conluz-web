@@ -95,6 +95,7 @@ export { ReadOnlyField } from "../../src/components/ReadOnlyField/ReadOnlyField"
 export { RecordList } from "../../src/components/RecordList/RecordList";
 export { ResponsiveRecordList } from "../../src/components/ResponsiveRecordList/ResponsiveRecordList";
 export { ListPagination } from "../../src/components/ListPagination/ListPagination";
+export { ListFilters } from "../../src/components/ListFilters/ListFilters";
 export { ResultStatus } from "../../src/components/ResultStatus/ResultStatus";
 export { RouteFallback } from "../../src/components/RouteFallback/RouteFallback";
 export { SearchBar } from "../../src/components/SearchBar/SearchBar";
