@@ -692,6 +692,30 @@ is in force today.
 - **Implements:** n/a
 - **Source:** #451, lucoenergia/conluz#625
 
+### UI-AGR-045 — The supply rows of an agreement's observed sharing filter by status
+
+- **Status:** Active
+- **Rule:** The coefficient rows of an agreement's observed sharing MUST be filterable by each
+  status, with its count, alongside "Todos" and "Con avisos", following the members page's filter
+  pattern: an "Estado" select from the list table's width up, the "Filtros" panel below it. After
+  "Todos" and "Con avisos", which keep the rows of UI-AGR-023, the filter MUST offer one option per
+  status, labelled as the status chips are, with its count from `coefficientStatusCounts`, in the
+  order the agreement card lists them; a status counted at 0 MUST NOT be offered. A status MUST
+  list only the coefficient rows in it, and MUST leave "Salen del reparto" as under "Todos".
+  Picking a status, or leaving one, MUST return to the first ten rows; switching between "Todos"
+  and "Con avisos" keeps the rows shown. When the selected status's count becomes 0 or is missing,
+  as after a refetch, the filter MUST read "Todos".
+- **Rationale:** Admins review an agreement status by status, for example the supplies not yet
+  observed, or the ones not distinguishable before setting dates. The members page is the app's
+  pattern for filtering a list by status, so the two lists work alike on both viewports. The counts
+  are the card's own, which the backend counts over the rows it returns, so an option and the rows
+  it lists never disagree. Hiding an empty status keeps the options to those that list something.
+  The options count supply rows, while the leaving rows are counted apart (`leavingStatusCounts`),
+  so a status leaves them as they are. A status the data no longer holds would otherwise leave an
+  empty table under a value the select cannot show.
+- **Implements:** n/a
+- **Source:** #449
+
 ## States
 
 | State | Rendered | Actions available |
@@ -709,6 +733,7 @@ is in force today.
 | Observed sharing loading | "Calculando el reparto observado…" and its progress, with no figure | None |
 | Observed sharing not computable, the plant supply without data | "No se puede calcular el reparto observado"; no agreement and no recommendation (UI-AGR-028) | "Ver el punto de la planta", with the plant's `canReadSupply` |
 | Observed sharing read failed | "No se pudo cargar el reparto observado." | "Reintentar" |
+| Agreement observation filtered by a status | Only that status's supply rows, the first ten until "Mostrar todos"; "Salen del reparto" as under "Todos" (UI-AGR-045) | Another option of "Estado", or of "Filtros" on a phone |
 | Observed sharing help open | "Cómo leer el reparto observado": the terms, every status and anomaly type (UI-AGR-038) | "Cerrar" |
 | Agreement observation of a draft | The catalogue's text for `SHARING_AGREEMENT_NOT_OBSERVABLE`, as a note | None |
 | Set application dates, dates step | The rows, prefilled when opened from observed sharing (UI-AGR-032); the reason "Ver vista previa" is disabled (UI-AGR-033) | "Misma fecha para todos", "Ver vista previa", "Cancelar" |
