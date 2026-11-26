@@ -8,7 +8,7 @@
 | **Roles** | A caller with the plant's `canListSharingAgreements`. Authoring and lifecycle actions: the capabilities each agreement and coefficient carries |
 | **Domain rules** | n/a |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `ListPagination` (the list; its shared rules are `record-lists.md`) |
-| **Last reviewed against code** | #451 |
+| **Last reviewed against code** | #436 |
 
 Scope: the rules introduced in #277 for sharing-agreement states migrated from visual tests to
 Vitest, the rules #350 introduced for the list's rows and for how a status is shown, and the
@@ -19,7 +19,8 @@ observed sharing view: a plant's agreements and one agreement compared with what
 activation confirmation that lists the supplies a first activation closes (#419), and the terms,
 counts and help that make the observed sharing readable, the unattributed production and its
 breakdown, and each row's measurable days (#419), and coefficients not applied to their supply,
-and supplies swapped with each other (#451). Not exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
+and supplies swapped with each other (#451), and the claim to the distributor prepared from a
+plant's anomalies (#436). Not exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
 list shares, the agreement list among them, are in [`record-lists.md`](record-lists.md).
 
 ## Purpose
@@ -377,13 +378,14 @@ is in force today.
 ### UI-AGR-026 — A β is a percentage with 4 decimals, and ±0.1 points reads as equal
 
 - **Status:** Active
-- **Rule:** Every β MUST be shown as a percentage with 4 decimals. An observed β within ±0.1
+- **Rule:** Every β on the observed sharing pages MUST be shown as a percentage with 4 decimals. The
+  claim text writes an observed β with 2 decimals instead (UI-AGR-048). An observed β within ±0.1
   percentage points of the registered one MUST read as equal; beyond that, it MUST take the warning
   style. β is feminine wherever it is labelled: "β registrada", "β observada".
 - **Rationale:** It is the analysis's own tolerance; a difference inside it is not a finding. β
   reads "la beta".
 - **Implements:** n/a
-- **Source:** #418; the feminine labels: #419
+- **Source:** #418; the feminine labels: #419; the claim text's observed β: #436
 
 ### UI-AGR-027 — A proposed date never reads as an observed one
 
@@ -716,6 +718,78 @@ is in force today.
 - **Implements:** n/a
 - **Source:** #449
 
+### UI-AGR-046 — The claim text is offered only when there is something to claim, and asks for nothing
+
+- **Status:** Active
+- **Rule:** The plant's observed sharing page MUST show "Preparar texto de reclamación" in
+  "Anomalías" when the analysis is computable and at least one anomaly, attributed or not, is of a
+  type the claim covers (UI-AGR-047). It MUST NOT render the button when the analysis is not
+  computable. It MUST NOT render it when no anomaly is of a type the claim covers, as when every
+  anomaly is APPLIED_BEFORE_SENT. The claim MUST be built from the observed sharing response
+  already on the page, and opening the dialog or copying MUST NOT make any request.
+- **Rationale:** A button that opens an empty claim is a dead action. The analysis is expensive
+  (UI-AGR-022) and already holds everything the claim says, so it stays the page's only request.
+- **Implements:** n/a
+- **Source:** #436
+
+### UI-AGR-047 — The claim covers what the distributor answers for, one item per anomaly part
+
+- **Status:** Active
+- **Rule:** The claim MUST list every anomaly of the plant, attributed and unattributed, of type
+  NOT_APPLIED, UNKNOWN_COEFFICIENT, REVERTED, ENERGY_OUTSIDE_AGREEMENT or NO_ENERGY_IN_AGREEMENT,
+  as one numbered item each; each part of a split NOT_APPLIED is an item of its own. The items MUST
+  follow the order the page lists the anomalies in (UI-AGR-024). The claim MUST NOT list an
+  APPLIED_BEFORE_SENT anomaly.
+- **Rationale:** Only what the distributor is responsible for is claimed. An APPLIED_BEFORE_SENT
+  usually means the sent date registered in Conluz is wrong, so claiming it would blame the
+  distributor for the community's own record. In page order, the admin finds each item on the page
+  it came from.
+- **Implements:** n/a
+- **Source:** #436
+
+### UI-AGR-048 — The claim is plain text from a fixed template, with supplies named by their CUPS
+
+- **Status:** Active
+- **Rule:** The claim MUST be the template of #436 in plain text: line breaks and a numbered list,
+  no markup. What the response gives MUST be filled in, and what it does not MUST be a placeholder
+  in brackets and capitals. The plant MUST be named by its CAU alone, "[CAU]" when it has none or
+  only whitespace; its name MUST NOT appear. A supply MUST be named by its CUPS alone; its name
+  MUST NOT appear. The registered coefficient MUST be the anomaly's `expectedBeta` in % with 4
+  decimals, or "[COEFICIENTE COMUNICADO]" when it is null. An observed β MUST be in % with 2
+  decimals, preceded by "aproximadamente". A NOT_APPLIED anomaly with `swappedWith` MUST name the
+  other supply by its CUPS, on the item of each of the two supplies. An anomaly attributed to no
+  agreement MUST read "(reparto «[NOMBRE DEL REPARTO]»)", and one whose agreement has no sent date
+  "fichero enviado el [FECHA DE ENVÍO]". A period with a start known to the day and an end MUST
+  read "del D1 al D2". A start in a range MUST read "desde una fecha entre el D1 y el D2", and a
+  start the data begins on "desde el D o antes", each followed by "hasta el D2". An anomaly that
+  lasts until the end of the data MUST end its period with "hasta la fecha de los últimos datos
+  publicados (D)", D being the last analysed day. Every date MUST read dd/mm/aaaa.
+- **Rationale:** The people sending the claim are not technical and write to any distributor, so
+  the text is a finished letter they only complete. The distributor knows the installation and the
+  supplies by their formal identifiers; their names in Conluz are internal, which is also why the
+  plant's name was taken out of the template. A registered coefficient is exact; an observed β is
+  a median of daily data, so it is marked approximate and the claim does not overclaim. Naming the
+  other supply of a swap lets the distributor correct both at once. A placeholder keeps what Conluz
+  does not know visible, so the sender cannot miss it.
+- **Implements:** n/a
+- **Source:** #436, lucoenergia/conluz#611, lucoenergia/conluz#625
+
+### UI-AGR-049 — Conluz only offers the claim to copy, and never sends it
+
+- **Status:** Active
+- **Rule:** The dialog MUST show "Revisa el texto, completa los datos entre corchetes y quita lo
+  que no quieras reclamar. Conluz no envía nada.", the claim in a read-only, selectable,
+  multi-line field labelled "Texto de reclamación", and "Copiar texto". "Copiar texto" MUST put
+  exactly the field's text on the clipboard and confirm it with "Texto copiado.", for a moment.
+  When the clipboard is missing or refuses the write, it MUST say "No se ha podido copiar.
+  Selecciona el texto y cópialo a mano.", and the text MUST stay selectable. The dialog MUST NOT
+  offer to send the text. On a phone it is the overlay's sheet (UI-OVL-001).
+- **Rationale:** The community decides what to claim and whether to; the text is a draft its
+  sender edits and sends. A browser has no clipboard in an insecure context and may deny it, so
+  copying by hand must stay possible.
+- **Implements:** n/a
+- **Source:** #436
+
 ## States
 
 | State | Rendered | Actions available |
@@ -734,6 +808,7 @@ is in force today.
 | Observed sharing not computable, the plant supply without data | "No se puede calcular el reparto observado"; no agreement and no recommendation (UI-AGR-028) | "Ver el punto de la planta", with the plant's `canReadSupply` |
 | Observed sharing read failed | "No se pudo cargar el reparto observado." | "Reintentar" |
 | Agreement observation filtered by a status | Only that status's supply rows, the first ten until "Mostrar todos"; "Salen del reparto" as under "Todos" (UI-AGR-045) | Another option of "Estado", or of "Filtros" on a phone |
+| Claim text open | The notice, the claim in a read-only field (UI-AGR-049) | "Copiar texto", closing |
 | Observed sharing help open | "Cómo leer el reparto observado": the terms, every status and anomaly type (UI-AGR-038) | "Cerrar" |
 | Agreement observation of a draft | The catalogue's text for `SHARING_AGREEMENT_NOT_OBSERVABLE`, as a note | None |
 | Set application dates, dates step | The rows, prefilled when opened from observed sharing (UI-AGR-032); the reason "Ver vista previa" is disabled (UI-AGR-033) | "Misma fecha para todos", "Ver vista previa", "Cancelar" |
