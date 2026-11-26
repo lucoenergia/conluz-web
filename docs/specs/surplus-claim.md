@@ -51,13 +51,20 @@ is reached from the plant detail (UI-PLT-017).
 
 - **Status:** Active
 - **Rule:**
-  - The top summary MUST hold, in this order, the month selector, the month's figures, the warning
-    count, the format selector and the download, all before the warnings.
-  - With at least one warning raised (UI-SCL-005), the count MUST read "Este mes tiene N avisos ·
-    Ver avisos" ("1 aviso" for one). "Ver avisos" MUST bring the warnings into view and move focus to
-    them.
-- **Rationale:** The admin acts without scrolling, on a phone too, and still sees that the month has
-  warnings before downloading.
+  - The top summary MUST hold, in this order, the control row (the month selector, the format
+    selector and the download), the block "Lo que reclamas", and the block "Calidad de los datos"
+    with the warning line, all before the warnings.
+  - The control row's fields and button MUST stack full width below `sm`. The CIL notice
+    (UI-SCL-010) and a failed download (UI-SCL-011) MUST take the button's place in it.
+  - From `sm` up, the two blocks MUST sit side by side, each as wide as its content, with their
+    labels and figures on shared rows. Below `sm` they MUST stack.
+  - With at least one warning raised (UI-SCL-005), the warning line MUST read "Este mes tiene N
+    avisos · Ver avisos" ("1 aviso" for one). "Ver avisos" MUST bring the warnings into view and move
+    focus to them.
+- **Rationale:** The admin acts without scrolling, on a phone too. The figures are grouped by
+  meaning, what is claimed apart from how good its data is, and the month's warnings sit with the
+  data quality they are about, before the download is confirmed (design: "Reclamación de
+  excedentes", section 3, alternative A).
 - **Implements:** n/a
 - **Source:** #455
 
@@ -65,9 +72,10 @@ is reached from the plant detail (UI-PLT-017).
 
 - **Status:** Active
 - **Rule:**
-  - The summary MUST show the month's surplus in kWh beside the surplus swatch, the estimated income
-    in euros, the days with real data, the estimated days, and the supplies included as "X de Y", or
-    "Ninguno" with none in scope.
+  - "Lo que reclamas" MUST show the month's surplus in kWh beside the surplus swatch and the
+    estimated income in euros, the two largest figures of the summary.
+  - "Calidad de los datos" MUST show "Días reales" as "X de N", the `REAL` days of the month's N
+    days, and "Puntos con datos" as "X de Y", or "Ninguno" with no supply in scope.
   - The income MUST carry the note "Estimación a precio de mercado (OMIE) del excedente de este
     fichero. Lo que pague la comercializadora puede ser distinto.", and, when `unpricedSurplusKWh` is
     above zero, the line "{kWh} sin precio de mercado: no cuentan en el importe."
@@ -75,7 +83,8 @@ is reached from the plant detail (UI-PLT-017).
   - A null surplus or income MUST read "—", never 0.
 - **Rationale:** The income is a gross market-price estimate, not what the retailer pays. Market
   prices may be negative, which is not a failure. A month with no records has no surplus to show,
-  which a measured 0 would misstate.
+  which a measured 0 would misstate. One "X de N" says what two separate counts of real and
+  estimated days said.
 - **Implements:** SCL-006
 - **Source:** #455
 
