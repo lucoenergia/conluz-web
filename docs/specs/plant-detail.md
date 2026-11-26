@@ -8,7 +8,7 @@
 | **Roles** | Community admin only: the plant's `canManage` (UI-PLT-010). Agreements: also the plant's `canListSharingAgreements` |
 | **Domain rules** | `lucoenergia/conluz`: PLT-001 (UI-PLT-008) |
 | **Design reference** | Claude Design canvas "Conluz · Energía de la comunidad y detalle de planta", revision 5: artboards `Planta-Movil`, `Planta-Escritorio`, `Planta-Estados`, `Planta-Hoy-Estados`, `CompHoy`, `CompPeriodo`, `CompGrafico` |
-| **Last reviewed against code** | #432 |
+| **Last reviewed against code** | #455 |
 
 ## Purpose
 
@@ -16,7 +16,7 @@ Show a community admin what a plant produced: today, according to its inverter, 
 as the distributor measured it. Tell them what state its sharing agreements and its Huawei
 integration are in, without scrolling past the production blocks on a phone.
 
-This document covers only the rules #260, #290, #311, #349, #406 and #407 introduced. The integrations section keeps the rules in
+This document covers only the rules #260, #290, #311, #349, #406, #407 and #455 introduced. The integrations section keeps the rules in
 [`integrations.md`](integrations.md) (UI-INT-005 to UI-INT-010), and the figures and chart labels
 keep those in [`formatting.md`](formatting.md).
 
@@ -273,6 +273,17 @@ keep those in [`formatting.md`](formatting.md).
   strip holds two facts and a fact moved into the details loses its copy control, it keeps it.
 - **Implements:** n/a
 - **Source:** #407 (both powers on the detail: maintainer decision), lucoenergia/conluz#567
+
+### UI-PLT-017 — "En esta planta" leads to the surplus claim
+
+- **Status:** Active
+- **Rule:** With the plant's `canManage`, "En esta planta" MUST show the row "Reclamación de
+  excedentes", which scrolls to its section and moves focus to its heading, and the section MUST
+  link to the plant's surplus claim with "Revisar y descargar". Neither MUST ask for the claim.
+- **Rationale:** Every row of the block leads to a section of the same page, as "Reparto observado"
+  does. The claim is computed on request, so only its own page asks for it.
+- **Implements:** n/a
+- **Source:** #455
 
 ## States
 
