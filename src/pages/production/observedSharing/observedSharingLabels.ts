@@ -73,11 +73,13 @@ export const ANOMALY_TYPE_LABEL: Record<SharingAnomalyResponseType, string> = {
   ENERGY_OUTSIDE_AGREEMENT: "Recibe energía fuera del acuerdo",
   NO_ENERGY_IN_AGREEMENT: "No recibe energía en el acuerdo",
   APPLIED_BEFORE_SENT: "Aplicado antes del envío",
+  NOT_APPLIED: "Coeficiente no aplicado",
 };
 
 /** The anomaly counts in the order the card lists them, with the field each reads. */
 export const ANOMALY_COUNT_ORDER: { type: SharingAnomalyResponseType; count: keyof SharingAnomalyCountsResponse }[] = [
   { type: SharingAnomalyResponseType.UNKNOWN_COEFFICIENT, count: "unknownCoefficient" },
+  { type: SharingAnomalyResponseType.NOT_APPLIED, count: "notApplied" },
   { type: SharingAnomalyResponseType.REVERTED, count: "reverted" },
   { type: SharingAnomalyResponseType.ENERGY_OUTSIDE_AGREEMENT, count: "energyOutsideAgreement" },
   { type: SharingAnomalyResponseType.NO_ENERGY_IN_AGREEMENT, count: "noEnergyInAgreement" },

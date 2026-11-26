@@ -35,6 +35,7 @@ const ANOMALY_TYPE_COUNTED: Record<SharingAnomalyResponseType, [singular: string
   ENERGY_OUTSIDE_AGREEMENT: ["recibe energía fuera del acuerdo", "reciben energía fuera del acuerdo"],
   NO_ENERGY_IN_AGREEMENT: ["no recibe energía en el acuerdo", "no reciben energía en el acuerdo"],
   APPLIED_BEFORE_SENT: ["aplicado antes del envío", "aplicados antes del envío"],
+  NOT_APPLIED: ["coeficiente no aplicado", "coeficientes no aplicados"],
 };
 
 const joinNonEmpty = (parts: (string | false)[]) => parts.filter(Boolean).join(" · ");

@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { ObservedDateResponse } from './observedDateResponse';
+import type { SharingAnomalyResponseSwappedWith } from './sharingAnomalyResponseSwappedWith';
 import type { SharingAnomalyResponseType } from './sharingAnomalyResponseType';
 import type { SupplyReferenceResponse } from './supplyReferenceResponse';
 
@@ -16,7 +17,7 @@ export interface SharingAnomalyResponse {
      */
   end: string | null;
   /**
-     * The supply's registered coefficient in the agreement the anomaly is attributed to, or 0 when the supply holds no row in it; for APPLIED_BEFORE_SENT, its value in the agreement sent late. The value the supply should have received, to read next to observedBeta. On a 0-1 scale, rounded half-up to 6 decimals. Null when the anomaly is attributed to no agreement.
+     * The supply's registered coefficient in the agreement the anomaly is attributed to, or 0 when the supply holds no row in it; for APPLIED_BEFORE_SENT, its value in the agreement sent late; for NOT_APPLIED, its value in the agreement applied to the plant. The value the supply should have received, to read next to observedBeta. On a 0-1 scale, rounded half-up to 6 decimals. Null when the anomaly is attributed to no agreement.
      * @nullable
      */
   expectedBeta: number | null;
@@ -30,6 +31,8 @@ export interface SharingAnomalyResponse {
   start: ObservedDateResponse;
   /** Supply the anomaly was observed on */
   supply: SupplyReferenceResponse;
-  /** Kind of anomaly */
+  /** For NOT_APPLIED, the supply it is swapped with: in the same agreement, its coefficient is not applied either, over a common valid day, and each supply receives the other's value in it. Null for any other type, when no supply is reciprocal, or when several supplies would be. */
+  swappedWith: SharingAnomalyResponseSwappedWith;
+  /** Kind of anomaly. NOT_APPLIED: inside the applied window of the agreement it is attributed to, the supply does not receive its value there, although it holds a row in it never observed applied. */
   type: SharingAnomalyResponseType;
 }

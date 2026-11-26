@@ -70,7 +70,8 @@ test.describe("Visual baselines", () => {
     });
     await waitForPageSettled(page);
     await expect(page.getByRole("article")).toHaveCount(2);
-    await expect(page.getByRole("heading", { name: "Anomalías (3)" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Anomalías (5)" })).toBeVisible();
+    await expect(page.getByText("2 Coeficiente no aplicado")).toBeVisible();
     await expect(page.getByRole("heading", { name: "No calculables" })).toBeVisible();
     await expect(page.getByText(/^Tienen coeficiente en esta planta y en otra\./)).toBeVisible();
     await expect(page.getByText("Salen del reparto: 2 · 1 con fecha distinta")).toBeVisible();
@@ -90,6 +91,8 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText("Pasa a 0 %")).toBeVisible();
     // The agreement's anomalies are open on its own page.
     await expect(page.getByText("β esperada 3,1500 % · β observada 4,1200 % · 420 días medibles")).toBeVisible();
+    // A swap names the other supply, on its own line on a phone (#451).
+    await expect(page.getByText(/^Intercambiado con Casa Este/)).toBeVisible();
     await settleForCapture(page);
 
     await expect(page).toHaveScreenshot("observed-sharing-agreement.png", await mainRegion(page));

@@ -8,7 +8,7 @@
 | **Roles** | A caller with the plant's `canListSharingAgreements`. Authoring and lifecycle actions: the capabilities each agreement and coefficient carries |
 | **Domain rules** | n/a |
 | **Design reference** | Design system: `ResponsiveRecordList`, `ListTable`, `RecordList`, `ListPagination` (the list; its shared rules are `record-lists.md`) |
-| **Last reviewed against code** | #419 |
+| **Last reviewed against code** | #451 |
 
 Scope: the rules introduced in #277 for sharing-agreement states migrated from visual tests to
 Vitest, the rules #350 introduced for the list's rows and for how a status is shown, and the
@@ -18,7 +18,8 @@ observed sharing view: a plant's agreements and one agreement compared with what
 (#418), and setting an agreement's application dates after a dry run of every effect, with the
 activation confirmation that lists the supplies a first activation closes (#419), and the terms,
 counts and help that make the observed sharing readable, the unattributed production and its
-breakdown, and each row's measurable days (#419). Not exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
+breakdown, and each row's measurable days (#419), and coefficients not applied to their supply,
+and supplies swapped with each other (#451). Not exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
 list shares, the agreement list among them, are in [`record-lists.md`](record-lists.md).
 
 ## Purpose
@@ -657,6 +658,39 @@ is in force today.
 - **Implements:** n/a
 - **Source:** #419; `windowDays`: lucoenergia/conluz#611; the stacked label: #419;
   `windowFrom`/`windowTo`: lucoenergia/conluz#618
+
+### UI-AGR-043 — A coefficient not applied to its supply is named, shown with its evidence and counted
+
+- **Status:** Active
+- **Rule:** A `NOT_APPLIED` anomaly MUST be labelled "Coeficiente no aplicado", show its expected
+  and observed β and measurable days from the response, and be counted wherever anomalies are
+  counted: the agreement card on the plant's page, "Qué revisar" on both pages ("1 coeficiente no
+  aplicado", "N coeficientes no aplicados", after the unknown coefficients) and the help
+  (UI-AGR-038), where it means "el acuerdo ya se aplica al resto de puntos, pero este punto no
+  recibe su nuevo coeficiente.".
+- **Rationale:** The admin must see an agreement not applied to a supply: the distributor applies
+  it to the plant but leaves one supply on something else, which is a direct claim to the
+  distributor. The expected β is the supply's value in that agreement, known only to the backend,
+  so the evidence reads it from the response like any other anomaly's (UI-AGR-024).
+- **Implements:** n/a
+- **Source:** #451, lucoenergia/conluz#625
+
+### UI-AGR-044 — A swapped supply is named and linked
+
+- **Status:** Active
+- **Rule:** When `swappedWith` is present, the anomaly MUST name the other supply and link to its
+  row. It MUST NOT be derived on the client. The anomaly's detail adds, on a line of its own,
+  "Intercambiado con <name> (<CUPS>)", the CUPS left out when it already is the name. The row is
+  that supply's anomalies under the same agreement: when they are listed, the name links to them,
+  expands them when collapsed, brings them into view and moves focus to their summary; otherwise it
+  is plain text. An anomaly with `swappedWith` null names no supply.
+- **Rationale:** A swap is a direct claim and must be explicit: two supplies receiving each
+  other's coefficient read as two unrelated anomalies unless the view says they are one exchange.
+  Whether a swap is reciprocal is decided by the backend over the measured days; the view only
+  shows what it returns. The other supply's anomalies are the one row both observed sharing pages
+  list, so the link works the same on each.
+- **Implements:** n/a
+- **Source:** #451, lucoenergia/conluz#625
 
 ## States
 

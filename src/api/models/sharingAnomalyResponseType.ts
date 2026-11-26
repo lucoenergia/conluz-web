@@ -7,7 +7,7 @@
  */
 
 /**
- * Kind of anomaly
+ * Kind of anomaly. NOT_APPLIED: inside the applied window of the agreement it is attributed to, the supply does not receive its value there, although it holds a row in it never observed applied.
  */
 export type SharingAnomalyResponseType = typeof SharingAnomalyResponseType[keyof typeof SharingAnomalyResponseType];
 
@@ -18,4 +18,5 @@ export const SharingAnomalyResponseType = {
   NO_ENERGY_IN_AGREEMENT: 'NO_ENERGY_IN_AGREEMENT',
   REVERTED: 'REVERTED',
   APPLIED_BEFORE_SENT: 'APPLIED_BEFORE_SENT',
+  NOT_APPLIED: 'NOT_APPLIED',
 } as const;

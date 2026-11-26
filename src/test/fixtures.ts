@@ -723,6 +723,7 @@ export function buildSharingAnomalyCounts(overrides: Partial<SharingAnomalyCount
       energyOutsideAgreement: 0,
       noEnergyInAgreement: 0,
       appliedBeforeSent: 0,
+      notApplied: 0,
     } satisfies SharingAnomalyCountsResponse),
     ...overrides,
   };
@@ -845,6 +846,7 @@ export function buildSharingAnomaly(overrides: Partial<SharingAnomalyResponse> =
       observedValidDays: 9007,
       // Attributed to no agreement unless a spec says which.
       expectedBeta: null,
+      swappedWith: null,
     } satisfies SharingAnomalyResponse),
     ...overrides,
   };

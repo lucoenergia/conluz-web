@@ -89,4 +89,5 @@ export const ANOMALY_TYPE_MEANING: Record<SharingAnomalyResponseType, string> = 
   NO_ENERGY_IN_AGREEMENT: "el punto tiene coeficiente pero recibe 0.",
   ENERGY_OUTSIDE_AGREEMENT: "el punto recibe energía sin tener coeficiente en ningún acuerdo.",
   APPLIED_BEFORE_SENT: "el coeficiente se ve aplicado antes de la fecha en que se envió el fichero.",
+  NOT_APPLIED: "el acuerdo ya se aplica al resto de puntos, pero este punto no recibe su nuevo coeficiente.",
 };

@@ -799,4 +799,94 @@ describe("PlantObservedSharingPage", () => {
       expect(within(revised).queryByText(/Salen del reparto/)).not.toBeInTheDocument();
     });
   });
+
+  describe("not applied coefficients and swapped supplies (#451)", () => {
+    // Modelled on the real case: Casa Luna and Casa Sol receive each other's
+    // coefficient; Casa Luna also has a stretch not applied with no swap, and
+    // Casa Norte another kind of anomaly.
+    const LUNA = supply("011", "Casa Luna");
+    const SOL = supply("012", "Casa Sol");
+    const notApplied = (id: string, of: typeof LUNA, swappedWith: typeof LUNA | null, observedBeta: number, days: number) =>
+      buildSharingAnomaly({
+        id,
+        supply: of,
+        type: SharingAnomalyResponseType.NOT_APPLIED,
+        start: { from: "2025-03-01", to: "2025-03-01" },
+        end: "2025-06-30",
+        expectedBeta: of === LUNA ? 0.0315 : 0.0412,
+        observedBeta,
+        observedValidDays: days,
+        swappedWith,
+      });
+    const SWAPPED = buildObservationSummary({
+      ...REVISED,
+      anomalies: [
+        notApplied("na-luna-1", LUNA, SOL, 0.0412, 21),
+        notApplied("na-luna-2", LUNA, SOL, 0.0411, 14),
+        notApplied("na-luna-3", LUNA, null, 0.05, 9),
+        notApplied("na-sol", SOL, LUNA, 0.0315, 35),
+        REVISED.anomalies[0],
+      ],
+      anomalyCounts: buildSharingAnomalyCounts({ unknownCoefficient: 1, notApplied: 4 }),
+      recommendations: [Recommendation.REVIEW_ANOMALIES],
+    });
+
+    function renderWithSwaps() {
+      renderPage({
+        observation: query.success<typeof getPlantSharingObservation>(
+          observationFixture({ sharingAgreements: [SWAPPED, INITIAL], unattributedAnomalies: [] }),
+        ),
+      });
+      return screen.getByRole("region", { name: "Anomalías (5)" });
+    }
+
+    test("UI-AGR-043: the agreement's card counts its not applied coefficients, and 'Qué revisar' names them", () => {
+      renderWithSwaps();
+      const revised = card("Reparto 2025");
+
+      expect(within(revised).getAllByRole("listitem").map((item) => item.textContent)).toEqual(
+        expect.arrayContaining(["1 Coeficiente no registrado", "4 Coeficiente no aplicado"]),
+      );
+      expect(within(revised).getByText("Anomalías · 5")).toBeInTheDocument();
+      const findings = within(within(revised).getByText("Qué revisar").nextElementSibling as HTMLElement).getAllByRole("listitem");
+      expect(findings.map((item) => item.textContent)).toEqual([
+        "5 anomalías1 coeficiente no registrado · 4 coeficientes no aplicadosVer anomalías",
+      ]);
+    });
+
+    test("UI-AGR-043: a not applied coefficient reads 'Coeficiente no aplicado' with the expected and observed β and measurable days returned", () => {
+      const section = renderWithSwaps();
+      // Collapsed on this page, so the rows are reached with hidden: true.
+      const luna = within(section).getByRole("region", { name: /^Casa Luna/, hidden: true });
+
+      const rows = within(luna).getAllByRole("row", { name: /^Coeficiente no aplicado/, hidden: true });
+      expect(rows).toHaveLength(3);
+      expect(rows[0]).toHaveTextContent("β esperada 3,1500 % · β observada 4,1200 % · 21 días medibles");
+      expect(rows[1]).toHaveTextContent("β esperada 3,1500 % · β observada 4,1100 % · 14 días medibles");
+      expect(rows[2]).toHaveTextContent("β esperada 3,1500 % · β observada 5,0000 % · 9 días medibles");
+    });
+
+    test("UI-AGR-044: following a swap expands the other supply's anomalies, shows its detail and focuses it", async () => {
+      Element.prototype.scrollIntoView = vi.fn();
+      const user = userEvent.setup();
+      const section = renderWithSwaps();
+      const sol = within(section).getByRole("button", { name: /^Casa Sol/ });
+      expect(sol).toHaveAttribute("aria-expanded", "false");
+
+      await user.click(within(section).getByRole("button", { name: /^Casa Luna/ }));
+      const luna = within(section).getByRole("region", { name: /^Casa Luna/ });
+      const [swapped] = within(luna).getAllByRole("row", { name: /^Coeficiente no aplicado/ });
+      expect(swapped).toHaveTextContent(`Intercambiado con Casa Sol (${SOL.code})`);
+      await user.click(within(swapped).getByRole("link", { name: "Casa Sol" }));
+
+      expect(sol).toHaveFocus();
+      expect(sol).toHaveAttribute("aria-expanded", "true");
+      const solRow = within(within(section).getByRole("region", { name: /^Casa Sol/ })).getByRole("row", {
+        name: /^Coeficiente no aplicado/,
+      });
+      expect(solRow).toBeVisible();
+      expect(solRow).toHaveTextContent("β esperada 4,1200 % · β observada 3,1500 % · 35 días medibles");
+      expect(solRow).toHaveTextContent(`Intercambiado con Casa Luna (${LUNA.code})`);
+    });
+  });
 });
