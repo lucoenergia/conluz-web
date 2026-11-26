@@ -52,6 +52,7 @@ const SharingAgreementsPage = lazyPage(() => import("./pages/production/SharingA
 const SharingAgreementDetailPage = lazyPage(() => import("./pages/production/SharingAgreementDetailPage"), "SharingAgreementDetailPage");
 const PlantObservedSharingPage = lazyPage(() => import("./pages/production/observedSharing/PlantObservedSharingPage"), "PlantObservedSharingPage");
 const SharingAgreementObservationPage = lazyPage(() => import("./pages/production/observedSharing/SharingAgreementObservationPage"), "SharingAgreementObservationPage");
+const PlantSurplusClaimPage = lazyPage(() => import("./pages/production/surplusClaim/PlantSurplusClaimPage"), "PlantSurplusClaimPage");
 const ApplicationDatesPage = lazyPage(() => import("./pages/production/applicationDates/ApplicationDatesPage"), "ApplicationDatesPage");
 
 const IntegrationsPage = lazyPage(() => import("./pages/integrations/IntegrationsPage"), "IntegrationsPage");
@@ -146,6 +147,8 @@ function App() {
               element={<CapabilityRoute require={{ scope: "plant", capability: "canManage" }}><Outlet /></CapabilityRoute>}
             >
               <Route index element={<PlantDetailPage />} />
+              {/* The surplus claim (#455), under the plant's own canManage. */}
+              <Route path="surplus-claim" element={<PlantSurplusClaimPage />} />
               <Route
                 path="sharing-agreements"
                 element={<CapabilityRoute require={{ scope: "plant", capability: "canListSharingAgreements" }}><SharingAgreementsPage /></CapabilityRoute>}

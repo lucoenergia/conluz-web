@@ -2,6 +2,7 @@ import {
   CoefficientObservationResponseStatus,
   LeavingObservationResponseStatus,
   PlantResponseInverterProvider,
+  PlantSurplusClaimDayResponseState,
   SharingAgreementObservationSummaryResponseRecommendationsItem,
   SharingAnomalyResponseType,
   SharingAgreementPartitionCoefficientResponseApplicationState,
@@ -30,6 +31,11 @@ import {
   type PlantCapabilitiesResponse,
   type PlantResponse,
   type PlantSharingObservationResponse,
+  type PlantSurplusClaimDayResponse,
+  type PlantSurplusClaimHourResponse,
+  type PlantSurplusClaimResponse,
+  type PlantSurplusClaimSummaryResponse,
+  type PlantSurplusClaimWarningsResponse,
   type PartitionCoefficientCapabilitiesResponse,
   type PlatformAdminCapabilitiesResponse,
   type PlatformAdminResponse,
@@ -877,6 +883,81 @@ export function buildSharingAgreementObservation(
       coefficients: [],
       leavingRows: [],
     } satisfies SharingAgreementObservationResponse),
+    ...overrides,
+  };
+}
+
+export function buildPlantSurplusClaimHour(
+  overrides: Partial<PlantSurplusClaimHourResponse> = {},
+): PlantSurplusClaimHourResponse {
+  return {
+    ...({
+      startsAt: "2001-01-01T00:00:00+01:00",
+      surplusKWh: 9001,
+    } satisfies PlantSurplusClaimHourResponse),
+    ...overrides,
+  };
+}
+
+export function buildPlantSurplusClaimDay(
+  overrides: Partial<PlantSurplusClaimDayResponse> = {},
+): PlantSurplusClaimDayResponse {
+  return {
+    ...({
+      date: "2001-01-01",
+      hours: [buildPlantSurplusClaimHour()],
+      peakHour: null,
+      state: PlantSurplusClaimDayResponseState.REAL,
+      surplusKWh: 9002,
+    } satisfies PlantSurplusClaimDayResponse),
+    ...overrides,
+  };
+}
+
+export function buildPlantSurplusClaimSummary(
+  overrides: Partial<PlantSurplusClaimSummaryResponse> = {},
+): PlantSurplusClaimSummaryResponse {
+  return {
+    ...({
+      estimatedDays: 9003,
+      realDays: 9004,
+      suppliesInScope: 9005,
+      suppliesWithData: 9006,
+      surplusIncome: null,
+      surplusKWh: null,
+    } satisfies PlantSurplusClaimSummaryResponse),
+    ...overrides,
+  };
+}
+
+/** A month that raises no warning: every list empty, every object null. */
+export function buildPlantSurplusClaimWarnings(
+  overrides: Partial<PlantSurplusClaimWarningsResponse> = {},
+): PlantSurplusClaimWarningsResponse {
+  return {
+    ...({
+      hoursAboveNominalPower: [],
+      noAppliedCoefficients: false,
+      plantSupplyShare: null,
+      suppliesWithGaps: [],
+      suppliesWithoutData: [],
+      uncoveredShare: null,
+    } satisfies PlantSurplusClaimWarningsResponse),
+    ...overrides,
+  };
+}
+
+export function buildPlantSurplusClaim(overrides: Partial<PlantSurplusClaimResponse> = {}): PlantSurplusClaimResponse {
+  return {
+    ...({
+      availableMonths: { firstMonth: null, latestPublishedMonth: null },
+      cil: null,
+      days: [],
+      month: "2001-01",
+      plant: { id: "TEST-PLANT-ID", name: "TEST-PLANT-NAME" },
+      summary: buildPlantSurplusClaimSummary(),
+      warnings: buildPlantSurplusClaimWarnings(),
+    } satisfies PlantSurplusClaimResponse),
     ...overrides,
   };
 }

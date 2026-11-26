@@ -54,6 +54,13 @@ describe("translateErrorDetail", () => {
     ).toBe(MISSING_CAU_MESSAGE);
   });
 
+  it.each([
+    ["SURPLUS_CLAIM_MONTH_NOT_CLOSED", "Ese mes todavía no ha terminado. Solo se pueden reclamar meses cerrados."],
+    ["SURPLUS_CLAIM_CIL_REQUIRED", "Falta el CIL de la planta. Endesa lo necesita para identificar la instalación."],
+  ] as const)("UI-ERR-001 words the surplus claim's %s, saying what happened (#455)", (code, message) => {
+    expect(translateErrorDetail({ message: "server message", code }, "fallback")).toBe(message);
+  });
+
   it("falls back to the fallback when code is unrecognised and message is empty", () => {
     expect(translateErrorDetail({ message: "", code: undefined }, "fallback")).toBe("fallback");
   });

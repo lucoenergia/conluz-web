@@ -1,63 +1,23 @@
-import { AXIOS_INSTANCE } from "../../http/custom-instance";
+import { downloadFile, type FileDownloadResult } from "../../http/downloadFile";
 
 const DEFAULT_FILENAME = "acuerdo-de-reparto";
 
-/*
- * Accepted duplication (#149): the two blob endpoints name their file in
- * different places. This download reads the server's Content-Disposition by
- * going around the generated client. Generating the distributor file
- * (SharingAgreementGenerateDialog) goes through the generated hook instead, and
- * Orval's `customInstance` keeps only `data` and discards the response headers,
- * so the dialog rebuilds the server's name, {regulatoryCode}_{year}.txt, from
- * values it already holds. Reading the header there would mean changing
- * src/http/custom-instance.ts, which every generated call passes through.
- *
- * Revisit if the backend's naming convention for the generated file changes, if
- * a third blob endpoint appears, or if a generated filename ever needs a value
- * the client does not already hold.
- */
-
-export interface SharingAgreementFileDownloadResult {
-  blob: Blob;
-  filename: string;
-}
+export type SharingAgreementFileDownloadResult = FileDownloadResult;
 
 /**
  * Downloads the sharing agreement's attached file as binary. Bypasses the
  * generated `useGetSharingAgreementFile` hook, which types the response body
- * as `string` with no `responseType` override and would corrupt the bytes.
- * Goes through the shared AXIOS_INSTANCE directly (same base URL and auth
- * interceptor as every other request) so the Content-Disposition header —
- * discarded by the generated client's `customInstance` wrapper — is readable.
+ * as `string` with no `responseType` override and would corrupt the bytes,
+ * and whose `customInstance` wrapper discards Content-Disposition.
  */
-export async function downloadSharingAgreementFile(
+export function downloadSharingAgreementFile(
   plantId: string,
   sharingAgreementId: string,
 ): Promise<SharingAgreementFileDownloadResult> {
-  const response = await AXIOS_INSTANCE.get(
+  return downloadFile(
     `/api/v1/plants/${plantId}/sharing-agreements/${sharingAgreementId}/file`,
-    { responseType: "blob" },
+    {
+      defaultFilename: DEFAULT_FILENAME,
+    },
   );
-
-  return {
-    blob: response.data,
-    filename: parseContentDispositionFilename(response.headers["content-disposition"]) ?? DEFAULT_FILENAME,
-  };
-}
-
-/** Parses the filename from a Content-Disposition header, handling both the plain and RFC 5987 encoded forms. */
-export function parseContentDispositionFilename(headerValue: string | undefined): string | undefined {
-  if (!headerValue) return undefined;
-
-  const encodedMatch = /filename\*=(?:UTF-8''|utf-8'')?([^;]+)/i.exec(headerValue);
-  if (encodedMatch) {
-    try {
-      return decodeURIComponent(encodedMatch[1].trim());
-    } catch {
-      // fall through to the plain form below
-    }
-  }
-
-  const plainMatch = /filename="?([^";]+)"?/i.exec(headerValue);
-  return plainMatch ? plainMatch[1].trim() : undefined;
 }

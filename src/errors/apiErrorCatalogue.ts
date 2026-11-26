@@ -4,6 +4,7 @@ import { PASSWORD_UNCHANGED_MESSAGE, throttledMessage } from "./authErrors";
 import { LAST_ACTIVE_ADMIN_EXPLANATION, resendLimitMessage } from "./membershipErrorMessages";
 import { DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE_MESSAGE, MISSING_CAU_MESSAGE } from "./sharingAgreementFileCopy";
 import { CIL_FORMAT_MESSAGE, CIL_IN_USE_MESSAGE } from "./plantCil";
+import { SURPLUS_CLAIM_CIL_REQUIRED_MESSAGE, SURPLUS_CLAIM_MONTH_NOT_CLOSED_MESSAGE } from "./surplusClaim";
 import { incompleteText, labelsForMissingFields, missingFieldNamesFrom } from "../utils/integrationStatus";
 import { CONTACT_CHANNEL_MESSAGES } from "../utils/contactChannelRules";
 
@@ -208,6 +209,13 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   // not, and shares the form's own words. Both are shown on the CIL input.
   PLANT_CIL_INVALID: CIL_FORMAT_MESSAGE,
   PLANT_CIL_ALREADY_IN_USE: CIL_IN_USE_MESSAGE,
+
+  // The surplus claim of a plant (lucoenergia/conluz#629, #633; #455). Its
+  // page never shows the month refusal, it falls back to the default month,
+  // and shows the CIL refusal as its own notice; both are catalogued for any
+  // other caller, the CIL refusal in the page's own words.
+  SURPLUS_CLAIM_MONTH_NOT_CLOSED: SURPLUS_CLAIM_MONTH_NOT_CLOSED_MESSAGE,
+  SURPLUS_CLAIM_CIL_REQUIRED: SURPLUS_CLAIM_CIL_REQUIRED_MESSAGE,
 
   // Deleting a supply that a plant or a sharing agreement still references
   // (lucoenergia/conluz#412; #290). Disabling is what stops using it.

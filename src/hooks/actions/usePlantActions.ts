@@ -1,8 +1,9 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getGetAllPlantsQueryKey,
   getGetPlantByIdQueryKey,
   getGetPlantInverterProductionTodayQueryKey,
+  getGetPlantSurplusClaimQueryKey,
   useDeletePlant,
   useUpdatePlant,
 } from "../../api/plants/plants";
@@ -19,11 +20,15 @@ import {
 import type {
   ConfigureHuaweiBody,
   CreateSharingAgreementBody,
+  GetPlantSurplusClaimFileFormat,
   PlantResponse,
   SharingAgreementResponse,
   UpdatePlantBody,
 } from "../../api/models";
 import { useActiveCommunity } from "../../context/community.context";
+import { withParsedBlobErrorBody } from "../../errors/blobErrorBody";
+import { downloadPlantSurplusClaimFile } from "../../pages/production/surplusClaim/downloadPlantSurplusClaimFile";
+import { triggerBrowserDownload } from "../../utils/triggerBrowserDownload";
 import { outcomeFromResource, type CapabilityOutcome } from "../permissions";
 import { grant, type MaybeAction } from "./action";
 
@@ -35,6 +40,9 @@ import { grant, type MaybeAction } from "./action";
  * its Huawei configuration". One answer, five actions. `enableHuawei` and
  * `disableHuawei` are an opposite pair, both handed over to a caller who may do
  * either: the stored configuration's `enabled` picks the one that applies.
+ *
+ * `downloadSurplusClaim` shares it too: the surplus claim and its file are
+ * read only by the plant's managers (#455).
  *
  * `configureHuawei` belongs here rather than on the community: its endpoint is
  * PUT /plants/{plantId}/production/huawei/config, so the plant is what
@@ -62,6 +70,13 @@ export type PlantDeleteResult = { ok: true } | { error: unknown };
  */
 export type PlantEditResult = { ok: true } | { error: unknown };
 
+/**
+ * A surplus claim file download: saved, or the refusal itself, its Blob body
+ * already parsed, so the screen can tell SURPLUS_CLAIM_CIL_REQUIRED from any
+ * other failure (#455).
+ */
+export type SurplusClaimDownloadResult = { ok: true } | { error: unknown };
+
 export interface PlantRowActions {
   actions: {
     edit: MaybeAction<[UpdatePlantBody], PlantEditResult>;
@@ -70,6 +85,7 @@ export interface PlantRowActions {
     enableHuawei: MaybeAction<[], HuaweiWriteResult>;
     disableHuawei: MaybeAction<[], HuaweiWriteResult>;
     createSharingAgreement: MaybeAction<[CreateSharingAgreementBody], SharingAgreementResponse | undefined>;
+    downloadSurplusClaim: MaybeAction<[string, GetPlantSurplusClaimFileFormat], SurplusClaimDownloadResult>;
   };
   outcomes: {
     edit: CapabilityOutcome;
@@ -78,6 +94,7 @@ export interface PlantRowActions {
     enableHuawei: CapabilityOutcome;
     disableHuawei: CapabilityOutcome;
     createSharingAgreement: CapabilityOutcome;
+    downloadSurplusClaim: CapabilityOutcome;
   };
 }
 
@@ -96,6 +113,13 @@ export function usePlantActions(): PlantActions {
   const enableHuaweiMutation = useEnableHuaweiConfig();
   const disableHuaweiMutation = useDisableHuaweiConfig();
   const createAgreementMutation = useCreateSharingAgreement();
+  // Not a generated hook: the generated getPlantSurplusClaimFile discards
+  // Content-Disposition, so the file goes through AXIOS_INSTANCE directly. It
+  // is an action anyway, as the sharing agreement file is: canManage decides it.
+  const downloadSurplusClaimMutation = useMutation({
+    mutationFn: (variables: { plantId: string; month: string; format: GetPlantSurplusClaimFileFormat }) =>
+      downloadPlantSurplusClaimFile(variables.plantId, variables.month, variables.format),
+  });
 
   const invalidateList = () =>
     queryClient.invalidateQueries({ queryKey: getGetAllPlantsQueryKey(activeCommunityId ?? "") });
@@ -131,6 +155,9 @@ export function usePlantActions(): PlantActions {
               try {
                 await updateMutation.mutateAsync({ plantId, data });
                 queryClient.invalidateQueries({ queryKey: getGetPlantByIdQueryKey(plantId) });
+                // Every month of the claim: it carries the plant's CIL (#455).
+                // No params, so the key is a prefix that matches each of them.
+                queryClient.invalidateQueries({ queryKey: getGetPlantSurplusClaimQueryKey(plantId) });
                 invalidateList();
                 return { ok: true };
               } catch (error) {
@@ -187,6 +214,20 @@ export function usePlantActions(): PlantActions {
             },
             createAgreementMutation.isPending,
           ),
+          downloadSurplusClaim: grant(
+            manage,
+            async (month: string, format: GetPlantSurplusClaimFileFormat): Promise<SurplusClaimDownloadResult> => {
+              try {
+                const { blob, filename } = await downloadSurplusClaimMutation.mutateAsync({ plantId, month, format });
+                triggerBrowserDownload(blob, filename);
+                return { ok: true };
+              } catch (error) {
+                // The request asks for a Blob, so a refusal's typed body is a Blob too.
+                return { error: await withParsedBlobErrorBody(error) };
+              }
+            },
+            downloadSurplusClaimMutation.isPending,
+          ),
         },
         outcomes: {
           edit: manage,
@@ -195,6 +236,7 @@ export function usePlantActions(): PlantActions {
           enableHuawei: manage,
           disableHuawei: manage,
           createSharingAgreement: manageAgreements,
+          downloadSurplusClaim: manage,
         },
       };
     },

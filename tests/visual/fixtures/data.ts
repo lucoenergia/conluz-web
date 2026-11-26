@@ -36,6 +36,8 @@ import type {
   SupplyProductionTodayResponse,
   SupplyReferenceResponse,
   SupplyResponse,
+  PlantSurplusClaimDayResponse,
+  PlantSurplusClaimResponse,
 } from "../../../src/api/models";
 
 // ---------------------------------------------------------------------------
@@ -2502,4 +2504,93 @@ export const APPLICATION_DATES_PREVIEW: CoefficientDatesEffectsResponse = {
     },
   ],
   communityStart: { before: "2025-03-14T23:00:00Z", after: "2025-01-31T23:00:00Z" },
+};
+
+// ---------------------------------------------------------------------------
+// The surplus claim of the plant for October 2026 (#455): every day of the
+// month, its hours with Madrid's offset as the contract writes them, the 25th
+// the day the clocks go back. A fixed curve, no randomness: three estimated
+// days with unrecorded hours, and one hour on the 22nd above the plant's
+// 100 kW nominal power. Every warning but "no applied coefficients" raised.
+// ---------------------------------------------------------------------------
+
+const pad2 = (value: number) => String(value).padStart(2, "0");
+
+/** The hour starts of a day of October 2026 on Madrid's clock: summer time until the 25th's 03:00. */
+function octoberHourStarts(day: number): string[] {
+  const date = `2026-10-${pad2(day)}`;
+  if (day < 25) return Array.from({ length: 24 }, (_, hour) => `${date}T${pad2(hour)}:00:00+02:00`);
+  if (day > 25) return Array.from({ length: 24 }, (_, hour) => `${date}T${pad2(hour)}:00:00+01:00`);
+  return [
+    `${date}T00:00:00+02:00`,
+    `${date}T01:00:00+02:00`,
+    `${date}T02:00:00+02:00`,
+    ...Array.from({ length: 22 }, (_, index) => `${date}T${pad2(index + 2)}:00:00+01:00`),
+  ];
+}
+
+const ESTIMATED_OCTOBER_DAYS = [7, 8, 19];
+const ABOVE_NOMINAL_STARTS = "2026-10-22T12:00:00+02:00";
+
+function octoberClaimDay(day: number): PlantSurplusClaimDayResponse {
+  const estimated = ESTIMATED_OCTOBER_DAYS.includes(day);
+  const weight = 0.6 + ((day * 7) % 10) / 25;
+  const hours = octoberHourStarts(day).map((startsAt) => {
+    // The clock hour, so the 25th's repeated 02:00 produces as the other.
+    const clockHour = Number(startsAt.slice(11, 13));
+    if (startsAt === ABOVE_NOMINAL_STARTS) return { startsAt, surplusKWh: 118.4 };
+    if (estimated && (clockHour === 10 || clockHour === 11)) return { startsAt, surplusKWh: null };
+    const light = (clockHour + 0.5 - 8) / 10;
+    const surplusKWh = light > 0 && light < 1 ? Math.round(Math.sin(Math.PI * light) * 46 * weight * 100) / 100 : 0;
+    return { startsAt, surplusKWh };
+  });
+  const measured = hours.filter((hour): hour is { startsAt: string; surplusKWh: number } => hour.surplusKWh !== null);
+  const surplusKWh = Math.round(measured.reduce((sum, hour) => sum + hour.surplusKWh, 0) * 1000) / 1000;
+  const peakHour = measured.reduce<(typeof measured)[number] | null>(
+    (peak, hour) => (hour.surplusKWh > 0 && (!peak || hour.surplusKWh > peak.surplusKWh) ? hour : peak),
+    null,
+  );
+  return {
+    date: `2026-10-${pad2(day)}`,
+    hours,
+    peakHour,
+    state: estimated ? "ESTIMATED" : "REAL",
+    surplusKWh,
+  };
+}
+
+const OCTOBER_CLAIM_DAYS = Array.from({ length: 31 }, (_, index) => octoberClaimDay(index + 1));
+
+export const FIXED_SURPLUS_CLAIM: PlantSurplusClaimResponse = {
+  availableMonths: { firstMonth: "2025-03", latestPublishedMonth: "2026-10" },
+  cil: "ES0031405000000001AB1F001",
+  days: OCTOBER_CLAIM_DAYS,
+  month: "2026-10",
+  plant: { id: FIXED_PLANT_ID, name: "Planta Solar Norte" },
+  summary: {
+    estimatedDays: ESTIMATED_OCTOBER_DAYS.length,
+    realDays: OCTOBER_CLAIM_DAYS.length - ESTIMATED_OCTOBER_DAYS.length,
+    suppliesInScope: 27,
+    suppliesWithData: 24,
+    surplusIncome: { amountEur: 412.37, unpricedSurplusKWh: 0 },
+    surplusKWh: Math.round(OCTOBER_CLAIM_DAYS.reduce((sum, day) => sum + (day.surplusKWh ?? 0), 0) * 1000) / 1000,
+  },
+  warnings: {
+    suppliesWithoutData: [
+      { supply: { id: "s-amparo", code: "ES0031406912345678JN0F", name: "Casa de Amparo" }, coefficient: 0.042 },
+      { supply: { id: "s-toni", code: "ES0031406987654321QW1F", name: "Taller de Toni" }, coefficient: 0.0315 },
+      { supply: { id: "s-lucia", code: "ES0031406955512340KL0F", name: "Ático de Lucía" }, coefficient: 0.028 },
+    ],
+    suppliesWithGaps: [
+      { supply: { id: "s-vicent", code: "ES0031406900011122AB0F", name: "Bajo B · Vicent Ribes" }, days: ["2026-10-07", "2026-10-08"] },
+      { supply: { id: "s-climent", code: "ES0031406933344455CD0F", name: "Panadería Climent" }, days: ["2026-10-19"] },
+    ],
+    uncoveredShare: {
+      largestShare: 0.08,
+      days: Array.from({ length: 12 }, (_, index) => `2026-10-${pad2(index + 1)}`),
+    },
+    plantSupplyShare: 0.05,
+    noAppliedCoefficients: false,
+    hoursAboveNominalPower: [{ startsAt: ABOVE_NOMINAL_STARTS, surplusKWh: 118.4 }],
+  },
 };

@@ -12,6 +12,7 @@ import { PlantSummary } from "./plantDetail/PlantSummary";
 import { PlantNextStep } from "./plantDetail/PlantNextStep";
 import { PlantAgreementsSection } from "./plantDetail/PlantAgreementsSection";
 import { PlantObservedSharingSection } from "./plantDetail/PlantObservedSharingSection";
+import { PlantSurplusClaimSection } from "./plantDetail/PlantSurplusClaimSection";
 import { usePlantIntegrationStatus } from "./plantDetail/usePlantIntegrationStatus";
 import { PlantPeriodProduction } from "./plantDetail/PlantPeriodProduction";
 import { PlantInverterToday } from "./plantDetail/PlantInverterToday";
@@ -133,6 +134,13 @@ export const PlantDetailPage: FC = () => {
       {plant?.capabilities.canListSharingAgreements && (
         <Box sx={sxStyles.pageContainer}>
           <PlantObservedSharingSection plant={plant} />
+        </Box>
+      )}
+
+      {/* The way to the surplus claim, which asks for nothing either (#455). */}
+      {plant?.capabilities.canManage && (
+        <Box sx={sxStyles.pageContainer}>
+          <PlantSurplusClaimSection plant={plant} />
         </Box>
       )}
 

@@ -7,10 +7,11 @@
  */
 
 export interface SyncDatadisConsumptionsBody {
-  supplyCode?: string;
   /**
-     * @minimum 2000
-     * @maximum 2100
+     * How many months before the current one the synchronization starts: 0 synchronizes the current month only.
+     * @minimum 0
+     * @maximum 24
      */
-  year: number;
+  monthsBack: number;
+  supplyCode?: string;
 }

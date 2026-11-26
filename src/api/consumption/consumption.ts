@@ -735,13 +735,17 @@ export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnTy
 
 
 /**
- * This endpoint enables users to synchronize consumption data from datadis for a specific year.
+ * This endpoint enables users to synchronize consumption data from datadis for the current month
+ * and the months before it.
  *
  * The request body must contain:
- * - **year** (required, integer): The year for which to synchronize consumption data
+ * - **monthsBack** (required, integer): How many months before the current one the
+ *   synchronization starts. 0 synchronizes the current month only.
  * - **supplyCode** (optional, string): The supply code (CUPS) to synchronize. If not provided, all active supplies will be synchronized.
  *
- * The synchronization will retrieve data from January 1st to December 31st of the specified year.
+ * The synchronization retrieves data from the first day of the month `monthsBack` months before
+ * today through today: with `monthsBack` 3 on 26 November, from 1 August through 26 November.
+ * Datadis serves at most 24 months back when queried by month, so `monthsBack` goes from 0 to 24. Any other value, a missing one or the former `year` field is answered with `400`, and Datadis is not called.
  *
  * **Behavior:**
  * - If supplyCode is provided: Synchronizes only that specific supply
@@ -761,7 +765,7 @@ export function useGetDatadisConsumptionHourlyCsvReport<TData = Awaited<ReturnTy
  *
  * In cases of errors, the server responds with an appropriate error status code accompanied by a
  * descriptive message to guide users in resolving any issues.
- * @summary Synchronize the consumptions for a specific year from datadis, optionally filtering by supply code.
+ * @summary Synchronize the consumptions of the last months from datadis, optionally filtering by supply code.
  */
 export const syncDatadisConsumptions = (
     communityId: string,
@@ -816,7 +820,7 @@ const {mutation: mutationOptions} = options ?
     export type SyncDatadisConsumptionsMutationVariables = {communityId: string;data: SyncDatadisConsumptionsBody}
 
     /**
- * @summary Synchronize the consumptions for a specific year from datadis, optionally filtering by supply code.
+ * @summary Synchronize the consumptions of the last months from datadis, optionally filtering by supply code.
  */
 export const useSyncDatadisConsumptions = <TError = ErrorType<RestError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncDatadisConsumptions>>, TError,SyncDatadisConsumptionsMutationVariables, TContext>, }

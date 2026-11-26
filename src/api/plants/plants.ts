@@ -31,6 +31,8 @@ import type {
   GetPlantEnergyMetricsParams,
   GetPlantHourlyEnergySeriesParams,
   GetPlantMonthlyEnergySeriesParams,
+  GetPlantSurplusClaimFileParams,
+  GetPlantSurplusClaimParams,
   PagedResultPlantResponse,
   PlantDailyEnergyBucketResponse,
   PlantEnergyMetricsResponse,
@@ -38,6 +40,7 @@ import type {
   PlantInverterProductionTodayResponse,
   PlantMonthlyEnergyBucketResponse,
   PlantResponse,
+  PlantSurplusClaimResponse,
   RestError,
   UpdatePlantBody
 } from '../models';
@@ -1269,6 +1272,274 @@ export function useGetPlantInverterProductionToday<TData = Awaited<ReturnType<ty
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetPlantInverterProductionTodayQueryOptions(plantId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * Builds, for one closed month, the plant's surplus hour by hour as the community admin would
+ * claim it from the retailer, with what is missing from it. Nothing is stored: it is computed
+ * on every request. Days and hours are read in the community's time zone.
+ *
+ * **Supplies in scope:** the supplies holding an applied coefficient of the plant (one the
+ * distributor applies) whose period overlaps the month, the plant's own supply excluded. Their
+ * surplus is summed over the whole month.
+ *
+ * - `days[].hours[]`: every hour of every local day, 23, 24 or 25 on the days the clocks
+ *   change, each identified by the instant it starts at. An hour's surplus is the sum of the
+ *   records of the supplies in scope; it is `null` when none of them stored a surplus record
+ *   for that hour, and `0` when the records carry zero.
+ * - `days[].state`: `REAL` when every supply in scope stored a surplus record for every hour of
+ *   the day, `ESTIMATED` otherwise, and on every day when no supply is in scope.
+ * - `days[].peakHour`: the hour with the day's largest surplus, the earliest on a tie; `null`
+ *   when the day's surplus is `null` or `0`.
+ * - `summary.surplusIncome`: an **estimate** of what the month's surplus earned at OMIE
+ *   day-ahead prices, computed as for the community energy metrics' surplus income, over
+ *   exactly the month's hourly surplus; `null` when `summary.surplusKWh` is.
+ *
+ * Energy is rounded to 3 decimals and euros to cents, once, on the unrounded sums.
+ *
+ * **Month:** `month` names a closed calendar month. Without it, the latest month whose
+ * assigned production Datadis has published for the plant's supplies
+ * (`availableMonths.latestPublishedMonth`), else the last closed month. The current month
+ * and later months are a bad request with code `SURPLUS_CLAIM_MONTH_NOT_CLOSED`. A closed
+ * month outside `availableMonths` is answered normally; its warnings say why it is empty.
+ *
+ * **Warnings** never prevent the claim; a list is empty, never `null`, when its warning is
+ * not raised. They name the supplies concerned, with their CUPS, because the admin manages
+ * them.
+ *
+ * **Required: the caller can manage the plant** (the plant's `canManage` capability): an
+ * active community admin of the plant's community. A member of that community who is not an
+ * admin is answered 403, and every other caller, a platform admin who is not a member
+ * included, 404.
+ * @summary Previews the surplus a plant would claim from its retailer for one closed month, hour by hour.
+ */
+export const getPlantSurplusClaim = (
+    plantId: string,
+    params?: GetPlantSurplusClaimParams,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlantSurplusClaimResponse>(
+      {url: `/api/v1/plants/${plantId}/surplus-claim`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+
+
+
+
+export const getGetPlantSurplusClaimQueryKey = (plantId: string,
+    params?: GetPlantSurplusClaimParams,) => {
+    return [
+    `/api/v1/plants/${plantId}/surplus-claim`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPlantSurplusClaimQueryOptions = <TData = Awaited<ReturnType<typeof getPlantSurplusClaim>>, TError = ErrorType<RestError>>(plantId: string,
+    params?: GetPlantSurplusClaimParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantSurplusClaim>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlantSurplusClaimQueryKey(plantId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlantSurplusClaim>>> = ({ signal }) => getPlantSurplusClaim(plantId,params, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: plantId !== null && plantId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlantSurplusClaim>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPlantSurplusClaimQueryResult = NonNullable<Awaited<ReturnType<typeof getPlantSurplusClaim>>>
+export type GetPlantSurplusClaimQueryError = ErrorType<RestError>
+
+
+export function useGetPlantSurplusClaim<TData = Awaited<ReturnType<typeof getPlantSurplusClaim>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: undefined |  GetPlantSurplusClaimParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantSurplusClaim>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantSurplusClaim>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantSurplusClaim>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantSurplusClaim<TData = Awaited<ReturnType<typeof getPlantSurplusClaim>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params?: GetPlantSurplusClaimParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantSurplusClaim>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantSurplusClaim>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantSurplusClaim>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantSurplusClaim<TData = Awaited<ReturnType<typeof getPlantSurplusClaim>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params?: GetPlantSurplusClaimParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantSurplusClaim>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Previews the surplus a plant would claim from its retailer for one closed month, hour by hour.
+ */
+
+export function useGetPlantSurplusClaim<TData = Awaited<ReturnType<typeof getPlantSurplusClaim>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params?: GetPlantSurplusClaimParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantSurplusClaim>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPlantSurplusClaimQueryOptions(plantId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * Writes, for one closed month, the plant's surplus claim as a file to attach to the claim sent
+ * to the retailer. It carries exactly the days, the day states and the hours that
+ * `getPlantSurplusClaim` previews for that month, from the unrounded values. Nothing is stored:
+ * it is written on every request. Its warnings never prevent the file, and none of them, nor the
+ * summary or the income, is written into it.
+ *
+ * **Formats:**
+ *
+ * - `ENDESA`: Endesa's own template, `reclamacionMedidas_{CIL}_{YYYY-MM}.xlsx`, delivered as
+ *   `reclamacionMedidas_{CIL}_{YYYY-MM}.zip` (`application/zip`) holding only the workbook. Its
+ *   `Carga` sheet gets one row per local day from row 2: the CIL, `AS`, the day's state (`R`
+ *   real, `E` estimated), the date shown as `dd/mm/yyyy`, then the hours `HOR1`... as numbers
+ *   rounded half-up to 2 decimals. An hour without any record is written as `0`, and an hour the
+ *   day does not have (`HOR24` and `HOR25` on the 23-hour day, `HOR25` on a 24-hour day) is left
+ *   empty. The other sheets are the template's. A plant without a CIL is a conflict with code
+ *   `SURPLUS_CLAIM_CIL_REQUIRED`.
+ * - `GENERIC`: a CSV (`text/csv`, UTF-8 with a BOM, `;` separated, CRLF line ends) named
+ *   `excedentes_{regulatoryCode}_{YYYY-MM}.csv`, or after the plant's id when it has no
+ *   regulatory code. The header is `fecha;estado;HOR1;...;HOR25`, then one row of 27 fields per
+ *   local day: the date as `dd/mm/yyyy`, `R` or `E`, and the 25 hours with 3 decimals and a
+ *   decimal comma. An hour without any record and an hour the day does not have are both empty;
+ *   the state tells them apart. It never needs a CIL.
+ *
+ * **Month:** `month` is required and names a closed calendar month, the one the admin reviewed.
+ * The current month and later months are a bad request with code
+ * `SURPLUS_CLAIM_MONTH_NOT_CLOSED`.
+ *
+ * **Required: the caller can manage the plant** (the plant's `canManage` capability): an
+ * active community admin of the plant's community. A member of that community who is not an
+ * admin is answered 403, and every other caller, a platform admin who is not a member
+ * included, 404.
+ * @summary Downloads the file a plant's surplus is claimed with from its retailer for one closed month.
+ */
+export const getPlantSurplusClaimFile = (
+    plantId: string,
+    params: GetPlantSurplusClaimFileParams,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<Blob>(
+      {url: `/api/v1/plants/${plantId}/surplus-claim/file`, method: 'GET',
+        params,
+        responseType: 'blob', signal
+    },
+      );
+    }
+
+
+
+
+export const getGetPlantSurplusClaimFileQueryKey = (plantId: string,
+    params?: GetPlantSurplusClaimFileParams,) => {
+    return [
+    `/api/v1/plants/${plantId}/surplus-claim/file`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPlantSurplusClaimFileQueryOptions = <TData = Awaited<ReturnType<typeof getPlantSurplusClaimFile>>, TError = ErrorType<RestError>>(plantId: string,
+    params: GetPlantSurplusClaimFileParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantSurplusClaimFile>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPlantSurplusClaimFileQueryKey(plantId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlantSurplusClaimFile>>> = ({ signal }) => getPlantSurplusClaimFile(plantId,params, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: plantId !== null && plantId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPlantSurplusClaimFile>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPlantSurplusClaimFileQueryResult = NonNullable<Awaited<ReturnType<typeof getPlantSurplusClaimFile>>>
+export type GetPlantSurplusClaimFileQueryError = ErrorType<RestError>
+
+
+export function useGetPlantSurplusClaimFile<TData = Awaited<ReturnType<typeof getPlantSurplusClaimFile>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: GetPlantSurplusClaimFileParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantSurplusClaimFile>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantSurplusClaimFile>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantSurplusClaimFile>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantSurplusClaimFile<TData = Awaited<ReturnType<typeof getPlantSurplusClaimFile>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: GetPlantSurplusClaimFileParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantSurplusClaimFile>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlantSurplusClaimFile>>,
+          TError,
+          Awaited<ReturnType<typeof getPlantSurplusClaimFile>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPlantSurplusClaimFile<TData = Awaited<ReturnType<typeof getPlantSurplusClaimFile>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: GetPlantSurplusClaimFileParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantSurplusClaimFile>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Downloads the file a plant's surplus is claimed with from its retailer for one closed month.
+ */
+
+export function useGetPlantSurplusClaimFile<TData = Awaited<ReturnType<typeof getPlantSurplusClaimFile>>, TError = ErrorType<RestError>>(
+ plantId: string,
+    params: GetPlantSurplusClaimFileParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlantSurplusClaimFile>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPlantSurplusClaimFileQueryOptions(plantId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
