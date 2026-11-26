@@ -242,6 +242,7 @@ export * from './sharingAgreementResponseFile';
 export * from './sharingAgreementResponseStatus';
 export * from './sharingAnomalyCountsResponse';
 export * from './sharingAnomalyResponse';
+export * from './sharingAnomalyResponseSwappedWith';
 export * from './sharingAnomalyResponseType';
 export * from './sharingObservationAnalysisResponse';
 export * from './sharingObservationAnalysisResponseNotComputableReason';

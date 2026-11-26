@@ -13,6 +13,8 @@ export interface SharingAnomalyCountsResponse {
   energyOutsideAgreement: number;
   /** Anomalies of type NO_ENERGY_IN_AGREEMENT */
   noEnergyInAgreement: number;
+  /** Anomalies of type NOT_APPLIED */
+  notApplied: number;
   /** Anomalies of type REVERTED */
   reverted: number;
   /** Anomalies of type UNKNOWN_COEFFICIENT */
