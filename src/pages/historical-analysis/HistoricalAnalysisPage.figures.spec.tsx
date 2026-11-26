@@ -359,7 +359,7 @@ describe("UI-HIS-014 incomplete coverage is stated in words (#249)", () => {
 describe("UI-HIS-010 the totals are fields of the same response (#249)", () => {
   const totals = () => screen.getByRole("list", { name: "Totales del periodo" });
   const tile = (label: string) => within(totals()).getAllByRole("listitem").find((item) => item.textContent?.startsWith(label))!;
-  const ESTIMATE_LABEL = "Estimado con un precio de 0,15 €/kWh para la energía, sin impuestos.";
+  const ESTIMATE_LABEL = "Estimado con un precio de 0,15 €/kWh para la energía, más IVA e impuesto eléctrico.";
 
   it("UI-HIS-010 four tiles: from the community, from the grid, to the grid and the estimated savings", () => {
     renderPage();
@@ -374,10 +374,12 @@ describe("UI-HIS-010 the totals are fields of the same response (#249)", () => {
     expect(tile("Ahorro estimado")).toHaveTextContent("72,75 €");
   });
 
-  it("UI-HIS-010 the estimate label shows the price the response carries", () => {
-    renderPage();
+  describe("UI-HOM-016 the estimate sentence states the price with VAT and electricity tax on top (#443)", () => {
+    it("UI-HIS-010 the estimate label shows the price the response carries", () => {
+      renderPage();
 
-    expect(tile("Ahorro estimado")).toHaveTextContent(ESTIMATE_LABEL);
+      expect(tile("Ahorro estimado")).toHaveTextContent(ESTIMATE_LABEL);
+    });
   });
 
   it("UI-HIS-010 without an estimated price there is no estimate label, even when tariffSource says ESTIMATE", () => {

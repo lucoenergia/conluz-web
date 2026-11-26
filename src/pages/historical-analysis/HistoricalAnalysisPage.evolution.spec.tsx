@@ -406,9 +406,11 @@ describe("UI-HIS-020 the charts' colours (#250)", () => {
 });
 
 describe("UI-HIS-020 the savings legend states the estimated price (#250)", () => {
-  it("UI-HIS-020 states the estimated price from the period's energy metrics when there is one", () => {
-    renderPage();
-    expect(within(card()).getByText("Estimado con un precio de 0,15 €/kWh para la energía, sin impuestos.")).toBeInTheDocument();
+  describe("UI-HOM-016 the estimate sentence states the price with VAT and electricity tax on top (#443)", () => {
+    it("UI-HIS-020 states the estimated price from the period's energy metrics when there is one", () => {
+      renderPage();
+      expect(within(card()).getByText("Estimado con un precio de 0,15 €/kWh para la energía, más IVA e impuesto eléctrico.")).toBeInTheDocument();
+    });
   });
 
   it("UI-HIS-020 states no price without estimatedPrice, even when tariffSource says ESTIMATE", () => {

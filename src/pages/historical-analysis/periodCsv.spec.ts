@@ -35,7 +35,7 @@ const FOUR_MONTHS = period("2025-11-01T00:00:00+01:00", "2026-03-01T00:00:00+01:
 const HEADER =
   "fecha;de_la_comunidad_autoconsumo_kwh;de_la_red_kwh;se_fue_a_la_red_excedentes_kwh;ahorro_estimado_eur;precio_referencia_eur_kwh;nota_ahorro;datos";
 const PRICE = { eurPerKWh: 0.1234 };
-const NOTE = "Estimado con un precio de 0,1234 €/kWh para la energía, sin impuestos.";
+const NOTE = "Estimado con un precio de 0,1234 €/kWh para la energía, más IVA e impuesto eléctrico.";
 
 /** The CSV's lines without the BOM, split on CRLF, the trailing empty one dropped. */
 const linesOf = (csv: string) => csv.slice(1).split("\r\n").slice(0, -1);
@@ -130,6 +130,16 @@ describe("periodCsv (#251)", () => {
       ["0,1234", NOTE],
       ["0,1234", NOTE],
     ]);
+  });
+
+  it("UI-HOM-016 the note on every line states the price with VAT and electricity tax on top", () => {
+    const slots = supplyDays([supplyBucket("2026/07/01"), supplyGapDay("2026/07/02"), supplyBucket("2026/07/03")]);
+
+    const notes = linesOf(periodCsv(slots, "daily", { eurPerKWh: 0.15 }))
+      .slice(1)
+      .map((line) => cellsOf(line)[6]);
+
+    expect(notes).toEqual(Array(3).fill("Estimado con un precio de 0,15 €/kWh para la energía, más IVA e impuesto eléctrico."));
   });
 
   it("UI-HIS-023 without estimatedPrice, both price columns are empty on every line", () => {

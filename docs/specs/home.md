@@ -8,11 +8,11 @@
 | **Roles** | A caller to whom the view is open (`useHomeViews`) |
 | **Domain rules** | `lucoenergia/conluz`: EPR-001, ENM-006, ENM-007, ENM-008, SEM-003 |
 | **Design reference** | n/a |
-| **Last reviewed against code** | #425 |
+| **Last reviewed against code** | #443 |
 
 Scope: the rules introduced in #280 for home states migrated from visual tests to Vitest, the
-month bounds of #324, the self-consumption ratio's basis and status of #253, and the member home's
-blocks below `sm` (#425). Not exhaustive: other home behaviour is not yet specified here.
+month bounds of #324, the self-consumption ratio's basis and status of #253, the member home's
+blocks below `sm` (#425), and the wording of the estimate sentence (#443). Not exhaustive: other home behaviour is not yet specified here.
 
 ## Purpose
 
@@ -222,6 +222,20 @@ view may present a missing figure as a zero or a normal setup stage as a failure
   did arrive in that hour.
 - **Implements:** UI-CHT-001
 - **Source:** #425
+
+### UI-HOM-016 — The estimate sentence states the energy price with VAT and electricity tax on top
+
+- **Status:** Active
+- **Rule:** The estimate sentence MUST state the price as the energy term with VAT and electricity
+  tax added on top: "Estimado con un precio de {price} para la energía, más IVA e impuesto
+  eléctrico." The same sentence MUST be used wherever the estimate is stated, the period CSV note
+  included.
+- **Rationale:** Since lucoenergia/conluz#610 the savings include the electricity tax and VAT,
+  while the price the sentence states is still the energy term before taxes. A sentence saying the
+  savings exclude taxes would contradict the figure next to it. One sentence everywhere keeps a
+  figure read on the home, in the period view or in a downloaded file meaning the same thing.
+- **Implements:** n/a
+- **Source:** #443
 
 ## States
 

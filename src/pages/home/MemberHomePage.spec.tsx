@@ -383,8 +383,20 @@ describe("MemberHomePage (#199)", () => {
       });
       openHome();
 
-      expect(text(savingsCard())).toContain("Estimado con un precio de 0,15 €/kWh para la energía, sin impuestos.");
-      expect(text(paybackCard())).toContain("Estimado con un precio de 0,1234 €/kWh para la energía, sin impuestos.");
+      expect(text(savingsCard())).toContain("Estimado con un precio de 0,15 €/kWh para la energía, más IVA e impuesto eléctrico.");
+      expect(text(paybackCard())).toContain("Estimado con un precio de 0,1234 €/kWh para la energía, más IVA e impuesto eléctrico.");
+    });
+
+    it("UI-HOM-016 the savings and payback cards state the price with VAT and electricity tax on top", () => {
+      answer({
+        metrics: monthWith({ savings: { amountEur: 27, tariffSource: "ESTIMATE", estimatedPrice: { eurPerKWh: 0.15 } } }),
+        payback: paybackWith({ tariffSource: "ESTIMATE", estimatedPrice: { eurPerKWh: 0.1234 } }),
+      });
+      openHome();
+
+      expect(text(savingsCard())).toContain("Estimado con un precio de 0,15 €/kWh para la energía, más IVA e impuesto eléctrico.");
+      expect(text(paybackCard())).toContain("Estimado con un precio de 0,1234 €/kWh para la energía, más IVA e impuesto eléctrico.");
+      expect(page()).not.toMatch(/sin\s+impuestos/);
     });
 
     it("UI-HOM-001 shows no estimate wording anywhere when neither response carries a price", () => {
