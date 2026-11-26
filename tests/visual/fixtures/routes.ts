@@ -27,6 +27,7 @@ import type {
   PlantHourlyEnergyBucketResponse,
   PlantInverterProductionTodayResponse,
   PlantMonthlyEnergyBucketResponse,
+  PlantSurplusClaimResponse,
 } from "../../../src/api/models";
 import {
   COMMUNITY_ADMIN_CAPABILITIES,
@@ -669,6 +670,28 @@ export async function mockObservedSharingRoutes(
       return body
         ? route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) })
         : route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({}) });
+    },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Helper: the plant's surplus claim (#455), for the month it is asked for or
+// the default. Registered AFTER mockPlantDetailRoutes(), whose predicate also
+// matches this URL and would answer it with the plant. Refused unless the
+// plant served to this caller says it may manage it, as the backend does.
+// ---------------------------------------------------------------------------
+
+export async function mockSurplusClaimRoutes(
+  page: Page,
+  claim: PlantSurplusClaimResponse,
+  currentUser?: { memberships?: Record<string, string> },
+) {
+  const { capabilities } = asPlantCaller(FIXED_PLANT, currentUser);
+  await page.route(
+    (url) => url.pathname === `/api/v1/plants/${FIXED_PLANT_ID}/surplus-claim`,
+    (route: Route) => {
+      if (refusal(capabilities, "canManage")) return refuse(route, "canManage");
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(claim) });
     },
   );
 }

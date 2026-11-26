@@ -3,6 +3,7 @@ import {
   getGetAllPlantsQueryKey,
   getGetPlantByIdQueryKey,
   getGetPlantInverterProductionTodayQueryKey,
+  getGetPlantSurplusClaimQueryKey,
   useDeletePlant,
   useUpdatePlant,
 } from "../../api/plants/plants";
@@ -21,6 +22,9 @@ import { mutation } from "../../test/queryState";
 import { renderHookWithProviders } from "../../test/renderWithProviders";
 import { usePlantActions } from "./usePlantActions";
 import { UpdatePlantBodyInverterProvider } from "../../api/models";
+import { downloadPlantSurplusClaimFile } from "../../pages/production/surplusClaim/downloadPlantSurplusClaimFile";
+import { triggerBrowserDownload } from "../../utils/triggerBrowserDownload";
+import { apiError } from "../../test/apiError";
 
 /** Complete bodies: a partial would hide a field the screen must supply. */
 const UPDATE_PLANT_BODY = {
@@ -50,6 +54,14 @@ vi.mock(import("../../api/production/production"), async (importOriginal) => ({
   useConfigureHuawei: vi.fn(),
   useEnableHuaweiConfig: vi.fn(),
   useDisableHuaweiConfig: vi.fn(),
+}));
+vi.mock(import("../../pages/production/surplusClaim/downloadPlantSurplusClaimFile"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  downloadPlantSurplusClaimFile: vi.fn(),
+}));
+vi.mock(import("../../utils/triggerBrowserDownload"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  triggerBrowserDownload: vi.fn(),
 }));
 vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -144,6 +156,55 @@ describe("usePlantActions", () => {
 
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetPlantByIdQueryKey(PLANT_ID) });
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: getGetAllPlantsQueryKey(COMMUNITY_ID) });
+  });
+
+  it("UI-SCL-010 reads every month of the plant's surplus claim again on edit, as it carries the plant's CIL", async () => {
+    const { result, queryClient } = render(plantWith({ canManage: true }));
+    const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+
+    await result.current.actions.edit?.run(UPDATE_PLANT_BODY);
+
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: [`/api/v1/plants/${PLANT_ID}/surplus-claim`] });
+    expect(getGetPlantSurplusClaimQueryKey(PLANT_ID)).toEqual([`/api/v1/plants/${PLANT_ID}/surplus-claim`]);
+  });
+
+  describe("the surplus claim download", () => {
+    beforeEach(() => {
+      vi.mocked(downloadPlantSurplusClaimFile).mockReset();
+      vi.mocked(triggerBrowserDownload).mockReset();
+    });
+
+    it("hands it back under the plant's canManage, and withholds it otherwise", () => {
+      expect(render(plantWith({ canManage: true })).result.current.actions.downloadSurplusClaim).toBeDefined();
+      const denied = render(plantWith({ canListSharingAgreements: true })).result.current;
+      expect(denied.actions.downloadSurplusClaim).toBeUndefined();
+      expect(denied.outcomes.downloadSurplusClaim).toEqual({ state: "denied" });
+    });
+
+    it("UI-SCL-008 asks for the month and format given, and saves the file under the server's name", async () => {
+      const blob = new Blob(["PK"]);
+      vi.mocked(downloadPlantSurplusClaimFile).mockResolvedValue({ blob, filename: "excedentes_ES1_2026-10.csv" });
+      const { result } = render(plantWith({ canManage: true }));
+
+      expect(await result.current.actions.downloadSurplusClaim!.run("2026-10", "GENERIC")).toEqual({ ok: true });
+
+      expect(downloadPlantSurplusClaimFile).toHaveBeenCalledWith(PLANT_ID, "2026-10", "GENERIC");
+      expect(triggerBrowserDownload).toHaveBeenCalledWith(blob, "excedentes_ES1_2026-10.csv");
+    });
+
+    it("UI-SCL-010 hands back a refusal with its Blob body read, so its code can be told apart", async () => {
+      const body = { status: 409, errors: [{ code: "SURPLUS_CLAIM_CIL_REQUIRED", message: "raw backend message" }] };
+      const refusal = Object.assign(apiError(409), {
+        response: { status: 409, headers: {}, data: new Blob([JSON.stringify(body)], { type: "application/json" }) },
+      });
+      vi.mocked(downloadPlantSurplusClaimFile).mockRejectedValue(refusal);
+      const { result } = render(plantWith({ canManage: true }));
+
+      const outcome = await result.current.actions.downloadSurplusClaim!.run("2026-10", "ENDESA");
+
+      expect(outcome).toEqual({ error: expect.objectContaining({ response: expect.objectContaining({ data: body }) }) });
+      expect(triggerBrowserDownload).not.toHaveBeenCalled();
+    });
   });
 
   // Invalidating a deleted plant would refetch it and 404 straight after a

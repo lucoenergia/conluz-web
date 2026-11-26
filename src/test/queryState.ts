@@ -5,6 +5,7 @@ import type {
   QueryObserverLoadingErrorResult,
   QueryObserverLoadingResult,
   QueryObserverPendingResult,
+  QueryObserverPlaceholderResult,
   QueryObserverSuccessResult,
   UseMutationResult,
 } from "@tanstack/react-query";
@@ -86,6 +87,33 @@ export const query = {
       status: "success",
       fetchStatus: "idle",
       promise: Promise.resolve(data),
+      queryKey: keyed(options.queryKey),
+    };
+  },
+
+  /**
+   * Another key is fetching, and the data shown is still the previous key's,
+   * as `placeholderData: keepPreviousData` keeps it. Typed like `success`.
+   */
+  placeholder<F extends Fetcher = never>(
+    data: FetcherData<F>,
+    options: { queryKey?: QueryKey } = {},
+  ): QueryObserverPlaceholderResult<FetcherData<F>, QueryError> & Keyed<FetcherData<F>, QueryError> {
+    return {
+      ...baseResult(),
+      data,
+      error: null,
+      isError: false,
+      isFetching: true,
+      isPending: false,
+      isLoading: false,
+      isLoadingError: false,
+      isRefetchError: false,
+      isSuccess: true,
+      isPlaceholderData: true,
+      status: "success",
+      fetchStatus: "fetching",
+      promise: unsettled<FetcherData<F>>(),
       queryKey: keyed(options.queryKey),
     };
   },

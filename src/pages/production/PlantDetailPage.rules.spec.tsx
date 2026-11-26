@@ -39,6 +39,8 @@ vi.mock(import("../../api/plants/plants"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetPlantEnergyMetrics: vi.fn(),
   useGetPlantInverterProductionToday: vi.fn(),
+  // Mocked only to prove the page never asks for the claim (#455).
+  useGetPlantSurplusClaim: vi.fn(),
 }));
 vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -50,7 +52,11 @@ vi.mock(import("../../api/sharing-agreements/sharing-agreements"), async (import
 
 import { usePlantInActiveCommunity } from "./usePlantInActiveCommunity";
 import { getHuaweiConfig, useGetHuaweiConfig } from "../../api/production/production";
-import { useGetPlantEnergyMetrics, useGetPlantInverterProductionToday } from "../../api/plants/plants";
+import {
+  useGetPlantEnergyMetrics,
+  useGetPlantInverterProductionToday,
+  useGetPlantSurplusClaim,
+} from "../../api/plants/plants";
 import {
   getSharingAgreements,
   useGetPlantSharingObservation,
@@ -365,6 +371,41 @@ describe("PlantDetailPage rules (#260)", () => {
       );
       expect(useGetPlantSharingObservation).not.toHaveBeenCalled();
       expect(useGetSharingAgreementObservation).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("the surplus claim entry", () => {
+    it("UI-PLT-017 the summary's \"Reclamación de excedentes\" row scrolls to its section and focuses its heading", async () => {
+      const user = userEvent.setup();
+      setup({ capabilities: { canManage: true } });
+
+      const row = within(summary()!).getByRole("button", { name: "Reclamación de excedentes" });
+      expect(row).toHaveTextContent("Revisa el mes y descarga el fichero para la comercializadora");
+      await user.click(row);
+
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+      expect(scrollIntoView.mock.contexts[0]).toHaveAttribute("id", "plant-surplus-claim");
+      const section = document.getElementById("plant-surplus-claim")!;
+      expect(within(section).getAllByRole("heading")[0]).toHaveFocus();
+    });
+
+    it("UI-PLT-017 the section links to the surplus claim without asking for it", () => {
+      setup({ capabilities: { canManage: true } });
+
+      const section = screen.getByRole("region", { name: "Reclamación de excedentes" });
+      expect(within(section).getByText("Revisa el mes y descarga el fichero para la comercializadora.")).toBeVisible();
+      expect(within(section).getByRole("link", { name: "Revisar y descargar" })).toHaveAttribute(
+        "href",
+        `/plants/${PLANT_A.id}/surplus-claim`,
+      );
+      expect(useGetPlantSurplusClaim).not.toHaveBeenCalled();
+    });
+
+    it("UI-PLT-017 shows neither the row nor the section without canManage", () => {
+      setup({ capabilities: { canListSharingAgreements: true } });
+
+      expect(within(summary()!).queryByRole("button", { name: "Reclamación de excedentes" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("region", { name: "Reclamación de excedentes" })).not.toBeInTheDocument();
     });
   });
 });
