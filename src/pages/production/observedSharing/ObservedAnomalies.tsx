@@ -1,23 +1,73 @@
-import { useState, type FC } from "react";
-import { Accordion, AccordionDetails, AccordionSummary, Box, Typography } from "@mui/material";
+import { useState, type FC, type MouseEvent } from "react";
+import { flushSync } from "react-dom";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Link, Typography } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { ListTable } from "../../../components/ListTable";
 import { RecordList } from "../../../components/RecordList";
 import { useListLayout } from "../../../components/ResponsiveRecordList/useListLayout";
 import { colors } from "../../../theme/tokens";
-import { supplyDisplayLabel } from "../../../utils/supplyDisplayLabel";
+import { supplyDisplayLabel, supplyLabelSource } from "../../../utils/supplyDisplayLabel";
 import type { AgreementAnomalies, SupplyAnomalies } from "./anomalyGroups";
 import { ANOMALY_TYPE_LABEL } from "./observedSharingLabels";
 import { formatAnomalyDetail, formatAnomalyEnd, formatObservedDate } from "./observedSharingFormat";
-import type { SharingAnomalyResponse } from "../../../api/models";
+import type { SharingAnomalyResponse, SupplyReferenceResponse } from "../../../api/models";
 
 const anomaliesCount = (count: number) => `${count} ${count === 1 ? "anomalía" : "anomalías"}`;
 const suppliesCount = (count: number) => `${count} ${count === 1 ? "punto" : "puntos"}`;
 
+/**
+ * The id of the group of the supply's anomalies listed under the same
+ * agreement, or undefined when that supply has none there.
+ */
+type GroupOf = (supplyId: string) => string | undefined;
+
+/** How to bring a supply's anomalies into view, by their group's id. */
+type OpenGroup = (groupId: string) => void;
+
+const summaryId = (groupId: string) => `${groupId}-summary`;
+
+/**
+ * "Intercambiado con <name> (<CUPS>)" (UI-AGR-044): the supply the backend
+ * says this one is swapped with, never worked out here. Its name leads to that
+ * supply's anomalies when they are listed under the same agreement. A supply
+ * named by its CUPS shows it once.
+ */
+const SwappedWith: FC<{ supply: SupplyReferenceResponse; groupOf: GroupOf; openGroup: OpenGroup }> = ({
+  supply,
+  groupOf,
+  openGroup,
+}) => {
+  const name = supplyDisplayLabel(supply);
+  const groupId = groupOf(supply.id);
+  const open = (event: MouseEvent) => {
+    event.preventDefault();
+    if (groupId) openGroup(groupId);
+  };
+  return (
+    <>
+      Intercambiado con{" "}
+      {groupId ? (
+        <Link href={`#${summaryId(groupId)}`} onClick={open}>
+          {name}
+        </Link>
+      ) : (
+        name
+      )}
+      {supplyLabelSource(supply) !== "code" && ` (${supply.code})`}
+    </>
+  );
+};
+
 /** One supply's anomalies: a table from the list width up, stacked rows below. */
-const AnomalyRows: FC<{ group: SupplyAnomalies }> = ({ group }) => {
+const AnomalyRows: FC<{ group: SupplyAnomalies; groupOf: GroupOf; openGroup: OpenGroup }> = ({
+  group,
+  groupOf,
+  openGroup,
+}) => {
   const layout = useListLayout();
   const label = `Anomalías de ${supplyDisplayLabel(group.supply)}`;
+  const swappedWith = (anomaly: SharingAnomalyResponse) =>
+    anomaly.swappedWith && <SwappedWith supply={anomaly.swappedWith} groupOf={groupOf} openGroup={openGroup} />;
 
   if (layout === "narrow") {
     return (
@@ -29,6 +79,7 @@ const AnomalyRows: FC<{ group: SupplyAnomalies }> = ({ group }) => {
           lines: [
             `Inicio: ${formatObservedDate(anomaly.start)} · Fin: ${formatAnomalyEnd(anomaly.end)}`,
             formatAnomalyDetail(anomaly),
+            ...(anomaly.swappedWith ? [swappedWith(anomaly)] : []),
           ],
         }))}
       />
@@ -47,7 +98,16 @@ const AnomalyRows: FC<{ group: SupplyAnomalies }> = ({ group }) => {
         {
           key: "detail",
           header: "Detalle",
-          render: (anomaly) => formatAnomalyDetail(anomaly),
+          render: (anomaly) => (
+            <>
+              {formatAnomalyDetail(anomaly)}
+              {anomaly.swappedWith && (
+                <Box component="span" sx={{ display: "block", overflowWrap: "anywhere" }}>
+                  {swappedWith(anomaly)}
+                </Box>
+              )}
+            </>
+          ),
         },
       ]}
     />
@@ -71,7 +131,9 @@ const SupplyAnomaliesItem: FC<{
   expanded: boolean;
   onToggle: (id: string, expanded: boolean) => void;
   heading: "h3" | "h4";
-}> = ({ group, id, expanded, onToggle, heading }) => (
+  groupOf: GroupOf;
+  openGroup: OpenGroup;
+}> = ({ group, id, expanded, onToggle, heading, groupOf, openGroup }) => (
   <Accordion
     disableGutters
     expanded={expanded}
@@ -80,7 +142,13 @@ const SupplyAnomaliesItem: FC<{
     elevation={0}
     sx={{ border: `1px solid ${colors.border.light}`, "&::before": { display: "none" } }}
   >
-    <AccordionSummary expandIcon={<ExpandMoreIcon />} id={`${id}-summary`} aria-controls={`${id}-rows`}>
+    <AccordionSummary
+      expandIcon={<ExpandMoreIcon />}
+      id={summaryId(id)}
+      aria-controls={`${id}-rows`}
+      // A swap's link brings it into view below the app bar.
+      sx={{ scrollMarginTop: (theme) => theme.spacing(10) }}
+    >
       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 1, rowGap: 0.25, minWidth: 0 }}>
         <Typography component="span" sx={{ fontWeight: 600, overflowWrap: "anywhere" }}>
           {supplyDisplayLabel(group.supply)}
@@ -94,7 +162,7 @@ const SupplyAnomaliesItem: FC<{
       </Box>
     </AccordionSummary>
     <AccordionDetails sx={{ p: 0 }}>
-      <AnomalyRows group={group} />
+      <AnomalyRows group={group} groupOf={groupOf} openGroup={openGroup} />
     </AccordionDetails>
   </Accordion>
 );
@@ -116,11 +184,20 @@ export const ObservedAnomalies: FC<ObservedAnomaliesProps> = ({ groups, showAgre
   const [toggled, setToggled] = useState<ReadonlyMap<string, boolean>>(new Map());
   const isExpanded = (id: string) => toggled.get(id) ?? defaultExpanded;
   const setExpanded = (id: string, expanded: boolean) => setToggled((current) => new Map(current).set(id, expanded));
+  // Expanded first, so its rows are on the page when it comes into view.
+  const openGroup = (id: string) => {
+    flushSync(() => setExpanded(id, true));
+    const summary = document.getElementById(summaryId(id));
+    summary?.scrollIntoView({ block: "start" });
+    summary?.focus({ preventScroll: true });
+  };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {groups.map((group) => {
         const agreementKey = group.agreement?.id ?? "unattributed";
+        const listed = new Set(group.supplies.map(({ supply }) => supply.id));
+        const groupOf: GroupOf = (supplyId) => (listed.has(supplyId) ? supplyGroupId(agreementKey, supplyId) : undefined);
         return (
           <Box key={agreementKey} sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {showAgreements && (
@@ -143,6 +220,8 @@ export const ObservedAnomalies: FC<ObservedAnomaliesProps> = ({ groups, showAgre
                   expanded={isExpanded(id)}
                   onToggle={setExpanded}
                   heading={showAgreements ? "h4" : "h3"}
+                  groupOf={groupOf}
+                  openGroup={openGroup}
                 />
               );
             })}
