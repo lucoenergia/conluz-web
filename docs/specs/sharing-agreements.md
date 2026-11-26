@@ -732,18 +732,23 @@ is in force today.
 - **Implements:** n/a
 - **Source:** #436
 
-### UI-AGR-047 — The claim covers what the distributor answers for, one item per anomaly part
+### UI-AGR-047 — The claim covers what the distributor answers for, one item per anomaly part, each supply's in date order
 
 - **Status:** Active
 - **Rule:** The claim MUST list every anomaly of the plant, attributed and unattributed, of type
   NOT_APPLIED, UNKNOWN_COEFFICIENT, REVERTED, ENERGY_OUTSIDE_AGREEMENT or NO_ENERGY_IN_AGREEMENT,
-  as one numbered item each; each part of a split NOT_APPLIED is an item of its own. The items MUST
-  follow the order the page lists the anomalies in (UI-AGR-024). The claim MUST NOT list an
-  APPLIED_BEFORE_SENT anomaly.
+  as one numbered item per anomaly part; each part of a split NOT_APPLIED is an item of its own.
+  The supplies MUST follow the order the page lists them in (UI-AGR-024): agreement groups in the
+  analysis's order, then the anomalies attributed to none, and within each group the supplies in
+  the order each first appears. Each supply's parts within a group MUST be ordered by start date:
+  the end of a range start, or the day of a start the data begins on. The page's own order MUST NOT
+  change. The claim MUST NOT list an APPLIED_BEFORE_SENT anomaly.
 - **Rationale:** Only what the distributor is responsible for is claimed. An APPLIED_BEFORE_SENT
   usually means the sent date registered in Conluz is wrong, so claiming it would blame the
-  distributor for the community's own record. In page order, the admin finds each item on the page
-  it came from.
+  distributor for the community's own record. With supplies in page order, the admin finds each
+  item on the page it came from. Within a supply, the analysis's order is not chronological, and a
+  letter reads a supply's periods in time order. The latest day a start may fall on is the one date
+  every start has.
 - **Implements:** n/a
 - **Source:** #436
 
