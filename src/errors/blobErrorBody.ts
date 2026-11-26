@@ -12,7 +12,7 @@
  *
  * Accepted exception (#149): this is parsed at the call site, not in
  * `customInstance`, the same way the Content-Disposition note in
- * src/components/SharingAgreementFilePanel/downloadSharingAgreementFile.ts
+ * src/http/downloadFile.ts
  * handles the response headers. `customInstance` hands back only `data` and
  * rethrows failures untouched, and every generated call passes through it, so
  * changing it there has a repo-wide blast radius for one endpoint. The cost is

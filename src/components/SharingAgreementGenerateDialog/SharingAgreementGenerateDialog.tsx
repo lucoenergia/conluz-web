@@ -59,7 +59,7 @@ export const SharingAgreementGenerateDialog: FC<SharingAgreementGenerateDialogPr
     // The generated hook's customInstance wrapper discards Content-Disposition,
     // so the filename is built client-side from the same
     // {regulatoryCode}_{year}.txt convention the backend uses. Why, and when to
-    // revisit it: the note in downloadSharingAgreementFile.ts.
+    // revisit it: the note in src/http/downloadFile.ts.
     const blob = await generateFile.run(year);
     if (!blob) return;
     triggerBrowserDownload(blob, filename);

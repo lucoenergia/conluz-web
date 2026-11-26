@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseContentDispositionFilename } from "./downloadSharingAgreementFile";
+import { parseContentDispositionFilename } from "./downloadFile";
 
 describe("parseContentDispositionFilename", () => {
   it("parses a plain quoted filename", () => {
