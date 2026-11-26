@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   SharingAgreementObservationSummaryResponseRecommendationsItem as Recommendation,
+  SharingAnomalyResponseType,
 } from "../../../api/models";
 import {
   buildObservationStatusCounts,
@@ -9,6 +10,7 @@ import {
   buildSharingAnomaly,
   buildSharingAnomalyCounts,
 } from "../../../test/fixtures";
+import { ANOMALY_COUNT_ORDER, ANOMALY_TYPE_LABEL } from "./observedSharingLabels";
 import { recommendationFindings } from "./recommendationFindings";
 
 /** The agreement's applied window, which a share's figures are computed over. */
@@ -136,6 +138,43 @@ describe("recommendationFindings", () => {
 
     test("UI-AGR-039: an agreement without an unattributed production share has no such finding", () => {
       expect(recommendationFindings("plant-a", summary({ unallocatedShare: null, recommendations: [Recommendation.NONE] }))).toEqual([]);
+    });
+  });
+
+  describe("not applied coefficients (#451)", () => {
+    const counting = (notApplied: number) =>
+      recommendationFindings(
+        "plant-a",
+        summary({
+          recommendations: [Recommendation.REVIEW_ANOMALIES],
+          anomalyCounts: buildSharingAnomalyCounts({ unknownCoefficient: 1, notApplied }),
+        }),
+      )[0];
+
+    test("UI-AGR-043: one not applied coefficient is counted in the singular, after unknown coefficients", () => {
+      expect(counting(1)).toMatchObject({ title: "2 anomalías", detail: "1 coeficiente no registrado · 1 coeficiente no aplicado" });
+    });
+
+    test("UI-AGR-043: several not applied coefficients are counted in the plural", () => {
+      expect(counting(4)).toMatchObject({ title: "5 anomalías", detail: "1 coeficiente no registrado · 4 coeficientes no aplicados" });
+    });
+
+    test("UI-AGR-043: every anomaly type of the client has a label and a count wherever anomalies are counted", () => {
+      const types = Object.values(SharingAnomalyResponseType);
+      expect(ANOMALY_COUNT_ORDER.map(({ type }) => type).sort()).toEqual([...types].sort());
+      expect(types.filter((type) => !ANOMALY_TYPE_LABEL[type])).toEqual([]);
+      for (const { count } of ANOMALY_COUNT_ORDER) {
+        const [finding] = recommendationFindings(
+          "plant-a",
+          summary({ recommendations: [Recommendation.REVIEW_ANOMALIES], anomalyCounts: buildSharingAnomalyCounts({ [count]: 2 }) }),
+        );
+        expect(finding.title, count).toBe("2 anomalías");
+        expect(finding.detail, count).toMatch(/^2 \S/);
+      }
+    });
+
+    test("UI-AGR-043: a not applied coefficient is labelled 'Coeficiente no aplicado'", () => {
+      expect(ANOMALY_TYPE_LABEL[SharingAnomalyResponseType.NOT_APPLIED]).toBe("Coeficiente no aplicado");
     });
   });
 });

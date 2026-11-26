@@ -2167,6 +2167,29 @@ const IN_FORCE_ANOMALIES: SharingAgreementObservationSummaryResponse["anomalies"
     expectedBeta: 0.0315,
     swappedWith: null,
   },
+  // Casa Sur and Casa Este receive each other's coefficient for a while (#451).
+  {
+    id: "anomaly-sur-not-applied",
+    supply: OBSERVED_SUPPLIES.sur,
+    type: "NOT_APPLIED",
+    start: { from: "2025-03-04", to: "2025-03-04" },
+    end: "2025-04-30",
+    observedBeta: 0.05,
+    observedValidDays: 48,
+    expectedBeta: 0.0315,
+    swappedWith: OBSERVED_SUPPLIES.este,
+  },
+  {
+    id: "anomaly-este-not-applied",
+    supply: OBSERVED_SUPPLIES.este,
+    type: "NOT_APPLIED",
+    start: { from: "2025-03-04", to: "2025-03-04" },
+    end: "2025-04-30",
+    observedBeta: 0.0315,
+    observedValidDays: 48,
+    expectedBeta: 0.05,
+    swappedWith: OBSERVED_SUPPLIES.sur,
+  },
 ];
 
 const IN_FORCE_OBSERVED: SharingAgreementObservationSummaryResponse = {
@@ -2179,7 +2202,7 @@ const IN_FORCE_OBSERVED: SharingAgreementObservationSummaryResponse = {
   // Casa Norte, which drops to 0 % on its date (FIXED_AGREEMENT_OBSERVATION, #623).
   leavesDistributionStatusCounts: { ...NO_COUNTS, appliedSameDate: 1 },
   anomalies: IN_FORCE_ANOMALIES,
-  anomalyCounts: { unknownCoefficient: 1, reverted: 1, energyOutsideAgreement: 0, noEnergyInAgreement: 0, appliedBeforeSent: 0, notApplied: 0 },
+  anomalyCounts: { unknownCoefficient: 1, reverted: 1, energyOutsideAgreement: 0, noEnergyInAgreement: 0, appliedBeforeSent: 0, notApplied: 2 },
   unallocatedShare: { days: 600, unallocated: 0.067, registeredShareWithoutData: 0.03, from: "2025-03-04", to: "2026-10-31" },
   recommendations: ["SET_DATES", "REVIEW_ANOMALIES"],
 };
