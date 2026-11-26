@@ -1,4 +1,4 @@
-import type { FC } from "react";
+import { useState, type FC } from "react";
 import { Accordion, AccordionDetails, AccordionSummary, Box, Typography } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { ListTable } from "../../../components/ListTable";
@@ -55,45 +55,49 @@ const AnomalyRows: FC<{ group: SupplyAnomalies }> = ({ group }) => {
 };
 
 /**
+ * The id of a supply's anomalies under an agreement. A supply can sit under
+ * more than one agreement, so the id carries both.
+ */
+const supplyGroupId = (agreementKey: string, supplyId: string) => `observed-anomalies-${agreementKey}-${supplyId}`;
+
+/**
  * A supply's anomalies, collapsible, saying how many there are while
  * collapsed. Its heading sits one level below its agreement's, when there is one.
- * The summary's id names the region that holds the rows; a supply can sit
- * under more than one agreement, so the id carries both.
+ * The summary's id names the region that holds the rows.
  */
 const SupplyAnomaliesItem: FC<{
   group: SupplyAnomalies;
-  agreementKey: string;
-  defaultExpanded: boolean;
+  id: string;
+  expanded: boolean;
+  onToggle: (id: string, expanded: boolean) => void;
   heading: "h3" | "h4";
-}> = ({ group, agreementKey, defaultExpanded, heading }) => {
-  const id = `observed-anomalies-${agreementKey}-${group.supply.id}`;
-  return (
-    <Accordion
-      disableGutters
-      defaultExpanded={defaultExpanded}
-      slots={{ heading }}
-      elevation={0}
-      sx={{ border: `1px solid ${colors.border.light}`, "&::before": { display: "none" } }}
-    >
-      <AccordionSummary expandIcon={<ExpandMoreIcon />} id={`${id}-summary`} aria-controls={`${id}-rows`}>
-        <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 1, rowGap: 0.25, minWidth: 0 }}>
-          <Typography component="span" sx={{ fontWeight: 600, overflowWrap: "anywhere" }}>
-            {supplyDisplayLabel(group.supply)}
-          </Typography>
-          <Typography component="span" variant="body2" sx={{ color: colors.text.subtle, overflowWrap: "anywhere" }}>
-            {group.supply.code}
-          </Typography>
-          <Typography component="span" variant="body2" sx={{ color: colors.warning.main, fontWeight: 600 }}>
-            {anomaliesCount(group.anomalies.length)}
-          </Typography>
-        </Box>
-      </AccordionSummary>
-      <AccordionDetails sx={{ p: 0 }}>
-        <AnomalyRows group={group} />
-      </AccordionDetails>
-    </Accordion>
-  );
-};
+}> = ({ group, id, expanded, onToggle, heading }) => (
+  <Accordion
+    disableGutters
+    expanded={expanded}
+    onChange={(_, isExpanded) => onToggle(id, isExpanded)}
+    slots={{ heading }}
+    elevation={0}
+    sx={{ border: `1px solid ${colors.border.light}`, "&::before": { display: "none" } }}
+  >
+    <AccordionSummary expandIcon={<ExpandMoreIcon />} id={`${id}-summary`} aria-controls={`${id}-rows`}>
+      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 1, rowGap: 0.25, minWidth: 0 }}>
+        <Typography component="span" sx={{ fontWeight: 600, overflowWrap: "anywhere" }}>
+          {supplyDisplayLabel(group.supply)}
+        </Typography>
+        <Typography component="span" variant="body2" sx={{ color: colors.text.subtle, overflowWrap: "anywhere" }}>
+          {group.supply.code}
+        </Typography>
+        <Typography component="span" variant="body2" sx={{ color: colors.warning.main, fontWeight: 600 }}>
+          {anomaliesCount(group.anomalies.length)}
+        </Typography>
+      </Box>
+    </AccordionSummary>
+    <AccordionDetails sx={{ p: 0 }}>
+      <AnomalyRows group={group} />
+    </AccordionDetails>
+  </Accordion>
+);
 
 interface ObservedAnomaliesProps {
   groups: AgreementAnomalies[];
@@ -105,35 +109,46 @@ interface ObservedAnomaliesProps {
 /**
  * The anomalies by agreement, then by supply (UI-AGR-024): each with its type,
  * its start (or range) and its end (or "en curso"), and the β observed while
- * it lasted.
+ * it lasted. Which supplies are expanded is held here, so that something else
+ * on the list can open one; a supply nobody has toggled follows `defaultExpanded`.
  */
-export const ObservedAnomalies: FC<ObservedAnomaliesProps> = ({ groups, showAgreements, defaultExpanded }) => (
-  <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-    {groups.map((group) => {
-      const agreementKey = group.agreement?.id ?? "unattributed";
-      return (
-        <Box key={agreementKey} sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          {showAgreements && (
-            <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 1 }}>
-              <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 600, overflowWrap: "anywhere" }}>
-                {group.agreement?.name ?? "Sin acuerdo atribuido"}
-              </Typography>
-              <Typography variant="body2" sx={{ color: colors.text.subtle }}>
-                {anomaliesCount(group.count)} · {suppliesCount(group.supplies.length)}
-              </Typography>
-            </Box>
-          )}
-          {group.supplies.map((supplyGroup) => (
-            <SupplyAnomaliesItem
-              key={supplyGroup.supply.id}
-              group={supplyGroup}
-              agreementKey={agreementKey}
-              defaultExpanded={defaultExpanded}
-              heading={showAgreements ? "h4" : "h3"}
-            />
-          ))}
-        </Box>
-      );
-    })}
-  </Box>
-);
+export const ObservedAnomalies: FC<ObservedAnomaliesProps> = ({ groups, showAgreements, defaultExpanded }) => {
+  const [toggled, setToggled] = useState<ReadonlyMap<string, boolean>>(new Map());
+  const isExpanded = (id: string) => toggled.get(id) ?? defaultExpanded;
+  const setExpanded = (id: string, expanded: boolean) => setToggled((current) => new Map(current).set(id, expanded));
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      {groups.map((group) => {
+        const agreementKey = group.agreement?.id ?? "unattributed";
+        return (
+          <Box key={agreementKey} sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {showAgreements && (
+              <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 1 }}>
+                <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 600, overflowWrap: "anywhere" }}>
+                  {group.agreement?.name ?? "Sin acuerdo atribuido"}
+                </Typography>
+                <Typography variant="body2" sx={{ color: colors.text.subtle }}>
+                  {anomaliesCount(group.count)} · {suppliesCount(group.supplies.length)}
+                </Typography>
+              </Box>
+            )}
+            {group.supplies.map((supplyGroup) => {
+              const id = supplyGroupId(agreementKey, supplyGroup.supply.id);
+              return (
+                <SupplyAnomaliesItem
+                  key={supplyGroup.supply.id}
+                  group={supplyGroup}
+                  id={id}
+                  expanded={isExpanded(id)}
+                  onToggle={setExpanded}
+                  heading={showAgreements ? "h4" : "h3"}
+                />
+              );
+            })}
+          </Box>
+        );
+      })}
+    </Box>
+  );
+};
