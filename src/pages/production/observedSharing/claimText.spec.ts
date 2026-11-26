@@ -86,6 +86,17 @@ const BLOQUE_A = buildObservationSummary({
       expectedBeta: 0.05,
       observedBeta: 0.061234,
     }),
+    // Casa Sur's side of the open swap: it overlaps Casa Norte's from 01/09/2025.
+    buildSharingAnomaly({
+      id: "sur-swapped-open",
+      supply: SUR,
+      type: Type.NOT_APPLIED,
+      start: day("2025-09-01"),
+      end: null,
+      expectedBeta: 0.0412,
+      observedBeta: 0.0315,
+      swappedWith: NORTE,
+    }),
   ],
 });
 
@@ -173,19 +184,23 @@ Periodo: desde el 15/09/2025 hasta la fecha de los últimos datos publicados (31
 No se le ha aplicado el coeficiente comunicado de 4,1200 %; recibe aproximadamente un 3,15 % (reparto «Reparto vecinos bloque A», fichero enviado el 20/02/2025). Este porcentaje coincide con el coeficiente comunicado para el punto CUPS ES0031000000000001JN0F, y a ese punto se le aplica el de este: los coeficientes de ambos puntos parecen intercambiados.
 Periodo: del 01/03/2025 al 30/06/2025.
 
-6. CUPS ES0031000000000005JN0F.
+6. CUPS ES0031000000000002JN0F.
+No se le ha aplicado el coeficiente comunicado de 4,1200 %; recibe aproximadamente un 3,15 % (reparto «Reparto vecinos bloque A», fichero enviado el 20/02/2025). Este porcentaje coincide con el coeficiente comunicado para el punto CUPS ES0031000000000001JN0F, y a ese punto se le aplica el de este: los coeficientes de ambos puntos parecen intercambiados.
+Periodo: desde el 01/09/2025 hasta la fecha de los últimos datos publicados (31/10/2025).
+
+7. CUPS ES0031000000000005JN0F.
 Se le vuelve a aplicar aproximadamente un 6,54 %, que corresponde a un reparto anterior, en lugar del coeficiente comunicado de 8,0000 % (reparto «Reparto inicial 2023», fichero enviado el [FECHA DE ENVÍO]).
 Periodo: del 01/05/2024 al 30/09/2024.
 
-7. CUPS ES0031000000000004JN0F.
+8. CUPS ES0031000000000004JN0F.
 No recibe energía de la instalación, aunque su coeficiente comunicado es 2,0000 % (reparto «Reparto inicial 2023», fichero enviado el [FECHA DE ENVÍO]).
 Periodo: desde una fecha entre el 10/01/2024 y el 15/01/2024 hasta el 31/03/2024.
 
-8. CUPS ES0031000000000006JN0F.
+9. CUPS ES0031000000000006JN0F.
 Recibe aproximadamente un 1,57 % de la energía de la instalación, aunque no figura en el reparto comunicado.
 Periodo: desde el 01/02/2024 hasta la fecha de los últimos datos publicados (31/10/2025).
 
-9. CUPS ES0031000000000005JN0F.
+10. CUPS ES0031000000000005JN0F.
 Se le ha aplicado aproximadamente un 7,20 %, cuando el coeficiente comunicado es [COEFICIENTE COMUNICADO] % (reparto «[NOMBRE DEL REPARTO]»).
 Periodo: desde el 01/04/2023 o antes hasta el 30/06/2023.
 
@@ -222,10 +237,11 @@ describe("buildClaimText", () => {
       `3. CUPS ${NORTE.code}.`,
       `4. CUPS ${ESTE.code}.`,
       `5. CUPS ${SUR.code}.`,
-      `6. CUPS ${TALLER.code}.`,
-      `7. CUPS ${OESTE.code}.`,
-      `8. CUPS ${HUERTO.code}.`,
-      `9. CUPS ${TALLER.code}.`,
+      `6. CUPS ${SUR.code}.`,
+      `7. CUPS ${TALLER.code}.`,
+      `8. CUPS ${OESTE.code}.`,
+      `9. CUPS ${HUERTO.code}.`,
+      `10. CUPS ${TALLER.code}.`,
     ]);
     // Casa Este's only claimed item is its unknown coefficient.
     expect(claimed[3][1]).toMatch(/^Se le ha aplicado aproximadamente un 6,12 %/);
@@ -242,10 +258,17 @@ describe("buildClaimText", () => {
   });
 
   test("UI-AGR-048: a swap names the other supply by its CUPS, on each of the two supplies", () => {
-    const [first, , , , fifth] = items(buildClaimText(OBSERVATION, PLANT));
+    const claimed = items(buildClaimText(OBSERVATION, PLANT));
+    const swapSentence = (code: string) => `para el punto CUPS ${code}, y a ese punto se le aplica el de este`;
 
-    expect(first[1]).toContain(`para el punto CUPS ${SUR.code}, y a ese punto se le aplica el de este`);
-    expect(fifth[1]).toContain(`para el punto CUPS ${NORTE.code}, y a ese punto se le aplica el de este`);
+    // The closed swap: Casa Norte's first part and Casa Sur's first part.
+    expect(claimed[0][1]).toContain(swapSentence(SUR.code));
+    expect(claimed[4][1]).toContain(swapSentence(NORTE.code));
+    // The open swap: Casa Norte's open part and Casa Sur's, which overlap.
+    expect(claimed[1][1]).toContain(swapSentence(SUR.code));
+    expect(claimed[5][1]).toContain(swapSentence(NORTE.code));
+    // Casa Norte's part that is not swapped names no other supply.
+    expect(claimed[2][1]).not.toContain("intercambiados");
   });
 
   test("UI-AGR-048: the text holds no markup, no supply name and no plant name, and names every claimed CUPS", () => {
