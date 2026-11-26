@@ -1,5 +1,5 @@
 import type { RestError, RestErrorDetail, RestErrorDetailCode } from "../api/models";
-import { isPasswordRule, PASSWORD_RULE_MESSAGES } from "../utils/passwordPolicy";
+import { isPasswordRule, PASSWORD_POLICY_GENERIC_MESSAGE, PASSWORD_RULE_MESSAGES } from "../utils/passwordPolicy";
 import { PASSWORD_UNCHANGED_MESSAGE, throttledMessage } from "./authErrors";
 import { LAST_ACTIVE_ADMIN_EXPLANATION, resendLimitMessage } from "./membershipErrorMessages";
 import { DISTRIBUTOR_FILE_SENT_ON_IN_FUTURE_MESSAGE, MISSING_CAU_MESSAGE } from "./sharingAgreementFileCopy";
@@ -270,7 +270,7 @@ const API_ERROR_TEMPLATES: Partial<Record<Exclude<RestErrorDetailCode, null>, Ap
   USER_CURRENT_PASSWORD_INCORRECT: "La contraseña actual no es correcta.",
   USER_PASSWORD_POLICY_VIOLATION: (params) => {
     const rule = params?.rule;
-    return isPasswordRule(rule) ? PASSWORD_RULE_MESSAGES[rule] : "La contraseña no cumple los requisitos.";
+    return isPasswordRule(rule) ? PASSWORD_RULE_MESSAGES[rule] : PASSWORD_POLICY_GENERIC_MESSAGE;
   },
   AUTH_TOO_MANY_FAILED_ATTEMPTS: (params) => {
     const seconds = Number(params?.retryAfterSeconds);

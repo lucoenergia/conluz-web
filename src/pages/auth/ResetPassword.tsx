@@ -9,7 +9,7 @@ import { PasswordInput } from "../../components/Forms/PasswordInput";
 import { PasswordPolicyHint } from "../../components/Forms/PasswordPolicyHint";
 import { useSessionActions } from "../../hooks/actions";
 import { useEndSession } from "../../hooks/useEndSession";
-import { checkPasswordPolicy, PASSWORD_RULE_MESSAGES } from "../../utils/passwordPolicy";
+import { checkPasswordPolicy, PASSWORD_POLICY_GENERIC_MESSAGE, PASSWORD_RULE_MESSAGES } from "../../utils/passwordPolicy";
 import { PASSWORD_UNCHANGED_MESSAGE, throttledMessage } from "../../errors/authErrors";
 import { getFirstApiErrorMessage } from "../../errors/apiErrorCatalogue";
 
@@ -106,7 +106,7 @@ export const ResetPassword: FC = () => {
         break;
       case "policyViolation":
         setFieldErrors({
-          newPassword: failure.rule ? PASSWORD_RULE_MESSAGES[failure.rule] : "La contraseña no cumple los requisitos.",
+          newPassword: failure.rule ? PASSWORD_RULE_MESSAGES[failure.rule] : PASSWORD_POLICY_GENERIC_MESSAGE,
         });
         break;
       case "passwordUnchanged":

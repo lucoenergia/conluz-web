@@ -318,6 +318,42 @@ describe("UI-INV-004 UI-INV-014 a platform invitation names the platform and ask
   });
 });
 
+describe("UI-FRM-006 a compromised password (#444)", () => {
+  it("UI-FRM-006 shows a COMPROMISED refusal on the new password, keeping the code and both passwords", async () => {
+    const user = userEvent.setup();
+    const router = routeRequests([
+      { method: "POST", url: INSPECT, respond: () => platformInspection(false) },
+      {
+        method: "POST",
+        url: ACCEPT,
+        respond: () => {
+          throw apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule: "COMPROMISED" } });
+        },
+      },
+    ]);
+    mockCustomInstance.mockImplementation(router.handle);
+
+    renderAt(`/accept-invitation#${TOKEN}`);
+    await findPlatformHeading();
+    await typeCode(user, CODE);
+    await choosePassword(user, NEW_PASSWORD);
+    await user.click(screen.getByRole("button", { name: "Aceptar invitación" }));
+
+    const newPassword = screen.getByLabelText("Nueva contraseña");
+    await waitFor(() =>
+      expect(newPassword).toHaveAccessibleDescription(
+        expect.stringContaining(
+          "Esta contraseña es muy común o ha aparecido en filtraciones de datos. Elige otra: una frase que recuerdes suele funcionar bien.",
+        ),
+      ),
+    );
+    expect(newPassword).toHaveAttribute("aria-invalid", "true");
+    expect(newPassword).toHaveValue(NEW_PASSWORD);
+    expect(screen.getByLabelText("Repite la nueva contraseña")).toHaveValue(NEW_PASSWORD);
+    expect(codeField()).toHaveValue(CODE);
+  });
+});
+
 describe("UI-INV-015 UI-INV-016 a wrong code (AC6)", () => {
   it("UI-INV-015 shows a wrong code on its field and keeps the token and the passwords for another try", async () => {
     const user = userEvent.setup();

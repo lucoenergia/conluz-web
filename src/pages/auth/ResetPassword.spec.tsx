@@ -203,7 +203,7 @@ describe("a link with no token (AC4)", () => {
 
 describe("the checks before sending (AC5)", () => {
   it.each([
-    ["14 code points", "a".repeat(14), undefined, PASSWORD_RULE_MESSAGES.TOO_SHORT],
+    ["9 code points", "a".repeat(9), undefined, "La contraseña debe tener al menos 10 caracteres."],
     ["65 code points", "a".repeat(65), undefined, PASSWORD_RULE_MESSAGES.TOO_LONG],
     // 19 code points, 76 bytes.
     ["emoji over 72 bytes", "😀".repeat(19), undefined, PASSWORD_RULE_MESSAGES.TOO_MANY_BYTES],
@@ -314,7 +314,7 @@ describe("a refused password (AC8)", () => {
     [
       "USER_PASSWORD_POLICY_VIOLATION",
       apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule: "TOO_SHORT" } }),
-      PASSWORD_RULE_MESSAGES.TOO_SHORT,
+      "La contraseña debe tener al menos 10 caracteres.",
     ],
     ["USER_PASSWORD_UNCHANGED", apiError(400, { code: "USER_PASSWORD_UNCHANGED" }), PASSWORD_UNCHANGED_MESSAGE],
   ])("%s shows on the new password, and a corrected attempt sends the same token", async (_, error, message) => {
@@ -345,6 +345,35 @@ describe("a refused password (AC8)", () => {
       { token: TOKEN, newPassword: PASSWORD },
       { token: TOKEN, newPassword: corrected },
     ]);
+  });
+});
+
+describe("UI-FRM-006 a compromised password (#444)", () => {
+  it("UI-FRM-006 shows a COMPROMISED refusal on the new password, keeping both fields", async () => {
+    const user = userEvent.setup();
+    const router = routeRequests(
+      resetRoutes(() => {
+        throw apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule: "COMPROMISED" } });
+      }),
+    );
+    mockCustomInstance.mockImplementation(router.handle);
+
+    renderAt(`/reset-password#${TOKEN}`);
+    await findForm();
+    await submit(user, PASSWORD);
+
+    const newPassword = screen.getByLabelText("Nueva contraseña");
+    await waitFor(() =>
+      expect(newPassword).toHaveAccessibleDescription(
+        expect.stringContaining(
+          "Esta contraseña es muy común o ha aparecido en filtraciones de datos. Elige otra: una frase que recuerdes suele funcionar bien.",
+        ),
+      ),
+    );
+    expect(newPassword).toBeInvalid();
+    expect(newPassword).toHaveValue(PASSWORD);
+    expect(screen.getByLabelText("Repite la nueva contraseña")).toHaveValue(PASSWORD);
+    expect(currentPath()).toBe("/reset-password");
   });
 });
 

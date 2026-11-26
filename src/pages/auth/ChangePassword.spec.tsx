@@ -149,21 +149,21 @@ describe("ChangePasswordPage", () => {
       await expectPasswordFieldContract(user, confirmField(), "new-password");
     });
 
-    it("shows the policy with a passphrase example, tied to the new password", () => {
+    it("UI-FRM-005 shows the policy with a passphrase example, tied to the new password", () => {
       renderPage();
 
-      const hint = screen.getByText(/Usa entre 15 y 64 caracteres/);
+      const hint = screen.getByText(/Usa entre 10 y 64 caracteres/);
       expect(hint).toHaveTextContent("«el gato duerme junto a la ventana»");
       expect(newField().getAttribute("aria-describedby")).toContain(hint.id);
     });
   });
 
-  describe("client-side checks, before anything is sent (AC2)", () => {
+  describe("UI-FRM-005 client-side checks, before anything is sent (AC2)", () => {
     it.each([
-      ["14 characters", "a".repeat(14), "La contraseña debe tener al menos 15 caracteres."],
+      ["9 characters", "a".repeat(9), "La contraseña debe tener al menos 10 caracteres."],
       ["65 characters", "a".repeat(65), "La contraseña no puede tener más de 64 caracteres."],
-      // 8 emoji: 16 UTF-16 units, but 8 characters.
-      ["8 emoji", "😀".repeat(8), "La contraseña debe tener al menos 15 caracteres."],
+      // 9 emoji: 18 UTF-16 units, but 9 characters.
+      ["9 emoji", "😀".repeat(9), "La contraseña debe tener al menos 10 caracteres."],
       // 19 emoji: 19 characters, 76 bytes.
       ["19 emoji", "😀".repeat(19), "La contraseña es demasiado larga"],
     ])("refuses %s with a visible reason", async (_label, value, message) => {
@@ -177,12 +177,12 @@ describe("ChangePasswordPage", () => {
       expect(token()).toHaveTextContent("a-token");
     });
 
-    it("accepts 15 emoji, counted as 15 characters", async () => {
+    it("accepts 10 emoji, counted as 10 characters", async () => {
       mockChangePassword.mockResolvedValueOnce(undefined);
       const user = userEvent.setup();
       renderPage();
 
-      const emoji = "😀".repeat(15);
+      const emoji = "😀".repeat(10);
       await submit(user, { current: "la actual de siempre", next: emoji, confirm: emoji });
 
       await waitFor(() =>
@@ -236,7 +236,7 @@ describe("ChangePasswordPage", () => {
 
       await submit(user, { current: "corta", next: "corta", confirm: "corta" });
 
-      expect(helperTextOf(newField())).toBe("La contraseña debe tener al menos 15 caracteres.");
+      expect(helperTextOf(newField())).toBe("La contraseña debe tener al menos 10 caracteres.");
       expect(mockChangePassword).not.toHaveBeenCalled();
     });
 
@@ -282,7 +282,7 @@ describe("ChangePasswordPage", () => {
     });
 
     it.each([
-      ["TOO_SHORT", "La contraseña debe tener al menos 15 caracteres."],
+      ["TOO_SHORT", "La contraseña debe tener al menos 10 caracteres."],
       ["TOO_LONG", "La contraseña no puede tener más de 64 caracteres."],
       ["TOO_MANY_BYTES", "La contraseña es demasiado larga"],
     ])("explains a %s policy violation on the new password", async (rule, message) => {
@@ -296,6 +296,26 @@ describe("ChangePasswordPage", () => {
       expect(token()).toHaveTextContent("a-token");
       expect(path()).toHaveTextContent("/change-password");
     });
+  });
+
+  it("UI-FRM-006 explains a COMPROMISED refusal on the new password, keeping every field", async () => {
+    mockChangePassword.mockRejectedValueOnce(
+      apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule: "COMPROMISED" } }),
+    );
+    const user = userEvent.setup();
+    renderPage();
+
+    await submit(user);
+
+    await waitFor(() =>
+      expect(helperTextOf(newField())).toBe(
+        "Esta contraseña es muy común o ha aparecido en filtraciones de datos. Elige otra: una frase que recuerdes suele funcionar bien.",
+      ),
+    );
+    expect(currentField()).toHaveValue("la actual de siempre");
+    expect(newField()).toHaveValue(VALID_NEW_PASSWORD);
+    expect(confirmField()).toHaveValue(VALID_NEW_PASSWORD);
+    expect(token()).toHaveTextContent("a-token");
   });
 
   describe("when the change is throttled (429)", () => {

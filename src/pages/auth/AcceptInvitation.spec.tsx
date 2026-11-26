@@ -581,7 +581,7 @@ describe("UI-INV-007 an account without a password (AC1)", () => {
     await findCommunityHeading();
     await choosePassword(user, "corta");
 
-    expect(await screen.findByText(/al menos 15 caracteres/)).toBeInTheDocument();
+    expect(await screen.findByText(/al menos 10 caracteres/)).toBeInTheDocument();
     await choosePassword(user, NEW_PASSWORD, `${NEW_PASSWORD}!`);
     expect(await screen.findByText("Las contraseñas no coinciden")).toBeInTheDocument();
     expect(bodiesTo(router, ACCEPT)).toEqual([]);
@@ -617,6 +617,39 @@ describe("UI-INV-008 a refused password", () => {
       { token: TOKEN, newPassword: NEW_PASSWORD },
       { token: TOKEN, newPassword: `${NEW_PASSWORD} y fresca` },
     ]);
+  });
+});
+
+describe("UI-FRM-006 a compromised password (#444)", () => {
+  it("UI-FRM-006 shows a COMPROMISED refusal on the new password, keeping both fields", async () => {
+    const user = userEvent.setup();
+    const router = routeRequests([
+      { method: "POST", url: INSPECT, respond: () => inspection(false) },
+      {
+        method: "POST",
+        url: ACCEPT,
+        respond: () => {
+          throw apiError(400, { code: "USER_PASSWORD_POLICY_VIOLATION", params: { rule: "COMPROMISED" } });
+        },
+      },
+    ]);
+    mockCustomInstance.mockImplementation(router.handle);
+
+    renderAt(`/accept-invitation#${TOKEN}`);
+    await findCommunityHeading();
+    await choosePassword(user, NEW_PASSWORD);
+
+    const newPassword = screen.getByLabelText("Nueva contraseña");
+    await waitFor(() =>
+      expect(newPassword).toHaveAccessibleDescription(
+        expect.stringContaining(
+          "Esta contraseña es muy común o ha aparecido en filtraciones de datos. Elige otra: una frase que recuerdes suele funcionar bien.",
+        ),
+      ),
+    );
+    expect(newPassword).toHaveAttribute("aria-invalid", "true");
+    expect(newPassword).toHaveValue(NEW_PASSWORD);
+    expect(screen.getByLabelText("Repite la nueva contraseña")).toHaveValue(NEW_PASSWORD);
   });
 });
 
