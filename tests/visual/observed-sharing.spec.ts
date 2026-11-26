@@ -86,7 +86,10 @@ test.describe("Visual baselines", () => {
     await openObservedSharing(page, `/plants/${FIXED_PLANT_ID}/sharing-agreements/observed/${PUBLISHED_AGREEMENT.id}`);
 
     await expect(page.getByRole("heading", { level: 1, name: "Reparto vecinos bloque A según Datadis" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Todos (5)" })).toBeVisible();
+    // The rows' filter: the "Estado" select on a desktop, the "Filtros" button on a phone.
+    await expect(
+      page.getByRole("combobox", { name: "Estado" }).or(page.getByRole("button", { name: "Filtros" })),
+    ).toBeVisible();
     await expect(page.getByRole("heading", { name: "Salen del reparto (2)" })).toBeVisible();
     await expect(page.getByText("Pasa a 0 %")).toBeVisible();
     // The agreement's anomalies are open on its own page.

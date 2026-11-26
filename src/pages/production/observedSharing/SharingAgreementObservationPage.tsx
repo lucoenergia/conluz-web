@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useState, type FC, type ReactNode } from "react";
-import { Box, Button, Chip, Link, Typography } from "@mui/material";
+import { Box, Button, Link, Typography } from "@mui/material";
 import { Link as RouterLink, useLocation, useParams } from "react-router";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import {
   CoefficientObservationResponseStatus,
   type CoefficientObservationResponse,
   type LeavingObservationResponse,
+  type ObservationStatusCountsResponse,
   type SharingAgreementObservationResponse,
 } from "../../../api/models";
 import { BreadCrumb } from "../../../components/Breadcrumb";
 import { DetailHeader } from "../../../components/DetailHeader";
 import { EmptyState } from "../../../components/EmptyState";
+import { ListFilters } from "../../../components/ListFilters";
 import { ListTable } from "../../../components/ListTable";
 import { LoadErrorAlert } from "../../../components/LoadErrorAlert";
 import { Notice } from "../../../components/Notice";
@@ -26,7 +28,7 @@ import { groupBySupply } from "./anomalyGroups";
 import { ObservationChip } from "./ObservationChip";
 import { ObservationNotComputable } from "./ObservationNotComputable";
 import { ObservationProgress } from "./ObservationProgress";
-import { filterObservationRows, type ObservationFilter } from "./observationFilter";
+import { filterObservationRows, isStatusFilter, type ObservationFilter } from "./observationFilter";
 import { ObservedAnomalies } from "./ObservedAnomalies";
 import { ObservedSharingHelp } from "./ObservedSharingHelp";
 import {
@@ -35,6 +37,7 @@ import {
   LEAVES_DISTRIBUTION_LABEL,
   LEAVING_REASON,
   LEAVING_STATUS_LABEL,
+  STATUS_COUNT_ORDER,
   STATUS_TONE,
   UNATTRIBUTED_PRODUCTION_LABEL,
   type ObservationTone,
@@ -54,6 +57,12 @@ import { RecommendationFindings } from "./RecommendationFindings";
 import { recommendationFindings } from "./recommendationFindings";
 import { UnattributedProduction } from "./UnattributedProduction";
 import { useSharingAgreementObservationData } from "./useSharingAgreementObservationData";
+
+/** How many coefficient rows the agreement counts in a status; 0 for a status it does not count. */
+const statusCount = (counts: ObservationStatusCountsResponse, status: CoefficientObservationResponse["status"]): number => {
+  const field = STATUS_COUNT_ORDER.find((entry) => entry.status === status)?.count;
+  return field === undefined ? 0 : counts[field];
+};
 
 /** How many coefficient rows show before "Mostrar todos". */
 const INITIAL_ROWS = 10;
@@ -137,23 +146,42 @@ const RowStatus: FC<{ label: string; tone: ObservationTone; anomalyLabels: strin
   </Box>
 );
 
-const FilterChips: FC<{
+/** "1 punto", "N puntos". */
+const pointsCount = (count: number) => (count === 1 ? "1 punto" : `${count} puntos`);
+
+/**
+ * The supply rows' filter, as the members page filters (UI-AGR-045): "Todos"
+ * and "Con avisos" with the rows they keep, then each status the agreement
+ * counts at least one row in, with that count, in the card's order.
+ */
+const RowFilter: FC<{
   filter: ObservationFilter;
   onChange: (filter: ObservationFilter) => void;
-  counts: Record<ObservationFilter, number>;
-}> = ({ filter, onChange, counts }) => (
-  <Box sx={{ display: "flex", gap: 1, overflowX: "auto", flexWrap: "nowrap", pb: 0.5, px: 2, pt: 2 }}>
-    {(["all", "warnings"] as const).map((value) => (
-      <Chip
-        key={value}
-        label={`${value === "all" ? "Todos" : "Con avisos"} (${counts[value]})`}
-        onClick={() => onChange(value)}
-        aria-pressed={filter === value}
-        color={filter === value ? "primary" : "default"}
-        size="small"
-        sx={{ flexShrink: 0 }}
-      />
-    ))}
+  counts: { all: number; warnings: number };
+  statusCounts: ObservationStatusCountsResponse;
+  shownCount: number;
+}> = ({ filter, onChange, counts, statusCounts, shownCount }) => (
+  <Box sx={{ p: 2 }}>
+    <ListFilters
+      filters={[
+        {
+          key: "status",
+          label: "Estado",
+          value: filter,
+          options: [
+            { value: "all", label: `Todos (${counts.all})` },
+            { value: "warnings", label: `Con avisos (${counts.warnings})` },
+            ...STATUS_COUNT_ORDER.filter(({ count }) => statusCounts[count] > 0).map(({ status, count }) => ({
+              value: status,
+              label: `${COEFFICIENT_STATUS_LABEL[status]} (${statusCounts[count]})`,
+            })),
+          ],
+          onChange: (value) => onChange(value as ObservationFilter),
+          width: 320,
+        },
+      ]}
+      resultLabel={`Ver ${pointsCount(shownCount)}`}
+    />
   </Box>
 );
 
@@ -189,8 +217,9 @@ const CoefficientRows: FC<{
   rows: CoefficientObservationResponse[];
   anomalyLabelsBySupply: Map<string, string[]>;
   header: ReactNode;
-}> = ({ rows, anomalyLabelsBySupply, header }) => {
-  const [showAll, setShowAll] = useState(false);
+  showAll: boolean;
+  onShowAll: () => void;
+}> = ({ rows, anomalyLabelsBySupply, header, showAll, onShowAll }) => {
   const shown = showAll ? rows : rows.slice(0, INITIAL_ROWS);
   const anomalyLabels = (row: CoefficientObservationResponse) => anomalyLabelsBySupply.get(row.supply.id) ?? [];
   const status = (row: CoefficientObservationResponse) => (
@@ -273,7 +302,7 @@ const CoefficientRows: FC<{
             <Typography variant="body2" sx={{ color: colors.text.subtle }}>
               Mostrando {shown.length} de {rows.length} puntos ·
             </Typography>
-            <Button size="small" onClick={() => setShowAll(true)}>
+            <Button size="small" onClick={onShowAll}>
               Mostrar todos
             </Button>
           </Box>
@@ -429,10 +458,25 @@ const LeavingRows: FC<{ rows: LeavingSectionRow[] }> = ({ rows }) => {
 
 const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservationResponse }> = ({ plantId, observation }) => {
   const { summary } = observation;
-  const [filter, setFilter] = useState<ObservationFilter>("all");
+  const [selectedFilter, setFilter] = useState<ObservationFilter>("all");
+  const [showAll, setShowAll] = useState(false);
+  // A refetch can leave the selected status with no row, and its option gone:
+  // the filter then reads "Todos", never an empty table (UI-AGR-045).
+  const filter =
+    isStatusFilter(selectedFilter) && !(statusCount(summary.coefficientStatusCounts, selectedFilter) > 0)
+      ? "all"
+      : selectedFilter;
   const all = useMemo(() => filterObservationRows(observation, "all"), [observation]);
   const warnings = useMemo(() => filterObservationRows(observation, "warnings"), [observation]);
-  const shown = filter === "all" ? all : warnings;
+  const shown = useMemo(
+    () => (filter === "all" ? all : filter === "warnings" ? warnings : filterObservationRows(observation, filter)),
+    [filter, all, warnings, observation],
+  );
+  const changeFilter = (next: ObservationFilter) => {
+    // Picking or leaving a status starts over from the first rows; "Todos" and "Con avisos" keep what is shown.
+    if (isStatusFilter(filter) || isStatusFilter(next)) setShowAll(false);
+    setFilter(next);
+  };
   const anomalyGroups = useMemo(() => [{ supplies: groupBySupply(summary.anomalies), count: summary.anomalies.length }], [summary]);
   const anomalyLabelsBySupply = useMemo(() => {
     const labels = new Map<string, string[]>();
@@ -445,7 +489,9 @@ const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservat
   }, [summary]);
   const anomalyCount = summary.anomalies.length;
   const findings = recommendationFindings(plantId, summary);
-  const leavingRows = leavingSectionRows(shown.leavingRows, shown.coefficients);
+  // A status filters the supply rows alone: the leaving ones show as under "Todos" (UI-AGR-045).
+  const leavingSource = isStatusFilter(filter) ? all : shown;
+  const leavingRows = leavingSectionRows(leavingSource.leavingRows, leavingSource.coefficients);
 
   return (
     <>
@@ -469,7 +515,17 @@ const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservat
         <CoefficientRows
           rows={shown.coefficients}
           anomalyLabelsBySupply={anomalyLabelsBySupply}
-          header={<FilterChips filter={filter} onChange={setFilter} counts={{ all: all.count, warnings: warnings.count }} />}
+          showAll={showAll}
+          onShowAll={() => setShowAll(true)}
+          header={
+            <RowFilter
+              filter={filter}
+              onChange={changeFilter}
+              counts={{ all: all.count, warnings: warnings.count }}
+              statusCounts={summary.coefficientStatusCounts}
+              shownCount={shown.coefficients.length}
+            />
+          }
         />
       </Box>
 

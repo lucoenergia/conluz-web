@@ -1991,7 +1991,7 @@ test.describe("#418: the observed sharing headers at 390px", () => {
 });
 
 test.describe("#418: the observed sharing filters sit inside their panel", () => {
-  test("the 'Todos' and 'Con avisos' chips keep the panel's 16px inset", async ({ page }) => {
+  test("the supply rows' filter keeps the panel's 16px inset (#449)", async ({ page }) => {
     await injectAuthToken(page);
     await seedActiveCommunity(page, FIXED_COMMUNITY_ADMIN_USER.id);
     await mockAllApiRoutes(page, FIXED_COMMUNITY_ADMIN_USER);
@@ -2004,15 +2004,16 @@ test.describe("#418: the observed sharing filters sit inside their panel", () =>
     );
     await page.goto(`/plants/${FIXED_PLANT_ID}/sharing-agreements/observed/${PUBLISHED_AGREEMENT.id}`);
 
-    const all = page.getByRole("button", { name: /^Todos \(\d+\)$/ });
-    await expect(all).toBeVisible();
-    // The list panel has no role or name: it is the chip's nearest MUI Paper ancestor.
-    const inset = await all.evaluate((chip) => {
-      const panel = chip.closest(".MuiPaper-root")!.getBoundingClientRect();
-      const box = chip.getBoundingClientRect();
+    // The "Estado" select from LIST_TABLE_MIN_WIDTH up, the "Filtros" button below it.
+    const control = page.getByRole("combobox", { name: "Estado" }).or(page.getByRole("button", { name: /^Filtros/ }));
+    await expect(control).toBeVisible();
+    // The list panel has no role or name: it is the control's nearest MUI Paper ancestor.
+    const inset = await control.evaluate((element) => {
+      const panel = element.closest(".MuiPaper-root")!.getBoundingClientRect();
+      const box = element.getBoundingClientRect();
       return { left: box.left - panel.left, top: box.top - panel.top };
     });
-    expect(inset.left, "the chips touch the panel's left edge").toBeGreaterThanOrEqual(16);
-    expect(inset.top, "the chips touch the panel's top edge").toBeGreaterThanOrEqual(16);
+    expect(inset.left, "the filter touches the panel's left edge").toBeGreaterThanOrEqual(16);
+    expect(inset.top, "the filter touches the panel's top edge").toBeGreaterThanOrEqual(16);
   });
 });

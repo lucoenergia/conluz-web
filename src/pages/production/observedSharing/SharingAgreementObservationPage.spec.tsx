@@ -252,6 +252,11 @@ const supplyNames = (section: HTMLElement) =>
     .slice(1)
     .map((row) => row.textContent?.match(/^(Casa (Norte|Sur|Este|Oeste)|Taller|Escuela|Bar|Kiosco)/)?.[0]);
 
+async function pickFilter(user: ReturnType<typeof userEvent.setup>, option: string) {
+  await user.click(screen.getByRole("combobox", { name: "Estado" }));
+  await user.click(await screen.findByRole("option", { name: option }));
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(window, "scrollTo").mockImplementation(() => {});
@@ -395,10 +400,10 @@ describe("SharingAgreementObservationPage", () => {
     renderPage();
     const user = userEvent.setup();
 
-    expect(screen.getByRole("button", { name: "Todos (8)" })).toHaveAttribute("aria-pressed", "true");
-    await user.click(screen.getByRole("button", { name: "Con avisos (4)" }));
+    expect(screen.getByRole("combobox", { name: "Estado" })).toHaveTextContent("Todos (8)");
+    await pickFilter(user, "Con avisos (4)");
 
-    expect(screen.getByRole("button", { name: "Con avisos (4)" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("combobox", { name: "Estado" })).toHaveTextContent("Con avisos (4)");
     expect(supplyNames(suppliesSection())).toEqual(["Casa Sur", "Casa Este", "Taller"]);
     expect(supplyNames(leavingSection())).toEqual(["Bar"]);
     expect(within(leavingSection()).getByRole("heading", { name: "Salen del reparto (1)" })).toBeInTheDocument();
