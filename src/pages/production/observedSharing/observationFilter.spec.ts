@@ -58,3 +58,17 @@ describe("filterObservationRows", () => {
     expect(warnings.count).toBe(4);
   });
 });
+
+describe("filterObservationRows by status", () => {
+  test("UI-AGR-045: a status keeps its coefficient rows, in order, and every leaving row", () => {
+    const applied = filterObservationRows(observation, CoefficientObservationResponseStatus.APPLIED_SAME_DATE);
+
+    expect(applied.coefficients.map((row) => row.supply.id)).toEqual(["same", "anomalous"]);
+    expect(applied.leavingRows).toEqual(observation.leavingRows);
+    expect(applied.count).toBe(5);
+  });
+
+  test("UI-AGR-045: a status no row is in keeps no coefficient row", () => {
+    expect(filterObservationRows(observation, CoefficientObservationResponseStatus.NOT_OBSERVABLE).coefficients).toEqual([]);
+  });
+});

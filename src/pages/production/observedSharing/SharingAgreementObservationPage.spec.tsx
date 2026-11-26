@@ -1224,3 +1224,237 @@ describe("SharingAgreementObservationPage", () => {
     });
   });
 });
+
+describe("UI-AGR-045: filtering the supply rows by status", () => {
+  const point = (n: number) => supply(String(200 + n), `Punto ${String(n).padStart(2, "0")}`);
+  const PLANT_SUPPLY = supply("999", "Planta Solar Norte");
+  const points = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, index) => point(from + index));
+  const row = (target: ReturnType<typeof supply>, status: Status, overrides: Parameters<typeof buildCoefficientObservation>[0] = {}) =>
+    buildCoefficientObservation({ coefficientId: `c-${target.id}`, supply: target, status, ...overrides });
+
+  // Six statuses over 19 rows, more than the ten shown at first; none pending.
+  // Points 01 to 06 have an anomaly, so "Con avisos" also keeps more than ten.
+  // Point 14 drops to 0 % and point 20 is absent: both leave the distribution.
+  const ROWS = [
+    ...points(1, 11).map((target) => row(target, Status.APPLIED_SAME_DATE)),
+    row(point(12), Status.APPLIED_DIFFERENT_DATE),
+    row(point(13), Status.APPLIED_DIFFERENT_DATE),
+    row(point(14), Status.APPLIED_DIFFERENT_DATE, { coefficient: 0, leavesDistribution: true }),
+    row(point(15), Status.NOT_DISTINGUISHABLE),
+    row(point(16), Status.NOT_DISTINGUISHABLE),
+    row(point(17), Status.NOT_OBSERVED),
+    row(point(18), Status.NO_DATA),
+    row(PLANT_SUPPLY, Status.NOT_OBSERVABLE),
+  ];
+  const COUNTS = buildObservationStatusCounts({
+    appliedSameDate: 11,
+    appliedDifferentDate: 3,
+    notDistinguishable: 2,
+    notObserved: 1,
+    noData: 1,
+    notObservable: 1,
+  });
+
+  function statusObservation(coefficients = ROWS, coefficientStatusCounts = COUNTS): SharingAgreementObservationResponse {
+    return buildSharingAgreementObservation({
+      summary: buildObservationSummary({
+        sharingAgreement: buildSharingAgreementReference({ id: AGREEMENT_ID, name: "Reparto 2025" }),
+        coefficientStatusCounts,
+        leavingStatusCounts: buildObservationStatusCounts({ appliedSameDate: 1 }),
+        leavesDistributionStatusCounts: buildObservationStatusCounts({ appliedDifferentDate: 1 }),
+        anomalies: points(1, 6).map((target) =>
+          buildSharingAnomaly({ id: `a-${target.id}`, supply: target, type: SharingAnomalyResponseType.REVERTED }),
+        ),
+        anomalyCounts: buildSharingAnomalyCounts({ reverted: 6 }),
+      }),
+      coefficients,
+      leavingRows: [
+        buildLeavingObservation({
+          previousCoefficientId: "l-20",
+          supply: point(20),
+          previousSharingAgreement: PREVIOUS,
+          status: LeavingStatus.APPLIED_SAME_DATE,
+        }),
+      ],
+    });
+  }
+
+  const renderStatusPage = (observation = statusObservation()) =>
+    renderPage({ observation: query.success<typeof getSharingAgreementObservation>(observation) });
+
+  const names = (section: HTMLElement) =>
+    within(section)
+      .getAllByRole("row")
+      .slice(1)
+      .map((tableRow) => tableRow.textContent?.match(/^(Punto \d\d|Planta Solar Norte)/)?.[0]);
+
+  const optionLabels = async (user: ReturnType<typeof userEvent.setup>) => {
+    await user.click(screen.getByRole("combobox", { name: "Estado" }));
+    const labels = (await screen.findAllByRole("option")).map((option) => option.textContent);
+    await user.keyboard("{Escape}");
+    return labels;
+  };
+
+  test("UI-AGR-045: each status with rows is offered with its count, after 'Todos' and 'Con avisos', in the card's order", async () => {
+    renderStatusPage();
+
+    expect(await optionLabels(userEvent.setup())).toEqual([
+      "Todos (20)",
+      "Con avisos (11)",
+      "Aplicado · misma fecha (11)",
+      "Aplicado · otra fecha (3)",
+      "No distinguible (2)",
+      "Sin observar (1)",
+      "Sin datos de Datadis (1)",
+      "No observable · punto de la planta (1)",
+    ]);
+  });
+
+  test("UI-AGR-045: a status the agreement counts no row in is not offered", async () => {
+    renderStatusPage();
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("combobox", { name: "Estado" }));
+    expect(await screen.findByRole("option", { name: "Sin observar (1)" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /^Pendiente/ })).not.toBeInTheDocument();
+  });
+
+  test("UI-AGR-045: selecting a status lists only its rows", async () => {
+    renderStatusPage();
+    const user = userEvent.setup();
+
+    await pickFilter(user, "Aplicado · otra fecha (3)");
+
+    expect(screen.getByRole("combobox", { name: "Estado" })).toHaveTextContent("Aplicado · otra fecha (3)");
+    expect(names(suppliesSection())).toEqual(["Punto 12", "Punto 13", "Punto 14"]);
+  });
+
+  test("UI-AGR-045: the plant supply's row is offered as 'No observable · punto de la planta' and listed alone", async () => {
+    renderStatusPage();
+
+    await pickFilter(userEvent.setup(), "No observable · punto de la planta (1)");
+
+    expect(names(suppliesSection())).toEqual(["Planta Solar Norte"]);
+  });
+
+  test("UI-AGR-045: 'Todos' lists every row, and 'Con avisos' the rows it kept before", async () => {
+    renderStatusPage();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Mostrar todos" }));
+
+    expect(names(suppliesSection())).toEqual([...points(1, 18).map((target) => target.name), "Planta Solar Norte"]);
+    await pickFilter(user, "Con avisos (11)");
+    expect(names(suppliesSection())).toEqual([
+      ...points(1, 6).map((target) => target.name),
+      "Punto 12",
+      "Punto 13",
+      "Punto 14",
+      "Punto 15",
+      "Punto 16",
+    ]);
+    await pickFilter(user, "Todos (20)");
+    expect(names(suppliesSection())).toHaveLength(19);
+  });
+
+  test("UI-AGR-045: picking a status, or leaving one, starts over from the first ten rows", async () => {
+    renderStatusPage();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Mostrar todos" }));
+
+    await pickFilter(user, "Aplicado · misma fecha (11)");
+    expect(names(suppliesSection())).toEqual(points(1, 10).map((target) => target.name));
+    expect(screen.getByText("Mostrando 10 de 11 puntos ·")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Mostrar todos" }));
+    expect(names(suppliesSection())).toHaveLength(11);
+    await pickFilter(user, "Todos (20)");
+    expect(names(suppliesSection())).toHaveLength(10);
+    expect(screen.getByText("Mostrando 10 de 19 puntos ·")).toBeInTheDocument();
+  });
+
+  test("UI-AGR-045: switching between 'Todos' and 'Con avisos' keeps every row shown", async () => {
+    renderStatusPage();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Mostrar todos" }));
+
+    await pickFilter(user, "Con avisos (11)");
+
+    expect(names(suppliesSection())).toHaveLength(11);
+    expect(screen.queryByRole("button", { name: "Mostrar todos" })).not.toBeInTheDocument();
+  });
+
+  test("UI-AGR-045: a status leaves 'Salen del reparto' as under 'Todos'", async () => {
+    renderStatusPage();
+    const user = userEvent.setup();
+    const underAll = names(leavingSection());
+
+    await pickFilter(user, "Sin observar (1)");
+
+    expect(underAll).toEqual(["Punto 20", "Punto 14"]);
+    expect(names(leavingSection())).toEqual(underAll);
+    expect(within(leavingSection()).getByRole("heading", { name: "Salen del reparto (2)" })).toBeInTheDocument();
+  });
+
+  test("UI-AGR-045: when a refetch leaves the selected status with no row, the filter reads 'Todos'", async () => {
+    const warn = vi.spyOn(console, "warn");
+    const error = vi.spyOn(console, "error");
+    try {
+      const { rerender } = renderStatusPage();
+      const user = userEvent.setup();
+      await pickFilter(user, "Sin observar (1)");
+      expect(names(suppliesSection())).toEqual(["Punto 17"]);
+
+      // The supply that was not observed is now observed applied on its date.
+      const refetched = statusObservation(
+        ROWS.map((candidate) =>
+          candidate.supply.id === point(17).id ? { ...candidate, status: Status.APPLIED_SAME_DATE } : candidate,
+        ),
+        { ...COUNTS, appliedSameDate: 12, notObserved: 0 },
+      );
+      vi.mocked(useGetSharingAgreementObservation).mockReturnValue(
+        query.success<typeof getSharingAgreementObservation>(refetched),
+      );
+      rerender(
+        <Routes>
+          <Route
+            path="/plants/:plantId/sharing-agreements/observed/:sharingAgreementId"
+            element={<SharingAgreementObservationPage />}
+          />
+        </Routes>,
+      );
+
+      expect(screen.getByRole("combobox", { name: "Estado" })).toHaveTextContent("Todos (20)");
+      await user.click(screen.getByRole("button", { name: "Mostrar todos" }));
+      expect(names(suppliesSection())).toHaveLength(19);
+      const logged = [...warn.mock.calls, ...error.mock.calls].map((call) => call.join(" "));
+      expect(logged.filter((message) => /out-of-range/.test(message))).toEqual([]);
+    } finally {
+      warn.mockRestore();
+      error.mockRestore();
+    }
+  });
+
+  test("UI-AGR-045: on a phone, the status is picked in the 'Filtros' panel and the rows stay stacked", async () => {
+    const width = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
+    try {
+      renderStatusPage();
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: "Filtros" }));
+      await user.click(screen.getByRole("radio", { name: "Sin observar (1)" }));
+
+      const list = screen.getByRole("list", { name: "Puntos de suministro del acuerdo" });
+      expect(within(list).getAllByRole("listitem").map((item) => item.textContent?.match(/^Punto \d\d/)?.[0])).toEqual([
+        "Punto 17",
+      ]);
+      expect(within(suppliesSection()).queryByRole("table")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Estado: Sin observar (1)" })).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Ver 1 punto" }));
+      expect(screen.queryByRole("radio", { name: "Sin observar (1)" })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Filtros, 1 activo" })).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+    }
+  });
+});
