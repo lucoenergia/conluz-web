@@ -14,7 +14,7 @@ import { SURPLUS_CLAIM_ICON } from "../plantDetail/sectionIcons";
 import { PlantFormDialog } from "../PlantFormDialog";
 import { SurplusClaimDownload } from "./SurplusClaimDownload";
 import { SurplusClaimDays } from "./SurplusClaimDays";
-import { SurplusClaimSummary } from "./SurplusClaimSummary";
+import { ClaimMonthField, SurplusClaimSummary } from "./SurplusClaimSummary";
 import { SurplusClaimWarnings } from "./SurplusClaimWarnings";
 import { claimMonthOptions, monthPhrase, raisedWarnings } from "./surplusClaimFormat";
 import { useClaimMonthParam } from "./useClaimMonthParam";
@@ -66,12 +66,9 @@ const ClaimView: FC<ClaimViewProps> = ({ plant, claim, isSwitchingMonth, selecte
       <Box sx={sxStyles.pageContainer}>
         <SurplusClaimSummary
           claim={claim}
-          selectedMonth={selectedMonth}
-          monthOptions={claimMonthOptions(claim.month, claim.availableMonths)}
-          onMonthChange={onMonthChange}
           warningCount={warnings.length}
           onShowWarnings={showWarnings}
-          actions={
+          controls={
             <SurplusClaimDownload
               plant={plant}
               claim={claim}
@@ -82,6 +79,13 @@ const ClaimView: FC<ClaimViewProps> = ({ plant, claim, isSwitchingMonth, selecte
                 editOpener.record(opener);
                 setIsEditOpen(true);
               }}
+              monthField={
+                <ClaimMonthField
+                  selectedMonth={selectedMonth}
+                  monthOptions={claimMonthOptions(claim.month, claim.availableMonths)}
+                  onMonthChange={onMonthChange}
+                />
+              }
             />
           }
         />

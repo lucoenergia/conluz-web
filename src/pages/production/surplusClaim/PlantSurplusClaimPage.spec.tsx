@@ -343,23 +343,29 @@ describe("PlantSurplusClaimPage", () => {
   });
 
   describe("the top summary", () => {
-    it("UI-SCL-003 holds the month, the figures, the warning count, the format and the download, before the warnings", () => {
+    it("UI-SCL-003 holds the control row, then \"Lo que reclamas\", then \"Calidad de los datos\" with the warning line, all before the warnings", () => {
       serveClaims(success(octoberClaim({ warnings: everyWarning() })));
       renderPage();
 
       const top = summary();
-      const controls = [
+      const claimed = within(top).getByRole("region", { name: "Lo que reclamas" });
+      const quality = within(top).getByRole("region", { name: "Calidad de los datos" });
+      const inOrder = [
         within(top).getByRole("combobox", { name: "Mes" }),
-        within(top).getByText("Excedentes del mes"),
-        within(top).getByRole("link", { name: "Ver avisos" }),
         within(top).getByRole("combobox", { name: "Formato" }),
         within(top).getByRole("button", { name: "Descargar fichero" }),
+        claimed,
+        quality,
+        warningsArea()!,
       ];
-      const warnings = warningsArea();
-      expect(warnings).not.toBeNull();
-      for (const control of controls) {
-        expect(control.compareDocumentPosition(warnings!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      for (const [index, element] of inOrder.slice(1).entries()) {
+        expect(inOrder[index].compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       }
+      expect(within(claimed).getByRole("heading", { level: 3, name: "Lo que reclamas" })).toBeVisible();
+      expect(within(claimed).getByText("Excedentes del mes")).toBeVisible();
+      expect(within(claimed).getByText("Importe estimado")).toBeVisible();
+      expect(within(quality).getByRole("heading", { level: 3, name: "Calidad de los datos" })).toBeVisible();
+      expect(within(quality).getByRole("link", { name: "Ver avisos" })).toBeVisible();
     });
 
     it("UI-SCL-004 shows the month's figures, and the income with its market-price note and its unpriced energy", () => {
@@ -388,9 +394,10 @@ describe("PlantSurplusClaimPage", () => {
         ),
       ).toBeVisible();
       expect(top.getByText("12,4 kWh sin precio de mercado: no cuentan en el importe.")).toBeVisible();
-      expect(top.getByText("Días con datos reales").nextElementSibling).toHaveTextContent("28");
-      expect(top.getByText("Días estimados").nextElementSibling).toHaveTextContent("3");
-      expect(top.getByText("Puntos de suministro incluidos").nextElementSibling).toHaveTextContent("24 de 27");
+      expect(top.getByText("Días reales").nextElementSibling).toHaveTextContent(/^28 de 31$/);
+      expect(top.getByText("Puntos con datos").nextElementSibling).toHaveTextContent(/^24 de 27$/);
+      expect(top.queryByText("Días con datos reales")).not.toBeInTheDocument();
+      expect(top.queryByText("Días estimados")).not.toBeInTheDocument();
     });
 
     it("UI-SCL-004 keeps the minus sign of a negative income, without alert colour, and no unpriced line at zero", () => {
@@ -428,13 +435,19 @@ describe("PlantSurplusClaimPage", () => {
       expect(top.getByText("Importe estimado").nextElementSibling).toHaveTextContent(/^—$/);
     });
 
-    it("UI-SCL-004 says \"Ninguno\" when no supply is in scope", () => {
+    it("UI-SCL-004 says \"Ninguno\" when no supply is in scope, and 0 of the month's days", () => {
       serveClaims(
-        success(octoberClaim({ summary: buildPlantSurplusClaimSummary({ suppliesInScope: 0, suppliesWithData: 0 }) })),
+        success(
+          octoberClaim({
+            summary: buildPlantSurplusClaimSummary({ realDays: 0, estimatedDays: 31, suppliesInScope: 0, suppliesWithData: 0 }),
+          }),
+        ),
       );
       renderPage();
 
-      expect(within(summary()).getByText("Puntos de suministro incluidos").nextElementSibling).toHaveTextContent(/^Ninguno$/);
+      const top = within(summary());
+      expect(top.getByText("Días reales").nextElementSibling).toHaveTextContent(/^0 de 31$/);
+      expect(top.getByText("Puntos con datos").nextElementSibling).toHaveTextContent(/^Ninguno$/);
     });
   });
 

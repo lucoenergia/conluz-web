@@ -1,4 +1,4 @@
-import { useState, type FC } from "react";
+import { useState, type FC, type ReactNode } from "react";
 import { Box, Button, MenuItem, TextField, Typography } from "@mui/material";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import {
@@ -15,7 +15,6 @@ import { getFirstApiErrorCode } from "../../../errors/apiErrorCatalogue";
 import { SURPLUS_CLAIM_CIL_REQUIRED_MESSAGE } from "../../../errors/surplusClaim";
 import { usePlantActions } from "../../../hooks/actions";
 import { colors } from "../../../theme/tokens";
-import { sxStyles } from "../../../theme/sx";
 import { monthPhrase, type RaisedWarning } from "./surplusClaimFormat";
 
 const FORMAT_LABELS: Record<GetPlantSurplusClaimFileFormat, string> = {
@@ -43,10 +42,13 @@ export interface SurplusClaimDownloadProps {
   warnings: readonly RaisedWarning[];
   /** Opens the plant's edit form, where its CIL is added. */
   onAddCil: (opener: HTMLElement) => void;
+  /** The month selector, first in the row. */
+  monthField: ReactNode;
 }
 
 /**
- * The format and the download, last in the top summary. The file asked for is
+ * The control row heading the top summary: the month, the format and the
+ * download (UI-SCL-003). The file asked for is
  * always the month shown, never a default (UI-SCL-008). A month with warnings
  * is confirmed first (UI-SCL-009); Endesa's format without a CIL offers the
  * way to add one instead of a download bound to fail (UI-SCL-010).
@@ -57,6 +59,7 @@ export const SurplusClaimDownload: FC<SurplusClaimDownloadProps> = ({
   isSwitchingMonth,
   warnings,
   onAddCil,
+  monthField,
 }) => {
   const download = usePlantActions().forPlant(plant).actions.downloadSurplusClaim;
   const [format, setFormat] = useState<GetPlantSurplusClaimFileFormat>(GetPlantSurplusClaimFileFormat.ENDESA);
@@ -88,38 +91,39 @@ export const SurplusClaimDownload: FC<SurplusClaimDownloadProps> = ({
     else void run();
   };
 
+  const failed = failure !== null && !failure.cilRequired;
+
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2.5, borderTop: `1px solid ${colors.divider}` }}>
+    // The control row: the month, the format, then the download, or what stands in its place.
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: { xs: "column", sm: "row" },
+        flexWrap: "wrap",
+        alignItems: { xs: "stretch", sm: "flex-start" },
+        gap: 1.5,
+      }}
+    >
       {/* In place before a refusal arrives, so the CIL notice it brings is announced. */}
       <ActionStatus message={failure?.cilRequired ? SURPLUS_CLAIM_CIL_REQUIRED_MESSAGE : ""} />
-      <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "stretch", sm: "center" }, gap: 2 }}>
-        <TextField
-          select
-          label="Formato"
-          value={format}
-          onChange={(event) => setFormat(event.target.value as GetPlantSurplusClaimFileFormat)}
-          sx={{ ...sxStyles.filterField, width: { xs: "100%", sm: 260 } }}
-        >
-          {Object.values(GetPlantSurplusClaimFileFormat).map((option) => (
-            <MenuItem key={option} value={option}>
-              {FORMAT_LABELS[option]}
-            </MenuItem>
-          ))}
-        </TextField>
-        {!needsCil && (
-          <Button
-            variant="contained"
-            startIcon={<DownloadOutlinedIcon />}
-            disabled={download.isPending || isSwitchingMonth}
-            onClick={requestDownload}
-          >
-            {download.isPending ? "Descargando…" : "Descargar fichero"}
-          </Button>
-        )}
-      </Box>
+      {monthField}
+      <TextField
+        select
+        size="small"
+        label="Formato"
+        value={format}
+        onChange={(event) => setFormat(event.target.value as GetPlantSurplusClaimFileFormat)}
+        sx={(theme) => ({ width: { xs: "100%", sm: theme.spacing(30) } })}
+      >
+        {Object.values(GetPlantSurplusClaimFileFormat).map((option) => (
+          <MenuItem key={option} value={option}>
+            {FORMAT_LABELS[option]}
+          </MenuItem>
+        ))}
+      </TextField>
 
       {needsCil && (
-        <Notice severity="warning">
+        <Notice severity="warning" sx={{ flex: { sm: "1 1 0" } }}>
           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 1 }}>
             <span>{SURPLUS_CLAIM_CIL_REQUIRED_MESSAGE}</span>
             <Button variant="outlined" size="small" color="inherit" onClick={(event) => onAddCil(event.currentTarget)}>
@@ -129,8 +133,21 @@ export const SurplusClaimDownload: FC<SurplusClaimDownloadProps> = ({
         </Notice>
       )}
 
-      {failure && !failure.cilRequired && (
-        <LoadErrorAlert message={`No se pudo descargar el fichero de ${monthPhrase(failure.month)}.`} onRetry={() => void run()} />
+      {!needsCil && failed && (
+        <Box sx={{ flex: { sm: "1 1 0" } }}>
+          <LoadErrorAlert message={`No se pudo descargar el fichero de ${monthPhrase(failure.month)}.`} onRetry={() => void run()} />
+        </Box>
+      )}
+
+      {!needsCil && !failed && (
+        <Button
+          variant="contained"
+          startIcon={<DownloadOutlinedIcon />}
+          disabled={download.isPending || isSwitchingMonth}
+          onClick={requestDownload}
+        >
+          {download.isPending ? "Descargando…" : "Descargar fichero"}
+        </Button>
       )}
 
       <ConfirmationModal
