@@ -21,18 +21,6 @@ const CLAIMABLE_TYPES: ReadonlySet<SharingAnomalyResponseType> = new Set([
   SharingAnomalyResponseType.NO_ENERGY_IN_AGREEMENT,
 ]);
 
-/** The agreement a claimed anomaly is attributed to, as the claim names it. */
-interface ClaimedAgreement {
-  name: string;
-  distributorFileSentOn: string | null;
-}
-
-export interface ClaimableAnomaly {
-  anomaly: SharingAnomalyResponse;
-  /** Undefined for an anomaly attributed to no agreement. */
-  agreement?: ClaimedAgreement;
-}
-
 /**
  * When an anomaly started, as far as the data tells: the latest day its start
  * may fall on, the end of a range, or the day the data starts on.
@@ -46,23 +34,14 @@ const startDay = (anomaly: SharingAnomalyResponse) => anomaly.start.to;
  * is not claimable; each supply's parts by start date, which the page does not
  * do. A stable sort keeps the analysis's order between parts starting the same day.
  */
-export function claimableAnomalies(observation: PlantSharingObservationResponse): ClaimableAnomaly[] {
-  const sentOn = new Map(
-    observation.sharingAgreements.map((summary) => [summary.sharingAgreement.id, summary.distributorFileSentOn]),
+export function claimableAnomalies(observation: PlantSharingObservationResponse): SharingAnomalyResponse[] {
+  return groupAnomalies(observation.sharingAgreements, observation.unattributedAnomalies).flatMap((group) =>
+    group.supplies.flatMap(({ anomalies }) =>
+      anomalies
+        .filter((anomaly) => CLAIMABLE_TYPES.has(anomaly.type))
+        .sort((a, b) => startDay(a).localeCompare(startDay(b))),
+    ),
   );
-  return groupAnomalies(observation.sharingAgreements, observation.unattributedAnomalies).flatMap((group) => {
-    const agreement = group.agreement && {
-      name: group.agreement.name,
-      distributorFileSentOn: sentOn.get(group.agreement.id) ?? null,
-    };
-    return group.supplies
-      .flatMap(({ anomalies }) =>
-        anomalies
-          .filter((anomaly) => CLAIMABLE_TYPES.has(anomaly.type))
-          .sort((a, b) => startDay(a).localeCompare(startDay(b))),
-      )
-      .map((anomaly) => ({ anomaly, agreement }));
-  });
 }
 
 /**
@@ -79,51 +58,48 @@ const registered = (expectedBeta: number | null) =>
 /** An observed β is approximate: 2 decimals, always after "aproximadamente" in the sentence (UI-AGR-048). */
 const observed = (observedBeta: number) => percentNumber(observedBeta, 2);
 
-/** The agreement the sentence refers the distributor to, or a placeholder when none is attributed. */
-function agreementReference(agreement: ClaimedAgreement | undefined): string {
-  if (!agreement) return "(reparto «[NOMBRE DEL REPARTO]»)";
-  const sentOn = agreement.distributorFileSentOn ? formatDay(agreement.distributorFileSentOn) : "[FECHA DE ENVÍO]";
-  return `(reparto «${agreement.name}», fichero enviado el ${sentOn})`;
-}
-
-/** What the distributor applied, by type, and, for a swap, the supply it is swapped with by its CUPS. */
-function sentence({ anomaly, agreement }: ClaimableAnomaly): string {
-  const reference = agreementReference(agreement);
+/**
+ * What the distributor applied, by type, and, for a swap, the supply it is
+ * swapped with by its CUPS. It follows the period, after a comma, so it starts
+ * in lower case.
+ */
+function sentence(anomaly: SharingAnomalyResponse): string {
   const expected = registered(anomaly.expectedBeta);
   const beta = observed(anomaly.observedBeta);
   switch (anomaly.type) {
     case SharingAnomalyResponseType.NOT_APPLIED: {
-      const text = `No se le ha aplicado el coeficiente comunicado de ${expected} %; recibe aproximadamente un ${beta} % ${reference}.`;
+      const text = `no se le ha aplicado el coeficiente comunicado de ${expected} %; recibe aproximadamente un ${beta} %.`;
       return anomaly.swappedWith
         ? `${text} Este porcentaje coincide con el coeficiente comunicado para el punto CUPS ${anomaly.swappedWith.code}, y a ese punto se le aplica el de este: los coeficientes de ambos puntos parecen intercambiados.`
         : text;
     }
     case SharingAnomalyResponseType.UNKNOWN_COEFFICIENT:
-      return `Se le ha aplicado aproximadamente un ${beta} %, cuando el coeficiente comunicado es ${expected} % ${reference}.`;
+      return `se le ha aplicado aproximadamente un ${beta} %, cuando el coeficiente comunicado es ${expected} %.`;
     case SharingAnomalyResponseType.REVERTED:
-      return `Se le vuelve a aplicar aproximadamente un ${beta} %, que corresponde a un reparto anterior, en lugar del coeficiente comunicado de ${expected} % ${reference}.`;
+      return `se le vuelve a aplicar aproximadamente un ${beta} %, que corresponde a un reparto anterior, en lugar del coeficiente comunicado de ${expected} %.`;
     case SharingAnomalyResponseType.ENERGY_OUTSIDE_AGREEMENT:
-      return `Recibe aproximadamente un ${beta} % de la energía de la instalación, aunque no figura en el reparto comunicado.`;
+      return `recibe aproximadamente un ${beta} % de la energía de la instalación, aunque no figura en el reparto comunicado.`;
     case SharingAnomalyResponseType.NO_ENERGY_IN_AGREEMENT:
-      return `No recibe energía de la instalación, aunque su coeficiente comunicado es ${expected} % ${reference}.`;
+      return `no recibe energía de la instalación, aunque su coeficiente comunicado es ${expected} %.`;
     default:
       throw new Error(`Not a claimable anomaly type: ${anomaly.type}`);
   }
 }
 
 /**
- * When the anomaly lasted. A start the data pins to one day reads "del …";
- * one known only within a range, or one the data starts on, reads "desde …".
+ * When the anomaly lasted, opening its item. A start the data pins to one day
+ * reads "Del …"; one known only within a range, or one the data starts on,
+ * reads "Desde …".
  */
 function period(start: ObservedDateResponse, end: string | null, analysedTo: string): string {
   const until = end === null ? `la fecha de los últimos datos publicados (${formatDay(analysedTo)})` : `el ${formatDay(end)}`;
   if (start.from === start.to) {
-    return end === null ? `desde el ${formatDay(start.to)} hasta ${until}` : `del ${formatDay(start.to)} al ${formatDay(end)}`;
+    return end === null ? `Desde el ${formatDay(start.to)} hasta ${until}` : `Del ${formatDay(start.to)} al ${formatDay(end)}`;
   }
   const from =
     start.from === null
-      ? `desde el ${formatDay(start.to)} o antes`
-      : `desde una fecha entre el ${formatDay(start.from)} y el ${formatDay(start.to)}`;
+      ? `Desde el ${formatDay(start.to)} o antes`
+      : `Desde una fecha entre el ${formatDay(start.from)} y el ${formatDay(start.to)}`;
   return `${from} hasta ${until}`;
 }
 
@@ -132,7 +108,8 @@ function period(start: ObservedDateResponse, end: string | null, analysedTo: str
  * template of #436, with what the observed sharing response says filled in and
  * the rest left as bracketed placeholders. Supplies are named by their CUPS
  * only; nothing internal to Conluz, such as a supply's or the plant's name,
- * appears. One numbered item per claimable anomaly part (UI-AGR-047).
+ * appears, nor the agreement an anomaly is attributed to. One numbered item
+ * per claimable anomaly part (UI-AGR-047), its period first.
  * Built from the response already on the page; nothing is requested.
  */
 export function buildClaimText(
@@ -142,8 +119,8 @@ export function buildClaimText(
   const cau = plant.regulatoryCode?.trim() || "[CAU]";
   const analysedTo = observation.analysis.analysedTo ?? "";
   const items = claimableAnomalies(observation).map(
-    (item, index) =>
-      `${index + 1}. CUPS ${item.anomaly.supply.code}.\n${sentence(item)}\nPeriodo: ${period(item.anomaly.start, item.anomaly.end, analysedTo)}.`,
+    (anomaly, index) =>
+      `${index + 1}. CUPS ${anomaly.supply.code}.\n${period(anomaly.start, anomaly.end, analysedTo)}, ${sentence(anomaly)}`,
   );
 
   return [
