@@ -3,8 +3,8 @@ import { Box, Button, TextField } from "@mui/material";
 import { ActionStatus } from "../../../components/ActionStatus";
 import { Notice } from "../../../components/Notice";
 import { ResponsiveOverlay } from "../../../components/ResponsiveOverlay";
-import type { PlantResponse, PlantSharingObservationResponse } from "../../../api/models";
-import { buildClaimText } from "./claimText";
+import type { PlantResponse } from "../../../api/models";
+import { buildClaimText, type ClaimSource } from "./claimText";
 
 const TITLE = "Texto de reclamación";
 const COPIED = "Texto copiado.";
@@ -16,22 +16,23 @@ const COPY_FEEDBACK_MS = 2000;
 type CopyResult = "copied" | "byHand" | null;
 
 interface ClaimTextDialogProps {
-  observation: PlantSharingObservationResponse;
+  /** The plant's observation, or one agreement's (agreementClaimSource). */
+  source: ClaimSource;
   plant: Pick<PlantResponse, "regulatoryCode">;
 }
 
 /**
  * "Preparar texto de reclamación" and the dialog it opens (UI-AGR-046,
  * UI-AGR-049): the claim to the distributor, built from the observation
- * already on the page, in a read-only field to review and copy. Conluz sends
- * nothing; copying is the only thing it does, and with no clipboard it says to
- * copy by hand.
+ * already on the page, the plant's or one agreement's, in a read-only field to
+ * review and copy. Conluz sends nothing; copying is the only thing it does, and
+ * with no clipboard it says to copy by hand.
  */
-export const ClaimTextDialog: FC<ClaimTextDialogProps> = ({ observation, plant }) => {
+export const ClaimTextDialog: FC<ClaimTextDialogProps> = ({ source, plant }) => {
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<CopyResult>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const text = useMemo(() => buildClaimText(observation, plant), [observation, plant]);
+  const text = useMemo(() => buildClaimText(source, plant), [source, plant]);
 
   useEffect(() => () => clearTimeout(feedbackTimer.current), []);
 

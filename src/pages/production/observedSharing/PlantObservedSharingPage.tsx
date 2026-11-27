@@ -201,7 +201,7 @@ const AnalysedState: FC<{ plantId: string; plant: PlantResponse; observation: Pl
           />
           {hasClaim && (
             <Box sx={{ mb: 2 }}>
-              <ClaimTextDialog observation={observation} plant={plant} />
+              <ClaimTextDialog source={observation} plant={plant} />
             </Box>
           )}
           {anomalyCount > 0 ? (

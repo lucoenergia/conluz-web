@@ -3,6 +3,7 @@ import {
   type ObservedDateResponse,
   type PlantResponse,
   type PlantSharingObservationResponse,
+  type SharingAgreementObservationResponse,
   type SharingAnomalyResponse,
 } from "../../../api/models";
 import { formatPercentage } from "../../../utils/formatPercentage";
@@ -28,14 +29,27 @@ const CLAIMABLE_TYPES: ReadonlySet<SharingAnomalyResponseType> = new Set([
 const startDay = (anomaly: SharingAnomalyResponse) => anomaly.start.to;
 
 /**
- * The plant's claimable anomalies, attributed and not (UI-AGR-047): supplies in
+ * What a claim is built from: the analysis and its anomalies, the plant's
+ * whole observation or one agreement's.
+ */
+export type ClaimSource = Pick<PlantSharingObservationResponse, "analysis" | "sharingAgreements" | "unattributedAnomalies">;
+
+/** One agreement's observation as a claim source: its own anomalies alone, none unattributed. */
+export const agreementClaimSource = (observation: SharingAgreementObservationResponse): ClaimSource => ({
+  analysis: observation.analysis,
+  sharingAgreements: [observation.summary],
+  unattributedAnomalies: [],
+});
+
+/**
+ * The source's claimable anomalies, attributed and not (UI-AGR-047): supplies in
  * the order the page lists them (UI-AGR-024), grouped as the page groups them
  * and then filtered, so a supply keeps its place even when its first anomaly
  * is not claimable; each supply's parts by start date, which the page does not
  * do. A stable sort keeps the analysis's order between parts starting the same day.
  */
-export function claimableAnomalies(observation: PlantSharingObservationResponse): SharingAnomalyResponse[] {
-  return groupAnomalies(observation.sharingAgreements, observation.unattributedAnomalies).flatMap((group) =>
+export function claimableAnomalies(source: ClaimSource): SharingAnomalyResponse[] {
+  return groupAnomalies(source.sharingAgreements, source.unattributedAnomalies).flatMap((group) =>
     group.supplies.flatMap(({ anomalies }) =>
       anomalies
         .filter((anomaly) => CLAIMABLE_TYPES.has(anomaly.type))
@@ -112,13 +126,10 @@ function period(start: ObservedDateResponse, end: string | null, analysedTo: str
  * per claimable anomaly part (UI-AGR-047), its period first.
  * Built from the response already on the page; nothing is requested.
  */
-export function buildClaimText(
-  observation: PlantSharingObservationResponse,
-  plant: Pick<PlantResponse, "regulatoryCode">,
-): string {
+export function buildClaimText(source: ClaimSource, plant: Pick<PlantResponse, "regulatoryCode">): string {
   const cau = plant.regulatoryCode?.trim() || "[CAU]";
-  const analysedTo = observation.analysis.analysedTo ?? "";
-  const items = claimableAnomalies(observation).map(
+  const analysedTo = source.analysis.analysedTo ?? "";
+  const items = claimableAnomalies(source).map(
     (anomaly, index) =>
       `${index + 1}. CUPS ${anomaly.supply.code}.\n${period(anomaly.start, anomaly.end, analysedTo)}, ${sentence(anomaly)}`,
   );
