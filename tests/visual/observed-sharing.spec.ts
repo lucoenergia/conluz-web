@@ -97,6 +97,7 @@ test.describe("Visual baselines", () => {
     await expect(page.getByText("β esperada 3,1500 % · β observada 4,1200 % · 420 días medibles")).toBeVisible();
     // A swap names the other supply, on its own line on a phone (#451).
     await expect(page.getByText(/^Intercambiado con Casa Este/)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Preparar texto de reclamación" })).toBeVisible();
     await settleForCapture(page);
 
     await expect(page).toHaveScreenshot("observed-sharing-agreement.png", await mainRegion(page));
