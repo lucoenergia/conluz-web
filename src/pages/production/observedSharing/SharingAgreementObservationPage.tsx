@@ -7,6 +7,7 @@ import {
   type CoefficientObservationResponse,
   type LeavingObservationResponse,
   type ObservationStatusCountsResponse,
+  type PlantResponse,
   type SharingAgreementObservationResponse,
 } from "../../../api/models";
 import { BreadCrumb } from "../../../components/Breadcrumb";
@@ -25,6 +26,8 @@ import { colors } from "../../../theme/tokens";
 import { supplyDisplayLabel } from "../../../utils/supplyDisplayLabel";
 import { OBSERVED_SHARING_ICON } from "../plantDetail/sectionIcons";
 import { groupBySupply } from "./anomalyGroups";
+import { agreementClaimSource, claimableAnomalies } from "./claimText";
+import { ClaimTextDialog } from "./ClaimTextDialog";
 import { ObservationChip } from "./ObservationChip";
 import { ObservationNotComputable } from "./ObservationNotComputable";
 import { ObservationProgress } from "./ObservationProgress";
@@ -456,7 +459,11 @@ const LeavingRows: FC<{ rows: LeavingSectionRow[] }> = ({ rows }) => {
   );
 };
 
-const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservationResponse }> = ({ plantId, observation }) => {
+const ObservedState: FC<{
+  plantId: string;
+  plant: Pick<PlantResponse, "regulatoryCode">;
+  observation: SharingAgreementObservationResponse;
+}> = ({ plantId, plant, observation }) => {
   const { summary } = observation;
   const [selectedFilter, setFilter] = useState<ObservationFilter>("all");
   const [showAll, setShowAll] = useState(false);
@@ -488,6 +495,10 @@ const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservat
     return labels;
   }, [summary]);
   const anomalyCount = summary.anomalies.length;
+  // This agreement's anomalies alone, offered only when one is claimable
+  // (UI-AGR-046); this state is a computable analysis.
+  const claimSource = useMemo(() => agreementClaimSource(observation), [observation]);
+  const hasClaim = useMemo(() => claimableAnomalies(claimSource).length > 0, [claimSource]);
   const findings = recommendationFindings(plantId, summary);
   // A status filters the supply rows alone: the leaving ones show as under "Todos" (UI-AGR-045).
   const leavingSource = isStatusFilter(filter) ? all : shown;
@@ -551,6 +562,11 @@ const ObservedState: FC<{ plantId: string; observation: SharingAgreementObservat
           >
             {anomalyCount > 0 ? `Anomalías de este acuerdo (${anomalyCount})` : "Anomalías de este acuerdo"}
           </Typography>
+          {hasClaim && (
+            <Box sx={{ mb: 2 }}>
+              <ClaimTextDialog source={claimSource} plant={plant} />
+            </Box>
+          )}
           {anomalyCount > 0 ? (
             <ObservedAnomalies groups={anomalyGroups} showAgreements={false} defaultExpanded />
           ) : (
@@ -603,7 +619,7 @@ export const SharingAgreementObservationPage: FC = () => {
   } else if (!observation.analysis.computable) {
     body = <ObservationNotComputable plant={plant} />;
   } else {
-    body = <ObservedState plantId={plantId} observation={observation} />;
+    body = <ObservedState plantId={plantId} plant={plant} observation={observation} />;
   }
 
 

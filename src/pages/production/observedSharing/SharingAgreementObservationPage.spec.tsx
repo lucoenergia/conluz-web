@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { cleanup, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { act, cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router";
 import { renderWithProviders } from "../../../test/renderWithProviders";
@@ -34,6 +34,8 @@ import {
   buildSharingAnomaly,
   buildSharingAnomalyCounts,
 } from "../../../test/fixtures";
+import { customInstance } from "../../../http/custom-instance";
+import { overlayHistorySettled } from "../../../components/ResponsiveOverlay/overlayHistory";
 import { SharingAgreementObservationPage } from "./SharingAgreementObservationPage";
 
 /** The agreement's applied window, which a share's figures are computed over. */
@@ -47,6 +49,12 @@ vi.mock(import("../../../api/plants/plants"), async (importOriginal) => ({
 vi.mock(import("../../../api/sharing-agreements/sharing-agreements"), async (importOriginal) => ({
   ...(await importOriginal()),
   useGetSharingAgreementObservation: vi.fn(),
+}));
+
+// Every generated request goes through it: the claim text must make none (UI-AGR-046).
+vi.mock(import("../../../http/custom-instance"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  customInstance: vi.fn(),
 }));
 
 const COMMUNITY_ID = "community-a";
@@ -1220,6 +1228,116 @@ describe("SharingAgreementObservationPage", () => {
         expect(within(section).getByRole("button", { name: /^Casa Sol/ })).toHaveFocus();
       } finally {
         Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+      }
+    });
+  });
+  describe("the claim text (#436)", () => {
+    const CLAIM_BUTTON = "Preparar texto de reclamación";
+
+    async function openClaim() {
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("button", { name: CLAIM_BUTTON }));
+      await act(() => overlayHistorySettled());
+      return { user, dialog: screen.getByRole("dialog", { name: "Texto de reclamación" }) };
+    }
+
+    const withAnomalies = (anomalies: ReturnType<typeof buildSharingAnomaly>[]) => {
+      const fixture = observationFixture();
+      return query.success<typeof getSharingAgreementObservation>({
+        ...fixture,
+        summary: { ...fixture.summary, anomalies },
+      });
+    };
+
+    afterEach(async () => {
+      // An overlay left open gives its history entry back on unmount.
+      cleanup();
+      await act(() => overlayHistorySettled());
+    });
+
+    test("UI-AGR-046: 'Preparar texto de reclamación' is offered in the agreement's anomalies when one is claimable", () => {
+      renderPage();
+
+      const section = screen.getByRole("region", { name: "Anomalías de este acuerdo (1)" });
+      expect(within(section).getByRole("button", { name: CLAIM_BUTTON })).toBeInTheDocument();
+    });
+
+    test("UI-AGR-046: the button is not rendered when the agreement has no anomaly", () => {
+      renderPage({ observation: withAnomalies([]) });
+
+      expect(screen.getByRole("heading", { name: "Anomalías de este acuerdo" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: CLAIM_BUTTON })).not.toBeInTheDocument();
+    });
+
+    test("UI-AGR-046: the button is not rendered when the agreement's only anomaly is APPLIED_BEFORE_SENT", () => {
+      renderPage({
+        observation: withAnomalies([
+          buildSharingAnomaly({ supply: NORTE, type: SharingAnomalyResponseType.APPLIED_BEFORE_SENT, expectedBeta: 0.03 }),
+        ]),
+      });
+
+      expect(screen.getByRole("heading", { name: "Anomalías de este acuerdo (1)" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: CLAIM_BUTTON })).not.toBeInTheDocument();
+    });
+
+    test("UI-AGR-047: the agreement's claim lists its claimable anomalies, in date order, and leaves out APPLIED_BEFORE_SENT", async () => {
+      renderPage({
+        observation: withAnomalies([
+          buildSharingAnomaly({
+            supply: NORTE,
+            type: SharingAnomalyResponseType.NOT_APPLIED,
+            start: { from: "2025-09-01", to: "2025-09-01" },
+            end: null,
+            expectedBeta: 0.0315,
+            observedBeta: 0.0412,
+          }),
+          buildSharingAnomaly({
+            supply: SUR,
+            type: SharingAnomalyResponseType.APPLIED_BEFORE_SENT,
+            start: { from: "2025-02-10", to: "2025-02-10" },
+            end: "2025-02-19",
+          }),
+          buildSharingAnomaly({
+            supply: NORTE,
+            type: SharingAnomalyResponseType.NOT_APPLIED,
+            start: { from: "2025-03-01", to: "2025-03-01" },
+            end: "2025-06-30",
+            expectedBeta: 0.0315,
+            observedBeta: 0.0123,
+          }),
+        ]),
+      });
+      const { dialog } = await openClaim();
+
+      const text = (within(dialog).getByRole("textbox", { name: "Texto de reclamación" }) as HTMLTextAreaElement).value;
+      const items = text.split("\n\n").filter((block) => /^\d+\. CUPS /.test(block));
+      expect(items).toEqual([
+        `1. CUPS ${NORTE.code}.\nDel 01/03/2025 al 30/06/2025, no se le ha aplicado el coeficiente comunicado de 3,1500 %; recibe aproximadamente un 1,23 %.`,
+        `2. CUPS ${NORTE.code}.\nDesde el 01/09/2025 hasta la fecha de los últimos datos publicados (31/10/2026), no se le ha aplicado el coeficiente comunicado de 3,1500 %; recibe aproximadamente un 4,12 %.`,
+      ]);
+      expect(text).not.toContain(SUR.code);
+    });
+
+    test("UI-AGR-046, UI-AGR-049: opening the dialog and copying make no request", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      const xhrSpy = vi.spyOn(XMLHttpRequest.prototype, "open");
+      try {
+        renderPage();
+        const { user, dialog } = await openClaim();
+        Object.defineProperty(navigator, "clipboard", {
+          value: { writeText: vi.fn().mockResolvedValue(undefined) },
+          configurable: true,
+          writable: true,
+        });
+        await user.click(within(dialog).getByRole("button", { name: "Copiar texto" }));
+
+        expect(within(dialog).getByRole("status")).toHaveTextContent("Texto copiado.");
+        expect(customInstance).not.toHaveBeenCalled();
+        expect(fetchSpy).not.toHaveBeenCalled();
+        expect(xhrSpy).not.toHaveBeenCalled();
+      } finally {
+        fetchSpy.mockRestore();
+        xhrSpy.mockRestore();
       }
     });
   });

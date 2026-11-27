@@ -19,12 +19,14 @@ import { groupAnomalies } from "./anomalyGroups";
 import { ObservationChip } from "./ObservationChip";
 import { ObservedAgreementCard } from "./ObservedAgreementCard";
 import { ObservedAnomalies } from "./ObservedAnomalies";
+import { ClaimTextDialog } from "./ClaimTextDialog";
+import { claimableAnomalies } from "./claimText";
 import { ObservedSharingHelp } from "./ObservedSharingHelp";
 import { ObservationNotComputable } from "./ObservationNotComputable";
 import { ObservationProgress } from "./ObservationProgress";
 import { actionableRecommendations } from "./observedSharingLabels";
 import { formatDataRange, formatDataRangeInSentence, joinNames, NO_VALUE } from "./observedSharingFormat";
-import type { PlantSharingObservationResponse } from "../../../api/models";
+import type { PlantResponse, PlantSharingObservationResponse } from "../../../api/models";
 import { usePlantSharingObservationData } from "./usePlantSharingObservationData";
 
 const READ_ONLY_NOTE = "Solo lectura: compara lo que muestra Datadis con lo registrado. No cambia ningún dato.";
@@ -142,13 +144,19 @@ const NotComputableSupplies: FC<{ observation: PlantSharingObservationResponse }
   );
 };
 
-const AnalysedState: FC<{ plantId: string; observation: PlantSharingObservationResponse }> = ({ plantId, observation }) => {
+const AnalysedState: FC<{ plantId: string; plant: PlantResponse; observation: PlantSharingObservationResponse }> = ({
+  plantId,
+  plant,
+  observation,
+}) => {
   const groups = useMemo(
     () => groupAnomalies(observation.sharingAgreements, observation.unattributedAnomalies),
     [observation],
   );
   const anomalyCount = groups.reduce((sum, group) => sum + group.count, 0);
   const allClear = isAllClear(observation);
+  // Offered only when there is something to claim (UI-AGR-046); this state is a computable analysis.
+  const hasClaim = useMemo(() => claimableAnomalies(observation).length > 0, [observation]);
 
   return (
     <>
@@ -191,6 +199,11 @@ const AnalysedState: FC<{ plantId: string; observation: PlantSharingObservationR
                 : "Cambios sostenidos que no corresponden al siguiente coeficiente registrado de un punto."
             }
           />
+          {hasClaim && (
+            <Box sx={{ mb: 2 }}>
+              <ClaimTextDialog source={observation} plant={plant} />
+            </Box>
+          )}
           {anomalyCount > 0 ? (
             <ObservedAnomalies groups={groups} showAgreements defaultExpanded={false} />
           ) : (
@@ -226,7 +239,7 @@ export const PlantObservedSharingPage: FC = () => {
   } else if (!observation.analysis.computable) {
     body = <ObservationNotComputable plant={plant} />;
   } else {
-    body = <AnalysedState plantId={plantId} observation={observation} />;
+    body = <AnalysedState plantId={plantId} plant={plant} observation={observation} />;
   }
 
   return (
