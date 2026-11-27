@@ -762,20 +762,23 @@ is in force today.
   MUST NOT appear. The registered coefficient MUST be the anomaly's `expectedBeta` in % with 4
   decimals, or "[COEFICIENTE COMUNICADO]" when it is null. An observed β MUST be in % with 2
   decimals, preceded by "aproximadamente". A NOT_APPLIED anomaly with `swappedWith` MUST name the
-  other supply by its CUPS, on the item of each of the two supplies. An anomaly attributed to no
-  agreement MUST read "(reparto «[NOMBRE DEL REPARTO]»)", and one whose agreement has no sent date
-  "fichero enviado el [FECHA DE ENVÍO]". A period with a start known to the day and an end MUST
-  read "del D1 al D2". A start in a range MUST read "desde una fecha entre el D1 y el D2", and a
-  start the data begins on "desde el D o antes", each followed by "hasta el D2". An anomaly that
-  lasts until the end of the data MUST end its period with "hasta la fecha de los últimos datos
-  publicados (D)", D being the last analysed day. Every date MUST read dd/mm/aaaa.
+  other supply by its CUPS, on the item of each of the two supplies. The claim MUST NOT name the
+  agreement an anomaly is attributed to, nor its sent date. Each item MUST be its CUPS line and
+  one line that opens with the period, followed by a comma and the sentence of its type. A period
+  with a start known to the day and an end MUST read "Del D1 al D2". A start in a range MUST read
+  "Desde una fecha entre el D1 y el D2", and a start the data begins on "Desde el D o antes", each
+  followed by "hasta el D2". An anomaly that lasts until the end of the data MUST end its period
+  with "hasta la fecha de los últimos datos publicados (D)", D being the last analysed day. Every
+  date MUST read dd/mm/aaaa.
 - **Rationale:** The people sending the claim are not technical and write to any distributor, so
   the text is a finished letter they only complete. The distributor knows the installation and the
   supplies by their formal identifiers; their names in Conluz are internal, which is also why the
-  plant's name was taken out of the template. A registered coefficient is exact; an observed β is
-  a median of daily data, so it is marked approximate and the claim does not overclaim. Naming the
-  other supply of a swap lets the distributor correct both at once. A placeholder keeps what Conluz
-  does not know visible, so the sender cannot miss it.
+  plant's name was taken out of the template. The agreement and its sent date were taken out of the
+  template with the maintainer as well; each item leads with its period, so it reads as one
+  sentence. A registered coefficient is exact; an observed β is a median of daily data, so it is
+  marked approximate and the claim does not overclaim. Naming the other supply of a swap lets the
+  distributor correct both at once. A placeholder keeps what Conluz does not know visible, so the
+  sender cannot miss it.
 - **Implements:** n/a
 - **Source:** #436, lucoenergia/conluz#611, lucoenergia/conluz#625
 
