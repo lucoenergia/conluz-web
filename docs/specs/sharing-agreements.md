@@ -20,7 +20,7 @@ activation confirmation that lists the supplies a first activation closes (#419)
 counts and help that make the observed sharing readable, the unattributed production and its
 breakdown, and each row's measurable days (#419), and coefficients not applied to their supply,
 and supplies swapped with each other (#451), and the claim to the distributor prepared from a
-plant's anomalies (#436). Not exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
+plant's or one agreement's anomalies (#436). Not exhaustive: other sharing-agreement behaviour is not yet specified here. The rules every records
 list shares, the agreement list among them, are in [`record-lists.md`](record-lists.md).
 
 ## Purpose
@@ -722,20 +722,23 @@ is in force today.
 
 - **Status:** Active
 - **Rule:** The plant's observed sharing page MUST show "Preparar texto de reclamación" in
-  "Anomalías" when the analysis is computable and at least one anomaly, attributed or not, is of a
-  type the claim covers (UI-AGR-047). It MUST NOT render the button when the analysis is not
-  computable. It MUST NOT render it when no anomaly is of a type the claim covers, as when every
-  anomaly is APPLIED_BEFORE_SENT. The claim MUST be built from the observed sharing response
-  already on the page, and opening the dialog or copying MUST NOT make any request.
+  "Anomalías", and an agreement's observed sharing page in "Anomalías de este acuerdo", when the
+  analysis is computable and at least one anomaly the page lists is of a type the claim covers
+  (UI-AGR-047). It MUST NOT render the button when the analysis is not computable. It MUST NOT
+  render it when no anomaly is of a type the claim covers, as when every anomaly is
+  APPLIED_BEFORE_SENT. The claim MUST be built from the observed sharing response already on the
+  page, and opening the dialog or copying MUST NOT make any request.
 - **Rationale:** A button that opens an empty claim is a dead action. The analysis is expensive
   (UI-AGR-022) and already holds everything the claim says, so it stays the page's only request.
+  An admin reviewing one agreement can claim its anomalies from where they read them.
 - **Implements:** n/a
 - **Source:** #436
 
 ### UI-AGR-047 — The claim covers what the distributor answers for, one item per anomaly part, each supply's in date order
 
 - **Status:** Active
-- **Rule:** The claim MUST list every anomaly of the plant, attributed and unattributed, of type
+- **Rule:** On the plant's page, the claim MUST list every anomaly of the plant, attributed and
+  unattributed; on an agreement's page, that agreement's anomalies alone. It MUST list those of type
   NOT_APPLIED, UNKNOWN_COEFFICIENT, REVERTED, ENERGY_OUTSIDE_AGREEMENT or NO_ENERGY_IN_AGREEMENT,
   as one numbered item per anomaly part; each part of a split NOT_APPLIED is an item of its own.
   The supplies MUST follow the order the page lists them in (UI-AGR-024): agreement groups in the
