@@ -317,6 +317,21 @@ describe("buildClaimText", () => {
     }
   });
 
+  test("UI-AGR-048: each item opens with its period, and names neither the agreement nor its sent date", () => {
+    const text = buildClaimText(OBSERVATION, PLANT);
+
+    for (const lines of items(text)) {
+      expect(lines).toHaveLength(2);
+      expect(lines[1]).toMatch(/^(Del|Desde) [^,]+, [a-z]/);
+    }
+    for (const name of ["Reparto vecinos bloque A", "Reparto inicial 2023"]) {
+      expect(text).not.toContain(name);
+    }
+    for (const fragment of ["20/02/2025", "Periodo:", "reparto «", "fichero enviado", "[NOMBRE DEL REPARTO]", "[FECHA DE ENVÍO]"]) {
+      expect(text).not.toContain(fragment);
+    }
+  });
+
   test("UI-AGR-048: the registered coefficient is the anomaly's expected β with 4 decimals, or the placeholder when it is null", () => {
     const withExpected = (expectedBeta: number | null) =>
       buildPlantSharingObservation({
